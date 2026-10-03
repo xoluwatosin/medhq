@@ -132,7 +132,6 @@ import PortalContractDoc from "./pages/portal/PortalContractDoc";
 import PortalApplications from "./pages/portal/PortalApplications";
 import PortalDetails from "./pages/portal/PortalDetails";
 
-import OAuthConsent from "./pages/OAuthConsent";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import PreAssessment from "./pages/PreAssessment";
@@ -264,7 +263,6 @@ const App = () => (
             <Route path="/care" element={<CareHome />} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
-            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="care/requests" element={<CareRequests />} />

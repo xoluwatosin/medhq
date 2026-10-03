@@ -72,7 +72,3 @@ verify_jwt = false
 # checks the service key, a run key or an admin login itself
 [functions.notify-relink]
 verify_jwt = false
-
-# OAuth discovery must be reachable unauthenticated; tools check the token
-[functions.mcp]
-verify_jwt = false

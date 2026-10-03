@@ -42,7 +42,3 @@ Set these with `supabase secrets set NAME=value`. `SUPABASE_URL`, `SUPABASE_ANON
 ## Database
 
 Schema history lives in two places: `supabase/migrations` (older) and `drizzle/migrations` (from August 2026, run with `DATABASE_URL` set). Consolidating them into one is outstanding.
-
-## MCP server
-
-`supabase/functions/mcp` is an MCP server for admin tools, built on `@lovable.dev/mcp-js` (an MIT npm package that runs without Lovable). The file used to be generated from `src/lib/mcp`; that generator is gone, so edit the function directly. The OAuth consent page stays at `/.lovable/oauth/consent` because existing MCP clients are registered against that path.
