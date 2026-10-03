@@ -189,6 +189,23 @@ Tranche 8 resumes after 7.5C. 7.5D and 7.5E must land before any visit screen, a
 - [ ] Clean the design tokens: retire `--tag-*`, `--chart-*`, `--spacing`, `--tracking-normal`; remove raw `rgba()` and `#fff` literals; collapse the three radius grammars.
 - [ ] Retire the five page-local status maps and seven date formats outside the care path.
 
+## System management
+
+Plan: `docs/administration/system-management.md`. Order: A, C1, B, rest of C, D, E.
+
+- [ ] A1: health signal catalogue (`ops_checks`), `ops_function_errors` with the shared `_shared/ops-log.ts` wrapper, and `private.ops_run_checks()` on a five-minute cron.
+- [ ] A2: extend `admin_alerts` with severity, dedupe, occurrences, acknowledge and auto-resolve.
+- [ ] A4: `/admin/system` live screen with realtime alerts, scheduled jobs, failed deliveries and retry; header alert bell; status strip on the Overview.
+- [ ] A3: immediate critical email with escalation, hourly warning batch and 07:45 daily digest through a generalised `send-admin-alert`.
+- [ ] A1 follow-on: `ops-probe` for Resend, Paystack, Anthropic and Google Maps.
+- [ ] C1 (alerts and email groups): typed `admin_settings`, `src/lib/system-config.ts` catalogue, `_shared/config.ts`; replace hard-coded alert and operations addresses.
+- [ ] B1–B3: `admin_activity` view over existing logs, `admin_audit` trigger on unlogged tables, `/admin/activity` with record and person history links.
+- [ ] C1 (remaining groups): working calendar and holiday editor, feature flags, maintenance banners and form pause, secret presence.
+- [ ] D1: role templates, with `care_coordinator` and `care_clinical` assigned through roles.
+- [ ] D2–D3: account health checks, quarterly access review, and one-step removal of access linked to Workforce leavers.
+- [ ] E1: archive registry across Care and Talent, restore and guarded permanent delete.
+- [ ] E2–E3: data requests with export and erase, and report-only retention.
+
 ## Later
 
 - [ ] Cross-client dashboard for relatives managing several clients.
