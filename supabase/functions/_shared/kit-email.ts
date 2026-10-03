@@ -22,7 +22,7 @@ export const KIT = {
   curve: "0",
   curveSm: "0",
 
-  logoWhite: `${SITE}/__l5e/assets-v1/6ff34975-6ca7-4929-9e0d-e65726372c6c/medicconnect-logo-white.png`,
+  logoWhite: `${SITE}/email-kit/medicconnect-logo-white.png`,
 };
 
 function esc(s: string): string {

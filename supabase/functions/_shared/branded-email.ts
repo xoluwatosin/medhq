@@ -301,7 +301,7 @@ function buildEmailHtml(subject: string, content: string, template: string, temp
     body = `${buildHeading(heading, d)}${paragraphs}`;
   }
 
-  const LOGO_WHITE = "https://medicconnect.co/__l5e/assets-v1/6ff34975-6ca7-4929-9e0d-e65726372c6c/medicconnect-logo-white.png";
+  const LOGO_WHITE = "https://medicconnect.co/email-kit/medicconnect-logo-white.png";
   const eyebrow = escapeHtml(String(templateData?.eyebrow || "The Care Operating System"));
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
