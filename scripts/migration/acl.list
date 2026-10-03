@@ -1,0 +1,557 @@
+; ACL entries from restore.list, reapplied by apply-acls.sh.
+; DEFAULT ACL entries owned by supabase_admin are left out (not ours to change).
+8125; 0 0 ACL - SCHEMA private postgres
+8126; 0 0 ACL - SCHEMA public pg_database_owner
+8210; 0 0 ACL private FUNCTION analytics_check_alerts() postgres
+8211; 0 0 ACL private FUNCTION analytics_refresh_all() postgres
+8212; 0 0 ACL private FUNCTION care_access_caller_ok() postgres
+8215; 0 0 ACL public TABLE care_documents postgres
+8216; 0 0 ACL private FUNCTION care_can_admin_access(_user_id uuid) postgres
+8217; 0 0 ACL private FUNCTION care_delivery_capability_ok(_code text) postgres
+8218; 0 0 ACL private FUNCTION care_delivery_stage_touch() postgres
+8219; 0 0 ACL private FUNCTION care_has_scope(_client_id uuid, _scope text) postgres
+8220; 0 0 ACL private FUNCTION care_modules_resolve(_modules jsonb, _age integer, _capability text, _overrides jsonb) postgres
+8221; 0 0 ACL private FUNCTION care_ops_ok() postgres
+8223; 0 0 ACL private FUNCTION care_resolve_modules(_client_id uuid, _definition jsonb) postgres
+8225; 0 0 ACL public TABLE care_assessment_reviews postgres
+8226; 0 0 ACL private FUNCTION care_service_config_freeze() postgres
+8227; 0 0 ACL private FUNCTION care_service_key(_client_id uuid) postgres
+8228; 0 0 ACL private FUNCTION followup_person_gaps(_person uuid) postgres
+8229; 0 0 ACL private FUNCTION followup_queue_dispatch() postgres
+8230; 0 0 ACL private FUNCTION followup_queue_reconcile() postgres
+8231; 0 0 ACL private FUNCTION followup_queue_sweep() postgres
+8232; 0 0 ACL private FUNCTION has_role(_user_id uuid, _role public.app_role) postgres
+8233; 0 0 ACL private FUNCTION is_super_admin(_user_id uuid) postgres
+8234; 0 0 ACL private FUNCTION metrics_audit_run() postgres
+8235; 0 0 ACL private FUNCTION mu_link_orphan_accounts() postgres
+8236; 0 0 ACL private FUNCTION upsert_form_definition(_kind text, _version integer, _status text, _def jsonb) postgres
+8237; 0 0 ACL public FUNCTION admin_access_guard() postgres
+8238; 0 0 ACL public FUNCTION admin_job_key_log(p_name text, p_action text, p_detail jsonb) postgres
+8239; 0 0 ACL public FUNCTION admin_job_key_rotate(p_name text) postgres
+8240; 0 0 ACL public FUNCTION admin_job_keys() postgres
+8241; 0 0 ACL public TABLE metrics_audit_findings postgres
+8242; 0 0 ACL public FUNCTION admin_metrics_audit_latest() postgres
+8243; 0 0 ACL public FUNCTION admin_metrics_audit_reconcile() postgres
+8244; 0 0 ACL public FUNCTION admin_metrics_audit_run() postgres
+8245; 0 0 ACL public FUNCTION analytics_acquisition() postgres
+8246; 0 0 ACL public FUNCTION analytics_campaigns() postgres
+8247; 0 0 ACL public FUNCTION analytics_candidates(_step text) postgres
+8248; 0 0 ACL public FUNCTION analytics_funnel() postgres
+8249; 0 0 ACL public FUNCTION analytics_invited_report() postgres
+8250; 0 0 ACL public FUNCTION analytics_last_refreshed() postgres
+8251; 0 0 ACL public FUNCTION analytics_refresh() postgres
+8252; 0 0 ACL public FUNCTION analytics_signup_failure_summary() postgres
+8253; 0 0 ACL public FUNCTION analytics_stuck_breakdown() postgres
+8254; 0 0 ACL public FUNCTION campaign_sync_stats(_campaign_id uuid) postgres
+8255; 0 0 ACL public FUNCTION care_access_overview(_client_id uuid) postgres
+8256; 0 0 ACL public FUNCTION care_age_years(_dob date) postgres
+8257; 0 0 ACL public FUNCTION care_amend_section(_document_id uuid, _section_id text, _changes jsonb, _reason text) postgres
+8258; 0 0 ACL public FUNCTION care_assessment_accept(_id uuid, _notes text) postgres
+8259; 0 0 ACL public FUNCTION care_assessment_assign(_id uuid, _assessor_person_id uuid, _reason text) postgres
+8260; 0 0 ACL public FUNCTION care_assessment_brief(_id uuid) postgres
+8261; 0 0 ACL public FUNCTION care_assessment_cancel(_id uuid, _reason text) postgres
+8262; 0 0 ACL public FUNCTION care_assessment_capture(_id uuid, _events jsonb) postgres
+8263; 0 0 ACL public FUNCTION care_assessment_due(_appointment timestamp with time zone) postgres
+8264; 0 0 ACL public FUNCTION care_assessment_record(_id uuid) postgres
+8265; 0 0 ACL public FUNCTION care_assessment_reroute(_id uuid, _reason text, _service text, _recipient_group text, _restart boolean) postgres
+8266; 0 0 ACL public FUNCTION care_assessment_reschedule(_id uuid, _appointment_at timestamp with time zone, _appointment_ends_at timestamp with time zone, _reason text) postgres
+8267; 0 0 ACL public FUNCTION care_assessment_reschedule(_id uuid, _appointment_at timestamp with time zone, _appointment_ends_at timestamp with time zone, _reason text, _location_kind text, _notes text) postgres
+8268; 0 0 ACL public FUNCTION care_assessment_return(_id uuid, _reason text, _category text, _instructions text, _priority text) postgres
+8269; 0 0 ACL public FUNCTION care_assessment_schedule(_client_id uuid, _appointment_at timestamp with time zone, _appointment_ends_at timestamp with time zone, _location_kind text, _notes text) postgres
+8270; 0 0 ACL public FUNCTION care_assessment_service_request(_work_id uuid, _service_id uuid, _note text) postgres
+8271; 0 0 ACL public FUNCTION care_assessment_start(_id uuid) postgres
+8272; 0 0 ACL public FUNCTION care_assessment_submit(_id uuid) postgres
+8273; 0 0 ACL public FUNCTION care_assessor_capability(_person_id uuid) postgres
+8274; 0 0 ACL public FUNCTION care_assessor_capability_set(_person_id uuid, _active boolean, _reason text) postgres
+8275; 0 0 ACL public FUNCTION care_assessor_eligible(_person_id uuid) postgres
+8276; 0 0 ACL public FUNCTION care_assessor_live_assessments(_person_id uuid) postgres
+8277; 0 0 ACL public FUNCTION care_assessor_options() postgres
+8278; 0 0 ACL public FUNCTION care_assignment_activate(_assignment_id uuid) postgres
+8279; 0 0 ACL public FUNCTION care_assignment_cancel(_assignment_id uuid, _reason text) postgres
+8280; 0 0 ACL public FUNCTION care_assignment_end(_assignment_id uuid, _reason text, _effective_to date) postgres
+8281; 0 0 ACL public FUNCTION care_assignment_plan(_episode_id uuid, _person_id uuid, _capability_code text, _effective_from date, _effective_to date) postgres
+8282; 0 0 ACL public FUNCTION care_basis_record(_client_id uuid, _person_id uuid, _basis_kind text, _evidence_note text, _evidence_sighted boolean) postgres
+8283; 0 0 ACL public FUNCTION care_basis_withdraw(_basis_id uuid, _reason text) postgres
+8284; 0 0 ACL public FUNCTION care_basis_withdrawal() postgres
+8285; 0 0 ACL public FUNCTION care_can_administer_access(_user_id uuid) postgres
+8286; 0 0 ACL public FUNCTION care_client_lifecycle(_client_id uuid, _action text, _reason text) postgres
+8287; 0 0 ACL public FUNCTION care_client_links(_client_id uuid) postgres
+8288; 0 0 ACL public FUNCTION care_client_onboarding_complete(_onboarding_hash text, _pre_assessment_hash text, _intake jsonb, _expires_at timestamp with time zone) postgres
+8289; 0 0 ACL public FUNCTION care_clients_controlled_values() postgres
+8290; 0 0 ACL public FUNCTION care_compose_full_name() postgres
+8291; 0 0 ACL public FUNCTION care_contact_ensure_person() postgres
+8292; 0 0 ACL public FUNCTION care_contact_save(_contact_id uuid, _full_name text, _relationship text, _phone text, _whatsapp text, _email text, _is_primary boolean, _country text) postgres
+8293; 0 0 ACL public FUNCTION care_contact_save(_contact_id uuid, _full_name text, _relationship text, _phone text, _whatsapp text, _email text, _is_primary boolean, _country text, _relationship_code text, _relationship_other text) postgres
+8294; 0 0 ACL public FUNCTION care_contacts_controlled_values() postgres
+8295; 0 0 ACL public FUNCTION care_derive_stage(_client_id uuid) postgres
+8296; 0 0 ACL public FUNCTION care_enquiry_convert(_submission_id uuid, _service_id uuid, _client_group text, _group_id uuid, _person_id uuid) postgres
+8297; 0 0 ACL public FUNCTION care_enquiry_matches(_submission_id uuid) postgres
+8298; 0 0 ACL public FUNCTION care_episode_activate(_episode_id uuid) postgres
+8299; 0 0 ACL public FUNCTION care_episode_create(_client_id uuid, _service_code text, _starts_at timestamp with time zone, _overrides jsonb) postgres
+8300; 0 0 ACL public FUNCTION care_episode_modules(_episode_id uuid, _capability text) postgres
+8301; 0 0 ACL public FUNCTION care_episode_set_status(_episode_id uuid, _status text, _reason text) postgres
+8302; 0 0 ACL public FUNCTION care_family_amend(_token_hash text, _document_id uuid, _section_id text, _changes jsonb) postgres
+8303; 0 0 ACL public FUNCTION care_finance_adjust(_invoice_id uuid, _kind text, _amount numeric, _reason text) postgres
+8304; 0 0 ACL public FUNCTION care_geo_check(_state_code text, _lga_code text) postgres
+8305; 0 0 ACL public FUNCTION care_grant_guard() postgres
+8306; 0 0 ACL public FUNCTION care_grant_reactivate(_grant_id uuid, _reason text) postgres
+8307; 0 0 ACL public FUNCTION care_grant_revoke(_grant_id uuid, _reason text) postgres
+8308; 0 0 ACL public FUNCTION care_grant_set(_client_id uuid, _person_id uuid, _journey boolean, _clinical_basis_id uuid, _finance_basis_id uuid, _reason text) postgres
+8309; 0 0 ACL public FUNCTION care_grant_suspend(_grant_id uuid, _reason text) postgres
+8310; 0 0 ACL public FUNCTION care_group_ensure(_client_id uuid) postgres
+8311; 0 0 ACL public FUNCTION care_group_member_set(_group_id uuid, _person_id uuid, _role text, _notes text) postgres
+8312; 0 0 ACL public FUNCTION care_group_overview(_group_id uuid) postgres
+8313; 0 0 ACL public FUNCTION care_group_save(_group_id uuid, _display_name text, _address_line text, _landmark text, _state_code text, _lga_code text) postgres
+8314; 0 0 ACL public FUNCTION care_is_assigned_assessor(_assessment_id uuid) postgres
+8315; 0 0 ACL public FUNCTION care_journey_grant(_client_id uuid, _person_id uuid, _reason text, _origin text) postgres
+8316; 0 0 ACL public FUNCTION care_languages_valid(_codes text[]) postgres
+8317; 0 0 ACL public FUNCTION care_my_clients() postgres
+8318; 0 0 ACL public FUNCTION care_my_person_ids() postgres
+8319; 0 0 ACL public FUNCTION care_notification_attempt(_id uuid) postgres
+8320; 0 0 ACL public FUNCTION care_notification_attempt(_id uuid, _force boolean) postgres
+8321; 0 0 ACL public FUNCTION care_notification_claim(_kind text, _channel text, _dedupe_key text, _destination text, _person_id uuid, _client_id uuid, _contact_id uuid, _related_table text, _related_id uuid, _subject text, _origin text) postgres
+8322; 0 0 ACL public FUNCTION care_notification_result(_id uuid, _ok boolean, _provider_message_id text, _provider_error text) postgres
+8323; 0 0 ACL public FUNCTION care_onboarding_service_id(_service_key text) postgres
+8324; 0 0 ACL public FUNCTION care_payer_set(_client_id uuid, _person_id uuid) postgres
+8325; 0 0 ACL public FUNCTION care_person_create(_full_name text, _preferred_name text, _email text, _phone text, _whatsapp text) postgres
+8326; 0 0 ACL public FUNCTION care_plan_approve(_document_id uuid, _decision text, _reason text) postgres
+8327; 0 0 ACL public FUNCTION care_plan_is_approved(_document_id uuid) postgres
+8328; 0 0 ACL public FUNCTION care_plan_item_remove(_document_id uuid, _kind text, _id uuid) postgres
+8329; 0 0 ACL public FUNCTION care_plan_item_save(_document_id uuid, _kind text, _id uuid, _payload jsonb) postgres
+8330; 0 0 ACL public FUNCTION care_plan_new_version(_document_id uuid, _reason text) postgres
+8331; 0 0 ACL public FUNCTION care_plan_save_section(_document_id uuid, _section_id text, _value jsonb) postgres
+8332; 0 0 ACL public FUNCTION care_plan_submit(_document_id uuid) postgres
+8333; 0 0 ACL public FUNCTION care_pre_assessment_finalise(_token_hash text, _document_id uuid, _outstanding jsonb, _flags jsonb, _address_line text, _state_code text, _lga_code text, _language_codes text[], _grant_person_id uuid) postgres
+8334; 0 0 ACL public FUNCTION care_proposal_comment(_proposal_id uuid, _body text) postgres
+8335; 0 0 ACL public FUNCTION care_proposal_draft(_client_id uuid, _assessment_document_id uuid) postgres
+8336; 0 0 ACL public FUNCTION care_proposal_recipients(_client_id uuid) postgres
+8337; 0 0 ACL public FUNCTION care_proposal_respond(_proposal_id uuid, _response text, _comment text) postgres
+8338; 0 0 ACL public FUNCTION care_proposal_send(_proposal_id uuid, _person_ids uuid[]) postgres
+8339; 0 0 ACL public FUNCTION care_proposal_status(_client_id uuid) postgres
+8340; 0 0 ACL public FUNCTION care_proposal_withdraw(_proposal_id uuid, _reason text) postgres
+8341; 0 0 ACL public FUNCTION care_quote_accept(_quote_id uuid) postgres
+8342; 0 0 ACL public FUNCTION care_quote_issue(_quote_id uuid) postgres
+8343; 0 0 ACL public FUNCTION care_quote_save(_quote_id uuid, _client_id uuid, _recipient_contact_id uuid, _lines jsonb, _vat_rate numeric, _valid_until date, _notes text) postgres
+8344; 0 0 ACL public FUNCTION care_recipient_create(_request_id uuid, _full_name text, _person_id uuid, _preferred_name text, _date_of_birth date, _age_years integer, _sex_code text, _address_line text, _landmark text, _state_code text, _lga_code text, _email text, _phone text) postgres
+8345; 0 0 ACL public FUNCTION care_recipient_person_link(_recipient_id uuid, _person_id uuid, _role text) postgres
+8346; 0 0 ACL public FUNCTION care_reconcile_stages() postgres
+8347; 0 0 ACL public FUNCTION care_refresh_stage(_client_id uuid) postgres
+8348; 0 0 ACL public FUNCTION care_relationship_remove(_id uuid) postgres
+8349; 0 0 ACL public FUNCTION care_relationship_set(_from_person_id uuid, _to_person_id uuid, _relationship_code text, _group_id uuid, _other_label text) postgres
+8350; 0 0 ACL public FUNCTION care_request_coverage(_request_id uuid) postgres
+8351; 0 0 ACL public FUNCTION care_request_lifecycle(_request_id uuid, _action text, _reason text) postgres
+8352; 0 0 ACL public FUNCTION care_request_readiness(_request_id uuid) postgres
+8353; 0 0 ACL public FUNCTION care_request_recipient_add(_request_id uuid, _client_id uuid, _person_id uuid, _address_line text, _landmark text, _state_code text, _lga_code text, _display_order integer) postgres
+8354; 0 0 ACL public FUNCTION care_request_recipient_remove(_id uuid) postgres
+8355; 0 0 ACL public FUNCTION care_request_save(_request_id uuid, _group_id uuid, _enquirer_person_id uuid, _status text, _source text, _enquiry_notes text, _callback_at timestamp with time zone, _callback_phone text) postgres
+8356; 0 0 ACL public FUNCTION care_review_checklist_save(_id uuid, _checklist jsonb) postgres
+8357; 0 0 ACL public FUNCTION care_review_record(_work uuid) postgres
+8358; 0 0 ACL public FUNCTION care_service_config_draft(_service_code text, _modules jsonb) postgres
+8359; 0 0 ACL public FUNCTION care_service_config_publish(_id uuid) postgres
+8360; 0 0 ACL public FUNCTION care_service_intention_remove(_id uuid) postgres
+8361; 0 0 ACL public FUNCTION care_service_intention_set(_intention_id uuid, _request_id uuid, _service_id uuid, _recipient_ids uuid[], _state text, _is_shared boolean, _reason text, _source text) postgres
+8362; 0 0 ACL public FUNCTION care_token_address_save(_token_hash text, _address_line text, _landmark text, _state_code text, _lga_code text) postgres
+8363; 0 0 ACL public FUNCTION care_visit_attach_work(_visit_id uuid, _work_id uuid) postgres
+8364; 0 0 ACL public FUNCTION care_visit_set(_visit_id uuid, _group_id uuid, _request_id uuid, _appointment_at timestamp with time zone, _appointment_ends_at timestamp with time zone, _location_kind text, _address_line text, _assessor_person_id uuid, _status text, _notes text) postgres
+8365; 0 0 ACL public FUNCTION care_work_assign(_id uuid, _assignee_user_id uuid, _team text) postgres
+8366; 0 0 ACL public FUNCTION care_work_cancel(_id uuid, _reason text) postgres
+8367; 0 0 ACL public FUNCTION care_work_complete(_id uuid, _outcome text) postgres
+8368; 0 0 ACL public FUNCTION care_work_create(_client_id uuid, _kind text, _title text, _source_key text, _detail text, _priority text, _is_blocker boolean, _due_at timestamp with time zone, _team text, _assignee_user_id uuid) postgres
+8369; 0 0 ACL public FUNCTION care_work_domain_managed(_kind text) postgres
+8370; 0 0 ACL public FUNCTION care_work_event(_client_id uuid, _event text, _ref uuid) postgres
+8371; 0 0 ACL public FUNCTION care_work_ranked(_client_id uuid) postgres
+8372; 0 0 ACL public FUNCTION care_work_reopen(_id uuid, _reason text) postgres
+8373; 0 0 ACL public FUNCTION care_work_set(_id uuid, _assignee_user_id uuid, _team text, _due_at timestamp with time zone) postgres
+8374; 0 0 ACL public FUNCTION care_working_due(_from timestamp with time zone, _days integer) postgres
+8375; 0 0 ACL public FUNCTION claim_invites_link_person() postgres
+8376; 0 0 ACL public FUNCTION claim_invites_stamp_invited() postgres
+8377; 0 0 ACL public FUNCTION clients_set_reference() postgres
+8378; 0 0 ACL public FUNCTION email_kit_set_updated_at() postgres
+8379; 0 0 ACL public FUNCTION handle_new_user() postgres
+8381; 0 0 ACL public TABLE heard_volunteer_profiles postgres
+8382; 0 0 ACL public FUNCTION heard_bootstrap_volunteer(p_role text, p_first_name text, p_last_name text) postgres
+8383; 0 0 ACL public FUNCTION heard_join_waitlist(_email text, _source text, _purpose text) postgres
+8384; 0 0 ACL public FUNCTION heard_public_letters(_limit integer) postgres
+8385; 0 0 ACL public FUNCTION heard_register_volunteer_profile(p_first_name text, p_last_name text, p_role_interest text) postgres
+8386; 0 0 ACL public FUNCTION heard_set_volunteer_profile_updated_at() postgres
+8387; 0 0 ACL public FUNCTION heard_submit_letter(_content text, _heading text, _sign_it_as text, _email text, _consent_version text) postgres
+8388; 0 0 ACL public FUNCTION heard_submit_message(_content text, _subject text, _email text) postgres
+8389; 0 0 ACL public FUNCTION heard_submit_story(_content text, _subject text, _sign_it_as text, _email text) postgres
+8390; 0 0 ACL public FUNCTION heard_submit_volunteer(_first_name text, _last_name text, _email text, _state text, _role_interest text, _motivation text, _time_commitment text) postgres
+8391; 0 0 ACL public FUNCTION heard_subscribe_letters(_email text, _consent_version text) postgres
+8392; 0 0 ACL public FUNCTION heard_update_volunteer_profile(p_first_name text, p_last_name text, p_preferred_name text, p_phone text, p_country_code text, p_subdivision_code text, p_subdivision_name text, p_lga text, p_city text, p_timezone text, p_languages jsonb, p_adjustments text, p_adjustments_discuss_privately boolean) postgres
+8393; 0 0 ACL public FUNCTION job_key_check(p_name text, p_value text) postgres
+8394; 0 0 ACL public FUNCTION job_key_value(p_name text) postgres
+8395; 0 0 ACL public FUNCTION matchmaker_set_updated_at() postgres
+8396; 0 0 ACL public FUNCTION mu_admin_upload_document(_person_id uuid, _label text, _url text, _doc_type text, _source_note text, _expires_at date) postgres
+8397; 0 0 ACL public FUNCTION mu_after_link_promote() postgres
+8398; 0 0 ACL public FUNCTION mu_after_parse_promote() postgres
+8399; 0 0 ACL public FUNCTION mu_applications_for_person(_person_id uuid) postgres
+8400; 0 0 ACL public FUNCTION mu_ask_candidate_parsed_field(_id uuid, _note text) postgres
+8401; 0 0 ACL public FUNCTION mu_ask_candidate_parsed_fields_bulk(_ids uuid[]) postgres
+8402; 0 0 ACL public FUNCTION mu_attach_credential_document(_person_id uuid, _credential_type text, _document_id uuid, _claim_source text) postgres
+8403; 0 0 ACL public FUNCTION mu_autosettle_documents(_limit integer) postgres
+8404; 0 0 ACL public FUNCTION mu_availability_freshness(_limit integer) postgres
+8405; 0 0 ACL public FUNCTION mu_availability_state(_person_id uuid, _from date, _to date) postgres
+8406; 0 0 ACL public FUNCTION mu_available_people(_from date, _to date, _blocks text[], _profession text, _state text, _lga text, _limit integer) postgres
+8407; 0 0 ACL public FUNCTION mu_awaiting_candidate(_limit integer) postgres
+8408; 0 0 ACL public FUNCTION mu_become_workforce(_person_id uuid, _payload jsonb) postgres
+8409; 0 0 ACL public FUNCTION mu_bin_contract(_contract_id uuid, _bin boolean) postgres
+8410; 0 0 ACL public FUNCTION mu_bin_offer(_offer_id uuid, _bin boolean) postgres
+8411; 0 0 ACL public FUNCTION mu_block_hours(_keys text[]) postgres
+8412; 0 0 ACL public FUNCTION mu_book_interview_slot(_slot_id uuid) postgres
+8413; 0 0 ACL public FUNCTION mu_cancel_document_request(_id uuid) postgres
+8414; 0 0 ACL public FUNCTION mu_norm_email(_e text) postgres
+8415; 0 0 ACL public FUNCTION mu_norm_phone(_p text) postgres
+8417; 0 0 ACL public TABLE mu_people postgres
+8418; 0 0 ACL public FUNCTION mu_candidate_gaps_row(p public.mu_people) postgres
+8419; 0 0 ACL public FUNCTION mu_candidate_update_profile(_patch jsonb) postgres
+8420; 0 0 ACL public FUNCTION mu_claim_my_person() postgres
+8421; 0 0 ACL public FUNCTION mu_close_document_requests() postgres
+8422; 0 0 ACL public FUNCTION mu_conflict_to_candidate(_conflict_id uuid, _actor uuid) postgres
+8423; 0 0 ACL public FUNCTION mu_contract_acknowledge_annex(_contract_id uuid, _code text, _acknowledged boolean) postgres
+8424; 0 0 ACL public FUNCTION mu_contract_countersign(_contract_id uuid, _name text, _signature_image text) postgres
+8425; 0 0 ACL public FUNCTION mu_contract_create_from_library(_person_id uuid, _payload jsonb) postgres
+8426; 0 0 ACL public FUNCTION mu_contract_create_from_template(_person_id uuid, _template_id uuid, _payload jsonb) postgres
+8427; 0 0 ACL public FUNCTION mu_contract_create_variation(_contract_id uuid, _actor_name text) postgres
+8428; 0 0 ACL public FUNCTION mu_contract_issue(_contract_id uuid, _actor_name text) postgres
+8429; 0 0 ACL public FUNCTION mu_contract_log(_contract_id uuid, _event_type text, _detail text, _payload jsonb, _actor_name text, _ip text, _user_agent text, _actor_role text) postgres
+8430; 0 0 ACL public TABLE mu_contracts postgres
+8431; 0 0 ACL public FUNCTION mu_contract_public_row(_row public.mu_contracts) postgres
+8432; 0 0 ACL public FUNCTION mu_contract_required_annexes(_contract public.mu_contracts) postgres
+8433; 0 0 ACL public FUNCTION mu_contract_save_draft(_contract_id uuid, _payload jsonb) postgres
+8434; 0 0 ACL public FUNCTION mu_contract_sign(_contract_id uuid, _signed_name text, _method text, _signature_image text, _user_agent text) postgres
+8435; 0 0 ACL public FUNCTION mu_contract_sign_annex(_contract_id uuid, _code text, _signed_name text, _method text, _signature_image text) postgres
+8436; 0 0 ACL public FUNCTION mu_contract_sign_by_token(_token text, _signed_name text, _method text, _signature_image text, _ip text, _user_agent text) postgres
+8437; 0 0 ACL public FUNCTION mu_contract_sign_in_portal(_contract_id uuid, _signed_name text, _method text, _signature_image text) postgres
+8438; 0 0 ACL public FUNCTION mu_contract_unsign_annex(_contract_id uuid, _code text) postgres
+8439; 0 0 ACL public FUNCTION mu_contract_void(_contract_id uuid, _reason text, _actor_name text) postgres
+8440; 0 0 ACL public FUNCTION mu_contracts_renewals_due(_days integer) postgres
+8441; 0 0 ACL public FUNCTION mu_convert_to_staff(_person_id uuid, _payload jsonb) postgres
+8442; 0 0 ACL public FUNCTION mu_create_contract(_person_id uuid, _payload jsonb) postgres
+8443; 0 0 ACL public FUNCTION mu_credential_state(_claim text, _evidence_document_id uuid, _verification_outcome text, _expires_at date) postgres
+8444; 0 0 ACL public FUNCTION mu_credentials_audit() postgres
+8445; 0 0 ACL public FUNCTION mu_credentials_guard() postgres
+8446; 0 0 ACL public FUNCTION mu_cv_was_read(_document_id uuid, _person_id uuid) postgres
+8447; 0 0 ACL public FUNCTION mu_decide_leave(_id uuid, _action text, _note text) postgres
+8448; 0 0 ACL public FUNCTION mu_deployment_readiness(_person_id uuid, _types text[]) postgres
+8449; 0 0 ACL public FUNCTION mu_derive_verification(_person_id uuid) postgres
+8450; 0 0 ACL public FUNCTION mu_derive_verification(_person_id uuid, _gaps jsonb) postgres
+8451; 0 0 ACL public FUNCTION mu_doc_kind_guess(_label text, _url text) postgres
+8452; 0 0 ACL public FUNCTION mu_doc_type(_label text, _url text) postgres
+8453; 0 0 ACL public FUNCTION mu_document_reading_health() postgres
+8454; 0 0 ACL public FUNCTION mu_document_status(_person_id uuid) postgres
+8455; 0 0 ACL public FUNCTION mu_document_verdict(_document_id uuid) postgres
+8456; 0 0 ACL public FUNCTION mu_documents_guess_kind() postgres
+8457; 0 0 ACL public FUNCTION mu_documents_sync() postgres
+8458; 0 0 ACL public FUNCTION mu_documents_touch_person() postgres
+8459; 0 0 ACL public FUNCTION mu_end_engagement(_id uuid, _end date) postgres
+8460; 0 0 ACL public FUNCTION mu_engagement_draft_contract() postgres
+8461; 0 0 ACL public FUNCTION mu_evidence_rank(_state text) postgres
+8463; 0 0 ACL public FUNCTION mu_expects_licence(_profession text) postgres
+8464; 0 0 ACL public FUNCTION mu_expire_documents() postgres
+8465; 0 0 ACL public FUNCTION mu_field_conflicts_auto_ask() postgres
+8466; 0 0 ACL public FUNCTION mu_field_shape_problem(_field text, _value text) postgres
+8467; 0 0 ACL public FUNCTION mu_flag_profile_ambiguity(_person_id uuid) postgres
+8468; 0 0 ACL public FUNCTION mu_fold_accents(_t text) postgres
+8469; 0 0 ACL public FUNCTION mu_guess_doc_kind(_label text, _url text) postgres
+8470; 0 0 ACL public FUNCTION mu_has_capability(_person_id uuid, _capability text) postgres
+8471; 0 0 ACL public FUNCTION mu_hour_span(_start integer, _end integer) postgres
+8472; 0 0 ACL public FUNCTION mu_hours_of(_blocks jsonb) postgres
+8473; 0 0 ACL public FUNCTION mu_intake_health() postgres
+8474; 0 0 ACL public FUNCTION mu_issue_contract(_contract_id uuid) postgres
+8475; 0 0 ACL public FUNCTION mu_lga_states(_lga text) postgres
+8476; 0 0 ACL public FUNCTION mu_link_join_application() postgres
+8477; 0 0 ACL public FUNCTION mu_link_matchmaker_application() postgres
+8478; 0 0 ACL public FUNCTION mu_loc_key(_v text) postgres
+8479; 0 0 ACL public FUNCTION mu_loc_overlap(_value text, _wanted text[]) postgres
+8480; 0 0 ACL public FUNCTION mu_loc_tokens(_value text) postgres
+8481; 0 0 ACL public FUNCTION mu_loose_date(_t text) postgres
+8482; 0 0 ACL public FUNCTION mu_match_candidates(_opportunity_id uuid, _limit integer, _include_blocked boolean) postgres
+8483; 0 0 ACL public FUNCTION mu_match_opportunities_for_person(_person_id uuid, _limit integer, _include_blocked boolean) postgres
+8484; 0 0 ACL public FUNCTION mu_match_report(_opportunity_id uuid, _limit integer) postgres
+8485; 0 0 ACL public FUNCTION mu_my_applications() postgres
+8486; 0 0 ACL public FUNCTION mu_my_contract(_contract_id uuid) postgres
+8487; 0 0 ACL public FUNCTION mu_my_contracts() postgres
+8488; 0 0 ACL public FUNCTION mu_my_offers() postgres
+8489; 0 0 ACL public FUNCTION mu_my_person_id() postgres
+8490; 0 0 ACL public FUNCTION mu_name_agreement(_a text, _b text) postgres
+8491; 0 0 ACL public FUNCTION mu_name_tokens(_name text) postgres
+8492; 0 0 ACL public FUNCTION mu_next_free_dates(_after date, _blocks text[], _profession text, _state text, _lga text, _horizon_days integer, _limit integer) postgres
+8493; 0 0 ACL public FUNCTION mu_norm_body(_v text) postgres
+8494; 0 0 ACL public FUNCTION mu_norm_lga(_v text, _state text) postgres
+8495; 0 0 ACL public FUNCTION mu_norm_state(_v text) postgres
+8496; 0 0 ACL public FUNCTION mu_offer_interview_slots(_application_id uuid, _slots jsonb) postgres
+8497; 0 0 ACL public FUNCTION mu_open_field_conflicts(_limit integer) postgres
+8498; 0 0 ACL public FUNCTION mu_parse_backlog(_limit integer) postgres
+8499; 0 0 ACL public FUNCTION mu_parsed_field_closes_conflict() postgres
+8500; 0 0 ACL public FUNCTION mu_parsed_norm(_field text, _value text) postgres
+8501; 0 0 ACL public FUNCTION mu_parsed_vs_held(_person_id uuid) postgres
+8502; 0 0 ACL public FUNCTION mu_people_claim_writeback() postgres
+8503; 0 0 ACL public FUNCTION mu_people_derive_gaps() postgres
+8504; 0 0 ACL public FUNCTION mu_people_derive_verification() postgres
+8505; 0 0 ACL public FUNCTION mu_people_flag_ambiguity() postgres
+8506; 0 0 ACL public FUNCTION mu_people_guard_admin_columns() postgres
+8507; 0 0 ACL public FUNCTION mu_person_gaps(_person uuid) postgres
+8508; 0 0 ACL public FUNCTION mu_portal_mode() postgres
+8509; 0 0 ACL public FUNCTION mu_profile_completeness(_person_id uuid) postgres
+8510; 0 0 ACL public FUNCTION mu_promote_application_answers(_person_id uuid) postgres
+8511; 0 0 ACL public FUNCTION mu_promote_extra_parsed_fields(_person_id uuid) postgres
+8512; 0 0 ACL public FUNCTION mu_promote_parsed_fields(_person_id uuid) postgres
+8513; 0 0 ACL public FUNCTION mu_query_field(_person_id uuid, _field text, _value text, _note text) postgres
+8514; 0 0 ACL public FUNCTION mu_queue_cv_parse() postgres
+8515; 0 0 ACL public FUNCTION mu_queue_document_parse() postgres
+8516; 0 0 ACL public FUNCTION mu_readiness_items(_person_id uuid) postgres
+8517; 0 0 ACL public FUNCTION mu_readiness_summary() postgres
+8518; 0 0 ACL public FUNCTION mu_rebuild_parsed_facets(_person_id uuid) postgres
+8519; 0 0 ACL public FUNCTION mu_reclassify_document(_document_id uuid, _doc_type text, _reason text) postgres
+8520; 0 0 ACL public FUNCTION mu_rederive_gaps_for_person() postgres
+8521; 0 0 ACL public FUNCTION mu_request_documents(_person_id uuid, _doc_types text[], _note text, _due_by date) postgres
+8522; 0 0 ACL public FUNCTION mu_request_leave(_from date, _to date, _reason text) postgres
+8523; 0 0 ACL public FUNCTION mu_requeue_parse(_person_id uuid) postgres
+8524; 0 0 ACL public FUNCTION mu_resolve_field_conflict(_conflict_id uuid, _action text) postgres
+8525; 0 0 ACL public FUNCTION mu_resolve_person(_name text, _email text, _phone text, _position text, _years integer, _state text) postgres
+8526; 0 0 ACL public FUNCTION mu_respond_offer(_offer_id uuid, _action text, _reason text) postgres
+8527; 0 0 ACL public FUNCTION mu_return_to_talent(_person_id uuid, _reason text) postgres
+8528; 0 0 ACL public FUNCTION mu_review_document(_document_id uuid, _outcome text, _reason text, _expires_at date, _conditional_until date) postgres
+8529; 0 0 ACL public FUNCTION mu_review_parsed_field(_id uuid, _action text) postgres
+8530; 0 0 ACL public FUNCTION mu_review_parsed_fields_bulk(_ids uuid[], _action text) postgres
+8531; 0 0 ACL public FUNCTION mu_review_pending_ids() postgres
+8532; 0 0 ACL public FUNCTION mu_review_queue(_limit integer) postgres
+8533; 0 0 ACL public FUNCTION mu_review_queue_count() postgres
+8534; 0 0 ACL public TABLE mu_role_requirements postgres
+8535; 0 0 ACL public FUNCTION mu_role_requirement(_profession text, _track text) postgres
+8536; 0 0 ACL public FUNCTION mu_route_uncertain_field() postgres
+8537; 0 0 ACL public FUNCTION mu_scan_name_duplicates() postgres
+8538; 0 0 ACL public FUNCTION mu_self_register(p_full_name text, p_phone text, p_track text, p_institution text, p_course_of_study text, p_year_of_study text, p_expected_graduation text) postgres
+8539; 0 0 ACL public FUNCTION mu_send_offer(_payload jsonb, _shifts jsonb) postgres
+8540; 0 0 ACL public FUNCTION mu_set_application_stage(_application_id uuid, _stage text, _note text) postgres
+8541; 0 0 ACL public FUNCTION mu_set_contract_status(_contract_id uuid, _status text, _note text) postgres
+8542; 0 0 ACL public FUNCTION mu_settle_after_read() postgres
+8543; 0 0 ACL public FUNCTION mu_settle_parsed_fields(_person_id uuid, _threshold numeric) postgres
+8544; 0 0 ACL public FUNCTION mu_shortlist_set_stage(_id uuid, _status text, _note text) postgres
+8545; 0 0 ACL public FUNCTION mu_sign_contract(_contract_id uuid, _signed_name text, _method text) postgres
+8546; 0 0 ACL public FUNCTION mu_staff_list() postgres
+8547; 0 0 ACL public FUNCTION mu_supersede_older_cvs() postgres
+8548; 0 0 ACL public FUNCTION mu_supersede_repeat_documents() postgres
+8549; 0 0 ACL public FUNCTION mu_sync_join_documents() postgres
+8550; 0 0 ACL public FUNCTION mu_sync_matchmaker_documents() postgres
+8551; 0 0 ACL public FUNCTION mu_system_blocks(_person_id uuid, _from date, _to date) postgres
+8552; 0 0 ACL public FUNCTION mu_system_request_document(_person_id uuid, _doc_type text, _note text) postgres
+8553; 0 0 ACL public FUNCTION mu_tidy_documents(_apply boolean) postgres
+8554; 0 0 ACL public FUNCTION mu_tidy_label(_label text) postgres
+8555; 0 0 ACL public FUNCTION mu_touch_availability() postgres
+8556; 0 0 ACL public FUNCTION mu_touch_availability_del() postgres
+8557; 0 0 ACL public FUNCTION mu_verification_queue(_limit integer) postgres
+8558; 0 0 ACL public FUNCTION mu_verify_credential(_person_id uuid, _credential_type text, _outcome text, _method text, _document_id uuid, _expires_at date, _note text) postgres
+8559; 0 0 ACL public FUNCTION mu_withdraw_application(_id uuid) postgres
+8560; 0 0 ACL public FUNCTION mu_withdraw_offer(_offer_id uuid, _reason text) postgres
+8561; 0 0 ACL public FUNCTION mu_work_preferences_audit() postgres
+8562; 0 0 ACL public FUNCTION mu_workforce_blockers(_person_id uuid) postgres
+8563; 0 0 ACL public FUNCTION mu_workforce_list() postgres
+8564; 0 0 ACL public FUNCTION seo_claim_effective_state(p_state text, p_valid_from timestamp with time zone, p_valid_until timestamp with time zone) postgres
+8565; 0 0 ACL public FUNCTION seo_claim_save(p_claim_id uuid, p_patch jsonb) postgres
+8566; 0 0 ACL public FUNCTION seo_claims_refresh_stale() postgres
+8567; 0 0 ACL public FUNCTION seo_fee_ref_add(p_page_id uuid, p_module_id uuid, p_service_fee_id uuid, p_usage_key text) postgres
+8568; 0 0 ACL public FUNCTION seo_market_save(p_market_id uuid, p_patch jsonb) postgres
+8569; 0 0 ACL public FUNCTION seo_module_save(p_module_id uuid, p_content jsonb, p_summary text, p_review_state text, p_change_note text) postgres
+8570; 0 0 ACL public FUNCTION seo_page_blockers(p_page_id uuid) postgres
+8571; 0 0 ACL public FUNCTION seo_page_create(p_page_key text, p_path text, p_page_type text, p_estate text, p_title text) postgres
+8572; 0 0 ACL public FUNCTION seo_page_link(p_kind text, p_page_id uuid, p_target_id uuid, p_key text, p_required boolean) postgres
+8573; 0 0 ACL public FUNCTION seo_page_publishable(p_page_id uuid) postgres
+8574; 0 0 ACL public FUNCTION seo_page_save(p_page_id uuid, p_patch jsonb) postgres
+8575; 0 0 ACL public FUNCTION seo_page_set_index_state(p_page_id uuid, p_state text) postgres
+8576; 0 0 ACL public FUNCTION seo_page_unlink(p_kind text, p_link_id uuid) postgres
+8577; 0 0 ACL public FUNCTION seo_public_fee_save(p_service_slug text, p_sku text, p_fee_type text, p_public_label text, p_amount numeric, p_billing_unit text, p_price_treatment text, p_public_visibility text, p_notes text) postgres
+8579; 0 0 ACL public FUNCTION set_care_request_recipient_key() postgres
+8580; 0 0 ACL public FUNCTION validate_join_application() postgres
+8656; 0 0 ACL private TABLE app_config postgres
+8657; 0 0 ACL public TABLE admin_access_log postgres
+8658; 0 0 ACL public TABLE admin_alerts postgres
+8659; 0 0 ACL public TABLE admin_login_log postgres
+8660; 0 0 ACL public TABLE admin_permissions postgres
+8661; 0 0 ACL public TABLE admin_settings postgres
+8662; 0 0 ACL public TABLE audience_groups postgres
+8663; 0 0 ACL public TABLE audience_members postgres
+8664; 0 0 ACL public TABLE blog_posts postgres
+8665; 0 0 ACL public COLUMN blog_posts.id postgres
+8666; 0 0 ACL public COLUMN blog_posts.title postgres
+8667; 0 0 ACL public COLUMN blog_posts.slug postgres
+8668; 0 0 ACL public COLUMN blog_posts.content postgres
+8669; 0 0 ACL public COLUMN blog_posts.excerpt postgres
+8670; 0 0 ACL public COLUMN blog_posts.author postgres
+8671; 0 0 ACL public COLUMN blog_posts.category postgres
+8672; 0 0 ACL public COLUMN blog_posts.featured_image_url postgres
+8673; 0 0 ACL public COLUMN blog_posts.hero_template postgres
+8674; 0 0 ACL public COLUMN blog_posts.polaroid_caption postgres
+8675; 0 0 ACL public COLUMN blog_posts.body_template postgres
+8676; 0 0 ACL public COLUMN blog_posts.body_images postgres
+8677; 0 0 ACL public COLUMN blog_posts.status postgres
+8678; 0 0 ACL public COLUMN blog_posts.published_at postgres
+8679; 0 0 ACL public COLUMN blog_posts.body_captions postgres
+8680; 0 0 ACL public TABLE budget_bands postgres
+8681; 0 0 ACL public TABLE campaign_events postgres
+8683; 0 0 ACL public TABLE campaigns postgres
+8684; 0 0 ACL public TABLE care_access_bases postgres
+8685; 0 0 ACL public TABLE care_access_grants postgres
+8686; 0 0 ACL public TABLE care_access_log postgres
+8691; 0 0 ACL public TABLE care_access_tokens postgres
+8692; 0 0 ACL public TABLE care_activity postgres
+8693; 0 0 ACL public TABLE care_answer_context_maps postgres
+8695; 0 0 ACL public TABLE care_assessment_capture_events postgres
+8696; 0 0 ACL public TABLE care_assessment_events postgres
+8698; 0 0 ACL public TABLE care_assessment_visits postgres
+8700; 0 0 ACL public TABLE care_assessment_work postgres
+8702; 0 0 ACL public TABLE care_assignments postgres
+8703; 0 0 ACL public TABLE care_client_next_action postgres
+8704; 0 0 ACL public TABLE care_client_onboarding_links postgres
+8705; 0 0 ACL public TABLE client_contacts postgres
+8708; 0 0 ACL public TABLE clients postgres
+8709; 0 0 ACL public TABLE care_controlled_value_review postgres
+8711; 0 0 ACL public TABLE care_delivery_assignments postgres
+8713; 0 0 ACL public TABLE care_episodes postgres
+8714; 0 0 ACL public TABLE care_finance_adjustments postgres
+8715; 0 0 ACL public TABLE care_flags postgres
+8716; 0 0 ACL public TABLE care_form_revision_events postgres
+8717; 0 0 ACL public TABLE care_group_members postgres
+8718; 0 0 ACL public TABLE care_group_relationship_terms postgres
+8720; 0 0 ACL public TABLE care_groups postgres
+8721; 0 0 ACL public TABLE care_languages postgres
+8722; 0 0 ACL public TABLE care_lgas postgres
+8723; 0 0 ACL public TABLE care_notifications postgres
+8724; 0 0 ACL public TABLE care_people postgres
+8726; 0 0 ACL public TABLE care_person_relationships postgres
+8727; 0 0 ACL public TABLE care_plan_approvals postgres
+8728; 0 0 ACL public TABLE care_plan_goals postgres
+8729; 0 0 ACL public TABLE care_plan_needs postgres
+8730; 0 0 ACL public TABLE care_plan_tasks postgres
+8731; 0 0 ACL public TABLE care_portal_invitations postgres
+8733; 0 0 ACL public TABLE care_pre_assessment_coverage postgres
+8734; 0 0 ACL public TABLE care_proposal_comments postgres
+8736; 0 0 ACL public TABLE care_proposal_responses postgres
+8737; 0 0 ACL public TABLE care_proposal_sends postgres
+8738; 0 0 ACL public TABLE care_proposals postgres
+8739; 0 0 ACL public TABLE care_public_holidays postgres
+8740; 0 0 ACL public TABLE care_questionnaire_session_recipients postgres
+8741; 0 0 ACL public TABLE care_questionnaire_sessions postgres
+8742; 0 0 ACL public TABLE care_quote_lines postgres
+8743; 0 0 ACL public TABLE care_quote_versions postgres
+8744; 0 0 ACL public TABLE care_quotes postgres
+8745; 0 0 ACL public TABLE care_relationship_terms postgres
+8748; 0 0 ACL public TABLE care_request_recipients postgres
+8749; 0 0 ACL public TABLE care_requests postgres
+8750; 0 0 ACL public TABLE care_response_amendments postgres
+8752; 0 0 ACL public TABLE care_service_configurations postgres
+8754; 0 0 ACL public TABLE care_service_intention_recipients postgres
+8755; 0 0 ACL public TABLE care_service_intentions postgres
+8756; 0 0 ACL public TABLE care_sex_terms postgres
+8757; 0 0 ACL public TABLE care_states postgres
+8758; 0 0 ACL public TABLE care_upload_files postgres
+8759; 0 0 ACL public TABLE care_work_items postgres
+8760; 0 0 ACL public TABLE care_working_hours postgres
+8761; 0 0 ACL public TABLE claim_invites postgres
+8762; 0 0 ACL public TABLE client_commercial postgres
+8763; 0 0 ACL public SEQUENCE client_reference_seq postgres
+8764; 0 0 ACL public TABLE contact_submissions postgres
+8765; 0 0 ACL public TABLE creator_applications postgres
+8766; 0 0 ACL public TABLE email_kit_templates postgres
+8767; 0 0 ACL public TABLE email_suppressions postgres
+8768; 0 0 ACL public TABLE enquiry_questions postgres
+8769; 0 0 ACL public TABLE enquiry_sends postgres
+8770; 0 0 ACL public TABLE enquiry_service_lines postgres
+8771; 0 0 ACL public TABLE followup_queue postgres
+8772; 0 0 ACL public TABLE form_definitions postgres
+8773; 0 0 ACL public TABLE heard_consents postgres
+8774; 0 0 ACL public TABLE heard_letter_deliveries postgres
+8775; 0 0 ACL public TABLE heard_letter_recipients postgres
+8776; 0 0 ACL public TABLE heard_letters postgres
+8777; 0 0 ACL public TABLE heard_stories postgres
+8778; 0 0 ACL public TABLE heard_submissions postgres
+8779; 0 0 ACL public TABLE heard_volunteer_applications postgres
+8780; 0 0 ACL public TABLE heard_volunteers postgres
+8781; 0 0 ACL public TABLE heard_waitlist postgres
+8782; 0 0 ACL public TABLE invoice_service_categories postgres
+8783; 0 0 ACL public TABLE invoice_services postgres
+8784; 0 0 ACL public TABLE job_key_audit postgres
+8785; 0 0 ACL public TABLE join_applications postgres
+8786; 0 0 ACL public TABLE matchmaker_applications postgres
+8787; 0 0 ACL public TABLE matchmaker_email_log postgres
+8788; 0 0 ACL public TABLE matchmaker_opportunities postgres
+8789; 0 0 ACL public TABLE matchmaker_opportunity_facets postgres
+8790; 0 0 ACL public TABLE matchmaker_question_templates postgres
+8791; 0 0 ACL public TABLE matchmaker_share_events postgres
+8792; 0 0 ACL public TABLE mu_activity postgres
+8793; 0 0 ACL public TABLE mu_availability_days postgres
+8794; 0 0 ACL public TABLE mu_availability_recurrence postgres
+8795; 0 0 ACL public TABLE mu_awards postgres
+8796; 0 0 ACL public TABLE mu_capabilities postgres
+8797; 0 0 ACL public TABLE mu_contract_annex_library postgres
+8798; 0 0 ACL public TABLE mu_contract_clause_library postgres
+8799; 0 0 ACL public TABLE mu_contract_events postgres
+8800; 0 0 ACL public TABLE mu_contract_templates postgres
+8801; 0 0 ACL public TABLE mu_credentials postgres
+8802; 0 0 ACL public COLUMN mu_credentials.claim postgres
+8803; 0 0 ACL public COLUMN mu_credentials.claim_source postgres
+8804; 0 0 ACL public COLUMN mu_credentials.claim_at postgres
+8805; 0 0 ACL public COLUMN mu_credentials.evidence_document_id postgres
+8806; 0 0 ACL public COLUMN mu_credentials.evidence_at postgres
+8807; 0 0 ACL public COLUMN mu_credentials.expires_at postgres
+8808; 0 0 ACL public COLUMN mu_credentials.reference postgres
+8809; 0 0 ACL public COLUMN mu_credentials.note postgres
+8810; 0 0 ACL public COLUMN mu_credentials.updated_at postgres
+8811; 0 0 ACL public TABLE mu_credentials_v postgres
+8812; 0 0 ACL public TABLE mu_cv_parses postgres
+8813; 0 0 ACL public TABLE mu_cv_expiries postgres
+8814; 0 0 ACL public TABLE mu_document_extractions postgres
+8815; 0 0 ACL public TABLE mu_document_requests postgres
+8816; 0 0 ACL public TABLE mu_document_types postgres
+8817; 0 0 ACL public TABLE mu_documents postgres
+8818; 0 0 ACL public TABLE mu_engagements postgres
+8819; 0 0 ACL public TABLE mu_facet_keywords postgres
+8820; 0 0 ACL public TABLE mu_field_conflicts postgres
+8821; 0 0 ACL public TABLE mu_institutions postgres
+8822; 0 0 ACL public TABLE mu_interview_slots postgres
+8823; 0 0 ACL public TABLE mu_leave_requests postgres
+8824; 0 0 ACL public TABLE mu_lexicon_phrases postgres
+8825; 0 0 ACL public TABLE mu_lga_index postgres
+8826; 0 0 ACL public TABLE mu_licensing_bodies postgres
+8827; 0 0 ACL public TABLE mu_match_rationales postgres
+8828; 0 0 ACL public TABLE mu_match_weights postgres
+8829; 0 0 ACL public TABLE mu_merge_candidates postgres
+8830; 0 0 ACL public TABLE mu_offer_shifts postgres
+8831; 0 0 ACL public TABLE mu_offers postgres
+8832; 0 0 ACL public TABLE mu_parsed_fields postgres
+8833; 0 0 ACL public TABLE mu_profile_facets postgres
+8834; 0 0 ACL public TABLE mu_readiness_v postgres
+8835; 0 0 ACL public TABLE mu_references postgres
+8836; 0 0 ACL public TABLE mu_required_documents postgres
+8837; 0 0 ACL public TABLE mu_shortlists postgres
+8838; 0 0 ACL public TABLE mu_staff_emergency_contacts postgres
+8839; 0 0 ACL public TABLE mu_training_catalogue postgres
+8840; 0 0 ACL public TABLE mu_verifications postgres
+8841; 0 0 ACL public TABLE mu_work_preferences postgres
+8842; 0 0 ACL public TABLE orders postgres
+8843; 0 0 ACL public TABLE otp_codes postgres
+8844; 0 0 ACL public TABLE paystack_invoice_lines postgres
+8845; 0 0 ACL public TABLE paystack_invoices postgres
+8846; 0 0 ACL public TABLE profiles postgres
+8847; 0 0 ACL public TABLE seo_claims postgres
+8848; 0 0 ACL public TABLE seo_fee_refs postgres
+8851; 0 0 ACL public TABLE seo_pages postgres
+8852; 0 0 ACL public TABLE seo_indexable_pages postgres
+8853; 0 0 ACL public TABLE seo_markets postgres
+8854; 0 0 ACL public TABLE seo_module_revisions postgres
+8855; 0 0 ACL public TABLE seo_modules postgres
+8856; 0 0 ACL public TABLE seo_page_claims postgres
+8857; 0 0 ACL public TABLE seo_page_markets postgres
+8858; 0 0 ACL public TABLE seo_page_modules postgres
+8859; 0 0 ACL public TABLE seo_page_services postgres
+8860; 0 0 ACL public TABLE service_fees postgres
+8861; 0 0 ACL public TABLE services postgres
+8862; 0 0 ACL public TABLE signup_failures postgres
+8863; 0 0 ACL public TABLE syn_results postgres
+8865; 0 0 ACL public SEQUENCE syn_results_seq_seq postgres
+8866; 0 0 ACL public TABLE user_roles postgres
+3612; 826 16490 DEFAULT ACL public DEFAULT PRIVILEGES FOR SEQUENCES postgres
+3613; 826 16489 DEFAULT ACL public DEFAULT PRIVILEGES FOR FUNCTIONS postgres
+3611; 826 16488 DEFAULT ACL public DEFAULT PRIVILEGES FOR TABLES postgres
