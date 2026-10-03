@@ -28,12 +28,10 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const BUCKET = "applications";
-// Claude does the extraction; the gateway model is only a fallback.
+// Claude does the extraction.
 const CLAUDE_MODEL = "claude-sonnet-4-5";
-const FALLBACK_MODEL = "google/gemini-3.6-flash";
 const MAX_TOKENS = 16000;
 // Only .docx is read as text locally. Anything longer than this is chunked and
 // merged rather than cut. PDFs go up whole as a native document block.
@@ -362,34 +360,6 @@ async function claudeCall(content: any[]): Promise<{ extraction?: Extraction; er
   return { extraction: block.input as Extraction };
 }
 
-async function gatewayCall(content: any[]): Promise<{ extraction?: Extraction; error?: string }> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY },
-    body: JSON.stringify({
-      model: FALLBACK_MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        { role: "system", content: `${SYSTEM}\n\nReturn json matching this schema exactly:\n${JSON.stringify(SCHEMA)}` },
-        { role: "user", content },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (res.status === 429) return { error: "Rate limited by the AI gateway, try again shortly" };
-  if (res.status === 402) return { error: "AI credits exhausted" };
-  if (!res.ok) return { error: `AI gateway error ${res.status}: ${(await res.text()).slice(0, 300)}` };
-
-  const body = await res.json();
-  const raw = body?.choices?.[0]?.message?.content ?? "";
-  try {
-    return { extraction: JSON.parse(raw) as Extraction };
-  } catch {
-    return { error: "The model returned malformed JSON" };
-  }
-}
-
 /** Build the message content for one chunk of the document. */
 function buildContent(doc: { buf: ArrayBuffer; ext: string }, filename: string, chunk: string | null, part: string) {
   const content: any[] = [{ type: "text", text: `${USER_PROMPT}${part}` }];
@@ -454,27 +424,17 @@ async function readDocument(doc: { buf: ArrayBuffer; ext: string }, filename: st
     const content = buildContent(doc, filename, chunks[i], part);
 
     let attempt = useClaude ? await claudeCall(content) : { error: "No Anthropic key configured" };
+    // Retry once.
+    if (attempt.error && useClaude) attempt = await claudeCall(content);
     if (attempt.error) {
-      // Retry once, then fall back to the gateway.
-      attempt = useClaude ? await claudeCall(content) : attempt;
+      errors.push(attempt.error);
+      continue;
     }
-    let model = CLAUDE_MODEL;
-    if (attempt.error) {
-      console.log("Claude parse unavailable, falling back:", attempt.error);
-      let fb = await gatewayCall(content);
-      if (fb.error) fb = await gatewayCall(content);
-      if (fb.error) {
-        errors.push(`${attempt.error} | fallback: ${fb.error}`);
-        continue;
-      }
-      attempt = fb;
-      model = FALLBACK_MODEL;
-    }
-    (attempt.extraction as any).__model = model;
+    (attempt.extraction as any).__model = CLAUDE_MODEL;
     results.push(attempt.extraction!);
   }
 
-  if (!results.length) return { error: errors.join(" ; ").slice(0, 500) || "No output from the models" };
+  if (!results.length) return { error: errors.join(" ; ").slice(0, 500) || "No output from the model" };
 
   const model = String(results[0].__model || CLAUDE_MODEL);
   const merged = mergeExtractions(results);

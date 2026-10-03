@@ -14,10 +14,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const CLAUDE_MODEL = "claude-sonnet-4-5";
-const FALLBACK_MODEL = "google/gemini-3.6-flash";
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -58,26 +56,6 @@ async function callClaude(prompt: string) {
   const body = await res.json();
   const text = (body?.content || []).filter((b: any) => b?.type === "text").map((b: any) => b.text).join("\n").trim();
   return text ? { text, model: CLAUDE_MODEL } : { error: "Claude returned no text" };
-}
-
-async function callGateway(prompt: string) {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY },
-    body: JSON.stringify({
-      model: FALLBACK_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
-  if (res.status === 429) return { error: "Rate limited by the AI gateway, try again shortly" };
-  if (res.status === 402) return { error: "AI credits exhausted" };
-  if (!res.ok) return { error: `AI gateway error ${res.status}: ${(await res.text()).slice(0, 300)}` };
-  const body = await res.json();
-  const text = String(body?.choices?.[0]?.message?.content ?? "").trim();
-  return text ? { text, model: FALLBACK_MODEL } : { error: "The model returned no text" };
 }
 
 Deno.serve(async (req) => {
@@ -145,8 +123,8 @@ Deno.serve(async (req) => {
 
     let result = await callClaude(prompt);
     if ((result as any).error) {
-      console.log("Claude unavailable for rationale:", (result as any).error);
-      result = await callGateway(prompt);
+      console.log("Claude unavailable for rationale, retrying:", (result as any).error);
+      result = await callClaude(prompt);
     }
     if ((result as any).error) return json({ error: (result as any).error }, 502);
 

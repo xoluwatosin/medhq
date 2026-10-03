@@ -3,8 +3,8 @@
 // Uses the browser key from the connected Google Maps Platform connector.
 import { useEffect, useState } from "react";
 
-const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-const TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+const BROWSER_KEY = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+const TRACKING_ID = import.meta.env.VITE_GOOGLE_MAPS_TRACKING_ID;
 
 let loadPromise: Promise<boolean> | null = null;
 

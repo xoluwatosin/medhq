@@ -31,22 +31,17 @@ Deno.serve(async (req) => {
   const input = String(body.input ?? "").trim().slice(0, 160);
   if (input.length < 3) return json({ suggestions: [] });
 
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
-  if (!lovableKey || !mapsKey) return json({ error: "Address search is not configured." }, 503);
+  if (!mapsKey) return json({ error: "Address search is not configured." }, 503);
 
-  const response = await fetch(
-    "https://connector-gateway.lovable.dev/google_maps/places/v1/places:autocomplete",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": mapsKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ input, includedRegionCodes: ["ng"] }),
+  const response = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+    method: "POST",
+    headers: {
+      "X-Goog-Api-Key": mapsKey,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ input, includedRegionCodes: ["ng"] }),
+  });
 
   if (!response.ok) {
     const detail = await response.text();

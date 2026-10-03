@@ -17,10 +17,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const CLAUDE_MODEL = "claude-sonnet-4-5";
-const FALLBACK_MODEL = "google/gemini-3.6-flash";
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -99,30 +97,6 @@ async function callClaude(brief: string) {
   return { data: block.input as any, model: CLAUDE_MODEL };
 }
 
-async function callGateway(brief: string) {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY },
-    body: JSON.stringify({
-      model: FALLBACK_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: `Convert this brief into structured requirements.\n\n${brief}` },
-      ],
-      response_format: { type: "json_schema", json_schema: { name: "role_requirements", strict: true, schema: SCHEMA } },
-    }),
-  });
-  if (res.status === 429) return { error: "Rate limited by the AI gateway, try again shortly" };
-  if (res.status === 402) return { error: "AI credits exhausted" };
-  if (!res.ok) return { error: `AI gateway error ${res.status}: ${(await res.text()).slice(0, 300)}` };
-  const body = await res.json();
-  try {
-    return { data: JSON.parse(body?.choices?.[0]?.message?.content ?? ""), model: FALLBACK_MODEL };
-  } catch {
-    return { error: "The model returned malformed JSON" };
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -168,8 +142,8 @@ Deno.serve(async (req) => {
 
     let result = await callClaude(brief);
     if ((result as any).error) {
-      console.log("Claude unavailable for opportunity parse:", (result as any).error);
-      result = await callGateway(brief);
+      console.log("Claude unavailable for opportunity parse, retrying:", (result as any).error);
+      result = await callClaude(brief);
     }
     if ((result as any).error) return json({ error: (result as any).error }, 502);
 

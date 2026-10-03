@@ -5,17 +5,19 @@
 // timestamps, status, moderation and audit fields stay server-derived.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
+// Extra exact origins (staging, previews, local dev), comma-separated.
+const EXTRA_ORIGINS = (Deno.env.get("EXTRA_ALLOWED_ORIGINS") ?? "")
+  .split(",").map((o) => o.trim()).filter(Boolean);
 const ALLOWED_ORIGINS = new Set<string>([
   "https://medicconnect.co",
   "https://www.medicconnect.co",
   "https://heard.medicconnect.co",
-  "https://medicconnect.lovable.app",
+  ...EXTRA_ORIGINS,
 ]);
-const LOVABLE_PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.lovable\.app$/;
-const DEFAULT_ORIGIN = "https://medicconnect.lovable.app";
+const DEFAULT_ORIGIN = "https://medicconnect.co";
 
 const isAllowedOrigin = (origin: string) =>
-  ALLOWED_ORIGINS.has(origin) || LOVABLE_PREVIEW_RE.test(origin);
+  ALLOWED_ORIGINS.has(origin);
 
 const getCorsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Origin": origin && isAllowedOrigin(origin) ? origin : DEFAULT_ORIGIN,

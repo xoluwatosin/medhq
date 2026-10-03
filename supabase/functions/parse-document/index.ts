@@ -22,11 +22,9 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const BUCKET = "applications";
 const CLAUDE_MODEL = "claude-sonnet-4-5";
-const FALLBACK_MODEL = "google/gemini-3.6-flash";
 const MAX_TOKENS = 8000;
 const CHUNK_CHARS = 60_000;
 
@@ -376,34 +374,6 @@ async function claudeCall(system: string, content: any[]): Promise<{ extraction?
   return { extraction: block.input as Extraction };
 }
 
-async function gatewayCall(system: string, content: any[]): Promise<{ extraction?: Extraction; error?: string }> {
-  const flattened = content
-    .map((c) => (c?.type === "text" ? c.text : "[binary document omitted for the fallback model]"))
-    .join("\n\n");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY },
-    body: JSON.stringify({
-      model: FALLBACK_MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        { role: "system", content: `${system}\n\nReturn json matching this schema exactly:\n${JSON.stringify(SCHEMA)}` },
-        { role: "user", content: flattened },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (res.status === 429) return { error: "Rate limited by the AI gateway, try again shortly" };
-  if (res.status === 402) return { error: "AI credits exhausted" };
-  if (!res.ok) return { error: `AI gateway error ${res.status}: ${(await res.text()).slice(0, 300)}` };
-  const body = await res.json();
-  try {
-    return { extraction: JSON.parse(body?.choices?.[0]?.message?.content ?? "") as Extraction };
-  } catch {
-    return { error: "The model returned malformed JSON" };
-  }
-}
-
 async function readDocument(
   doc: { buf: ArrayBuffer; ext: string },
   filename: string,
@@ -425,16 +395,11 @@ async function readDocument(
     return { error: `Unsupported file type: .${doc.ext}` };
   }
 
-  if (ANTHROPIC_API_KEY) {
-    let attempt = await claudeCall(system, content);
-    if (attempt.error) attempt = await claudeCall(system, content);
-    if (!attempt.error) return { extraction: attempt.extraction, model: CLAUDE_MODEL };
-    console.log("Claude document read unavailable, falling back:", attempt.error);
-  }
-
-  const fb = await gatewayCall(system, content);
-  if (fb.error) return { error: fb.error };
-  return { extraction: fb.extraction, model: FALLBACK_MODEL };
+  if (!ANTHROPIC_API_KEY) return { error: "No Anthropic key configured" };
+  let attempt = await claudeCall(system, content);
+  if (attempt.error) attempt = await claudeCall(system, content);
+  if (attempt.error) return { error: attempt.error };
+  return { extraction: attempt.extraction, model: CLAUDE_MODEL };
 }
 
 // ---------------------------------------------------------------------------

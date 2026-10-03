@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
     const url = Deno.env.get("SUPABASE_URL")!;
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) return json({ error: "AI is not configured" }, 500);
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!anthropicKey) return json({ error: "AI is not configured" }, 500);
 
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader) return json({ error: "Not signed in" }, 401);
@@ -112,14 +112,16 @@ ${clauseText || "(no clauses)"}
 ANNEXES IN THE PACK
 ${annexText || "(no annexes)"}`;
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
+        "x-api-key": anthropicKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-pro-preview",
+        model: "claude-sonnet-4-5",
+        max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -130,7 +132,11 @@ ${annexText || "(no annexes)"}`;
     }
 
     const data = await res.json();
-    const review = data?.choices?.[0]?.message?.content?.trim() || "";
+    const review = (data?.content || [])
+      .filter((b: any) => b?.type === "text")
+      .map((b: any) => b.text)
+      .join("")
+      .trim();
 
     await admin.from("mu_contract_events").insert({
       contract_id: contractId,

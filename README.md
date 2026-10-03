@@ -1,73 +1,49 @@
-# Welcome to your Lovable project
+# Medic Connect
 
-## Project info
+Medic Connect (care, workforce, admin) and Heard, in one Vite + React app on Supabase.
 
-**URL**: https://lovable.dev/projects/7410f81b-8218-4f2d-bb32-1ba1f84eabb2
+Originally built in Lovable. The project has since moved off Lovable: nothing here depends on Lovable's hosting, AI gateway, connectors or package mirror.
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/7410f81b-8218-4f2d-bb32-1ba1f84eabb2) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install
+cp .env.example .env   # then fill in the values
+npm run dev            # http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+Other scripts: `npm run build`, `npm run lint`, `npx vitest run`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Tests that import the Supabase client need `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set. Any placeholder value works.
 
-**Use GitHub Codespaces**
+## Frontend environment (`.env`)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Variable | What it is |
+|---|---|
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` | Supabase project (Settings → API) |
+| `VITE_GOOGLE_MAPS_BROWSER_KEY` | Google Maps JavaScript API key, restricted to your domains |
+| `VITE_GOOGLE_MAPS_TRACKING_ID` | Optional Maps tracking ID |
+| `VITE_GOOGLE_ADS_*` | Google Ads conversion IDs |
 
-## What technologies are used for this project?
+## Edge function secrets
 
-This project is built with:
+Set these with `supabase secrets set NAME=value`. `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are provided automatically.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Secret | Used for |
+|---|---|
+| `ANTHROPIC_API_KEY` | CV, document and opportunity parsing, match rationales, contract review |
+| `GOOGLE_MAPS_API_KEY` | Address autocomplete (Places API (New)) |
+| `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `NOTIFICATION_EMAIL` | Email sending and delivery tracking |
+| `PAYSTACK_SECRET_KEY` | Invoices |
+| `MONDAY_API_KEY` | Monday.com board sync for enquiries |
+| `CRON_SECRET`, `PARSE_CV_CRON_SECRET`, `MU_LINK_SWEEP_KEY`, `RELINK_RUN_KEY` | Shared secrets for scheduled jobs |
+| `SITE_URL`, `PUBLIC_SITE_URL` | Links in emails |
+| `EXTRA_ALLOWED_ORIGINS` | Optional, comma-separated. Extra exact origins (staging, previews, `http://localhost:8080`) allowed by the public form functions |
 
-## How can I deploy this project?
+## Database
 
-Simply open [Lovable](https://lovable.dev/projects/7410f81b-8218-4f2d-bb32-1ba1f84eabb2) and click on Share -> Publish.
+Schema history lives in two places: `supabase/migrations` (older) and `drizzle/migrations` (from August 2026, run with `DATABASE_URL` set). Consolidating them into one is outstanding.
 
-## Can I connect a custom domain to my Lovable project?
+## MCP server
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+`supabase/functions/mcp` is an MCP server for admin tools, built on `@lovable.dev/mcp-js` (an MIT npm package that runs without Lovable). The file used to be generated from `src/lib/mcp`; that generator is gone, so edit the function directly. The OAuth consent page stays at `/.lovable/oauth/consent` because existing MCP clients are registered against that path.

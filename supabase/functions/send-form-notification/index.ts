@@ -13,20 +13,19 @@ const APPLICATION_GROUP_NAME = "Job Applicants";
 const CREATOR_GROUP_NAME = "Creator Applicants";
 
 // Restrict CORS to a strict explicit allowlist (no suffix matching)
+// Extra exact origins (staging, previews, local dev), comma-separated.
+const EXTRA_ORIGINS = (Deno.env.get("EXTRA_ALLOWED_ORIGINS") ?? "")
+  .split(",").map((o) => o.trim()).filter(Boolean);
 const ALLOWED_ORIGINS = new Set<string>([
   "https://medicconnect.co",
   "https://www.medicconnect.co",
-  "https://medicconnect.lovable.app",
-  "https://id-preview--5ee81f05-6042-44da-a29b-ff2522864cf2.lovable.app",
+  ...EXTRA_ORIGINS,
 ]);
 
-// Strict regex for Lovable preview/published subdomains (no arbitrary subdomain stacking)
-const LOVABLE_PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.lovable\.app$/;
-const DEFAULT_ORIGIN = "https://medicconnect.lovable.app";
+const DEFAULT_ORIGIN = "https://medicconnect.co";
 
 function isAllowedOrigin(origin: string): boolean {
-  if (ALLOWED_ORIGINS.has(origin)) return true;
-  return LOVABLE_PREVIEW_RE.test(origin);
+  return ALLOWED_ORIGINS.has(origin);
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
