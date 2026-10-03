@@ -35,7 +35,6 @@ Set these with `supabase secrets set NAME=value`. `SUPABASE_URL`, `SUPABASE_ANON
 | `GOOGLE_MAPS_API_KEY` | Address autocomplete (Places API (New)) |
 | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `NOTIFICATION_EMAIL` | Email sending and delivery tracking |
 | `PAYSTACK_SECRET_KEY` | Invoices |
-| `MONDAY_API_KEY` | Monday.com board sync for enquiries |
 | `CRON_SECRET`, `PARSE_CV_CRON_SECRET`, `MU_LINK_SWEEP_KEY`, `RELINK_RUN_KEY` | Shared secrets for scheduled jobs |
 | `SITE_URL`, `PUBLIC_SITE_URL` | Links in emails |
 | `EXTRA_ALLOWED_ORIGINS` | Optional, comma-separated. Extra exact origins (staging, previews, `http://localhost:8080`) allowed by the public form functions |

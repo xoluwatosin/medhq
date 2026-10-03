@@ -3,10 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { kitEmail, kitFacts, kitMarkdown } from "../_shared/kit-email.ts";
 import { emailTags } from "../_shared/email-tags.ts";
 
-// Monday.com board IDs
-const MONDAY_CONTACT_BOARD_ID = "5090937583";
-const MONDAY_JOIN_BOARD_ID = "5090937845";
-
 // Audience group names
 const CONTACT_GROUP_NAME = "Contact Enquiries";
 const APPLICATION_GROUP_NAME = "Job Applicants";
@@ -98,53 +94,6 @@ interface FormNotificationRequest {
   };
 }
 
-// Create Monday.com item using GraphQL API
-async function createMondayItem(
-  boardId: string,
-  itemName: string,
-  columnValues: Record<string, unknown>,
-  apiKey: string
-): Promise<{ success: boolean; itemId?: string; error?: string }> {
-  try {
-    const query = `
-      mutation ($boardId: ID!, $itemName: String!, $columnValues: JSON) {
-        create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) {
-          id
-        }
-      }
-    `;
-
-    const response = await fetch("https://api.monday.com/v2", {
-      method: "POST",
-      headers: {
-        "Authorization": apiKey,
-        "Content-Type": "application/json",
-        "API-Version": "2024-01",
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          boardId: boardId,
-          itemName: itemName,
-          columnValues: JSON.stringify(columnValues),
-        },
-      }),
-    });
-
-    const data = await response.json();
-
-    if (data.errors) {
-      console.error("Monday.com API error:", data.errors);
-      return { success: false, error: data.errors[0]?.message || "Unknown error" };
-    }
-
-    return { success: true, itemId: data.data?.create_item?.id };
-  } catch (error) {
-    console.error("Monday.com request failed:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Request failed" };
-  }
-}
-
 // Add submitter to audience group
 async function addToAudience(
   supabase: any,
@@ -215,11 +164,6 @@ const handler = async (req: Request): Promise<Response> => {
     const NOTIFICATION_EMAIL = Deno.env.get("NOTIFICATION_EMAIL");
     if (!NOTIFICATION_EMAIL) {
       throw new Error("NOTIFICATION_EMAIL is not configured");
-    }
-
-    const MONDAY_API_KEY = Deno.env.get("MONDAY_API_KEY");
-    if (!MONDAY_API_KEY) {
-      throw new Error("MONDAY_API_KEY is not configured");
     }
 
     // Create service-role Supabase client for audience inserts
@@ -343,15 +287,10 @@ const handler = async (req: Request): Promise<Response> => {
     const safePortfolioUrl = escapeHtml(data.portfolioUrl);
     const safeRateCardUrl = escapeHtml(data.rateCardUrl);
 
-    // Create Monday.com item
-    let mondayBoardId: string;
-    let mondayItemName: string;
     let audienceGroupName: string;
     let audienceSource: string;
 
     if (formType === "contact") {
-      mondayBoardId = MONDAY_CONTACT_BOARD_ID;
-      mondayItemName = `${data.name} - ${data.service || "General Inquiry"}`;
       audienceGroupName = CONTACT_GROUP_NAME;
       audienceSource = "contact_form";
       subject = `New contact enquiry: ${safeService || "General"}`;
@@ -373,8 +312,6 @@ const handler = async (req: Request): Promise<Response> => {
         footnote: "Sent automatically when a contact form is completed on medicconnect.co.",
       });
     } else if (formType === "creator_application") {
-      mondayBoardId = MONDAY_CONTACT_BOARD_ID;
-      mondayItemName = `Creator: ${data.name}`;
       audienceGroupName = CREATOR_GROUP_NAME;
       audienceSource = "creator_form";
       subject = `New creator application: ${safeName}`;
@@ -399,8 +336,6 @@ const handler = async (req: Request): Promise<Response> => {
         footnote: "Sent automatically when a creator application is submitted on medicconnect.co.",
       });
     } else {
-      mondayBoardId = MONDAY_JOIN_BOARD_ID;
-      mondayItemName = `${data.name} - ${data.role || "General Application"}`;
       audienceGroupName = APPLICATION_GROUP_NAME;
       audienceSource = "application_form";
       subject = `New application: ${safeRole || "General"}`;
@@ -437,9 +372,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const shouldNotify = setting?.value === true;
 
-    // Run Monday, audience, and optionally email in parallel
+    // Add to the audience and, if enabled, email the team, in parallel
     const tasks: Promise<any>[] = [
-      createMondayItem(mondayBoardId, mondayItemName, {}, MONDAY_API_KEY),
       addToAudience(supabase, data.email, data.name, audienceGroupName, audienceSource),
     ];
 
@@ -472,13 +406,9 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Email notification skipped (${settingKey} is disabled)`);
     }
 
-    const [mondayResult] = await Promise.all(tasks);
-    console.log("Monday.com item result:", mondayResult);
+    await Promise.all(tasks);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      monday: mondayResult 
-    }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
