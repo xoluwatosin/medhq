@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS audience_members_email_group_id_key ON public.audience_members (email, group_id);

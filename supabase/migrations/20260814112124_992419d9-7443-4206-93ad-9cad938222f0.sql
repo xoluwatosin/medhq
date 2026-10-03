@@ -1,0 +1,1 @@
+ALTER VIEW public.mu_cv_expiries SET (security_invoker = on);

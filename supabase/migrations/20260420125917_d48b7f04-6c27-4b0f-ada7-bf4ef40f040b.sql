@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Service role can read settings" ON public.admin_settings;

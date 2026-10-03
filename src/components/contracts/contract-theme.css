@@ -1,0 +1,444 @@
+/* The contract document. One stylesheet for screen, print and PDF, so the
+   three can never drift apart. Values come from the Medic Connect reference
+   design and are deliberately fixed: a legal document does not follow the
+   app theme, it follows the letterhead. */
+
+.mc-doc {
+  --mc-deep: #26306b;
+  --mc-blue: #3b4dc4;
+  --mc-tint: #eef1ff;
+  --mc-warm: #faf8f4;
+  --mc-ink: #1a1f2e;
+  --mc-body: #3d4356;
+  --mc-muted: #8a90a0;
+  --mc-hair: #e6e3dd;
+  font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  color: var(--mc-ink);
+  background: #fff;
+}
+
+.mc-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #fff;
+  padding: 17mm 17mm 15mm;
+  box-shadow: 0 2px 14px rgba(26, 31, 46, 0.14);
+}
+
+.mc-doc * { box-sizing: border-box; }
+.mc-doc a { color: var(--mc-blue); text-decoration: none; }
+
+.mc-runhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c4c0b8;
+}
+
+.mc-runfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  margin-top: 26px;
+  border-top: 1px solid var(--mc-hair);
+  font-size: 10px;
+  color: var(--mc-muted);
+}
+
+.mc-eyebrow {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mc-blue);
+}
+
+.mc-tok {
+  display: inline-block;
+  background: var(--mc-tint);
+  color: var(--mc-blue);
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 0.95em;
+  font-weight: 600;
+}
+
+.mc-value { font-weight: 600; color: var(--mc-deep); }
+
+.mc-letterhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0 18px;
+  border-bottom: 2px solid var(--mc-deep);
+}
+
+.mc-address { text-align: right; font-size: 12px; line-height: 1.65; color: var(--mc-muted); }
+
+.mc-meta {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 9px 18px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.mc-meta .k { color: var(--mc-muted); }
+.mc-meta .v { color: var(--mc-body); }
+
+.mc-title {
+  margin: 16px 0 0;
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.028em;
+  color: var(--mc-deep);
+  text-transform: uppercase;
+}
+
+.mc-sec { padding: 20px 0; border-top: 1px solid var(--mc-hair); break-inside: avoid; }
+.mc-sec.first { border-top: 2px solid var(--mc-deep); margin-top: 14px; }
+
+.mc-h2 {
+  margin: 0 0 10px;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.015em;
+  color: var(--mc-deep);
+  text-transform: uppercase;
+}
+
+/* Clause bodies are authored as rich text, so style by element. */
+.mc-body { font-size: 13.5px; line-height: 1.65; color: var(--mc-body); }
+.mc-body p { margin: 0 0 10px; }
+.mc-body p.muted { color: var(--mc-muted); font-size: 12.5px; }
+.mc-body strong { color: var(--mc-deep); }
+.mc-body h3 {
+  margin: 16px 0 7px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--mc-deep);
+}
+.mc-body ol,
+.mc-body ul { margin: 0 0 10px; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; }
+.mc-body ol { list-style: lower-roman; }
+.mc-body ul { list-style: none; padding-left: 0; }
+.mc-body ul li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; }
+.mc-body ul li::before { content: "\2022"; color: var(--mc-blue); font-weight: 700; }
+.mc-body li { line-height: 1.6; }
+.mc-body li::marker { color: var(--mc-muted); font-weight: 700; }
+
+.mc-banner {
+  margin-top: 26px;
+  break-inside: avoid;
+}
+.mc-banner-inner {
+  background: var(--mc-deep);
+  border-radius: 14px;
+  padding: 16px 22px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.mc-banner-inner h2 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  position: relative;
+}
+.mc-banner-inner img {
+  position: absolute;
+  right: -70px;
+  top: -30px;
+  width: 250px;
+  opacity: 0.1;
+}
+
+.mc-annexes { margin-top: 26px; break-inside: avoid; }
+.mc-annex-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 26px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mc-body);
+}
+.mc-annex-row {
+  display: grid;
+  grid-template-columns: 66px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--mc-hair);
+}
+.mc-annex-row .code { font-weight: 700; color: var(--mc-deep); }
+
+.mc-accept { margin-top: 28px; break-inside: avoid; }
+.mc-accept-inner {
+  background: var(--mc-warm);
+  border-radius: 20px;
+  padding: 28px 30px;
+  position: relative;
+  overflow: hidden;
+}
+.mc-accept-inner > img {
+  position: absolute;
+  right: -100px;
+  bottom: -100px;
+  width: 280px;
+  opacity: 0.07;
+}
+.mc-accept h2 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--mc-deep);
+  text-transform: uppercase;
+  position: relative;
+}
+.mc-accept .lead {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--mc-body);
+  max-width: 560px;
+  position: relative;
+}
+.mc-sign-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  position: relative;
+}
+.mc-sign-card { background: #fff; border-radius: 14px; padding: 18px 20px; }
+.mc-sign-box {
+  margin-top: 12px;
+  height: 60px;
+  border-radius: 9px;
+  background: #f6f7fb;
+  border: 1px dashed #cfd4e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  color: #a8aec0;
+  overflow: hidden;
+}
+.mc-sign-box img { max-height: 56px; max-width: 100%; }
+.mc-sign-box .ink {
+  font-family: "Caveat", "Segoe Script", cursive;
+  font-size: 26px;
+  color: var(--mc-deep);
+}
+.mc-sign-meta {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #5a6072;
+}
+.mc-sign-meta .k { color: #9aa0ae; }
+.mc-consent {
+  margin-top: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #5a6072;
+  position: relative;
+}
+.mc-consent .box {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--mc-blue);
+  border-radius: 3px;
+  flex: none;
+  margin-top: 2px;
+  text-align: center;
+  line-height: 10px;
+  font-size: 10px;
+  color: var(--mc-blue);
+}
+
+@page { size: A4; margin: 17mm 17mm 15mm; }
+
+@media print {
+  body { background: #fff; }
+  .mc-no-print { display: none !important; }
+  .mc-sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+}
+
+/* The app's global heading rule paints every h1 to h6 in ink. Inside the
+   document that is wrong twice over: the navy banner needs white text, and a
+   legal letter keeps its own type scale. State it here so the two never fight. */
+.mc-doc h1, .mc-doc h2, .mc-doc h3, .mc-doc h4, .mc-doc h5, .mc-doc h6 {
+  letter-spacing: inherit;
+}
+.mc-banner-inner, .mc-banner-inner h2 { color: #fff; }
+.mc-accept-inner h2 { color: var(--mc-deep); }
+
+/* ---------------------------------------------------------------------------
+   On a phone the sheet is not a sheet. A person reading a contract on a 390px
+   screen needs the words to fit, not a scaled A4 page they have to drag left
+   and right. The paper stays exact for print and for the PDF. */
+.mc-fit .mc-sheet {
+  width: 100%;
+  min-height: 0;
+  padding: 20px 16px 22px;
+  box-shadow: none;
+}
+.mc-fit .mc-doc,
+.mc-fit .mc-body,
+.mc-fit .mc-body p,
+.mc-fit .mc-body li { font-size: 15px; line-height: 1.65; }
+.mc-fit .mc-body table,
+.mc-fit table { display: block; width: 100%; overflow-x: auto; }
+
+@media (max-width: 900px) {
+  .mc-sheet { width: 100%; min-height: 0; padding: 20px 16px 22px; box-shadow: none; }
+  .mc-runhead { font-size: 8.5px; }
+  .mc-annex-grid { grid-template-columns: 1fr; }
+}
+
+/* An annex arrives as pasted rich text: bare tables, no rhythm. Give it a
+   document's manners so seven policies do not read as one wall. */
+.mc-annex-body {
+  color: var(--mc-body, #3d4356);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 68ch;
+}
+.mc-annex-body > *:first-child { margin-top: 0; }
+.mc-annex-body h1, .mc-annex-body h2 {
+  margin: 26px 0 8px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1a1f2e;
+  letter-spacing: -0.01em;
+}
+.mc-annex-body h3, .mc-annex-body h4 {
+  margin: 20px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #26306b;
+}
+.mc-annex-body p { margin: 0 0 12px; }
+.mc-annex-body ul, .mc-annex-body ol { margin: 0 0 14px; padding-left: 22px; }
+.mc-annex-body li { margin: 0 0 6px; }
+.mc-annex-body li::marker { color: #3b4dc4; }
+.mc-annex-body strong { color: #1a1f2e; }
+.mc-annex-body a { color: #3b4dc4; }
+.mc-annex-body hr { margin: 22px 0; border: 0; border-top: 1px solid #e6e3dd; }
+.mc-annex-body table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+.mc-annex-body th, .mc-annex-body td {
+  border: 1px solid #e6e3dd;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.mc-annex-body thead th, .mc-annex-body tr > td:first-child {
+  background: #faf8f4;
+  font-weight: 600;
+  color: #26306b;
+}
+.mc-annex-body img { max-width: 100%; height: auto; }
+
+/* A pasted table has no column widths, so a narrow first column stacks its
+   words one under the other. Fix the columns, give every cell room, and let
+   the table scroll inside its own frame rather than dragging the page. */
+.mc-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 0 16px;
+  border: 1px solid #e6e3dd;
+  border-radius: 4px;
+}
+.mc-table-scroll > table {
+  display: table;
+  margin: 0;
+  border: 0;
+  width: 100%;
+  min-width: 520px;
+  table-layout: fixed;
+}
+.mc-table-scroll th,
+.mc-table-scroll td {
+  min-width: 150px;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.mc-table-scroll tr > th:first-child,
+.mc-table-scroll tr > td:first-child { width: 34%; }
+
+/* Section rhythm, so headings step down instead of running together. */
+.mc-annex-body h2 + h3, .mc-annex-body h3 + h4 { margin-top: 10px; }
+.mc-annex-body h2 { border-top: 1px solid #efece6; padding-top: 18px; }
+.mc-annex-body > h2:first-child { border-top: 0; padding-top: 0; }
+.mc-annex-body h4 { font-size: 15px; color: #3d4356; }
+
+@media (max-width: 640px) {
+  .mc-annex-body { font-size: 16px; }
+  .mc-annex-body h1, .mc-annex-body h2 { font-size: 18px; }
+  .mc-table-scroll > table { min-width: 460px; }
+  .mc-table-scroll th, .mc-table-scroll td { min-width: 130px; padding: 10px; }
+}
+
+/* The execution page. Every document in the pack ends with one, so each file
+   stands on its own as a signed record. */
+.mc-exec {
+  border-top: 2px solid var(--mc-hair, #e6e3dd);
+  padding-top: 16px;
+  break-inside: avoid;
+}
+.mc-exec .mc-sign-grid { margin-top: 6px; }
+
+/* Annex wording inside the document sheet is rendered with .mc-body, so give
+   its pasted tables the same manners as the portal view: visible rules, room
+   in every cell, and a first column that cannot crush its words. */
+.mc-body table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0 0 14px;
+  font-size: 12.5px;
+}
+.mc-body th,
+.mc-body td {
+  border: 1px solid var(--mc-hair, #e6e3dd);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.mc-body thead th,
+.mc-body tr > td:first-child {
+  background: var(--mc-warm, #faf8f4);
+  font-weight: 600;
+  color: var(--mc-deep, #26306b);
+}
+.mc-body tr > th:first-child,
+.mc-body tr > td:first-child { width: 30%; }

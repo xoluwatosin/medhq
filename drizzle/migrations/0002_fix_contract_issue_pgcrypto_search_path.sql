@@ -1,0 +1,1 @@
+ALTER FUNCTION public.mu_contract_issue(uuid, text) SET search_path TO 'public', 'extensions';

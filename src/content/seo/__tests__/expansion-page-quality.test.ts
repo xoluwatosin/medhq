@@ -1,0 +1,46 @@
+import { describe, expect, it } from "vitest";
+import { EXPANSION_PAGES } from "@/content/seo/expansion-pages";
+import { GOVERNED_FEES, GOVERNED_MODULES } from "@/content/seo/governed-modules";
+
+const genericPlaceholders = [
+  "The formal assessment confirms the plan, professional scope and service arrangement.",
+  "Requirements are scoped and agreed with the organisation before deployment.",
+  "Start with the specific need addressed by",
+];
+
+describe("expansion SEO content quality", () => {
+  it("keeps exactly 71 unique expansion routes, the three merged routes excluded", () => {
+    expect(EXPANSION_PAGES).toHaveLength(71);
+    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(71);
+  });
+
+  it("gives every page a unique direct answer", () => {
+    const answers = EXPANSION_PAGES.map((page) => page.intro.join(" "));
+    expect(answers.every((text) => text.length >= 120)).toBe(true);
+    expect(new Set(answers).size).toBe(71);
+    expect(answers.some((text) => genericPlaceholders.some((placeholder) => text.includes(placeholder)))).toBe(false);
+  });
+
+  it("answers every question page with decision guidance", () => {
+    const questions = EXPANSION_PAGES.filter((page) => page.h1.endsWith("?"));
+    expect(questions.length).toBeGreaterThan(0);
+    for (const page of questions) {
+      expect(page.answerHeading).toBe("The short answer");
+      expect(page.answerPoints.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("keeps work routes accurate and candidate registration qualified", () => {
+    const jobs = EXPANSION_PAGES.filter((page) => page.template === "jobs");
+    for (const page of jobs) expect(page.intro.join(" ").toLowerCase()).toContain("not an offer");
+    const pool = EXPANSION_PAGES.find((page) => page.path === "/medic-connect-talent-pool");
+    expect(pool?.cards.map((card) => card.title)).toEqual(["Register your profile", "Complete vetting", "Be considered"]);
+  });
+
+  it("uses only governed module and fee references", () => {
+    for (const page of EXPANSION_PAGES) {
+      for (const code of page.moduleCodes) expect(GOVERNED_MODULES[code]).toBeDefined();
+      for (const sku of page.feeSkus) expect(GOVERNED_FEES[sku]).toBeDefined();
+    }
+  });
+});

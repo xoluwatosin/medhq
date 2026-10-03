@@ -1,0 +1,1 @@
+DELETE FROM public.email_suppressions WHERE email IN ('oluwatosin@medicconnect.co','info@medicconnect.co','muminat@medicconnect.co','munachim@medicconnect.co','tickets@medicconnect.co');

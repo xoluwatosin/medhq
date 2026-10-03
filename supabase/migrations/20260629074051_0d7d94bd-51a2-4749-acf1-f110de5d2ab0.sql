@@ -1,0 +1,1 @@
+ALTER TABLE public.blog_posts ADD COLUMN IF NOT EXISTS drop_cap_enabled boolean NOT NULL DEFAULT true;

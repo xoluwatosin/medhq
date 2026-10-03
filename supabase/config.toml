@@ -1,0 +1,70 @@
+project_id = "eylgffhvyuykafxydrul"
+
+[functions.send-form-notification]
+verify_jwt = false
+
+[functions.send-campaign]
+verify_jwt = false
+
+[functions.invite-admin]
+verify_jwt = false
+
+[functions.admin-password-reset]
+verify_jwt = false
+
+[functions.admin-otp]
+verify_jwt = false
+
+[functions.notify-new-post]
+verify_jwt = false
+
+[functions.publish-scheduled-posts]
+verify_jwt = false
+
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.unsubscribe-email]
+verify_jwt = false
+
+[functions.candidate-claim]
+verify_jwt = false
+
+
+[functions.claim-token]
+verify_jwt = false
+
+[functions.parse-cv]
+verify_jwt = false
+
+[functions.parse-document]
+verify_jwt = false
+
+
+[functions.admin-alert-test]
+verify_jwt = false
+
+[functions.send-admin-alert]
+verify_jwt = false
+
+[functions.send-followup-nudge]
+verify_jwt = false
+
+[functions.care-form-load]
+verify_jwt = false
+
+[functions.care-form-save]
+verify_jwt = false
+
+[functions.care-file-upload]
+verify_jwt = false
+
+[functions.care-token-create]
+verify_jwt = true
+
+[functions.care-token-send]
+verify_jwt = true
+
+[functions.paystack-invoice-webhook]
+verify_jwt = false

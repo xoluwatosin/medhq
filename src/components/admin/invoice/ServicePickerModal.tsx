@@ -1,0 +1,71 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useCatalogue } from "@/hooks/useCatalogue";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus } from "lucide-react";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (description: string, price: number) => void;
+}
+
+export function ServicePickerModal({ open, onClose, onSelect }: Props) {
+  const { categories, services } = useCatalogue();
+
+  const handleSelect = (name: string, price: number) => {
+    onSelect(name, price);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle>Pick from Catalogue</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[60vh] pr-4">
+          {categories.map((cat) => {
+            const catServices = services.filter((s) => s.category_id === cat.id);
+            return (
+              <div key={cat.id} className="mb-6">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {cat.name}
+                </h4>
+                <div className="space-y-1">
+                  {catServices.map((svc) => (
+                    <button
+                      key={svc.id}
+                      onClick={() => handleSelect(svc.name, svc.price)}
+                      className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      <span>{svc.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground font-mono">
+                          ₦{svc.price.toLocaleString()}
+                        </span>
+                        <Plus className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                    </button>
+                  ))}
+                  {catServices.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-3 py-2">No services yet</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {categories.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No catalogue items. Go to the Catalogue tab to add services.
+            </p>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}

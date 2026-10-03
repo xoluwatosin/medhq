@@ -1,0 +1,5172 @@
+{
+ "version": 2,
+ "kind": "pre_assessment",
+ "source": "MC-FRM-07 v1.5, 12 September 2026",
+ "opening": "These questions will help the nurse prepare for your home visit. Answer what you can and leave anything you are unsure about. This questionnaire does not replace the assessment. Your visit can still go ahead if you do not complete it.",
+ "closing": "Thank you. The nurse will review your answers before the visit.",
+ "privacyUrl": "https://www.medicconnect.co/privacy",
+ "moduleRules": {
+  "m1": {
+   "always": [
+    "post_surgical",
+    "eldercare",
+    "clinical_home_care"
+   ],
+   "whenAny": [
+    {
+     "field": "regular_medicines",
+     "in": [
+      "yes"
+     ]
+    }
+   ]
+  },
+  "m2": {
+   "always": [
+    "postnatal",
+    "nanny",
+    "additional_needs"
+   ],
+   "whenAny": [
+    {
+     "field": "care_arrangement",
+     "in": [
+      "daytime_care",
+      "live_in_care",
+      "night_care"
+     ]
+    }
+   ]
+  },
+  "m3": {
+   "always": [
+    "post_surgical",
+    "eldercare"
+   ],
+   "whenAny": [
+    {
+     "field": "moves_independently",
+     "in": [
+      "with_help",
+      "no_they_remain_in_bed"
+     ]
+    },
+    {
+     "field": "falls_six_months",
+     "in": [
+      "yes"
+     ]
+    },
+    {
+     "field": "age_years",
+     "gte": 70
+    },
+    {
+     "field": "hospital_3m",
+     "in": [
+      "currently_in_hospital"
+     ]
+    }
+   ]
+  }
+ },
+ "sections": [
+  {
+   "id": "core_a",
+   "title": "About the person receiving care",
+   "when": "always",
+   "fields": [
+    {
+     "id": "who_for",
+     "record": "Care is for",
+     "asked": "Who is this care for?",
+     "type": "choice",
+     "required": true,
+     "help": null,
+     "options": [
+      {
+       "value": "myself",
+       "label": "Myself"
+      },
+      {
+       "value": "someone_else",
+       "label": "Someone else"
+      }
+     ]
+    },
+    {
+     "id": "first_name",
+     "record": "First name",
+     "asked": "First name",
+     "type": "text",
+     "required": true,
+     "help": null,
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "someone_else"
+      ]
+     }
+    },
+    {
+     "id": "middle_name",
+     "record": "Middle name",
+     "asked": "Middle name",
+     "type": "text",
+     "required": false,
+     "help": "Optional",
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "someone_else"
+      ]
+     }
+    },
+    {
+     "id": "last_name",
+     "record": "Last name",
+     "asked": "Last name",
+     "type": "text",
+     "required": true,
+     "help": null,
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "someone_else"
+      ]
+     }
+    },
+    {
+     "id": "confirm_own_name",
+     "record": "Name confirmed",
+     "asked": "Is this your name?",
+     "type": "confirm",
+     "required": true,
+     "help": null,
+     "prefill": "client.full_name",
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "myself"
+      ]
+     }
+    },
+    {
+     "id": "preferred_name",
+     "record": "Preferred name",
+     "asked": "What name do they prefer to use?",
+     "type": "text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "date_of_birth",
+     "record": "Date of birth",
+     "asked": "Date of birth",
+     "type": "date",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "age_years",
+     "record": "Age",
+     "asked": "If you do not know the date of birth, roughly how old are they?",
+     "type": "number",
+     "required": false,
+     "help": "Only needed if the date of birth is unknown",
+     "showWhen": {
+      "field": "date_of_birth",
+      "empty": true
+     }
+    },
+    {
+     "id": "confirm_phone",
+     "record": "Phone confirmed",
+     "asked": "Is this the best number to reach you?",
+     "type": "confirm",
+     "required": true,
+     "help": null,
+     "prefill": "contact.phone"
+    },
+    {
+     "id": "client_phone",
+     "record": "Phone, person receiving care",
+     "asked": "What is the best number for the person receiving care?",
+     "type": "phone",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "someone_else"
+      ]
+     }
+    },
+    {
+     "id": "languages",
+     "record": "Preferred language",
+     "asked": "Which languages should the care professional speak?",
+     "type": "language_picker",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "sensory",
+     "record": "Sight, hearing and speech",
+     "asked": "Do they have any difficulties with their sight, hearing or speech?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "wears_glasses",
+       "label": "Wears glasses"
+      },
+      {
+       "value": "uses_a_hearing_aid",
+       "label": "Uses a hearing aid"
+      },
+      {
+       "value": "difficulty_seeing",
+       "label": "Difficulty seeing"
+      },
+      {
+       "value": "difficulty_hearing",
+       "label": "Difficulty hearing"
+      },
+      {
+       "value": "difficulty_speaking",
+       "label": "Difficulty speaking"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "core_b_adult",
+   "title": "Decisions about care",
+   "when": {
+    "clientGroup": [
+     "adult"
+    ],
+    "notWhen": {
+     "field": "who_for",
+     "in": [
+      "myself"
+     ]
+    }
+   },
+   "fields": [
+    {
+     "id": "makes_own_decisions",
+     "record": "Makes own decisions about care",
+     "asked": "Do they make their own decisions about their care?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "sometimes_or_it_is_becoming_difficult",
+       "label": "Sometimes, or it is becoming difficult"
+      }
+     ]
+    },
+    {
+     "id": "decision_supporter_name",
+     "record": "Decision supporter",
+     "asked": "Who supports them with decisions about their care?",
+     "type": "person_name",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "makes_own_decisions",
+      "in": [
+       "no",
+       "sometimes_or_it_is_becoming_difficult"
+      ]
+     }
+    },
+    {
+     "id": "decision_supporter_relationship",
+     "record": "Relationship to them",
+     "asked": "What is this person's relationship to them?",
+     "type": "relationship",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "makes_own_decisions",
+      "in": [
+       "no",
+       "sometimes_or_it_is_becoming_difficult"
+      ]
+     }
+    },
+    {
+     "id": "authority_basis",
+     "record": "Authority in place",
+     "asked": "Has anyone been formally appointed to make decisions for them?",
+     "type": "choice",
+     "required": false,
+     "help": "Next of kin means family who are consulted but hold no legal authority. Power of attorney and a court order are formal appointments with documents.",
+     "options": [
+      {
+       "value": "next_of_kin",
+       "label": "Next of kin"
+      },
+      {
+       "value": "power_of_attorney",
+       "label": "Power of attorney"
+      },
+      {
+       "value": "court_order",
+       "label": "Court order"
+      },
+      {
+       "value": "no_formal_arrangement",
+       "label": "No formal arrangement"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "makes_own_decisions",
+      "in": [
+       "no",
+       "sometimes_or_it_is_becoming_difficult"
+      ]
+     }
+    },
+    {
+     "id": "knows_about_visit",
+     "record": "Aware of the request",
+     "asked": "Do they know that you have asked us to visit?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no_not_yet",
+       "label": "No, not yet"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "feels_about_visit",
+     "record": "Feeling about the visit",
+     "asked": "How do they feel about the visit?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "they_would_like_the_visit",
+       "label": "They would like the visit"
+      },
+      {
+       "value": "they_are_unsure",
+       "label": "They are unsure"
+      },
+      {
+       "value": "they_do_not_want_the_visit",
+       "label": "They do not want the visit"
+      },
+      {
+       "value": "not_known",
+       "label": "Not known"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "they_would_like_the_visit"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "core_b_child",
+   "title": "Decisions about care",
+   "when": {
+    "clientGroup": [
+     "child"
+    ]
+   },
+   "fields": [
+    {
+     "id": "is_parent_guardian",
+     "record": "Parent or legal guardian",
+     "asked": "Are you the child's parent or legal guardian?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "pr_holder_name",
+     "record": "Parental responsibility",
+     "asked": "Who has parental responsibility for the child?",
+     "type": "person_name",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "is_parent_guardian",
+      "in": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "pr_holder_relationship",
+     "record": "Relationship to the child",
+     "asked": "What is this person's relationship to the child?",
+     "type": "relationship",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "is_parent_guardian",
+      "in": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "pr_holder_aware",
+     "record": "Aware of the request",
+     "asked": "Do they know about this request?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "they_made_this_request",
+       "label": "They made this request"
+      },
+      {
+       "value": "yes_they_know_about_it",
+       "label": "Yes, they know about it"
+      },
+      {
+       "value": "no_they_do_not_know_yet",
+       "label": "No, they do not know yet"
+      }
+     ],
+     "showWhen": {
+      "field": "is_parent_guardian",
+      "in": [
+       "no"
+      ]
+     },
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "they_made_this_request",
+       "yes_they_know_about_it"
+      ]
+     }
+    },
+    {
+     "id": "child_knows_visit",
+     "record": "Child aware of the visit",
+     "asked": "Does your child know that a nurse will be visiting?",
+     "type": "choice",
+     "required": false,
+     "help": "Asked where the child is 12 or over, or where the service is children with additional needs",
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "too_young_to_understand",
+       "label": "Too young to understand"
+      }
+     ]
+    },
+    {
+     "id": "child_feels_visit",
+     "record": "Child's feeling about the visit",
+     "asked": "How does your child feel about the visit?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "comfortable",
+       "label": "Comfortable"
+      },
+      {
+       "value": "unsure",
+       "label": "Unsure"
+      },
+      {
+       "value": "worried",
+       "label": "Worried"
+      },
+      {
+       "value": "they_have_not_been_told_yet",
+       "label": "They have not been told yet"
+      },
+      {
+       "value": "too_young_to_say",
+       "label": "Too young to say"
+      }
+     ],
+     "showWhen": {
+      "field": "child_knows_visit",
+      "in": [
+       "yes",
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "child_feels_note",
+     "record": "Note on the child's feeling",
+     "asked": "Is there anything you would like to add?",
+     "type": "long_text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "child_knows_visit",
+      "in": [
+       "yes",
+       "no"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "core_b_maternal",
+   "title": "Decisions about care",
+   "when": {
+    "clientGroup": [
+     "maternal"
+    ],
+    "notWhen": {
+     "field": "who_for",
+     "in": [
+      "myself"
+     ]
+    }
+   },
+   "fields": [
+    {
+     "id": "mother_knows",
+     "record": "Aware of the request",
+     "asked": "Does she know that you are arranging care for her?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no_not_yet",
+       "label": "No, not yet"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "mother_feels",
+     "record": "Feeling about the care",
+     "asked": "How does she feel about receiving care?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "she_would_like_the_care",
+       "label": "She would like the care"
+      },
+      {
+       "value": "she_is_unsure",
+       "label": "She is unsure"
+      },
+      {
+       "value": "she_does_not_want_the_care",
+       "label": "She does not want the care"
+      },
+      {
+       "value": "not_known",
+       "label": "Not known"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "she_would_like_the_care"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "core_arranger",
+   "title": "About you",
+   "when": {
+    "notWhen": {
+     "field": "who_for",
+     "in": [
+      "myself"
+     ]
+    }
+   },
+   "fields": [
+    {
+     "id": "arranger_confirm",
+     "record": "Your name confirmed",
+     "asked": "Is this your name?",
+     "type": "confirm",
+     "required": true,
+     "help": null,
+     "prefill": "contact.full_name"
+    },
+    {
+     "id": "arranger_relationship",
+     "record": "Your relationship to them",
+     "asked": "What is your relationship to them?",
+     "type": "relationship",
+     "required": true,
+     "help": null
+    },
+    {
+     "id": "arranger_email_confirm",
+     "record": "Your email confirmed",
+     "asked": "Is this your email address?",
+     "type": "confirm",
+     "required": true,
+     "help": null,
+     "prefill": "contact.email"
+    }
+   ]
+  },
+  {
+   "id": "core_c",
+   "title": "Current health and circumstances",
+   "when": "always",
+   "fields": [
+    {
+     "id": "situation",
+     "record": "Situation, in their own words",
+     "asked": "In your own words, what is happening and how can we help?",
+     "type": "long_text",
+     "required": true,
+     "help": null
+    },
+    {
+     "id": "diagnoses",
+     "record": "Diagnoses",
+     "asked": "Have they been diagnosed with any medical conditions?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none_that_we_know_of",
+       "label": "None that we know of",
+       "exclusive": true
+      },
+      {
+       "value": "diabetes",
+       "label": "Diabetes"
+      },
+      {
+       "value": "high_blood_pressure",
+       "label": "High blood pressure"
+      },
+      {
+       "value": "heart_disease",
+       "label": "Heart disease"
+      },
+      {
+       "value": "stroke",
+       "label": "Stroke"
+      },
+      {
+       "value": "dementia_or_memory_loss",
+       "label": "Dementia or memory loss"
+      },
+      {
+       "value": "cancer",
+       "label": "Cancer"
+      },
+      {
+       "value": "kidney_disease",
+       "label": "Kidney disease"
+      },
+      {
+       "value": "asthma_or_another_lung_condition",
+       "label": "Asthma or another lung condition"
+      },
+      {
+       "value": "arthritis",
+       "label": "Arthritis"
+      },
+      {
+       "value": "parkinsons_disease",
+       "label": "Parkinson's disease"
+      },
+      {
+       "value": "sickle_cell_disease",
+       "label": "Sickle cell disease"
+      },
+      {
+       "value": "epilepsy",
+       "label": "Epilepsy"
+      },
+      {
+       "value": "a_mental_health_condition",
+       "label": "A mental health condition"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "hospital_3m",
+     "record": "Hospital, last three months",
+     "asked": "Have they been in hospital in the last three months?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "currently_in_hospital",
+       "label": "Currently in hospital"
+      }
+     ]
+    },
+    {
+     "id": "hospital_name",
+     "record": "Hospital admitted to",
+     "asked": "Which hospital were they admitted to?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "hospital_3m",
+      "in": [
+       "yes",
+       "currently_in_hospital"
+      ]
+     }
+    },
+    {
+     "id": "admitted_on",
+     "record": "Date admitted",
+     "asked": "When were they admitted?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "hospital_3m",
+      "in": [
+       "yes",
+       "currently_in_hospital"
+      ]
+     }
+    },
+    {
+     "id": "discharged",
+     "record": "Discharged",
+     "asked": "Have they been discharged?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "discharge_planned",
+       "label": "Discharge planned"
+      }
+     ],
+     "showWhen": {
+      "field": "hospital_3m",
+      "in": [
+       "yes",
+       "currently_in_hospital"
+      ]
+     }
+    },
+    {
+     "id": "discharged_on",
+     "record": "Date discharged",
+     "asked": "When were they discharged?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "discharged",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "discharge_due",
+     "record": "Expected discharge date",
+     "asked": "When are they expected to leave hospital?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "discharged",
+      "in": [
+       "discharge_planned"
+      ]
+     }
+    },
+    {
+     "id": "discharge_letter",
+     "record": "Discharge letter",
+     "asked": "Can you share their discharge letter?",
+     "type": "upload",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "discharged",
+      "in": [
+       "yes",
+       "discharge_planned"
+      ]
+     }
+    },
+    {
+     "id": "doctor_involved",
+     "record": "Doctor involved",
+     "asked": "Is a doctor already involved in their care?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "doctor_name",
+     "record": "Doctor's name",
+     "asked": "What is the doctor's name?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "doctor_involved",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "doctor_setting",
+     "record": "Where the doctor practises",
+     "asked": "Where does the doctor practise?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "private_hospital_or_clinic",
+       "label": "Private hospital or clinic"
+      },
+      {
+       "value": "government_hospital",
+       "label": "Government hospital"
+      },
+      {
+       "value": "teaching_hospital",
+       "label": "Teaching hospital"
+      },
+      {
+       "value": "outside_nigeria",
+       "label": "Outside Nigeria"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "doctor_involved",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "regular_medicines",
+     "record": "Regular medicines",
+     "asked": "Do they take any regular medicines?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "has_allergies",
+     "record": "Allergies",
+     "asked": "Do they have any known allergies?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "none_known",
+       "label": "None known"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "allergy_agent",
+     "record": "Causative agent",
+     "asked": "What are they allergic to?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "medicine",
+       "label": "Medicine"
+      },
+      {
+       "value": "food",
+       "label": "Food"
+      },
+      {
+       "value": "dust_or_pollen",
+       "label": "Dust or pollen"
+      },
+      {
+       "value": "latex",
+       "label": "Latex"
+      },
+      {
+       "value": "insect_stings",
+       "label": "Insect stings"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ],
+     "showWhen": {
+      "field": "has_allergies",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "allergy_reaction",
+     "record": "Description of the reaction",
+     "asked": "What reaction do they have?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "has_allergies",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "preferred_hospital",
+     "record": "Preferred hospital",
+     "asked": "Which hospital would you prefer to use in an emergency?",
+     "type": "text",
+     "required": false,
+     "help": "If you have not decided, leave this blank"
+    }
+   ]
+  },
+  {
+   "id": "core_d",
+   "title": "Family and other support",
+   "when": "always",
+   "fields": [
+    {
+     "id": "existing_staff",
+     "record": "Existing staff",
+     "asked": "Is there already a nanny, caregiver or household staff member?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "who_helps",
+     "record": "Who else helps",
+     "asked": "Who else currently helps to care for them?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "nobody_at_the_moment",
+       "label": "Nobody at the moment",
+       "exclusive": true
+      },
+      {
+       "value": "spouse_or_partner",
+       "label": "Spouse or partner"
+      },
+      {
+       "value": "child_or_children",
+       "label": "Child or children"
+      },
+      {
+       "value": "another_relative",
+       "label": "Another relative"
+      },
+      {
+       "value": "neighbour_or_friend",
+       "label": "Neighbour or friend"
+      },
+      {
+       "value": "household_staff",
+       "label": "Household staff"
+      },
+      {
+       "value": "nurse_or_caregiver",
+       "label": "Nurse or caregiver"
+      }
+     ]
+    },
+    {
+     "id": "help_frequency",
+     "record": "How often they help",
+     "asked": "How often do they help?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "every_day",
+       "label": "Every day"
+      },
+      {
+       "value": "a_few_times_a_week",
+       "label": "A few times a week"
+      },
+      {
+       "value": "weekends_only",
+       "label": "Weekends only"
+      },
+      {
+       "value": "occasionally",
+       "label": "Occasionally"
+      },
+      {
+       "value": "only_in_an_emergency",
+       "label": "Only in an emergency"
+      }
+     ],
+     "showWhen": {
+      "field": "who_helps",
+      "notIn": [
+       "nobody_at_the_moment"
+      ]
+     }
+    },
+    {
+     "id": "alt_contact_name",
+     "record": "Alternative contact",
+     "asked": "Who should we contact if we cannot reach you?",
+     "type": "person_name",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "alt_contact_relationship",
+     "record": "Their relationship",
+     "asked": "What is their relationship to the person receiving care?",
+     "type": "relationship",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "alt_contact_phone",
+     "record": "Their phone number",
+     "asked": "What is their phone number?",
+     "type": "phone",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "arranged_abroad",
+     "record": "Arranged from abroad",
+     "asked": "Is anyone arranging the care from outside Nigeria?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "abroad_country",
+     "record": "Country",
+     "asked": "Which country are they in?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "arranged_abroad",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "abroad_best_time",
+     "record": "Best time to reach them",
+     "asked": "When is the best time to reach them?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "morning",
+       "label": "Morning"
+      },
+      {
+       "value": "afternoon",
+       "label": "Afternoon"
+      },
+      {
+       "value": "evening",
+       "label": "Evening"
+      },
+      {
+       "value": "any_time",
+       "label": "Any time"
+      }
+     ],
+     "showWhen": {
+      "field": "arranged_abroad",
+      "in": [
+       "yes"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "core_e",
+   "title": "Care arrangements",
+   "when": "always",
+   "fields": [
+    {
+     "id": "days_needed",
+     "record": "Days needed",
+     "asked": "Which days would you need care?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "monday",
+       "label": "Monday"
+      },
+      {
+       "value": "tuesday",
+       "label": "Tuesday"
+      },
+      {
+       "value": "wednesday",
+       "label": "Wednesday"
+      },
+      {
+       "value": "thursday",
+       "label": "Thursday"
+      },
+      {
+       "value": "friday",
+       "label": "Friday"
+      },
+      {
+       "value": "saturday",
+       "label": "Saturday"
+      },
+      {
+       "value": "sunday",
+       "label": "Sunday"
+      },
+      {
+       "value": "every_day",
+       "label": "Every day",
+       "exclusive": true
+      },
+      {
+       "value": "not_sure_yet",
+       "label": "Not sure yet",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "times_needed",
+     "record": "Times needed",
+     "asked": "What times would you need care?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "mornings",
+       "label": "Mornings"
+      },
+      {
+       "value": "afternoons",
+       "label": "Afternoons"
+      },
+      {
+       "value": "evenings",
+       "label": "Evenings"
+      },
+      {
+       "value": "overnight",
+       "label": "Overnight"
+      },
+      {
+       "value": "the_whole_day",
+       "label": "The whole day",
+       "exclusive": true
+      },
+      {
+       "value": "around_the_clock",
+       "label": "Around the clock",
+       "exclusive": true
+      },
+      {
+       "value": "not_sure_yet",
+       "label": "Not sure yet",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "care_arrangement",
+     "record": "Care arrangement",
+     "asked": "Which care arrangement would suit you?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "visits",
+       "label": "Visits"
+      },
+      {
+       "value": "daytime_care",
+       "label": "Daytime care"
+      },
+      {
+       "value": "live_in_care",
+       "label": "Live-in care"
+      },
+      {
+       "value": "night_care",
+       "label": "Night care"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "start_when",
+     "record": "Preferred start",
+     "asked": "When would you like the care to begin?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "as_soon_as_possible",
+       "label": "As soon as possible"
+      },
+      {
+       "value": "within_two_weeks",
+       "label": "Within two weeks"
+      },
+      {
+       "value": "within_a_month",
+       "label": "Within a month"
+      },
+      {
+       "value": "we_are_planning_ahead",
+       "label": "We are planning ahead"
+      }
+     ]
+    },
+    {
+     "id": "start_date",
+     "record": "Start date",
+     "asked": "Is there a particular date?",
+     "type": "date",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "duration",
+     "record": "Expected duration",
+     "asked": "How long do you think you will need support?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "a_few_weeks",
+       "label": "A few weeks"
+      },
+      {
+       "value": "a_few_months",
+       "label": "A few months"
+      },
+      {
+       "value": "ongoing",
+       "label": "Ongoing"
+      },
+      {
+       "value": "not_sure_yet",
+       "label": "Not sure yet"
+      }
+     ]
+    },
+    {
+     "id": "budget_band",
+     "record": "Budget",
+     "asked": "Do you have a monthly budget in mind?",
+     "type": "budget_band",
+     "required": false,
+     "help": "Options are read from the budget bands held in the system"
+    },
+    {
+     "id": "referral_source",
+     "record": "How they heard of us",
+     "asked": "How did you hear about Medic Connect?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "instagram",
+       "label": "Instagram"
+      },
+      {
+       "value": "whatsapp",
+       "label": "WhatsApp"
+      },
+      {
+       "value": "google",
+       "label": "Google"
+      },
+      {
+       "value": "friend_or_relative",
+       "label": "Friend or relative"
+      },
+      {
+       "value": "hospital_or_doctor",
+       "label": "Hospital or doctor"
+      },
+      {
+       "value": "employer",
+       "label": "Employer"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "core_f",
+   "title": "Preparing for the visit",
+   "when": "always",
+   "fields": [
+    {
+     "id": "address",
+     "record": "Home address",
+     "asked": "What address should the nurse visit?",
+     "type": "address",
+     "required": true,
+     "help": "Start typing and choose from the list"
+    },
+    {
+     "id": "landmark",
+     "record": "Landmark",
+     "asked": "Is there a nearby landmark?",
+     "type": "text",
+     "required": false,
+     "help": "Optional, but it helps the nurse find you"
+    },
+    {
+     "id": "lga",
+     "record": "Area",
+     "asked": "Which area is the address in?",
+     "type": "lga",
+     "required": true,
+     "help": null
+    },
+    {
+     "id": "who_present",
+     "record": "Who will be present",
+     "asked": "Who will be at home when the nurse visits?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "the_person_receiving_care",
+       "label": "The person receiving care"
+      },
+      {
+       "value": "you",
+       "label": "You"
+      },
+      {
+       "value": "another_family_member",
+       "label": "Another family member"
+      },
+      {
+       "value": "household_staff",
+       "label": "Household staff"
+      },
+      {
+       "value": "not_decided_yet",
+       "label": "Not decided yet",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "visit_days",
+     "record": "Days that suit",
+     "asked": "Which days would suit you for the visit?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "monday_to_friday",
+       "label": "Monday to Friday"
+      },
+      {
+       "value": "saturday",
+       "label": "Saturday"
+      },
+      {
+       "value": "sunday",
+       "label": "Sunday"
+      },
+      {
+       "value": "any_day",
+       "label": "Any day",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "visit_time",
+     "record": "Time that suits",
+     "asked": "What time of day would suit you?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "morning",
+       "label": "Morning"
+      },
+      {
+       "value": "afternoon",
+       "label": "Afternoon"
+      },
+      {
+       "value": "evening",
+       "label": "Evening"
+      },
+      {
+       "value": "any_time",
+       "label": "Any time"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s1",
+   "title": "About your pregnancy",
+   "when": {
+    "service": [
+     "antenatal"
+    ]
+   },
+   "fields": [
+    {
+     "id": "weeks_pregnant",
+     "record": "Weeks pregnant",
+     "asked": "How many weeks pregnant are you?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "number_of_weeks",
+       "label": "Number of weeks"
+      },
+      {
+       "value": "first_trimester",
+       "label": "First trimester"
+      },
+      {
+       "value": "second_trimester",
+       "label": "Second trimester"
+      },
+      {
+       "value": "third_trimester",
+       "label": "Third trimester"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "weeks_number",
+     "record": "Weeks",
+     "asked": "How many weeks?",
+     "type": "number",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "weeks_pregnant",
+      "in": [
+       "number_of_weeks"
+      ]
+     }
+    },
+    {
+     "id": "high_risk",
+     "record": "High-risk pregnancy",
+     "asked": "Have you been told that this is a high-risk pregnancy?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "pregnancy_concerns",
+     "record": "Concerns raised",
+     "asked": "Have any concerns been raised during this pregnancy?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "blood_pressure",
+       "label": "Blood pressure"
+      },
+      {
+       "value": "blood_sugar",
+       "label": "Blood sugar"
+      },
+      {
+       "value": "bleeding",
+       "label": "Bleeding"
+      },
+      {
+       "value": "babys_position",
+       "label": "Baby's position"
+      },
+      {
+       "value": "twins_or_another_multiple_pregnancy",
+       "label": "Twins or another multiple pregnancy"
+      },
+      {
+       "value": "low_amniotic_fluid",
+       "label": "Low amniotic fluid"
+      },
+      {
+       "value": "babys_growth",
+       "label": "Baby's growth"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "antenatal_red_flags",
+     "record": "Red flags, last week",
+     "asked": "Have you experienced any of the following in the last week?",
+     "type": "multi",
+     "required": false,
+     "help": "These help the nurse prepare. They are not a diagnosis.",
+     "options": [
+      {
+       "value": "none_of_these",
+       "label": "None of these",
+       "exclusive": true
+      },
+      {
+       "value": "a_headache_that_will_not_go_away",
+       "label": "A headache that will not go away"
+      },
+      {
+       "value": "blurred_vision_flashing_lights_or_another_change_to_your_vision",
+       "label": "Blurred vision, flashing lights or another change to your vision"
+      },
+      {
+       "value": "pain_under_the_ribs_on_the_right",
+       "label": "Pain under the ribs on the right"
+      },
+      {
+       "value": "sudden_swelling_of_the_face_hands_or_feet",
+       "label": "Sudden swelling of the face, hands or feet"
+      },
+      {
+       "value": "the_baby_moving_less_than_usual",
+       "label": "The baby moving less than usual"
+      },
+      {
+       "value": "any_bleeding",
+       "label": "Any bleeding"
+      },
+      {
+       "value": "any_loss_of_fluid",
+       "label": "Any loss of fluid"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "sameDay": true,
+      "unless": [
+       "none_of_these"
+      ]
+     }
+    },
+    {
+     "id": "home_monitoring",
+     "record": "Home monitoring",
+     "asked": "Are you monitoring your blood pressure or blood sugar at home?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "blood_pressure",
+       "label": "Blood pressure"
+      },
+      {
+       "value": "blood_sugar",
+       "label": "Blood sugar"
+      },
+      {
+       "value": "both",
+       "label": "Both"
+      },
+      {
+       "value": "neither",
+       "label": "Neither"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "booked_hospital",
+     "record": "Booked hospital",
+     "asked": "Which hospital are you booked with?",
+     "type": "text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "midwife_name",
+     "record": "Doctor or midwife",
+     "asked": "Who is your doctor or midwife?",
+     "type": "text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "first_baby",
+     "record": "First baby",
+     "asked": "Is this your first baby?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "children_count",
+     "record": "Number of children",
+     "asked": "How many children do you have?",
+     "type": "number",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "first_baby",
+      "in": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "previous_births",
+     "record": "Previous births",
+     "asked": "How would you describe your previous births?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "all_straightforward",
+       "label": "All straightforward"
+      },
+      {
+       "value": "caesarean_birth",
+       "label": "Caesarean birth"
+      },
+      {
+       "value": "long_or_difficult_labour",
+       "label": "Long or difficult labour"
+      },
+      {
+       "value": "premature_birth",
+       "label": "Premature birth"
+      },
+      {
+       "value": "pregnancy_or_baby_loss",
+       "label": "Pregnancy or baby loss"
+      },
+      {
+       "value": "prefer_not_to_say",
+       "label": "Prefer not to say",
+       "exclusive": true
+      }
+     ],
+     "showWhen": {
+      "field": "first_baby",
+      "in": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "previous_births_note",
+     "record": "Note on previous births",
+     "asked": "Is there anything you would like to add?",
+     "type": "long_text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "first_baby",
+      "in": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "birth_plan",
+     "record": "Where they plan to give birth",
+     "asked": "Where do you plan to give birth?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "the_hospital_named_above",
+       "label": "The hospital named above"
+      },
+      {
+       "value": "another_hospital",
+       "label": "Another hospital"
+      },
+      {
+       "value": "at_home",
+       "label": "At home"
+      },
+      {
+       "value": "undecided",
+       "label": "Undecided"
+      }
+     ]
+    },
+    {
+     "id": "blood_group",
+     "record": "Blood group",
+     "asked": "What is your blood group, if known?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "o+",
+       "label": "O+"
+      },
+      {
+       "value": "o_",
+       "label": "O-"
+      },
+      {
+       "value": "a+",
+       "label": "A+"
+      },
+      {
+       "value": "a_",
+       "label": "A-"
+      },
+      {
+       "value": "b+",
+       "label": "B+"
+      },
+      {
+       "value": "b_",
+       "label": "B-"
+      },
+      {
+       "value": "ab+",
+       "label": "AB+"
+      },
+      {
+       "value": "ab_",
+       "label": "AB-"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "antenatal_card",
+     "record": "Antenatal card or scan",
+     "asked": "Can you share your antenatal card or a recent scan?",
+     "type": "upload",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "postnatal_support",
+     "record": "Support after the birth",
+     "asked": "Who will support you during the first few weeks after the birth?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "my_husband_or_partner",
+       "label": "My husband or partner"
+      },
+      {
+       "value": "my_mother",
+       "label": "My mother"
+      },
+      {
+       "value": "my_mother_in_law",
+       "label": "My mother-in-law"
+      },
+      {
+       "value": "another_relative",
+       "label": "Another relative"
+      },
+      {
+       "value": "household_staff",
+       "label": "Household staff"
+      },
+      {
+       "value": "nobody_yet",
+       "label": "Nobody yet",
+       "exclusive": true
+      },
+      {
+       "value": "this_is_the_support_i_need_help_arranging",
+       "label": "This is the support I need help arranging",
+       "exclusive": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s2",
+   "title": "About the birth and the baby",
+   "when": {
+    "service": [
+     "postnatal"
+    ]
+   },
+   "fields": [
+    {
+     "id": "baby_age",
+     "record": "Baby's age",
+     "asked": "How old is the baby?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "not_yet_born",
+       "label": "Not yet born"
+      },
+      {
+       "value": "under_2_weeks",
+       "label": "Under 2 weeks"
+      },
+      {
+       "value": "2_to_6_weeks",
+       "label": "2 to 6 weeks"
+      },
+      {
+       "value": "over_6_weeks",
+       "label": "Over 6 weeks"
+      }
+     ]
+    },
+    {
+     "id": "delivery_mode",
+     "record": "Delivery",
+     "asked": "How was the baby delivered?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "caesarean",
+       "label": "Caesarean"
+      },
+      {
+       "value": "vaginal",
+       "label": "Vaginal"
+      },
+      {
+       "value": "assisted_vaginal_delivery",
+       "label": "Assisted vaginal delivery"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "birth_complications",
+     "record": "Complications",
+     "asked": "Were there any complications during or after the birth?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "heavy_bleeding",
+       "label": "Heavy bleeding"
+      },
+      {
+       "value": "infection",
+       "label": "Infection"
+      },
+      {
+       "value": "high_blood_pressure_or_pre_eclampsia",
+       "label": "High blood pressure or pre-eclampsia"
+      },
+      {
+       "value": "long_or_difficult_labour",
+       "label": "Long or difficult labour"
+      },
+      {
+       "value": "baby_needed_special_care",
+       "label": "Baby needed special care"
+      },
+      {
+       "value": "baby_was_born_early",
+       "label": "Baby was born early"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "birth_weight",
+     "record": "Birth weight",
+     "asked": "What was the baby's birth weight?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "current_weight",
+     "record": "Current weight",
+     "asked": "What is the baby's current weight?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "jaundice",
+     "record": "Jaundice",
+     "asked": "Has the baby had jaundice?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "readmitted",
+     "record": "Readmitted since birth",
+     "asked": "Has the baby been readmitted to hospital since birth?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "feeding_method",
+     "record": "Feeding",
+     "asked": "How is the baby being fed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "breastfeeding",
+       "label": "Breastfeeding"
+      },
+      {
+       "value": "formula",
+       "label": "Formula"
+      },
+      {
+       "value": "both",
+       "label": "Both"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "feeding_difficulties",
+     "record": "Feeding difficulties",
+     "asked": "Are there any difficulties with feeding?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "no_difficulties",
+       "label": "No difficulties",
+       "exclusive": true
+      },
+      {
+       "value": "difficulty_latching",
+       "label": "Difficulty latching"
+      },
+      {
+       "value": "concern_about_milk_supply",
+       "label": "Concern about milk supply"
+      },
+      {
+       "value": "pain_during_feeding",
+       "label": "Pain during feeding"
+      },
+      {
+       "value": "baby_is_not_gaining_weight",
+       "label": "Baby is not gaining weight"
+      },
+      {
+       "value": "baby_feeds_constantly",
+       "label": "Baby feeds constantly"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure",
+       "exclusive": true
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "wet_nappies",
+     "record": "Wet nappies a day",
+     "asked": "How many wet nappies does the baby usually have each day?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "fewer_than_4",
+       "label": "Fewer than 4"
+      },
+      {
+       "value": "4_to_5",
+       "label": "4 to 5"
+      },
+      {
+       "value": "6_or_more",
+       "label": "6 or more"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "dirty_nappies",
+     "record": "Dirty nappies",
+     "asked": "How often does the baby have a dirty nappy?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "at_least_once_a_day",
+       "label": "At least once a day"
+      },
+      {
+       "value": "less_often",
+       "label": "Less often"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "newborn_checks",
+     "record": "Newborn checks",
+     "asked": "Which newborn checks has the baby had?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "heel_prick_blood_spot_test",
+       "label": "Heel-prick blood spot test"
+      },
+      {
+       "value": "hearing_screening",
+       "label": "Hearing screening"
+      },
+      {
+       "value": "oxygen_level_check",
+       "label": "Oxygen-level check"
+      },
+      {
+       "value": "newborn_physical_examination",
+       "label": "Newborn physical examination"
+      },
+      {
+       "value": "none_yet",
+       "label": "None yet",
+       "exclusive": true
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure",
+       "exclusive": true
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "baby_red_flags",
+     "record": "Red flags, baby",
+     "asked": "Have you noticed any of the following in the baby?",
+     "type": "multi",
+     "required": false,
+     "help": "These help the nurse prepare. They are not a diagnosis.",
+     "options": [
+      {
+       "value": "none_of_these",
+       "label": "None of these",
+       "exclusive": true
+      },
+      {
+       "value": "yellow_skin_or_eyes",
+       "label": "Yellow skin or eyes"
+      },
+      {
+       "value": "unusually_sleepy_or_difficult_to_wake",
+       "label": "Unusually sleepy or difficult to wake"
+      },
+      {
+       "value": "a_high_pitched_or_unusual_cry",
+       "label": "A high-pitched or unusual cry"
+      },
+      {
+       "value": "feeding_less_well_than_before",
+       "label": "Feeding less well than before"
+      },
+      {
+       "value": "unusually_hot_or_cold_to_the_touch",
+       "label": "Unusually hot or cold to the touch"
+      },
+      {
+       "value": "fast_breathing",
+       "label": "Fast breathing"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "sameDay": true,
+      "unless": [
+       "none_of_these"
+      ]
+     },
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "mother_recovery",
+     "record": "Mother's recovery",
+     "asked": "How is the mother recovering?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "recovering_well",
+       "label": "Recovering well",
+       "exclusive": true
+      },
+      {
+       "value": "wound_pain",
+       "label": "Wound pain"
+      },
+      {
+       "value": "heavy_bleeding",
+       "label": "Heavy bleeding"
+      },
+      {
+       "value": "difficulty_passing_urine",
+       "label": "Difficulty passing urine"
+      },
+      {
+       "value": "constipation",
+       "label": "Constipation"
+      },
+      {
+       "value": "breast_pain_or_engorgement",
+       "label": "Breast pain or engorgement"
+      },
+      {
+       "value": "difficulty_sleeping",
+       "label": "Difficulty sleeping"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ],
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "mother_red_flags",
+     "record": "Red flags, mother",
+     "asked": "Has the mother experienced any of the following?",
+     "type": "multi",
+     "required": false,
+     "help": "These help the nurse prepare. They are not a diagnosis.",
+     "options": [
+      {
+       "value": "none_of_these",
+       "label": "None of these",
+       "exclusive": true
+      },
+      {
+       "value": "bleeding_that_is_heavier_than_a_period_or_contains_clots",
+       "label": "Bleeding that is heavier than a period or contains clots"
+      },
+      {
+       "value": "a_wound_that_is_hot_red_or_leaking",
+       "label": "A wound that is hot, red or leaking"
+      },
+      {
+       "value": "fever_or_chills",
+       "label": "Fever or chills"
+      },
+      {
+       "value": "a_severe_headache_or_changes_to_her_vision",
+       "label": "A severe headache or changes to her vision"
+      },
+      {
+       "value": "pain_or_swelling_in_one_calf",
+       "label": "Pain or swelling in one calf"
+      },
+      {
+       "value": "a_red_and_painful_breast_with_fever",
+       "label": "A red and painful breast with fever"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "sameDay": true,
+      "unless": [
+       "none_of_these"
+      ]
+     },
+     "showWhen": {
+      "field": "baby_age",
+      "notIn": [
+       "not_yet_born"
+      ]
+     }
+    },
+    {
+     "id": "mother_mood",
+     "record": "How the mother is feeling",
+     "asked": "How is the mother feeling in herself?",
+     "type": "choice",
+     "required": false,
+     "help": "This is not scored. Any formal screening happens at the visit.",
+     "options": [
+      {
+       "value": "coping_well",
+       "label": "Coping well"
+      },
+      {
+       "value": "tired_but_managing",
+       "label": "Tired but managing"
+      },
+      {
+       "value": "tearful_or_low",
+       "label": "Tearful or low"
+      },
+      {
+       "value": "anxious_or_worried",
+       "label": "Anxious or worried"
+      },
+      {
+       "value": "not_herself",
+       "label": "Not herself"
+      },
+      {
+       "value": "prefer_not_to_say",
+       "label": "Prefer not to say"
+      }
+     ]
+    },
+    {
+     "id": "mother_mood_note",
+     "record": "Note on mood",
+     "asked": "Is there anything you would like to add?",
+     "type": "long_text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "omugwo_support",
+     "record": "Existing support",
+     "asked": "How long will your current family or Omugwo support be available?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "they_are_leaving_soon",
+       "label": "They are leaving soon"
+      },
+      {
+       "value": "a_few_more_weeks",
+       "label": "A few more weeks"
+      },
+      {
+       "value": "a_month_or_more",
+       "label": "A month or more"
+      },
+      {
+       "value": "nobody_is_helping",
+       "label": "Nobody is helping",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "support_level",
+     "record": "Support level",
+     "asked": "What level of support would suit you?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "daytime_support_for_around_6_hours",
+       "label": "Daytime support for around 6 hours"
+      },
+      {
+       "value": "full_daytime_support_for_8_to_10_hours",
+       "label": "Full daytime support for 8 to 10 hours"
+      },
+      {
+       "value": "night_support_as_well",
+       "label": "Night support as well"
+      },
+      {
+       "value": "nurse_visits_only",
+       "label": "Nurse visits only"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "title": "About the surgery or admission",
+   "when": {
+    "service": [
+     "post_surgical"
+    ]
+   },
+   "fields": [
+    {
+     "id": "surgery_type",
+     "record": "Surgery or admission",
+     "asked": "What was the surgery or hospital admission for?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "abdominal_surgery",
+       "label": "Abdominal surgery"
+      },
+      {
+       "value": "hip_or_knee_surgery",
+       "label": "Hip or knee surgery"
+      },
+      {
+       "value": "another_orthopaedic_procedure",
+       "label": "Another orthopaedic procedure"
+      },
+      {
+       "value": "caesarean_section",
+       "label": "Caesarean section"
+      },
+      {
+       "value": "heart_surgery",
+       "label": "Heart surgery"
+      },
+      {
+       "value": "cancer_treatment",
+       "label": "Cancer treatment"
+      },
+      {
+       "value": "amputation",
+       "label": "Amputation"
+      },
+      {
+       "value": "accident_or_injury",
+       "label": "Accident or injury"
+      },
+      {
+       "value": "medical_admission_without_surgery",
+       "label": "Medical admission without surgery"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "surgery_note",
+     "record": "Note on the surgery",
+     "asked": "Is there anything you would like to add?",
+     "type": "long_text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "surgery_date",
+     "record": "Date of surgery",
+     "asked": "When was the surgery?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "surgery_type",
+      "notIn": [
+       "medical_admission_without_surgery"
+      ]
+     }
+    },
+    {
+     "id": "where_now",
+     "record": "Where they are now",
+     "asked": "Where is the person now?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "still_in_hospital",
+       "label": "Still in hospital"
+      },
+      {
+       "value": "already_at_home",
+       "label": "Already at home"
+      },
+      {
+       "value": "due_to_be_discharged",
+       "label": "Due to be discharged"
+      }
+     ]
+    },
+    {
+     "id": "ps_discharged_on",
+     "record": "Date discharged",
+     "asked": "When were they discharged?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "where_now",
+      "in": [
+       "already_at_home"
+      ]
+     }
+    },
+    {
+     "id": "ps_discharge_due",
+     "record": "Planned discharge date",
+     "asked": "When are they due to be discharged?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "where_now",
+      "in": [
+       "still_in_hospital",
+       "due_to_be_discharged"
+      ]
+     }
+    },
+    {
+     "id": "care_needs",
+     "record": "What needs care at home",
+     "asked": "What will need to be cared for at home?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "wound",
+       "label": "Wound"
+      },
+      {
+       "value": "surgical_drain",
+       "label": "Surgical drain"
+      },
+      {
+       "value": "catheter",
+       "label": "Catheter"
+      },
+      {
+       "value": "stoma",
+       "label": "Stoma"
+      },
+      {
+       "value": "ongoing_drip_or_iv_treatment",
+       "label": "Ongoing drip or IV treatment"
+      },
+      {
+       "value": "stitches_or_staples_that_need_to_be_removed",
+       "label": "Stitches or staples that need to be removed"
+      },
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "discharge_summary",
+     "record": "Discharge summary",
+     "asked": "Can you share the discharge summary or instructions?",
+     "type": "upload",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "followup_booked",
+     "record": "Follow-up booked",
+     "asked": "Have any follow-up appointments been booked?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "followup_date",
+     "record": "Next appointment",
+     "asked": "When is the next appointment?",
+     "type": "date",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "followup_booked",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "followup_place",
+     "record": "Where the appointment is",
+     "asked": "Where will the appointment take place?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "followup_booked",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "pain_control",
+     "record": "Pain control",
+     "asked": "How well is their pain being managed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "well_controlled_with_medicine",
+       "label": "Well controlled with medicine"
+      },
+      {
+       "value": "some_pain_most_of_the_time",
+       "label": "Some pain most of the time"
+      },
+      {
+       "value": "severe_pain",
+       "label": "Severe pain"
+      },
+      {
+       "value": "not_sure_what_medicine_they_are_taking",
+       "label": "Not sure what medicine they are taking"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s4",
+   "title": "Day-to-day life",
+   "when": {
+    "service": [
+     "eldercare"
+    ]
+   },
+   "fields": [
+    {
+     "id": "help_level",
+     "record": "Help needed day to day",
+     "asked": "How much help do they need from day to day?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "they_manage_independently",
+       "label": "They manage independently"
+      },
+      {
+       "value": "need_someone_nearby",
+       "label": "Need someone nearby"
+      },
+      {
+       "value": "need_help_with_some_activities",
+       "label": "Need help with some activities"
+      },
+      {
+       "value": "need_help_with_most_activities",
+       "label": "Need help with most activities"
+      },
+      {
+       "value": "need_help_with_everything",
+       "label": "Need help with everything"
+      }
+     ]
+    },
+    {
+     "id": "help_with",
+     "record": "What they need help with",
+     "asked": "What do they need help with?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "washing",
+       "label": "Washing"
+      },
+      {
+       "value": "dressing",
+       "label": "Dressing"
+      },
+      {
+       "value": "using_the_toilet",
+       "label": "Using the toilet"
+      },
+      {
+       "value": "eating",
+       "label": "Eating"
+      },
+      {
+       "value": "moving_around",
+       "label": "Moving around"
+      },
+      {
+       "value": "getting_in_and_out_of_bed",
+       "label": "Getting in and out of bed"
+      },
+      {
+       "value": "nothing_yet",
+       "label": "Nothing yet",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "memory_difficulties",
+     "record": "Memory difficulties",
+     "asked": "Do they have memory difficulties or periods of confusion?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "memory_diagnosis",
+     "record": "Diagnosis",
+     "asked": "Have they received a diagnosis for this?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "memory_difficulties",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "memory_diagnosis_detail",
+     "record": "Diagnosis detail",
+     "asked": "What is the diagnosis?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "memory_diagnosis",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "memory_onset",
+     "record": "Onset",
+     "asked": "When did the difficulties begin?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "within_the_last_6_months",
+       "label": "Within the last 6 months"
+      },
+      {
+       "value": "6_to_12_months_ago",
+       "label": "6 to 12 months ago"
+      },
+      {
+       "value": "1_to_3_years_ago",
+       "label": "1 to 3 years ago"
+      },
+      {
+       "value": "more_than_3_years_ago",
+       "label": "More than 3 years ago"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "memory_difficulties",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "sleep_pattern",
+     "record": "Sleep",
+     "asked": "How do they usually sleep?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "sleeps_through_the_night",
+       "label": "Sleeps through the night"
+      },
+      {
+       "value": "wakes_once_or_twice",
+       "label": "Wakes once or twice"
+      },
+      {
+       "value": "awake_for_much_of_the_night",
+       "label": "Awake for much of the night"
+      },
+      {
+       "value": "gets_up_and_wanders",
+       "label": "Gets up and wanders"
+      },
+      {
+       "value": "it_varies",
+       "label": "It varies"
+      }
+     ]
+    },
+    {
+     "id": "night_support",
+     "record": "Night support",
+     "asked": "Does anyone support them during the night?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "nobody",
+       "label": "Nobody"
+      },
+      {
+       "value": "someone_stays_with_them",
+       "label": "Someone stays with them"
+      },
+      {
+       "value": "someone_regularly_gets_up_to_help_them",
+       "label": "Someone regularly gets up to help them"
+      }
+     ]
+    },
+    {
+     "id": "behaviours",
+     "record": "Behaviours noticed",
+     "asked": "Have you noticed any of these behaviours?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "agitation",
+       "label": "Agitation"
+      },
+      {
+       "value": "restlessness",
+       "label": "Restlessness"
+      },
+      {
+       "value": "trying_to_leave_the_house",
+       "label": "Trying to leave the house"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "triggers",
+     "record": "Known triggers",
+     "asked": "Is there anything that upsets or frightens them?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "nothing_we_know_of",
+       "label": "Nothing we know of",
+       "exclusive": true
+      },
+      {
+       "value": "being_rushed",
+       "label": "Being rushed"
+      },
+      {
+       "value": "strangers_or_new_faces",
+       "label": "Strangers or new faces"
+      },
+      {
+       "value": "bathing_or_personal_care",
+       "label": "Bathing or personal care"
+      },
+      {
+       "value": "being_left_alone",
+       "label": "Being left alone"
+      },
+      {
+       "value": "darkness_or_evenings",
+       "label": "Darkness or evenings"
+      },
+      {
+       "value": "loud_noise",
+       "label": "Loud noise"
+      },
+      {
+       "value": "being_contradicted",
+       "label": "Being contradicted"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "enjoys",
+     "record": "What they enjoy",
+     "asked": "What do they enjoy or want to continue doing?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "prayer_church_or_mosque",
+       "label": "Prayer, church or mosque"
+      },
+      {
+       "value": "radio_or_television",
+       "label": "Radio or television"
+      },
+      {
+       "value": "visitors_and_company",
+       "label": "Visitors and company"
+      },
+      {
+       "value": "going_outside",
+       "label": "Going outside"
+      },
+      {
+       "value": "cooking_or_spending_time_in_the_kitchen",
+       "label": "Cooking or spending time in the kitchen"
+      },
+      {
+       "value": "music",
+       "label": "Music"
+      },
+      {
+       "value": "reading",
+       "label": "Reading"
+      },
+      {
+       "value": "gardening_or_caring_for_animals",
+       "label": "Gardening or caring for animals"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "carer_wellbeing",
+     "record": "Main carer's wellbeing",
+     "asked": "How is the person currently providing most of the care coping?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "nobody_is_currently_providing_most_of_the_care",
+       "label": "Nobody is currently providing most of the care"
+      },
+      {
+       "value": "managing_well",
+       "label": "Managing well"
+      },
+      {
+       "value": "tired_but_coping",
+       "label": "Tired but coping"
+      },
+      {
+       "value": "struggling",
+       "label": "Struggling"
+      },
+      {
+       "value": "unable_to_continue_without_more_support",
+       "label": "Unable to continue without more support"
+      },
+      {
+       "value": "prefer_not_to_say",
+       "label": "Prefer not to say"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s5",
+   "title": "What support is needed",
+   "when": {
+    "service": [
+     "clinical_home_care"
+    ]
+   },
+   "fields": [
+    {
+     "id": "clinical_support",
+     "record": "Support needed",
+     "asked": "What support is needed?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "wound_dressing",
+       "label": "Wound dressing"
+      },
+      {
+       "value": "injection",
+       "label": "Injection"
+      },
+      {
+       "value": "drip_or_iv_treatment",
+       "label": "Drip or IV treatment"
+      },
+      {
+       "value": "catheter_care",
+       "label": "Catheter care"
+      },
+      {
+       "value": "stoma_care",
+       "label": "Stoma care"
+      },
+      {
+       "value": "blood_sample",
+       "label": "Blood sample"
+      },
+      {
+       "value": "vital_sign_checks",
+       "label": "Vital-sign checks"
+      },
+      {
+       "value": "care_for_a_sick_child",
+       "label": "Care for a sick child"
+      },
+      {
+       "value": "doctor_visit",
+       "label": "Doctor visit"
+      },
+      {
+       "value": "test_at_home",
+       "label": "Test at home"
+      },
+      {
+       "value": "physiotherapy",
+       "label": "Physiotherapy"
+      },
+      {
+       "value": "mental_health_support",
+       "label": "Mental health support"
+      },
+      {
+       "value": "support_with_a_long_term_condition",
+       "label": "Support with a long-term condition"
+      },
+      {
+       "value": "something_else",
+       "label": "Something else"
+      }
+     ]
+    },
+    {
+     "id": "doctor_type",
+     "record": "Type of doctor",
+     "asked": "What type of doctor is needed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "general_doctor",
+       "label": "General doctor"
+      },
+      {
+       "value": "specialist_doctor",
+       "label": "Specialist doctor"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "clinical_support",
+      "contains": [
+       "doctor_visit"
+      ]
+     }
+    },
+    {
+     "id": "test_type",
+     "record": "Test needed",
+     "asked": "What test is needed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "ecg",
+       "label": "ECG"
+      },
+      {
+       "value": "24_hour_blood_pressure_monitoring",
+       "label": "24-hour blood pressure monitoring"
+      },
+      {
+       "value": "holter_monitoring",
+       "label": "Holter monitoring"
+      },
+      {
+       "value": "blood_test",
+       "label": "Blood test"
+      },
+      {
+       "value": "blood_glucose_monitoring",
+       "label": "Blood glucose monitoring"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "clinical_support",
+      "contains": [
+       "test_at_home"
+      ]
+     }
+    },
+    {
+     "id": "mh_type",
+     "record": "Mental health support",
+     "asked": "What type of mental health support is needed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "psychiatry",
+       "label": "Psychiatry"
+      },
+      {
+       "value": "psychology",
+       "label": "Psychology"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "clinical_support",
+      "contains": [
+       "mental_health_support"
+      ]
+     }
+    },
+    {
+     "id": "doctor_requested",
+     "record": "Requested by a doctor",
+     "asked": "Has a doctor requested this service?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes_in_writing",
+       "label": "Yes, in writing"
+      },
+      {
+       "value": "yes_verbally",
+       "label": "Yes, verbally"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "request_form",
+     "record": "Request or prescription",
+     "asked": "Can you share the note, prescription or request form?",
+     "type": "upload",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "frequency_needed",
+     "record": "How often",
+     "asked": "How often is the support needed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "once",
+       "label": "Once"
+      },
+      {
+       "value": "a_few_times",
+       "label": "A few times"
+      },
+      {
+       "value": "ongoing",
+       "label": "Ongoing"
+      }
+     ]
+    },
+    {
+     "id": "test_results",
+     "record": "Recent results",
+     "asked": "Are there any recent test results you can share?",
+     "type": "upload",
+     "required": false,
+     "help": null
+    }
+   ]
+  },
+  {
+   "id": "s6",
+   "title": "About the role",
+   "when": {
+    "service": [
+     "nanny"
+    ]
+   },
+   "fields": [
+    {
+     "id": "arrangement_type",
+     "record": "Arrangement",
+     "asked": "How would you like the arrangement to work?",
+     "type": "choice",
+     "required": false,
+     "help": "The nanny we provide is employed by Medic Connect. We train and supervise them and arrange cover when they are absent.",
+     "options": [
+      {
+       "value": "medic_connect_provides_and_manages_the_nanny",
+       "label": "Medic Connect provides and manages the nanny"
+      },
+      {
+       "value": "medic_connect_finds_a_nanny_you_employ_directly",
+       "label": "Medic Connect finds a nanny you employ directly"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "optionsGatedByFee": {
+      "medic_connect_finds_a_nanny_you_employ_directly": "placement"
+     }
+    },
+    {
+     "id": "other_children_ages",
+     "record": "Other children's ages",
+     "asked": "If care is for more than one child, how old are the other children?",
+     "type": "text",
+     "required": false,
+     "help": null
+    },
+    {
+     "id": "live_in_preference",
+     "record": "Live-in or live-out",
+     "asked": "Would you prefer a live-in or live-out nanny?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "live_in",
+       "label": "Live-in"
+      },
+      {
+       "value": "live_out",
+       "label": "Live-out"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "child_health_need",
+     "record": "Health condition or additional need",
+     "asked": "Does any child have a health condition or additional support need?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "child_health_detail",
+     "record": "Detail",
+     "asked": "Please tell us more",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "child_health_need",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "role_extras",
+     "record": "Beyond childcare",
+     "asked": "What would you like the role to include in addition to childcare?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "cooking",
+       "label": "Cooking"
+      },
+      {
+       "value": "school_drop_off_or_collection",
+       "label": "School drop-off or collection"
+      },
+      {
+       "value": "driving",
+       "label": "Driving"
+      },
+      {
+       "value": "childrens_laundry",
+       "label": "Children's laundry"
+      },
+      {
+       "value": "homework_support",
+       "label": "Homework support"
+      },
+      {
+       "value": "none_of_these",
+       "label": "None of these",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "nanny_priorities",
+     "record": "What matters most",
+     "asked": "What matters most when choosing a nanny?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "experience_with_newborns",
+       "label": "Experience with newborns"
+      },
+      {
+       "value": "cooking",
+       "label": "Cooking"
+      },
+      {
+       "value": "driving",
+       "label": "Driving"
+      },
+      {
+       "value": "spoken_english",
+       "label": "Spoken English"
+      },
+      {
+       "value": "experience_with_additional_needs",
+       "label": "Experience with additional needs"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "staff_manager",
+     "record": "Who manages household staff",
+     "asked": "If there are other household staff, who manages them?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "you",
+       "label": "You"
+      },
+      {
+       "value": "another_family_member",
+       "label": "Another family member"
+      },
+      {
+       "value": "a_house_manager",
+       "label": "A house manager"
+      },
+      {
+       "value": "nobody_in_particular",
+       "label": "Nobody in particular"
+      }
+     ]
+    },
+    {
+     "id": "house_rules",
+     "record": "House rules",
+     "asked": "Are there any house rules or expectations we should know about?",
+     "type": "long_text",
+     "required": false,
+     "help": null
+    }
+   ]
+  },
+  {
+   "id": "s7",
+   "title": "About your child's needs",
+   "when": {
+    "service": [
+     "additional_needs"
+    ]
+   },
+   "fields": [
+    {
+     "id": "needs_type",
+     "record": "Needs",
+     "asked": "Which of the following describes your child's needs?",
+     "type": "multi",
+     "required": false,
+     "help": "Physical disability affects mobility, movement or coordination. Learning difficulty affects areas such as reading, writing, numbers or concentration, without affecting overall intellectual ability, and includes dyslexia, dyspraxia and ADHD. Learning disability affects learning, understanding new information and managing everyday activities, and includes Down syndrome and global developmental delay.",
+     "options": [
+      {
+       "value": "physical_disability",
+       "label": "Physical disability"
+      },
+      {
+       "value": "learning_difficulty",
+       "label": "Learning difficulty"
+      },
+      {
+       "value": "learning_disability",
+       "label": "Learning disability"
+      },
+      {
+       "value": "medical_condition_requiring_daily_care",
+       "label": "Medical condition requiring daily care"
+      },
+      {
+       "value": "not_sure_or_no_diagnosis_yet",
+       "label": "Not sure or no diagnosis yet",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "an_diagnosis",
+     "record": "Diagnosis",
+     "asked": "Has your child received a diagnosis?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no_formal_diagnosis_yet",
+       "label": "No formal diagnosis yet"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "an_diagnosis_detail",
+     "record": "Diagnosis detail",
+     "asked": "What is the diagnosis?",
+     "type": "text",
+     "required": false,
+     "help": null,
+     "showWhen": {
+      "field": "an_diagnosis",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "an_diagnosed_by",
+     "record": "Who diagnosed",
+     "asked": "Who made the diagnosis?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "paediatrician",
+       "label": "Paediatrician"
+      },
+      {
+       "value": "hospital_doctor",
+       "label": "Hospital doctor"
+      },
+      {
+       "value": "therapist",
+       "label": "Therapist"
+      },
+      {
+       "value": "school",
+       "label": "School"
+      },
+      {
+       "value": "specialist_outside_nigeria",
+       "label": "Specialist outside Nigeria"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "an_diagnosis",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "communication",
+     "record": "How the child communicates",
+     "asked": "How does your child communicate?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "speech",
+       "label": "Speech"
+      },
+      {
+       "value": "a_few_words",
+       "label": "A few words"
+      },
+      {
+       "value": "signs_or_gestures",
+       "label": "Signs or gestures"
+      },
+      {
+       "value": "communication_device_or_pictures",
+       "label": "Communication device or pictures"
+      },
+      {
+       "value": "not_yet_communicating_intentionally",
+       "label": "Not yet communicating intentionally"
+      }
+     ]
+    },
+    {
+     "id": "support_wanted",
+     "record": "Support sought",
+     "asked": "What support are you looking for?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "daytime_support_worker",
+       "label": "Daytime support worker"
+      },
+      {
+       "value": "help_with_everyday_activities",
+       "label": "Help with everyday activities"
+      },
+      {
+       "value": "physiotherapy_or_movement_support",
+       "label": "Physiotherapy or movement support"
+      },
+      {
+       "value": "emotional_support_for_the_child_or_family",
+       "label": "Emotional support for the child or family"
+      },
+      {
+       "value": "respite_for_the_family",
+       "label": "Respite for the family"
+      },
+      {
+       "value": "equipment_for_the_home",
+       "label": "Equipment for the home"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "an_help_level",
+     "record": "Help needed day to day",
+     "asked": "How much help does your child need from day to day?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "manages_independently",
+       "label": "Manages independently"
+      },
+      {
+       "value": "needs_someone_nearby",
+       "label": "Needs someone nearby"
+      },
+      {
+       "value": "needs_help_with_some_activities",
+       "label": "Needs help with some activities"
+      },
+      {
+       "value": "needs_help_with_most_activities",
+       "label": "Needs help with most activities"
+      },
+      {
+       "value": "needs_help_with_everything",
+       "label": "Needs help with everything"
+      }
+     ]
+    },
+    {
+     "id": "schooling",
+     "record": "School or programme",
+     "asked": "Does your child attend school or another programme?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "full_time",
+       "label": "Full-time"
+      },
+      {
+       "value": "part_time",
+       "label": "Part-time"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "we_are_trying_to_arrange_this",
+       "label": "We are trying to arrange this"
+      }
+     ]
+    },
+    {
+     "id": "therapies",
+     "record": "Therapy received",
+     "asked": "Is your child receiving any therapy?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "physiotherapy",
+       "label": "Physiotherapy"
+      },
+      {
+       "value": "speech_and_language_therapy",
+       "label": "Speech and language therapy"
+      },
+      {
+       "value": "occupational_therapy",
+       "label": "Occupational therapy"
+      },
+      {
+       "value": "psychology",
+       "label": "Psychology"
+      },
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "an_conditions",
+     "record": "Conditions",
+     "asked": "Does your child have any of the following conditions?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none_that_we_know_of",
+       "label": "None that we know of",
+       "exclusive": true
+      },
+      {
+       "value": "epilepsy_or_seizures",
+       "label": "Epilepsy or seizures"
+      },
+      {
+       "value": "asthma",
+       "label": "Asthma"
+      },
+      {
+       "value": "feeding_or_swallowing_difficulty",
+       "label": "Feeding or swallowing difficulty"
+      },
+      {
+       "value": "adhd",
+       "label": "ADHD"
+      },
+      {
+       "value": "autism_or_sensory_differences",
+       "label": "Autism or sensory differences"
+      },
+      {
+       "value": "heart_condition",
+       "label": "Heart condition"
+      },
+      {
+       "value": "something_else",
+       "label": "Something else"
+      }
+     ]
+    },
+    {
+     "id": "rescue_medicine",
+     "record": "Rescue medicine available",
+     "asked": "Is rescue medicine available for the seizures?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "an_conditions",
+      "contains": [
+       "epilepsy_or_seizures"
+      ]
+     }
+    },
+    {
+     "id": "rescue_trained",
+     "record": "Someone trained to give it",
+     "asked": "Is someone trained to give the rescue medicine?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "rescue_medicine",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "equipment_dependency",
+     "record": "Equipment",
+     "asked": "Does your child depend on any equipment?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "oxygen",
+       "label": "Oxygen"
+      },
+      {
+       "value": "ventilator_or_breathing_machine",
+       "label": "Ventilator or breathing machine"
+      },
+      {
+       "value": "tracheostomy",
+       "label": "Tracheostomy"
+      },
+      {
+       "value": "feeding_tube",
+       "label": "Feeding tube"
+      },
+      {
+       "value": "suction_machine",
+       "label": "Suction machine"
+      },
+      {
+       "value": "wheelchair_or_standing_frame",
+       "label": "Wheelchair or standing frame"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "eating_drinking",
+     "record": "Eating and drinking",
+     "asked": "How does your child eat and drink?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "normally_for_their_age",
+       "label": "Normally for their age"
+      },
+      {
+       "value": "needs_food_softened_or_blended",
+       "label": "Needs food softened or blended"
+      },
+      {
+       "value": "needs_thickened_drinks",
+       "label": "Needs thickened drinks"
+      },
+      {
+       "value": "needs_help_to_be_fed",
+       "label": "Needs help to be fed"
+      },
+      {
+       "value": "partly_or_fully_by_tube",
+       "label": "Partly or fully by tube"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "choking_history",
+     "record": "Coughing or choking on feeds",
+     "asked": "Has your child ever coughed, choked or turned blue during a feed?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "occasionally",
+       "label": "Occasionally"
+      },
+      {
+       "value": "often",
+       "label": "Often"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "routes": {
+      "to": "clinical_lead",
+      "unless": [
+       "no"
+      ]
+     }
+    },
+    {
+     "id": "an_carer_wellbeing",
+     "record": "Main carer's wellbeing",
+     "asked": "How is the person providing most of the care coping?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "managing_well",
+       "label": "Managing well"
+      },
+      {
+       "value": "tired_but_coping",
+       "label": "Tired but coping"
+      },
+      {
+       "value": "struggling",
+       "label": "Struggling"
+      },
+      {
+       "value": "unable_to_continue_without_more_support",
+       "label": "Unable to continue without more support"
+      },
+      {
+       "value": "prefer_not_to_say",
+       "label": "Prefer not to say"
+      }
+     ]
+    },
+    {
+     "id": "an_triggers",
+     "record": "Distress triggers",
+     "asked": "Is there anything that causes your child distress?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "nothing_we_know_of",
+       "label": "Nothing we know of",
+       "exclusive": true
+      },
+      {
+       "value": "loud_noise",
+       "label": "Loud noise"
+      },
+      {
+       "value": "crowds_or_unfamiliar_places",
+       "label": "Crowds or unfamiliar places"
+      },
+      {
+       "value": "changes_to_routine",
+       "label": "Changes to routine"
+      },
+      {
+       "value": "touch_or_personal_care",
+       "label": "Touch or personal care"
+      },
+      {
+       "value": "hunger_or_tiredness",
+       "label": "Hunger or tiredness"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    },
+    {
+     "id": "an_helps",
+     "record": "What helps",
+     "asked": "What helps when your child is distressed?",
+     "type": "long_text",
+     "required": false,
+     "help": null
+    }
+   ]
+  },
+  {
+   "id": "s8",
+   "title": "A little more",
+   "when": {
+    "service": [
+     "other"
+    ]
+   },
+   "fields": [
+    {
+     "id": "advised_by",
+     "record": "Advised to seek care",
+     "asked": "Has anyone advised you to seek a particular type of care or support?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes_a_doctor_or_hospital",
+       "label": "Yes, a doctor or hospital"
+      },
+      {
+       "value": "yes_a_relative_or_friend",
+       "label": "Yes, a relative or friend"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "advised_note",
+     "record": "Note",
+     "asked": "Is there anything you would like to add?",
+     "type": "long_text",
+     "required": false,
+     "help": null
+    }
+   ]
+  },
+  {
+   "id": "m1",
+   "title": "Medicines",
+   "when": {
+    "module": "m1"
+   },
+   "fields": [
+    {
+     "id": "medicine_photos",
+     "record": "Medicine photographs",
+     "asked": "Can you share photographs of the current medicines?",
+     "type": "upload",
+     "required": false,
+     "help": "Please make sure the pharmacy labels are visible. You do not need to type the details."
+    },
+    {
+     "id": "medicine_count",
+     "record": "Medicines a day",
+     "asked": "Approximately how many medicines do they take each day?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None"
+      },
+      {
+       "value": "1_to_2",
+       "label": "1 to 2"
+      },
+      {
+       "value": "3_to_5",
+       "label": "3 to 5"
+      },
+      {
+       "value": "6_or_more",
+       "label": "6 or more"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "pill_organiser",
+     "record": "Kept in a pill organiser",
+     "asked": "Are any medicines kept in a pill organiser?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "unlabelled",
+     "record": "Kept without original label",
+     "asked": "Are any medicines kept without their original label?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "medicine_manager",
+     "record": "Who manages the medicines",
+     "asked": "Who currently manages or gives the medicines?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "the_person_receiving_care",
+       "label": "The person receiving care"
+      },
+      {
+       "value": "a_family_member",
+       "label": "A family member"
+      },
+      {
+       "value": "a_nurse",
+       "label": "A nurse"
+      },
+      {
+       "value": "a_caregiver",
+       "label": "A caregiver"
+      },
+      {
+       "value": "nobody_regularly_and_doses_are_sometimes_missed",
+       "label": "Nobody regularly, and doses are sometimes missed"
+      }
+     ]
+    },
+    {
+     "id": "needs_reminders",
+     "record": "Needs reminders",
+     "asked": "Do they need reminders, encouragement or help to take their medicines?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "sedating",
+     "record": "Sedating medicines",
+     "asked": "Are any of their medicines likely to cause dizziness or drowsiness?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ]
+    },
+    {
+     "id": "medicine_flags",
+     "record": "Medicines needing a nurse",
+     "asked": "Do any of the following apply?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none_of_these",
+       "label": "None of these",
+       "exclusive": true
+      },
+      {
+       "value": "insulin_or_another_injection",
+       "label": "Insulin or another injection"
+      },
+      {
+       "value": "medicine_given_into_a_vein_including_through_a_drip",
+       "label": "Medicine given into a vein, including through a drip"
+      },
+      {
+       "value": "a_medicine_given_through_a_feeding_tube",
+       "label": "A medicine given through a feeding tube"
+      },
+      {
+       "value": "oxygen",
+       "label": "Oxygen"
+      },
+      {
+       "value": "warfarin_or_another_medicine_with_a_dose_determined_by_blood_tests",
+       "label": "Warfarin or another medicine with a dose determined by blood tests"
+      },
+      {
+       "value": "a_controlled_drug",
+       "label": "A controlled drug"
+      },
+      {
+       "value": "a_medicine_that_has_not_yet_been_started",
+       "label": "A medicine that has not yet been started"
+      },
+      {
+       "value": "a_medicine_given_without_the_persons_knowledge_including_medicine_hidden_in_food_or_drink",
+       "label": "A medicine given without the person's knowledge, including medicine hidden in food or drink"
+      }
+     ],
+     "routes": {
+      "to": "nurse_review",
+      "unless": [
+       "none_of_these"
+      ]
+     }
+    }
+   ],
+   "intro": "We will review the medicines at the visit. Photographs of the labels are the quickest way to tell us what they are."
+  },
+  {
+   "id": "m2",
+   "title": "The home",
+   "when": {
+    "module": "m2"
+   },
+   "fields": [
+    {
+     "id": "stairs",
+     "record": "Stairs",
+     "asked": "Are there stairs in the home?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "uses_stairs",
+     "record": "Uses the stairs",
+     "asked": "Does the person need to use the stairs?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "sometimes",
+       "label": "Sometimes"
+      }
+     ],
+     "showWhen": {
+      "field": "stairs",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "handrail",
+     "record": "Handrail",
+     "asked": "Do the stairs have a handrail?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "some_do",
+       "label": "Some do"
+      }
+     ],
+     "showWhen": {
+      "field": "stairs",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "lighting",
+     "record": "Lighting",
+     "asked": "Are the rooms they use well lit?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "some_are",
+       "label": "Some are"
+      }
+     ]
+    },
+    {
+     "id": "sleeps_where",
+     "record": "Where they sleep",
+     "asked": "Where does the person sleep?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "their_own_room_upstairs",
+       "label": "Their own room upstairs"
+      },
+      {
+       "value": "their_own_room_on_the_ground_floor",
+       "label": "Their own room on the ground floor"
+      },
+      {
+       "value": "a_shared_room",
+       "label": "A shared room"
+      },
+      {
+       "value": "the_sitting_room",
+       "label": "The sitting room"
+      },
+      {
+       "value": "sleeping_arrangements_are_not_yet_settled",
+       "label": "Sleeping arrangements are not yet settled"
+      }
+     ]
+    },
+    {
+     "id": "bathroom_access",
+     "record": "Bathroom access",
+     "asked": "Can they reach and use the bathroom?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "with_help",
+       "label": "With help"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "water",
+     "record": "Water supply",
+     "asked": "Is running water available?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "sometimes",
+       "label": "Sometimes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "power",
+     "record": "Power supply",
+     "asked": "Is the electricity supply reliable?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "sometimes",
+       "label": "Sometimes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "live_in_space",
+     "record": "Space for a live-in caregiver",
+     "asked": "Is there a suitable place for a live-in caregiver to sleep?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "care_arrangement",
+      "in": [
+       "live_in_care"
+      ]
+     }
+    },
+    {
+     "id": "equipment_present",
+     "record": "Equipment already there",
+     "asked": "What care equipment is already available?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "hospital_bed",
+       "label": "Hospital bed"
+      },
+      {
+       "value": "oxygen",
+       "label": "Oxygen"
+      },
+      {
+       "value": "wheelchair",
+       "label": "Wheelchair"
+      },
+      {
+       "value": "walking_frame",
+       "label": "Walking frame"
+      },
+      {
+       "value": "suction",
+       "label": "Suction"
+      },
+      {
+       "value": "nebuliser",
+       "label": "Nebuliser"
+      },
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      }
+     ]
+    },
+    {
+     "id": "pets",
+     "record": "Pets",
+     "asked": "Are there any pets in the home?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "no_pets",
+       "label": "No pets",
+       "exclusive": true
+      },
+      {
+       "value": "a_dog",
+       "label": "A dog"
+      },
+      {
+       "value": "a_cat",
+       "label": "A cat"
+      },
+      {
+       "value": "other",
+       "label": "Other"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "m3",
+   "title": "Moving about and falls",
+   "when": {
+    "module": "m3"
+   },
+   "fields": [
+    {
+     "id": "moves_independently",
+     "record": "Moves independently",
+     "asked": "Can they move around independently?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "with_help",
+       "label": "With help"
+      },
+      {
+       "value": "no_they_remain_in_bed",
+       "label": "No, they remain in bed"
+      }
+     ]
+    },
+    {
+     "id": "mobility_aids",
+     "record": "Mobility aids",
+     "asked": "Do they use any mobility aids?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      },
+      {
+       "value": "cane",
+       "label": "Cane"
+      },
+      {
+       "value": "walker",
+       "label": "Walker"
+      },
+      {
+       "value": "wheelchair",
+       "label": "Wheelchair"
+      },
+      {
+       "value": "hoist",
+       "label": "Hoist"
+      }
+     ]
+    },
+    {
+     "id": "falls_six_months",
+     "record": "Falls, previous six months",
+     "asked": "Have they fallen in the last six months?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "falls_count",
+     "record": "Number of falls",
+     "asked": "How many times?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "once",
+       "label": "Once"
+      },
+      {
+       "value": "two_or_three_times",
+       "label": "Two or three times"
+      },
+      {
+       "value": "more_than_three",
+       "label": "More than three"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "falls_six_months",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "fall_accounted",
+     "record": "Cause of the fall known",
+     "asked": "Is it clear how the fall happened?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "not_sure",
+       "label": "Not sure"
+      }
+     ],
+     "showWhen": {
+      "field": "falls_six_months",
+      "in": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "hazard_recognition",
+     "record": "Hazard recognition",
+     "asked": "Can they recognise when an activity may be unsafe for them?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      },
+      {
+       "value": "sometimes",
+       "label": "Sometimes"
+      }
+     ]
+    },
+    {
+     "id": "help_seeking",
+     "record": "Help-seeking",
+     "asked": "Do they ask for help when they need it?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "no_they_usually_try_on_their_own",
+       "label": "No, they usually try on their own"
+      },
+      {
+       "value": "sometimes",
+       "label": "Sometimes"
+      }
+     ]
+    },
+    {
+     "id": "toilet_safely",
+     "record": "Toilet safely",
+     "asked": "Can they get on and off the toilet safely?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "yes",
+       "label": "Yes"
+      },
+      {
+       "value": "with_help",
+       "label": "With help"
+      },
+      {
+       "value": "no",
+       "label": "No"
+      }
+     ]
+    },
+    {
+     "id": "continence",
+     "record": "Continence",
+     "asked": "Do they have any difficulty controlling their bladder or bowels?",
+     "type": "choice",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "no_difficulty",
+       "label": "No difficulty"
+      },
+      {
+       "value": "occasional_difficulty",
+       "label": "Occasional difficulty"
+      },
+      {
+       "value": "frequent_difficulty",
+       "label": "Frequent difficulty"
+      }
+     ]
+    },
+    {
+     "id": "continence_equipment",
+     "record": "Continence equipment",
+     "asked": "Do they use any continence or toileting equipment?",
+     "type": "multi",
+     "required": false,
+     "help": null,
+     "options": [
+      {
+       "value": "continence_pads",
+       "label": "Continence pads"
+      },
+      {
+       "value": "catheter",
+       "label": "Catheter"
+      },
+      {
+       "value": "stoma",
+       "label": "Stoma"
+      },
+      {
+       "value": "none",
+       "label": "None",
+       "exclusive": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "consent",
+   "title": "Before you send this",
+   "when": "always",
+   "fields": [
+    {
+     "id": "consent_hold",
+     "record": "Consent to hold information",
+     "asked": "I agree that Medic Connect may collect and use the information I have provided to prepare for the visit and arrange care.",
+     "type": "checkbox",
+     "required": true,
+     "help": null,
+     "blocking": true
+    },
+    {
+     "id": "consent_authority",
+     "record": "Authority to give information",
+     "asked": "I confirm that I am authorised to provide this information on their behalf.",
+     "type": "checkbox",
+     "required": true,
+     "help": null,
+     "blocking": true,
+     "showWhen": {
+      "field": "who_for",
+      "in": [
+       "someone_else"
+      ]
+     }
+    }
+   ],
+   "intro": "Your answers and any documents or photographs you upload will form part of the care record. They will be used by the visiting nurse and the clinical team arranging the care. Relevant information may also be shared with the care professional assigned to you when they need it to provide care. We will not use or share this information for another purpose without your permission, unless the law requires us to. You may ask to access or correct your information and, where applicable, ask us to delete it. Please see our privacy notice for details."
+  }
+ ]
+}

@@ -1,0 +1,825 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1787948491032,
+      "tag": "0000_contract_portal_signing",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787950000732,
+      "tag": "0001_contract_per_annex_signatures",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787956267116,
+      "tag": "0002_fix_contract_issue_pgcrypto_search_path",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787958293441,
+      "tag": "0003_contract_variations_and_renewals",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788348474528,
+      "tag": "0004_strip_unused_signature_boxes_and_set_signatory",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788511159245,
+      "tag": "0005_followup_nudge_reconcile_and_gap_reason",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788511190185,
+      "tag": "0006_followup_dispatch_reconciles_first",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788823081186,
+      "tag": "0007_contact_submissions_email_optional",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788826713667,
+      "tag": "0008_remove_care_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789151580918,
+      "tag": "0009_drop_obsolete_clinical_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789229001962,
+      "tag": "0010_care_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789229512060,
+      "tag": "0011_care_flags_and_document_outstanding",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789229583789,
+      "tag": "0012_form_definition_upsert_helper",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789229601409,
+      "tag": "0013_form_definition_upsert_helper_grant",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789235452241,
+      "tag": "0014_care_services_reference_and_activity",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789252623010,
+      "tag": "0015_care_people_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789253035758,
+      "tag": "0016_client_contacts_person_required",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789253403957,
+      "tag": "0017_care_access_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789253891622,
+      "tag": "0018_care_access_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789253948643,
+      "tag": "0019_care_basis_withdrawal_single_statement",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789254647057,
+      "tag": "0020_care_access_admin_and_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789254830587,
+      "tag": "0021_care_can_administer_access_rpc",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789256000759,
+      "tag": "0022_care_controlled_data_and_notification_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789256079415,
+      "tag": "0023_care_work_engine_and_derived_stage",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789256162280,
+      "tag": "0024_care_work_ranking_rules_and_stage",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789256560854,
+      "tag": "0025_care_contact_relationship_code",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789256883265,
+      "tag": "0026_care_stage_values",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789257952212,
+      "tag": "0027_care_reference_domains",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789258096861,
+      "tag": "0028_care_geography_seed",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789258134791,
+      "tag": "0029_care_controlled_value_enforcement",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789258267239,
+      "tag": "0030_care_assessment_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789258327399,
+      "tag": "0031_care_canonical_stage_and_assessment_work_rules",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789258357269,
+      "tag": "0032_care_work_ownership_and_assessor_options",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789259020082,
+      "tag": "0033_care_assessment_corrections",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789260804199,
+      "tag": "0034_care_tranche6_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1789262181441,
+      "tag": "0035_care_amend_section_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789262306133,
+      "tag": "0036_clients_language_codes_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789265243702,
+      "tag": "0037_care_assessment_document_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789302268815,
+      "tag": "0038_care_assessment_lifecycle_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1789302371110,
+      "tag": "0039_care_pre_assessment_finalise",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1789305804802,
+      "tag": "0040_care_assessor_capability_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1789307176686,
+      "tag": "0041_care_assessor_workforce_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1789309364599,
+      "tag": "0042_talent_workforce_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1789314625732,
+      "tag": "0043_care_clinical_review_and_plan",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1789321116658,
+      "tag": "0044_care_t7_correction",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1789321533228,
+      "tag": "0045_care_revoke_truncate_clinical",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1789322245759,
+      "tag": "0046_care_assessment_binding_and_modules",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1789323581072,
+      "tag": "0047_care_definition_grammar_and_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1789323680870,
+      "tag": "0048_care_assessment_answer_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1789323747496,
+      "tag": "0049_care_definition_budget_band_options",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1789326245135,
+      "tag": "0050_care_episodes_and_service_configuration",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1789326361245,
+      "tag": "0051_care_delivery_assignments",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1789326385054,
+      "tag": "0052_care_delivery_assignment_stage_touch",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1789326615122,
+      "tag": "0053_care_delivery_least_privilege",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1789329515777,
+      "tag": "0054_care_condition_grammar_and_derived_facts",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1789331528872,
+      "tag": "0055_care_assessment_amendment_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1789331659096,
+      "tag": "0056_care_clinical_review_checklist",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1789331702259,
+      "tag": "0057_care_review_checklist_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789332366058,
+      "tag": "0058_care_client_proposal",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789332834533,
+      "tag": "0059_care_proposal_send_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1789332853417,
+      "tag": "0060_care_proposal_send_rowcount",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789335115102,
+      "tag": "0061_care_document_bound_clinical_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1789335164038,
+      "tag": "0062_care_review_decisions_on_review_record",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1789335227182,
+      "tag": "0063_care_proposal_access_and_responses",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1789335275427,
+      "tag": "0064_care_lineage_and_closed_issue_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1789335502977,
+      "tag": "0065_care_carry_classification_and_confirmed_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1789335554318,
+      "tag": "0066_care_freeze_active_evidence_on_submit",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1789335612859,
+      "tag": "0067_care_publish_guard_restore_filters",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1789335697250,
+      "tag": "0068_care_brief_routing_and_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1789337023970,
+      "tag": "0069_care_intake_routing_review_and_lineage",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1789346446992,
+      "tag": "0070_care_group_multi_recipient_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1789347830888,
+      "tag": "0071_care_group_security_and_identity_resolution",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1789351522158,
+      "tag": "0072_care_questionnaire_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1789351622358,
+      "tag": "0073_care_token_position",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1789352173142,
+      "tag": "0074_care_definition_structured_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1789356763377,
+      "tag": "0075_mu_readiness_summary",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1789382590453,
+      "tag": "0076_care_people_one_auth_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1789384240132,
+      "tag": "0077_person_first_last_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1789385428782,
+      "tag": "0078_paystack_invoices",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1789391084509,
+      "tag": "0079_care_service_coverage_and_family_amendments",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1789391153288,
+      "tag": "0080_care_top_up_recipient_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1789396591027,
+      "tag": "0081_bind_top_up_tokens_and_service_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1789396665270,
+      "tag": "0082_bind_request_recipients_to_intake_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1789399001424,
+      "tag": "0083_care_definition_medicine_choice",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1789406141778,
+      "tag": "0084_stabilise_intake_recipient_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1789421515682,
+      "tag": "0085_care_client_onboarding_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1789428561222,
+      "tag": "0086_make_client_onboarding_service_routing_exact",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1789431429999,
+      "tag": "0087_care_definition_new_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1789442964672,
+      "tag": "0088_seo_governance_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1789469399901,
+      "tag": "0089_invoice_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1789486567051,
+      "tag": "0090_admin_access_delegation",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1789487165870,
+      "tag": "0091_fix_onboarding_complete_digest_path",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1789496351311,
+      "tag": "0092_seo_governance_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1789501140745,
+      "tag": "0093_seo_blockers_text_cast",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1789506820897,
+      "tag": "0094_seo_publication_gate_realignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1789506965757,
+      "tag": "0095_seo_blockers_execute_grant",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1789508630591,
+      "tag": "0096_seo_public_pricing_and_clinical_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1789508672681,
+      "tag": "0097_service_fee_sku_unique_constraint",
+      "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1789508931902,
+      "tag": "0098_allow_test_role_to_read_blockers",
+      "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1789508951945,
+      "tag": "0099_allow_test_role_seo_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1789554046798,
+      "tag": "0100_register_expansion_seo_routes",
+      "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1789558873088,
+      "tag": "0101_heard_product_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1789562663537,
+      "tag": "0102_heard_legacy_lists_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1789569632870,
+      "tag": "0103_heard_volunteer_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1789569746584,
+      "tag": "0104_heard_volunteer_profile_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1789569864322,
+      "tag": "0105_heard_volunteer_profile_write_lockdown",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1789570046531,
+      "tag": "0106_heard_volunteer_profile_public_grant_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1789652483976,
+      "tag": "0107_care_record_spine",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1789652539845,
+      "tag": "0108_care_enquiry_routing_and_household_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1789652585961,
+      "tag": "0109_care_relationship_direction_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 110,
+      "version": "7",
+      "when": 1789675382518,
+      "tag": "0110_care_record_governance_and_finance",
+      "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1789675497509,
+      "tag": "0111_care_revision_events_and_approved_proposals",
+      "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1789740746793,
+      "tag": "0112_care_answer_context_and_approval_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1789740915014,
+      "tag": "0113_care_record_permission_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1790159894474,
+      "tag": "0114_harden_reference_reads_public_inserts_and_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1790250817569,
+      "tag": "0115_heard_volunteer_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1790270877372,
+      "tag": "0116_heard_bootstrap_role_choice",
+      "breakpoints": true
+    }
+  ]
+}

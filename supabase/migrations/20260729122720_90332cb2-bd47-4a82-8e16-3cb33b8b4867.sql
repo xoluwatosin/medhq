@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.mu_resolve_person(text, text, text, text, integer, text) FROM PUBLIC, anon, authenticated;

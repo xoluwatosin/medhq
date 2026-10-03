@@ -1,0 +1,2952 @@
+{
+  "version": 2,
+  "kind": "assessment",
+  "source": "Medic Connect Professional Assessment Specification, 13 September 2026",
+  "moduleRules": {
+    "m_svc_antenatal": {
+      "always": [
+        "antenatal"
+      ]
+    },
+    "m_svc_postnatal": {
+      "always": [
+        "postnatal"
+      ]
+    },
+    "m_svc_post_surgical": {
+      "always": [
+        "post_surgical"
+      ]
+    },
+    "m_svc_eldercare": {
+      "always": [
+        "eldercare"
+      ]
+    },
+    "m_svc_clinical": {
+      "always": [
+        "clinical_home_care"
+      ]
+    },
+    "m_svc_nanny": {
+      "always": [
+        "nanny"
+      ]
+    },
+    "m_svc_additional": {
+      "always": [
+        "additional_needs"
+      ]
+    }
+  },
+  "sections": [
+    {
+      "id": "pre_assessment_review",
+      "title": "What the family told us",
+      "when": "always",
+      "mode": "confirm_amend",
+      "intro": "Each answer given before the visit is confirmed or amended. Amending never changes what the family sent.",
+      "fields": []
+    },
+    {
+      "id": "a_visit",
+      "title": "Visit and identity",
+      "when": "always",
+      "fields": [
+        {
+          "id": "av_setting",
+          "record": "Assessment setting",
+          "asked": "Where is this assessment taking place?",
+          "type": "choice",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "home",
+              "label": "At home"
+            },
+            {
+              "value": "hospital",
+              "label": "In hospital"
+            },
+            {
+              "value": "remote",
+              "label": "Remotely"
+            },
+            {
+              "value": "other",
+              "label": "Somewhere else"
+            }
+          ]
+        },
+        {
+          "id": "av_setting_other",
+          "record": "Setting detail",
+          "asked": "Where exactly?",
+          "type": "text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "av_setting",
+            "in": [
+              "other"
+            ]
+          }
+        },
+        {
+          "id": "av_started_at",
+          "record": "Assessment date",
+          "asked": "Date of the visit",
+          "type": "date",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "av_recipient_name",
+          "record": "Recipient name as confirmed at the visit",
+          "asked": "Recipient's first and last name, as given at the visit",
+          "type": "person_name",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "av_dob",
+          "record": "Date of birth confirmed at the visit",
+          "asked": "Date of birth",
+          "type": "date",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "av_preferred_name",
+          "record": "Preferred name",
+          "asked": "Preferred name",
+          "type": "text",
+          "assessorOnly": true
+        },
+        {
+          "id": "av_pronouns",
+          "record": "Pronouns",
+          "asked": "Pronouns",
+          "type": "text",
+          "assessorOnly": true
+        },
+        {
+          "id": "av_present",
+          "record": "People present",
+          "asked": "Who was present?",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Name",
+            "Relationship",
+            "Role at the visit"
+          ]
+        },
+        {
+          "id": "av_interpreter",
+          "record": "Interpreter or communication support used",
+          "asked": "Was an interpreter or communication support used?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "av_interpreter_detail",
+          "record": "Communication support detail",
+          "asked": "What support was used?",
+          "type": "text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "av_interpreter",
+            "in": [
+              "yes"
+            ]
+          }
+        },
+        {
+          "id": "av_other_sources",
+          "record": "Others who contributed information",
+          "asked": "Who else contributed information?",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Name",
+            "Role",
+            "What they contributed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a_consent",
+      "title": "Consent, decision-making and participation",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ac_decision",
+          "record": "Ability to make this decision now",
+          "asked": "Can the person understand, retain, weigh and communicate this decision at this time?",
+          "type": "choice",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "with_support",
+              "label": "Yes, with support"
+            },
+            {
+              "value": "unclear",
+              "label": "Unclear, further review required"
+            },
+            {
+              "value": "no",
+              "label": "No, for this decision"
+            },
+            {
+              "value": "not_applicable",
+              "label": "Not applicable, a young child"
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "yes",
+              "with_support",
+              "not_applicable"
+            ]
+          },
+          "help": "Never inferred from age, diagnosis, disability, communication method or family involvement."
+        },
+        {
+          "id": "ac_support_used",
+          "record": "Support used to enable participation",
+          "asked": "What was done to enable the person to take part?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ac_own_account",
+          "record": "The person's own account and preferences",
+          "asked": "In the person's own words, what do they want?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ac_representative",
+          "record": "Representative and basis for involvement",
+          "asked": "Who is acting for the person, and on what basis?",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Name",
+            "Relationship",
+            "Basis for involvement"
+          ]
+        },
+        {
+          "id": "ac_consent_assessment",
+          "record": "Consent to the assessment",
+          "asked": "Did the person or their representative consent to this assessment?",
+          "type": "yes_no",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ac_sharing",
+          "record": "Basis for sharing information",
+          "asked": "What is the consent or other basis for sharing information?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ac_disagreement",
+          "record": "Disagreement recorded",
+          "asked": "Is there disagreement between the person and others?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ac_disagreement_detail",
+          "record": "What the disagreement is",
+          "asked": "What is the disagreement?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ac_disagreement",
+            "in": [
+              "yes"
+            ]
+          }
+        },
+        {
+          "id": "ac_immediate",
+          "record": "Immediate action required before continuing",
+          "asked": "Was any immediate action required before continuing?",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_situation",
+      "title": "Presenting situation and outcomes",
+      "when": "always",
+      "fields": [
+        {
+          "id": "as_why_now",
+          "record": "What has led to the assessment now",
+          "asked": "What has led to this assessment now?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "as_changed",
+          "record": "What has changed recently",
+          "asked": "What has changed recently?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "as_independent",
+          "record": "What the person can do independently",
+          "asked": "What can the person currently do without help?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "as_current_help",
+          "record": "Help currently provided",
+          "asked": "What help is provided now, and by whom?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "as_matters",
+          "record": "What matters most to the person",
+          "asked": "What matters most to the person?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "as_good_day",
+          "record": "What a good day looks like",
+          "asked": "What would a good day look like?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "as_hopes",
+          "record": "What the person wants to maintain, regain or achieve",
+          "asked": "What would the person or family like to maintain, regain or achieve?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "as_without",
+          "record": "Likely outcome without support",
+          "asked": "What is likely to happen without support?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "as_priority",
+          "record": "Assessor's summary of priority needs",
+          "asked": "Summary of the priority needs",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_health",
+      "title": "Health and clinical history",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ah_diagnoses",
+          "record": "Diagnoses and status",
+          "asked": "Diagnoses and their current status",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Diagnosis",
+            "Since",
+            "Status"
+          ]
+        },
+        {
+          "id": "ah_admissions",
+          "record": "Recent admissions, surgery and discharge",
+          "asked": "Recent admissions, surgery or discharge",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_symptoms",
+          "record": "Current symptoms and changes",
+          "asked": "Current symptoms and any change",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_history",
+          "record": "Relevant past history",
+          "asked": "Relevant past history",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_infection",
+          "record": "Infection status or precautions",
+          "asked": "Any infection status or precautions known?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_clinicians",
+          "record": "Treating clinicians and their instructions",
+          "asked": "Treating clinicians and their instructions",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Clinician or service",
+            "Contact",
+            "Instruction"
+          ]
+        },
+        {
+          "id": "ah_appointments",
+          "record": "Appointments and follow-up",
+          "asked": "Appointments and follow-up",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_devices",
+          "record": "Clinical devices in use",
+          "asked": "Clinical devices in use",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Device",
+            "Since",
+            "Who manages it"
+          ]
+        },
+        {
+          "id": "ah_observations_taken",
+          "record": "Observations taken",
+          "asked": "Were observations clinically indicated and taken today?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_observations",
+          "record": "Baseline observations",
+          "asked": "Observations recorded today",
+          "type": "measurement",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ah_observations_taken",
+            "in": [
+              "yes"
+            ]
+          },
+          "measures": [
+            {
+              "key": "temperature",
+              "label": "Temperature",
+              "unit": "°C"
+            },
+            {
+              "key": "pulse",
+              "label": "Pulse",
+              "unit": "bpm"
+            },
+            {
+              "key": "respiratory_rate",
+              "label": "Respiratory rate",
+              "unit": "breaths/min"
+            },
+            {
+              "key": "spo2",
+              "label": "Oxygen saturation",
+              "unit": "%"
+            },
+            {
+              "key": "systolic",
+              "label": "Blood pressure, systolic",
+              "unit": "mmHg"
+            },
+            {
+              "key": "diastolic",
+              "label": "Blood pressure, diastolic",
+              "unit": "mmHg"
+            },
+            {
+              "key": "glucose",
+              "label": "Blood glucose",
+              "unit": "mmol/L"
+            },
+            {
+              "key": "weight",
+              "label": "Weight",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "id": "ah_observation_context",
+          "record": "Observation context",
+          "asked": "Position, cuff, device, oxygen and timing context for the observations",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ah_observations_taken",
+            "in": [
+              "yes"
+            ]
+          }
+        },
+        {
+          "id": "ah_pain_score",
+          "record": "Pain now, 0 to 10",
+          "asked": "Pain now, where 0 is no pain and 10 is the worst pain imaginable",
+          "type": "number",
+          "assessorOnly": true,
+          "help": "0 no pain, 10 worst pain imaginable."
+        },
+        {
+          "id": "ah_pain_site",
+          "record": "Pain site",
+          "asked": "Where is the pain?",
+          "type": "text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ah_red_flags",
+          "record": "Red flags present today",
+          "asked": "Any red flags present today?",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "breathing",
+              "label": "Breathing difficulty"
+            },
+            {
+              "value": "chest_pain",
+              "label": "Chest pain"
+            },
+            {
+              "value": "bleeding",
+              "label": "Bleeding"
+            },
+            {
+              "value": "sepsis",
+              "label": "Signs of sepsis"
+            },
+            {
+              "value": "confusion",
+              "label": "New confusion"
+            },
+            {
+              "value": "unresponsive",
+              "label": "Reduced consciousness"
+            },
+            {
+              "value": "fall_injury",
+              "label": "Injury from a fall"
+            },
+            {
+              "value": "none",
+              "label": "None today",
+              "exclusive": true
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "none"
+            ],
+            "sameDay": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "a_medicines",
+      "title": "Medicines and allergies",
+      "when": "always",
+      "fields": [
+        {
+          "id": "am_list",
+          "record": "Medicines",
+          "asked": "Current medicines",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Name",
+            "Strength",
+            "Dose",
+            "Route",
+            "Frequency or times",
+            "Indication",
+            "Prescriber or source",
+            "Current supply",
+            "Who manages it",
+            "Support needed",
+            "Special instruction",
+            "Time-critical or refrigerated"
+          ]
+        },
+        {
+          "id": "am_source",
+          "record": "Medicines reconciliation source",
+          "asked": "What was the medicines list reconciled against?",
+          "type": "choice",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "packs",
+              "label": "The packs in the home"
+            },
+            {
+              "value": "prescription",
+              "label": "A prescription or dispensing label"
+            },
+            {
+              "value": "discharge",
+              "label": "Discharge paperwork"
+            },
+            {
+              "value": "clinician",
+              "label": "A treating clinician"
+            },
+            {
+              "value": "family",
+              "label": "Family account only"
+            }
+          ]
+        },
+        {
+          "id": "am_adherence",
+          "record": "Adherence and missed doses",
+          "asked": "Adherence and any missed doses",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_self_manage",
+          "record": "Ability to self-manage medicines",
+          "asked": "Can the person manage their own medicines?",
+          "type": "choice",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "independent",
+              "label": "Independently"
+            },
+            {
+              "value": "prompting",
+              "label": "With prompting"
+            },
+            {
+              "value": "administration",
+              "label": "Needs administration"
+            },
+            {
+              "value": "not_assessed",
+              "label": "Not assessed"
+            }
+          ]
+        },
+        {
+          "id": "am_storage",
+          "record": "Storage",
+          "asked": "How and where are medicines stored?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_high_risk",
+          "record": "Controlled or high-risk medicines",
+          "asked": "Any controlled or high-risk medicines, and what that requires",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_prn",
+          "record": "PRN instructions",
+          "asked": "PRN medicines and the instruction for each",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_changes",
+          "record": "Recent changes",
+          "asked": "Recent changes to medicines",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_side_effects",
+          "record": "Side effects or concerns",
+          "asked": "Side effects or concerns",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "am_escalation",
+          "record": "Medicines escalation required",
+          "asked": "Is escalation about medicines required?",
+          "type": "yes_no",
+          "assessorOnly": true,
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "no"
+            ]
+          }
+        },
+        {
+          "id": "am_allergies",
+          "record": "Allergies",
+          "asked": "Allergies",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Agent",
+            "Reaction",
+            "Severity",
+            "Certainty",
+            "Source"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a_communication",
+      "title": "Communication, cognition and emotional wellbeing",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ak_language",
+          "record": "Preferred language",
+          "asked": "Preferred language",
+          "type": "language_picker",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_senses",
+          "record": "Hearing, sight and speech",
+          "asked": "Hearing, sight and speech",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "hearing",
+              "label": "Hearing difficulty"
+            },
+            {
+              "value": "sight",
+              "label": "Sight difficulty"
+            },
+            {
+              "value": "speech",
+              "label": "Speech difficulty"
+            },
+            {
+              "value": "aids_hearing",
+              "label": "Uses a hearing aid"
+            },
+            {
+              "value": "aids_glasses",
+              "label": "Wears glasses"
+            },
+            {
+              "value": "none",
+              "label": "No difficulty",
+              "exclusive": true
+            }
+          ]
+        },
+        {
+          "id": "ak_method",
+          "record": "Communication method and aids",
+          "asked": "How does the person communicate best?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_understanding",
+          "record": "Understanding of their own health",
+          "asked": "How well does the person understand their own health and care?",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_cognition",
+          "record": "Memory, orientation and executive difficulty",
+          "asked": "Any memory, orientation or planning difficulty, described objectively",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_delirium",
+          "record": "Sudden confusion screen indicated",
+          "asked": "Is there new or fluctuating confusion today?",
+          "type": "yes_no",
+          "assessorOnly": true,
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "no"
+            ],
+            "sameDay": true
+          }
+        },
+        {
+          "id": "ak_mood",
+          "record": "Mood, anxiety, distress and coping",
+          "asked": "Mood, anxiety, distress and coping",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_sleep",
+          "record": "Sleep",
+          "asked": "Sleep",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ak_behaviour",
+          "record": "Behaviour described objectively",
+          "asked": "What happened, in what context, what it may communicate, what helped and how recovery went",
+          "type": "long_text",
+          "assessorOnly": true,
+          "help": "Describe what was seen. Do not use difficult or non-compliant."
+        },
+        {
+          "id": "ak_preferences",
+          "record": "Religious, cultural, privacy and gender preferences",
+          "asked": "Religious, cultural, privacy and gender preferences",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_daily",
+      "title": "Daily living and personal care",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ad_matrix",
+          "record": "Support needed for each activity",
+          "asked": "Support needed for each activity",
+          "type": "matrix",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "independent",
+              "label": "Independent"
+            },
+            {
+              "value": "equipment",
+              "label": "Needs equipment or an adaptation"
+            },
+            {
+              "value": "prompting",
+              "label": "Needs prompting"
+            },
+            {
+              "value": "some_help",
+              "label": "Needs some physical assistance"
+            },
+            {
+              "value": "full_help",
+              "label": "Needs full assistance"
+            },
+            {
+              "value": "not_assessed",
+              "label": "Not assessed or not applicable"
+            }
+          ],
+          "rows": [
+            "Washing and bathing",
+            "Oral care",
+            "Dressing",
+            "Grooming",
+            "Toileting",
+            "Transfers",
+            "Eating and drinking",
+            "Preparing meals",
+            "Shopping",
+            "Household tasks",
+            "Getting out into the community",
+            "Telephone and communication",
+            "Managing appointments",
+            "Managing money where it affects care"
+          ]
+        },
+        {
+          "id": "ad_routine",
+          "record": "Usual routine and preferences",
+          "asked": "Usual routine and preferences",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ad_privacy",
+          "record": "Privacy and dignity preferences",
+          "asked": "Privacy and dignity preferences",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ad_exact_help",
+          "record": "The exact help required",
+          "asked": "The exact help required, activity by activity",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_mobility",
+      "title": "Mobility, falls and environment",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ab_indoors",
+          "record": "Usual mobility indoors",
+          "asked": "Usual mobility indoors",
+          "type": "choice",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "independent",
+              "label": "Without help"
+            },
+            {
+              "value": "aid",
+              "label": "With an aid"
+            },
+            {
+              "value": "with_person",
+              "label": "With a person"
+            },
+            {
+              "value": "wheelchair",
+              "label": "Wheelchair"
+            },
+            {
+              "value": "in_bed",
+              "label": "Mostly in bed"
+            }
+          ]
+        },
+        {
+          "id": "ab_outdoors",
+          "record": "Usual mobility outdoors",
+          "asked": "Usual mobility outdoors",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_observed",
+          "record": "Gait and transfer observation",
+          "asked": "What was observed of gait and transfers?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ab_aids",
+          "record": "Aids and whether they are used correctly",
+          "asked": "Aids in use, and whether used correctly",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_weight_bearing",
+          "record": "Weight-bearing restrictions",
+          "asked": "Any weight-bearing restriction",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_falls_12m",
+          "record": "Falls in the previous twelve months",
+          "asked": "Number of falls in the last twelve months",
+          "type": "number",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_falls_detail",
+          "record": "Circumstances of falls",
+          "asked": "Circumstances of the falls",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ab_falls_12m",
+            "gte": 1
+          }
+        },
+        {
+          "id": "ab_fear",
+          "record": "Fear of falling",
+          "asked": "Is there fear of falling?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_stairs",
+          "record": "Stairs and access",
+          "asked": "Stairs and access",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_furniture",
+          "record": "Bed, chair and toilet suitability",
+          "asked": "Bed, chair and toilet suitability",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ab_handling",
+          "record": "Manual-handling considerations",
+          "asked": "Manual-handling considerations",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ab_equipment",
+          "record": "Equipment present and required",
+          "asked": "Equipment present and required",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Equipment",
+            "Present or required",
+            "Note"
+          ]
+        },
+        {
+          "id": "ab_hazards",
+          "record": "Care-relevant home hazards",
+          "asked": "Care-relevant hazards in the home",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "lighting",
+              "label": "Lighting"
+            },
+            {
+              "value": "flooring",
+              "label": "Flooring"
+            },
+            {
+              "value": "bathroom",
+              "label": "Bathroom"
+            },
+            {
+              "value": "electrical",
+              "label": "Electrical or fire"
+            },
+            {
+              "value": "pets",
+              "label": "Pets"
+            },
+            {
+              "value": "security",
+              "label": "Security"
+            },
+            {
+              "value": "water",
+              "label": "Water supply"
+            },
+            {
+              "value": "waste",
+              "label": "Waste"
+            },
+            {
+              "value": "none",
+              "label": "None relevant",
+              "exclusive": true
+            }
+          ]
+        },
+        {
+          "id": "ab_emergency_access",
+          "record": "Emergency access and evacuation",
+          "asked": "Emergency access and evacuation",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_nutrition",
+      "title": "Nutrition, hydration and continence",
+      "when": "always",
+      "fields": [
+        {
+          "id": "an_intake",
+          "record": "Usual intake and preferences",
+          "asked": "Usual intake and food preferences",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_appetite",
+          "record": "Appetite and weight change",
+          "asked": "Appetite and any weight change",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_obtain",
+          "record": "Ability to obtain and prepare food",
+          "asked": "Ability to obtain and prepare food",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_feeding_help",
+          "record": "Feeding assistance required",
+          "asked": "Feeding assistance required",
+          "type": "choice",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "independent",
+              "label": "Independent"
+            },
+            {
+              "value": "equipment",
+              "label": "Needs equipment or an adaptation"
+            },
+            {
+              "value": "prompting",
+              "label": "Needs prompting"
+            },
+            {
+              "value": "some_help",
+              "label": "Needs some physical assistance"
+            },
+            {
+              "value": "full_help",
+              "label": "Needs full assistance"
+            },
+            {
+              "value": "not_assessed",
+              "label": "Not assessed or not applicable"
+            }
+          ]
+        },
+        {
+          "id": "an_swallow",
+          "record": "Swallowing, choking or aspiration risk",
+          "asked": "Is there any swallowing, choking or aspiration risk?",
+          "type": "yes_no",
+          "assessorOnly": true,
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "no"
+            ]
+          }
+        },
+        {
+          "id": "an_texture",
+          "record": "Prescribed texture or fluid modification",
+          "asked": "Prescribed texture or fluid modification",
+          "type": "text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "an_swallow",
+            "in": [
+              "yes"
+            ]
+          }
+        },
+        {
+          "id": "an_tube",
+          "record": "Feeding tube details",
+          "asked": "Feeding tube details",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_hydration",
+          "record": "Hydration concerns",
+          "asked": "Hydration concerns",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_oral",
+          "record": "Dentition and oral health",
+          "asked": "Dentition and oral health",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_bowel",
+          "record": "Bowel pattern and support",
+          "asked": "Bowel pattern and support",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_bladder",
+          "record": "Bladder pattern and support",
+          "asked": "Bladder pattern and support",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_aids",
+          "record": "Continence aids",
+          "asked": "Continence aids in use",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_devices",
+          "record": "Catheter or stoma",
+          "asked": "Catheter or stoma details",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_skin_effect",
+          "record": "Skin effects and infection concerns",
+          "asked": "Skin effects and infection concerns",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "an_plan_upload",
+          "record": "Professional diet, feeding or continence plan",
+          "asked": "Upload any professional diet, feeding or continence plan",
+          "type": "upload",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_skin",
+      "title": "Skin, wounds and pain",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ax_integrity",
+          "record": "Skin integrity and pressure-risk factors",
+          "asked": "Skin integrity and pressure-risk factors",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ax_observed",
+          "record": "Pressure areas observed",
+          "asked": "Were pressure areas observed, with consent?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ax_reposition",
+          "record": "Repositioning ability and current plan",
+          "asked": "Repositioning ability and any current plan",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ax_wounds",
+          "record": "Wounds present",
+          "asked": "Are any wounds present?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ax_wound_rows",
+          "record": "Wounds",
+          "asked": "Each wound",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ax_wounds",
+            "in": [
+              "yes"
+            ]
+          },
+          "items": [
+            "Type",
+            "Location",
+            "Size",
+            "Tissue",
+            "Exudate",
+            "Odour",
+            "Surrounding skin",
+            "Pain",
+            "Signs of infection",
+            "Dressing",
+            "Clinical instruction"
+          ]
+        },
+        {
+          "id": "ax_surgical",
+          "record": "Surgical wound, drain, staples or sutures",
+          "asked": "Surgical wound, drain, staple or suture detail",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ax_wounds",
+            "in": [
+              "yes"
+            ]
+          }
+        },
+        {
+          "id": "ax_photo",
+          "record": "Wound photographs",
+          "asked": "Photographs, where consent was recorded",
+          "type": "upload",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ax_wounds",
+            "in": [
+              "yes"
+            ]
+          },
+          "help": "Only with recorded consent."
+        },
+        {
+          "id": "ax_pain",
+          "record": "Pain: location, character, pattern, triggers, relief and effect",
+          "asked": "Pain: location, character, pattern, triggers, what relieves it and how it affects daily life",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_risk",
+      "title": "Safeguarding, risk and escalation",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ar_concerns",
+          "record": "Risks identified",
+          "asked": "Which risks are present?",
+          "type": "multi",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "abuse",
+              "label": "Abuse, neglect or exploitation"
+            },
+            {
+              "value": "self_neglect",
+              "label": "Self-neglect"
+            },
+            {
+              "value": "domestic",
+              "label": "Domestic safety"
+            },
+            {
+              "value": "child",
+              "label": "Child safeguarding"
+            },
+            {
+              "value": "carer_strain",
+              "label": "Carer strain"
+            },
+            {
+              "value": "wandering",
+              "label": "Wandering or going missing"
+            },
+            {
+              "value": "falls",
+              "label": "Falls"
+            },
+            {
+              "value": "choking",
+              "label": "Choking or aspiration"
+            },
+            {
+              "value": "pressure",
+              "label": "Pressure injury"
+            },
+            {
+              "value": "medicine",
+              "label": "Medicines"
+            },
+            {
+              "value": "infection",
+              "label": "Infection"
+            },
+            {
+              "value": "fire",
+              "label": "Fire or oxygen"
+            },
+            {
+              "value": "device",
+              "label": "Device failure"
+            },
+            {
+              "value": "deterioration",
+              "label": "Deterioration"
+            },
+            {
+              "value": "lone_worker",
+              "label": "Lone-worker risk"
+            },
+            {
+              "value": "none",
+              "label": "No risk identified",
+              "exclusive": true
+            }
+          ],
+          "routes": {
+            "to": "safeguarding",
+            "unless": [
+              "none",
+              "falls",
+              "carer_strain",
+              "lone_worker"
+            ],
+            "sameDay": true
+          }
+        },
+        {
+          "id": "ar_rows",
+          "record": "Risk assessment",
+          "asked": "For each risk identified",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Hazard or concern",
+            "Who may be harmed",
+            "Evidence or context",
+            "Existing controls",
+            "Likelihood",
+            "Consequence",
+            "Immediate action",
+            "Recommended control",
+            "Owner",
+            "Review trigger"
+          ],
+          "help": "Likelihood and consequence use the anchors agreed with the clinical lead."
+        },
+        {
+          "id": "ar_urgent_done",
+          "record": "Urgent action already taken",
+          "asked": "Where urgent action was needed, has it already been taken?",
+          "type": "yes_no",
+          "assessorOnly": true
+        },
+        {
+          "id": "ar_urgent_detail",
+          "record": "Urgent action taken",
+          "asked": "What was done, and who was told?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "ar_urgent_done",
+            "in": [
+              "yes"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "a_network",
+      "title": "Existing support network",
+      "when": "always",
+      "fields": [
+        {
+          "id": "aw_household",
+          "record": "Household composition",
+          "asked": "Who lives in the household?",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "aw_support",
+          "record": "Family and informal support",
+          "asked": "Family and informal support",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Name",
+            "Relationship",
+            "What they do",
+            "When"
+          ]
+        },
+        {
+          "id": "aw_paid",
+          "record": "Paid carers or nannies already in place",
+          "asked": "Paid carers or nannies already in place",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "aw_professionals",
+          "record": "Professionals and services involved",
+          "asked": "Professionals and services involved",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Service or professional",
+            "Role",
+            "Contact",
+            "Frequency"
+          ]
+        },
+        {
+          "id": "aw_school",
+          "record": "School, nursery or therapy",
+          "asked": "School, nursery or therapy involvement",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "aw_gaps",
+          "record": "Gaps, duplication and carer strain",
+          "asked": "Gaps, duplication and carer strain",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "aw_escalation",
+          "record": "Contact and escalation hierarchy",
+          "asked": "Contact and escalation hierarchy",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Order",
+            "Name",
+            "Relationship or role",
+            "Contact"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a_mod_antenatal",
+      "title": "Antenatal",
+      "when": {
+        "module": "m_svc_antenatal"
+      },
+      "fields": [
+        {
+          "id": "at_gestation",
+          "record": "Gestation in weeks",
+          "asked": "Gestation in weeks",
+          "type": "number",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "at_edd",
+          "record": "Expected date of delivery",
+          "asked": "Expected date of delivery",
+          "type": "date",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "at_obstetric",
+          "record": "Obstetric history",
+          "asked": "Obstetric history",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "at_risk_factors",
+          "record": "High-risk factors",
+          "asked": "High-risk factors present",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "hypertension",
+              "label": "Raised blood pressure"
+            },
+            {
+              "value": "pre_eclampsia",
+              "label": "Pre-eclampsia"
+            },
+            {
+              "value": "diabetes",
+              "label": "Diabetes in pregnancy"
+            },
+            {
+              "value": "anaemia",
+              "label": "Anaemia"
+            },
+            {
+              "value": "multiple",
+              "label": "Multiple pregnancy"
+            },
+            {
+              "value": "previous_section",
+              "label": "Previous caesarean"
+            },
+            {
+              "value": "bleeding",
+              "label": "Bleeding"
+            },
+            {
+              "value": "infection",
+              "label": "Infection"
+            },
+            {
+              "value": "none",
+              "label": "None identified",
+              "exclusive": true
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "none",
+              "previous_section"
+            ]
+          }
+        },
+        {
+          "id": "at_concerns",
+          "record": "Current concerns",
+          "asked": "Current concerns",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_obs",
+          "record": "Maternal observations",
+          "asked": "Maternal observations where indicated",
+          "type": "measurement",
+          "assessorOnly": true,
+          "measures": [
+            {
+              "key": "systolic",
+              "label": "Blood pressure, systolic",
+              "unit": "mmHg"
+            },
+            {
+              "key": "diastolic",
+              "label": "Blood pressure, diastolic",
+              "unit": "mmHg"
+            },
+            {
+              "key": "pulse",
+              "label": "Pulse",
+              "unit": "bpm"
+            },
+            {
+              "key": "temperature",
+              "label": "Temperature",
+              "unit": "°C"
+            },
+            {
+              "key": "weight",
+              "label": "Weight",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "id": "at_clinic_plan",
+          "record": "Antenatal clinic or consultant plan",
+          "asked": "Antenatal clinic or consultant plan",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_supplements",
+          "record": "Medicines and supplements",
+          "asked": "Medicines and supplements",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_nutrition",
+          "record": "Nutrition and anaemia",
+          "asked": "Nutrition and anaemia",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_birth_prep",
+          "record": "Birth preparation",
+          "asked": "Birth preparation",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_wellbeing",
+          "record": "Mental wellbeing",
+          "asked": "Mental wellbeing",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_home_support",
+          "record": "Home and social support",
+          "asked": "Home and social support",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_post_birth",
+          "record": "Post-birth planning",
+          "asked": "Post-birth planning",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "at_escalate",
+          "record": "Immediate escalation findings",
+          "asked": "Immediate escalation findings",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_postnatal",
+      "title": "Postnatal and newborn",
+      "when": {
+        "module": "m_svc_postnatal"
+      },
+      "fields": [
+        {
+          "id": "pn_delivery",
+          "record": "Delivery and recovery",
+          "asked": "Delivery and recovery",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "pn_wound",
+          "record": "Wound or perineum",
+          "asked": "Wound or perineum",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "pn_bleeding",
+          "record": "Bleeding",
+          "asked": "Bleeding",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "pn_pain",
+          "record": "Pain",
+          "asked": "Pain",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "pn_obs",
+          "record": "Maternal observations",
+          "asked": "Maternal observations",
+          "type": "measurement",
+          "assessorOnly": true,
+          "measures": [
+            {
+              "key": "temperature",
+              "label": "Temperature",
+              "unit": "°C"
+            },
+            {
+              "key": "pulse",
+              "label": "Pulse",
+              "unit": "bpm"
+            },
+            {
+              "key": "systolic",
+              "label": "Blood pressure, systolic",
+              "unit": "mmHg"
+            },
+            {
+              "key": "diastolic",
+              "label": "Blood pressure, diastolic",
+              "unit": "mmHg"
+            }
+          ]
+        },
+        {
+          "id": "pn_warning",
+          "record": "Warning signs of infection or clot",
+          "asked": "Warning signs of infection or clot present",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "fever",
+              "label": "Fever"
+            },
+            {
+              "value": "offensive_lochia",
+              "label": "Offensive discharge"
+            },
+            {
+              "value": "calf_pain",
+              "label": "Calf pain or swelling"
+            },
+            {
+              "value": "breathlessness",
+              "label": "Breathlessness"
+            },
+            {
+              "value": "headache",
+              "label": "Severe headache"
+            },
+            {
+              "value": "none",
+              "label": "None",
+              "exclusive": true
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "none"
+            ],
+            "sameDay": true
+          }
+        },
+        {
+          "id": "pn_feeding_mother",
+          "record": "Feeding experience",
+          "asked": "Feeding experience",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "pn_sleep",
+          "record": "Sleep",
+          "asked": "Sleep",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "pn_emotional",
+          "record": "Emotional wellbeing",
+          "asked": "Emotional wellbeing",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "pn_support",
+          "record": "Support at home",
+          "asked": "Support at home",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_age",
+          "record": "Baby's age in days",
+          "asked": "Baby's age in days",
+          "type": "number",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nb_gestation",
+          "record": "Gestation at birth in weeks",
+          "asked": "Gestation at birth in weeks",
+          "type": "number",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_feeding",
+          "record": "Feeding assessment",
+          "asked": "Feeding assessment",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nb_weight",
+          "record": "Weight and trend",
+          "asked": "Weight and trend",
+          "type": "measurement",
+          "assessorOnly": true,
+          "measures": [
+            {
+              "key": "weight",
+              "label": "Weight",
+              "unit": "kg"
+            }
+          ]
+        },
+        {
+          "id": "nb_output",
+          "record": "Hydration and output",
+          "asked": "Wet and dirty nappies in the last day",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_jaundice",
+          "record": "Jaundice",
+          "asked": "Jaundice",
+          "type": "choice",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "none",
+              "label": "None seen"
+            },
+            {
+              "value": "mild",
+              "label": "Mild"
+            },
+            {
+              "value": "marked",
+              "label": "Marked"
+            },
+            {
+              "value": "not_assessed",
+              "label": "Not assessed"
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "none",
+              "mild",
+              "not_assessed"
+            ],
+            "sameDay": true
+          }
+        },
+        {
+          "id": "nb_temp_breathing",
+          "record": "Temperature and breathing",
+          "asked": "Temperature and breathing",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_cord",
+          "record": "Cord and skin",
+          "asked": "Cord and skin",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_checks",
+          "record": "Newborn checks completed",
+          "asked": "Newborn checks completed",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_safe_sleep",
+          "record": "Safe sleep and handling",
+          "asked": "Safe sleep and handling",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nb_immunisation",
+          "record": "Immunisation and follow-up",
+          "asked": "Immunisation and follow-up",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nb_escalation",
+          "record": "Escalation signs explained to the family",
+          "asked": "Escalation signs explained to the family",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_post_surgical",
+      "title": "Post-surgical",
+      "when": {
+        "module": "m_svc_post_surgical"
+      },
+      "fields": [
+        {
+          "id": "ps_procedure",
+          "record": "Procedure and date",
+          "asked": "Procedure and date",
+          "type": "text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ps_discharge",
+          "record": "Discharge instructions",
+          "asked": "Discharge instructions",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ps_wound_device",
+          "record": "Wound, drain or device",
+          "asked": "Wound, drain or device",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_warning",
+          "record": "Warning signs",
+          "asked": "Warning signs present",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "infection",
+              "label": "Infection"
+            },
+            {
+              "value": "vte",
+              "label": "Clot or calf pain"
+            },
+            {
+              "value": "respiratory",
+              "label": "Breathing difficulty"
+            },
+            {
+              "value": "bleeding",
+              "label": "Bleeding"
+            },
+            {
+              "value": "wound_breakdown",
+              "label": "Wound breakdown"
+            },
+            {
+              "value": "none",
+              "label": "None",
+              "exclusive": true
+            }
+          ],
+          "routes": {
+            "to": "clinical_lead",
+            "unless": [
+              "none"
+            ],
+            "sameDay": true
+          }
+        },
+        {
+          "id": "ps_pain",
+          "record": "Pain and its control",
+          "asked": "Pain and its control",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_mobility",
+          "record": "Mobility and restrictions",
+          "asked": "Mobility and restrictions",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ps_nutrition",
+          "record": "Nutrition and elimination",
+          "asked": "Nutrition and elimination",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_medicines",
+          "record": "Medicines after surgery",
+          "asked": "Medicines after surgery",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_rehab",
+          "record": "Rehabilitation",
+          "asked": "Rehabilitation",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_equipment",
+          "record": "Equipment",
+          "asked": "Equipment",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_followup",
+          "record": "Follow-up",
+          "asked": "Follow-up",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ps_interventions",
+          "record": "Required nursing interventions",
+          "asked": "Required nursing interventions",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_eldercare",
+      "title": "Eldercare",
+      "when": {
+        "module": "m_svc_eldercare"
+      },
+      "fields": [
+        {
+          "id": "el_function",
+          "record": "Function and independence",
+          "asked": "Function and independence",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "el_frailty",
+          "record": "Frailty indicators",
+          "asked": "Frailty indicators observed",
+          "type": "multi",
+          "assessorOnly": true,
+          "options": [
+            {
+              "value": "slow_walking",
+              "label": "Slower walking"
+            },
+            {
+              "value": "weight_loss",
+              "label": "Unintended weight loss"
+            },
+            {
+              "value": "exhaustion",
+              "label": "Exhaustion"
+            },
+            {
+              "value": "low_activity",
+              "label": "Low activity"
+            },
+            {
+              "value": "weakness",
+              "label": "Weakness"
+            },
+            {
+              "value": "none",
+              "label": "None observed",
+              "exclusive": true
+            }
+          ]
+        },
+        {
+          "id": "el_cognition",
+          "record": "Cognition and delirium",
+          "asked": "Cognition and delirium",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_falls",
+          "record": "Falls",
+          "asked": "Falls",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_nutrition",
+          "record": "Nutrition",
+          "asked": "Nutrition",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_continence",
+          "record": "Continence",
+          "asked": "Continence",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_skin",
+          "record": "Skin",
+          "asked": "Skin",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_polypharmacy",
+          "record": "Polypharmacy",
+          "asked": "Polypharmacy",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_social",
+          "record": "Loneliness and social participation",
+          "asked": "Loneliness and social participation",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_carer",
+          "record": "Carer sustainability",
+          "asked": "Carer sustainability",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "el_advance",
+          "record": "Advance preferences volunteered",
+          "asked": "Advance preferences, only where volunteered",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_clinical",
+      "title": "Clinical home care",
+      "when": {
+        "module": "m_svc_clinical"
+      },
+      "fields": [
+        {
+          "id": "cl_submodules",
+          "record": "Clinical care required",
+          "asked": "Which clinical care is required?",
+          "type": "multi",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "wound",
+              "label": "Wound care"
+            },
+            {
+              "value": "injection",
+              "label": "Injections or infusions"
+            },
+            {
+              "value": "diabetes",
+              "label": "Diabetes care"
+            },
+            {
+              "value": "respiratory",
+              "label": "Respiratory or oxygen"
+            },
+            {
+              "value": "catheter",
+              "label": "Catheter or stoma"
+            },
+            {
+              "value": "peg",
+              "label": "PEG or enteral feeding"
+            },
+            {
+              "value": "neuro",
+              "label": "Complex neurological care"
+            },
+            {
+              "value": "trache",
+              "label": "Tracheostomy or ventilation"
+            },
+            {
+              "value": "physio",
+              "label": "Physiotherapy or rehabilitation"
+            },
+            {
+              "value": "chronic",
+              "label": "Chronic disease support"
+            },
+            {
+              "value": "palliative",
+              "label": "Palliative or end-of-life care"
+            }
+          ]
+        },
+        {
+          "id": "cl_wound",
+          "record": "Wound care instruction",
+          "asked": "Authorised wound care instruction",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "wound"
+            ]
+          }
+        },
+        {
+          "id": "cl_injection",
+          "record": "Injection or infusion instruction",
+          "asked": "Authorised injection or infusion instruction",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "injection"
+            ]
+          }
+        },
+        {
+          "id": "cl_diabetes",
+          "record": "Diabetes care",
+          "asked": "Monitoring, insulin and hypoglycaemia plan",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "diabetes"
+            ]
+          }
+        },
+        {
+          "id": "cl_respiratory",
+          "record": "Respiratory or oxygen care",
+          "asked": "Oxygen prescription, equipment and safety",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "respiratory"
+            ]
+          }
+        },
+        {
+          "id": "cl_catheter",
+          "record": "Catheter or stoma care",
+          "asked": "Catheter or stoma care",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "catheter"
+            ]
+          }
+        },
+        {
+          "id": "cl_peg",
+          "record": "PEG or enteral feeding",
+          "asked": "Regimen, pump, flushes and escalation",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "peg"
+            ]
+          }
+        },
+        {
+          "id": "cl_neuro",
+          "record": "Complex neurological care",
+          "asked": "Complex neurological care",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "neuro"
+            ]
+          }
+        },
+        {
+          "id": "cl_trache",
+          "record": "Tracheostomy or ventilation",
+          "asked": "Tube, suction, humidification, emergency equipment and competence",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "trache"
+            ]
+          },
+          "routes": {
+            "to": "clinical_lead",
+            "unless": []
+          }
+        },
+        {
+          "id": "cl_physio",
+          "record": "Physiotherapy or rehabilitation programme",
+          "asked": "Programme and who authorised it",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "physio"
+            ]
+          }
+        },
+        {
+          "id": "cl_chronic",
+          "record": "Chronic disease support",
+          "asked": "Chronic disease support",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "chronic"
+            ]
+          }
+        },
+        {
+          "id": "cl_palliative",
+          "record": "Palliative or end-of-life care",
+          "asked": "Symptom control, preferences and agreed plan",
+          "type": "long_text",
+          "assessorOnly": true,
+          "showWhen": {
+            "field": "cl_submodules",
+            "contains": [
+              "palliative"
+            ]
+          }
+        },
+        {
+          "id": "cl_authorised_by",
+          "record": "Who authorised the clinical instruction",
+          "asked": "Who authorised the clinical instruction?",
+          "type": "text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "cl_competence",
+          "record": "Competence required of the professional",
+          "asked": "Competence required of the professional",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "cl_supplies",
+          "record": "Supplies and equipment",
+          "asked": "Supplies and equipment",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "cl_monitoring",
+          "record": "Monitoring required",
+          "asked": "Monitoring required",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "cl_escalation",
+          "record": "Escalation thresholds and contacts",
+          "asked": "Escalation thresholds and contacts",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "cl_frequency",
+          "record": "Visit frequency required",
+          "asked": "Visit frequency required",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_nanny",
+      "title": "Nanny and childcare",
+      "when": {
+        "module": "m_svc_nanny"
+      },
+      "fields": [
+        {
+          "id": "nn_children",
+          "record": "Children",
+          "asked": "Each child",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "First name",
+            "Last name",
+            "Date of birth",
+            "Developmental context"
+          ]
+        },
+        {
+          "id": "nn_health",
+          "record": "Health, allergies and medicines",
+          "asked": "Health, allergies and medicines",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nn_feeding",
+          "record": "Feeding and meals",
+          "asked": "Feeding and meals",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_sleep",
+          "record": "Sleep and naps",
+          "asked": "Sleep and naps",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_toileting",
+          "record": "Toileting and routines",
+          "asked": "Toileting and routines",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_communication",
+          "record": "How each child communicates",
+          "asked": "How each child communicates",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_school",
+          "record": "Nursery or school and authorised collection",
+          "asked": "Nursery or school, and who may collect",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "items": [
+            "Setting",
+            "Hours",
+            "Authorised to collect",
+            "Contact"
+          ]
+        },
+        {
+          "id": "nn_interests",
+          "record": "Interests and activities",
+          "asked": "Interests and activities",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_safeguarding",
+          "record": "Safeguarding and supervision",
+          "asked": "Safeguarding and supervision requirements",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nn_household",
+          "record": "Household context",
+          "asked": "Household context",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nn_duties",
+          "record": "Expected duties and boundaries",
+          "asked": "Expected duties and boundaries",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nn_emergency",
+          "record": "Emergency contacts",
+          "asked": "Emergency contacts",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Order",
+            "Name",
+            "Relationship",
+            "Contact"
+          ]
+        },
+        {
+          "id": "nn_capability",
+          "record": "Nanny capability requirements",
+          "asked": "Capability requirements for the nanny",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_mod_additional",
+      "title": "Children with additional needs",
+      "when": {
+        "module": "m_svc_additional"
+      },
+      "fields": [
+        {
+          "id": "nd_strengths",
+          "record": "Strengths, interests and family priorities",
+          "asked": "Strengths, interests and family priorities",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nd_diagnosis",
+          "record": "Diagnosis or assessment status",
+          "asked": "Diagnosis or assessment status",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_communication",
+          "record": "Communication and AAC",
+          "asked": "Communication and any AAC",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nd_mobility",
+          "record": "Functional mobility",
+          "asked": "Functional mobility",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_personal_care",
+          "record": "Personal care",
+          "asked": "Personal care",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_eating",
+          "record": "Eating, drinking and swallowing",
+          "asked": "Eating, drinking and swallowing",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_sensory",
+          "record": "Sensory profile",
+          "asked": "Sensory profile",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_distress",
+          "record": "Observable distress and what helps",
+          "asked": "What is seen, what it may communicate, and what helps",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_seizures",
+          "record": "Seizures and rescue plan",
+          "asked": "Seizures and rescue plan",
+          "type": "long_text",
+          "assessorOnly": true,
+          "help": "Attach the authorised rescue plan where one exists."
+        },
+        {
+          "id": "nd_medicines",
+          "record": "Medicines",
+          "asked": "Medicines specific to the child's needs",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_equipment",
+          "record": "Equipment",
+          "asked": "Equipment",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_sleep",
+          "record": "Sleep",
+          "asked": "Sleep",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_school",
+          "record": "School and therapies",
+          "asked": "School and therapies",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_safety",
+          "record": "Safety",
+          "asked": "Safety",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nd_plans",
+          "record": "Professional plans held",
+          "asked": "Professional plans held",
+          "type": "upload",
+          "assessorOnly": true
+        },
+        {
+          "id": "nd_participation",
+          "record": "Participation goals",
+          "asked": "Participation goals",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "nd_worker",
+          "record": "Capabilities required of the worker",
+          "asked": "Capabilities required of the worker",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "a_synthesis",
+      "title": "Assessor synthesis and recommendations",
+      "when": "always",
+      "fields": [
+        {
+          "id": "ay_summary",
+          "record": "Professional summary",
+          "asked": "Concise professional summary",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_needs",
+          "record": "Confirmed needs",
+          "asked": "Confirmed needs",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_strengths",
+          "record": "Strengths and independence to preserve",
+          "asked": "Strengths and independence to preserve",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_goals",
+          "record": "Person and family goals",
+          "asked": "Goals in the person's or family's own terms",
+          "type": "repeatable",
+          "assessorOnly": true,
+          "required": true,
+          "items": [
+            "Goal",
+            "Observable target",
+            "Baseline",
+            "Review measure"
+          ]
+        },
+        {
+          "id": "ay_risks",
+          "record": "Risks and required controls",
+          "asked": "Risks and the controls required",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_model",
+          "record": "Recommended service model",
+          "asked": "Recommended service model",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_capabilities",
+          "record": "Recommended professional type and capabilities",
+          "asked": "Recommended professional type and capabilities",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_pattern",
+          "record": "Proposed visit pattern",
+          "asked": "Proposed visit pattern",
+          "type": "weekly_pattern",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_hours",
+          "record": "Proposed hours each week",
+          "asked": "Proposed hours each week",
+          "type": "number",
+          "assessorOnly": true
+        },
+        {
+          "id": "ay_equipment",
+          "record": "Equipment and supplies",
+          "asked": "Equipment and supplies needed",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ay_further",
+          "record": "Further information or professional review needed",
+          "asked": "Further information or professional review needed",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ay_actions_taken",
+          "record": "Immediate actions already taken",
+          "asked": "Immediate actions already taken",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "ay_proceed",
+          "record": "Suitability to proceed",
+          "asked": "Is it suitable to proceed?",
+          "type": "choice",
+          "assessorOnly": true,
+          "required": true,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "yes_conditions",
+              "label": "Yes, with the conditions stated"
+            },
+            {
+              "value": "no",
+              "label": "No, not at this time"
+            }
+          ]
+        },
+        {
+          "id": "ay_proceed_reason",
+          "record": "Reasons",
+          "asked": "Reasons for that view",
+          "type": "long_text",
+          "assessorOnly": true,
+          "required": true
+        },
+        {
+          "id": "ay_lead_decision",
+          "record": "Items requiring a Clinical Lead decision",
+          "asked": "Items requiring a Clinical Lead decision",
+          "type": "long_text",
+          "assessorOnly": true
+        }
+      ]
+    },
+    {
+      "id": "a_completion",
+      "title": "Completion",
+      "when": "always",
+      "fields": [
+        {
+          "id": "az_outstanding",
+          "record": "Anything not assessed and why",
+          "asked": "Anything not assessed today, and why",
+          "type": "long_text",
+          "assessorOnly": true
+        },
+        {
+          "id": "az_uploads",
+          "record": "Documents collected at the visit",
+          "asked": "Documents collected at the visit",
+          "type": "upload",
+          "assessorOnly": true
+        },
+        {
+          "id": "az_declaration",
+          "record": "Assessor declaration",
+          "asked": "I confirm this is my own professional assessment and is accurate.",
+          "type": "choice",
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "no",
+              "label": "No"
+            }
+          ],
+          "assessorOnly": true,
+          "required": true
+        }
+      ]
+    }
+  ]
+}

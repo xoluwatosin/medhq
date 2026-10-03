@@ -1,0 +1,732 @@
+{
+  "sections": [
+    {
+      "id": "core_a",
+      "title": "About the person receiving care",
+      "when": "always",
+      "fields": [
+        {
+          "id": "person_name",
+          "record": "Name",
+          "asked": "What is their full name?",
+          "youAsked": "What is your full name?",
+          "type": "text",
+          "required": true,
+          "help": null
+        },
+        {
+          "id": "preferred_name",
+          "record": "Preferred name",
+          "asked": "What do they prefer to be called?",
+          "youAsked": "What do you prefer to be called?",
+          "type": "text",
+          "required": false,
+          "help": "The name the nurse should use when they arrive."
+        },
+        {
+          "id": "age_years",
+          "record": "Age",
+          "asked": "How old are they?",
+          "youAsked": "How old are you?",
+          "type": "number",
+          "required": true,
+          "help": null
+        },
+        {
+          "id": "lives_with",
+          "record": "Household",
+          "asked": "Who lives with them?",
+          "youAsked": "Who lives with you?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "lives_alone", "label": "They live alone", "youLabel": "I live alone", "exclusive": true },
+            { "value": "spouse_partner", "label": "Spouse or partner" },
+            { "value": "their_children", "label": "Their children", "youLabel": "My children" },
+            { "value": "grandchildren", "label": "Grandchildren" },
+            { "value": "another_relative", "label": "Another relative" },
+            { "value": "household_staff", "label": "Household staff" },
+            { "value": "other", "label": "Other" }
+          ]
+        },
+        {
+          "id": "preferred_language",
+          "record": "Preferred language",
+          "asked": "Which language would they like the care worker to speak?",
+          "youAsked": "Which language would you like the care worker to speak?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "english", "label": "English" },
+            { "value": "yoruba", "label": "Yoruba" },
+            { "value": "igbo", "label": "Igbo" },
+            { "value": "hausa", "label": "Hausa" },
+            { "value": "pidgin", "label": "Nigerian Pidgin" },
+            { "value": "french", "label": "French" },
+            { "value": "other", "label": "Other" }
+          ]
+        },
+        {
+          "id": "sensory_difficulties",
+          "record": "Vision, hearing or speech",
+          "asked": "Do they have any difficulty with vision, hearing or speech?",
+          "youAsked": "Do you have any difficulty with vision, hearing or speech?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "none", "label": "None", "exclusive": true },
+            { "value": "wears_glasses", "label": "Wears glasses", "youLabel": "I wear glasses" },
+            { "value": "hearing_aid", "label": "Uses a hearing aid", "youLabel": "I use a hearing aid" },
+            { "value": "difficulty_hearing", "label": "Difficulty hearing" },
+            { "value": "difficulty_speaking", "label": "Difficulty speaking" },
+            { "value": "other", "label": "Other" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_b_adult",
+      "title": "Decisions and who is asking",
+      "when": { "clientGroup": ["adult"] },
+      "fields": [
+        {
+          "id": "decisions_own",
+          "record": "Makes own care decisions",
+          "asked": "Do they make their own decisions about their care?",
+          "youAsked": "Do you make your own decisions about your care?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" },
+            { "value": "becoming_difficult", "label": "Sometimes, or it is becoming difficult" }
+          ]
+        },
+        {
+          "id": "decision_maker",
+          "record": "Decision maker",
+          "asked": "Who makes decisions on their behalf?",
+          "type": "contact",
+          "required": false,
+          "help": "Their name, how they are related, and the arrangement in place.",
+          "contactFields": ["name", "relationship", "arrangement"],
+          "showWhen": { "field": "decisions_own", "in": ["no", "becoming_difficult"] }
+        },
+        {
+          "id": "aware_of_visit",
+          "record": "Aware of the visit",
+          "asked": "Do they know that you have asked us to visit?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "hideWhenFiller": ["client"],
+          "options": [
+            { "value": "yes_wants_visit", "label": "Yes, and they want the visit" },
+            { "value": "yes_unsure", "label": "Yes, but they are unsure" },
+            { "value": "not_yet", "label": "No, not yet" }
+          ]
+        },
+        {
+          "id": "filler_contact_adult",
+          "record": "Person completing this form",
+          "asked": "Your name and how you are related to them",
+          "type": "contact",
+          "required": true,
+          "help": null,
+          "contactFields": ["name", "relationship"],
+          "hideWhenFiller": ["client"]
+        }
+      ]
+    },
+    {
+      "id": "core_b_child",
+      "title": "Parental responsibility",
+      "when": { "clientGroup": ["child"] },
+      "fields": [
+        {
+          "id": "is_parent_guardian",
+          "record": "Filler is parent or guardian",
+          "asked": "Are you the child's parent or legal guardian?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" }
+          ]
+        },
+        {
+          "id": "parental_responsibility_holder",
+          "record": "Holds parental responsibility",
+          "asked": "Who holds parental responsibility?",
+          "type": "contact",
+          "required": false,
+          "help": null,
+          "contactFields": ["name", "relationship", "arrangement"],
+          "showWhen": { "field": "is_parent_guardian", "in": ["no"] }
+        },
+        {
+          "id": "parental_responsibility_aware",
+          "record": "Parental responsibility holder aware",
+          "asked": "Are they aware of this request?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "is_parent_guardian", "in": ["no"] },
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true }
+          ]
+        },
+        {
+          "id": "child_aware",
+          "record": "Child aware of the visit",
+          "asked": "Does your child know a nurse will visit, and how do they feel about it?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "options": [
+            { "value": "knows_happy", "label": "They know and are happy about it" },
+            { "value": "knows_unsure", "label": "They know and are unsure" },
+            { "value": "not_aware", "label": "They do not know yet" },
+            { "value": "too_young", "label": "Too young to say" }
+          ]
+        },
+        {
+          "id": "child_aware_note",
+          "record": "Note about how the child feels",
+          "asked": "Anything you would like the nurse to know about that",
+          "type": "long_text",
+          "required": false,
+          "help": null
+        },
+        {
+          "id": "filler_contact_child",
+          "record": "Person completing this form",
+          "asked": "Your name and how you are related to them",
+          "type": "contact",
+          "required": true,
+          "help": null,
+          "contactFields": ["name", "relationship"]
+        }
+      ]
+    },
+    {
+      "id": "core_b_maternal",
+      "title": "Who is asking",
+      "when": { "clientGroup": ["maternal"] },
+      "skipWhenFiller": ["client"],
+      "fields": [
+        {
+          "id": "maternal_aware",
+          "record": "Aware of the visit",
+          "asked": "Do they know you are arranging this, and do they want it?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "options": [
+            { "value": "yes_wants_it", "label": "Yes, and they want it" },
+            { "value": "yes_unsure", "label": "Yes, but they are unsure" },
+            { "value": "not_yet", "label": "No, not yet" }
+          ]
+        },
+        {
+          "id": "filler_contact_maternal",
+          "record": "Person completing this form",
+          "asked": "Your name and how you are related to them",
+          "type": "contact",
+          "required": true,
+          "help": null,
+          "contactFields": ["name", "relationship"]
+        }
+      ]
+    },
+    {
+      "id": "core_c",
+      "title": "Current health and circumstances",
+      "when": "always",
+      "fields": [
+        {
+          "id": "situation",
+          "record": "What is happening",
+          "asked": "In your own words, what is happening and what support would you like from us?",
+          "type": "long_text",
+          "required": true,
+          "help": null
+        },
+        {
+          "id": "conditions",
+          "record": "Diagnosed conditions",
+          "asked": "Has a doctor diagnosed any of these?",
+          "youAsked": "Has a doctor diagnosed you with any of these?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "none_known", "label": "None that we know of", "exclusive": true },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true },
+            { "value": "high_blood_pressure", "label": "High blood pressure" },
+            { "value": "diabetes", "label": "Diabetes" },
+            { "value": "stroke", "label": "Stroke" },
+            { "value": "heart_condition", "label": "Heart condition" },
+            { "value": "asthma_or_copd", "label": "Asthma or a lung condition" },
+            { "value": "kidney_disease", "label": "Kidney disease" },
+            { "value": "sickle_cell", "label": "Sickle cell" },
+            { "value": "cancer", "label": "Cancer" },
+            { "value": "dementia", "label": "Dementia or memory loss" },
+            { "value": "arthritis", "label": "Arthritis or joint problems" },
+            { "value": "mental_health", "label": "A mental health condition" },
+            { "value": "other", "label": "Other" }
+          ]
+        },
+        {
+          "id": "hospital_recent",
+          "record": "Hospital in last three months",
+          "asked": "Have they been in hospital in the last three months?",
+          "youAsked": "Have you been in hospital in the last three months?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" },
+            { "value": "currently", "label": "They are in hospital now", "youLabel": "I am in hospital now" }
+          ]
+        },
+        {
+          "id": "hospital_which",
+          "record": "Hospital",
+          "asked": "Which hospital, and roughly when?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "hospital_recent", "in": ["yes", "currently"] }
+        },
+        {
+          "id": "discharge_letter",
+          "record": "Discharge letter",
+          "asked": "If you have a discharge letter, you can add it here",
+          "type": "upload",
+          "required": false,
+          "help": "A clear photograph is fine.",
+          "showWhen": { "field": "hospital_recent", "in": ["yes", "currently"] }
+        },
+        {
+          "id": "doctor_involved",
+          "record": "Doctor involved",
+          "asked": "Is a doctor already involved in their care?",
+          "youAsked": "Is a doctor already involved in your care?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true }
+          ]
+        },
+        {
+          "id": "doctor_name",
+          "record": "Doctor name",
+          "asked": "What is the doctor's name?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "doctor_involved", "in": ["yes"] }
+        },
+        {
+          "id": "doctor_where",
+          "record": "Doctor location",
+          "asked": "Where do they practise?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "doctor_involved", "in": ["yes"] }
+        },
+        {
+          "id": "regular_medicines",
+          "record": "Regular medicines",
+          "asked": "Do they take any regular medicines?",
+          "youAsked": "Do you take any regular medicines?",
+          "type": "choice",
+          "required": false,
+          "help": "The nurse will write the full list down at the visit.",
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true }
+          ]
+        },
+        {
+          "id": "allergies",
+          "record": "Allergies",
+          "asked": "Do they have any allergies?",
+          "youAsked": "Do you have any allergies?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "none_known", "label": "None known", "exclusive": true },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true },
+            { "value": "yes", "label": "Yes" }
+          ]
+        },
+        {
+          "id": "allergies_detail",
+          "record": "Allergy detail",
+          "asked": "Which allergies, and what happens?",
+          "type": "long_text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "allergies", "in": ["yes"] }
+        },
+        {
+          "id": "preferred_hospital",
+          "record": "Preferred hospital in an emergency",
+          "asked": "Which hospital would you prefer us to use in an emergency?",
+          "type": "text",
+          "required": false,
+          "help": null
+        }
+      ]
+    },
+    {
+      "id": "core_d",
+      "title": "Family and other support",
+      "when": "always",
+      "fields": [
+        {
+          "id": "existing_household_help",
+          "record": "Existing household help",
+          "asked": "Is there already a nanny, caregiver or other household staff?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" }
+          ]
+        },
+        {
+          "id": "who_helps",
+          "record": "Who else helps",
+          "asked": "Who else helps at the moment?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "nobody", "label": "Nobody at the moment", "exclusive": true },
+            { "value": "spouse_partner", "label": "Spouse or partner" },
+            { "value": "their_children", "label": "Their children" },
+            { "value": "another_relative", "label": "Another relative" },
+            { "value": "neighbour_or_friend", "label": "A neighbour or friend" },
+            { "value": "nanny_or_caregiver", "label": "A nanny or caregiver" },
+            { "value": "household_staff", "label": "Household staff" }
+          ]
+        },
+        {
+          "id": "help_frequency",
+          "record": "How often help is given",
+          "asked": "How often do they help?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "showWhen": {
+            "field": "who_helps",
+            "in": ["spouse_partner", "their_children", "another_relative", "neighbour_or_friend", "nanny_or_caregiver", "household_staff"]
+          },
+          "options": [
+            { "value": "lives_in", "label": "They live in" },
+            { "value": "every_day", "label": "Every day" },
+            { "value": "most_days", "label": "Most days" },
+            { "value": "weekly", "label": "Once or twice a week" },
+            { "value": "occasionally", "label": "Now and then" }
+          ]
+        },
+        {
+          "id": "alternate_contact",
+          "record": "Second contact",
+          "asked": "Who should we contact if we cannot reach you?",
+          "type": "contact",
+          "required": false,
+          "help": null,
+          "contactFields": ["name", "relationship", "phone"]
+        },
+        {
+          "id": "arranged_from_abroad",
+          "record": "Arranged from outside Nigeria",
+          "asked": "Is anyone arranging this care from outside Nigeria?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" }
+          ]
+        },
+        {
+          "id": "abroad_country",
+          "record": "Country",
+          "asked": "Which country are they in?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "arranged_from_abroad", "in": ["yes"] }
+        },
+        {
+          "id": "abroad_best_time",
+          "record": "Best time to reach them",
+          "asked": "What is the best time to reach them?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "arranged_from_abroad", "in": ["yes"] }
+        }
+      ]
+    },
+    {
+      "id": "core_e",
+      "title": "Care arrangements",
+      "when": "always",
+      "fields": [
+        {
+          "id": "days_wanted",
+          "record": "Days wanted",
+          "asked": "Which days do you have in mind?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "every_day", "label": "Every day", "exclusive": true },
+            { "value": "monday", "label": "Monday" },
+            { "value": "tuesday", "label": "Tuesday" },
+            { "value": "wednesday", "label": "Wednesday" },
+            { "value": "thursday", "label": "Thursday" },
+            { "value": "friday", "label": "Friday" },
+            { "value": "saturday", "label": "Saturday" },
+            { "value": "sunday", "label": "Sunday" },
+            { "value": "not_sure", "label": "Not sure yet", "exclusive": true }
+          ]
+        },
+        {
+          "id": "hours_wanted",
+          "record": "Hours wanted",
+          "asked": "Which hours do you have in mind?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "mornings", "label": "Mornings" },
+            { "value": "afternoons", "label": "Afternoons" },
+            { "value": "evenings", "label": "Evenings" },
+            { "value": "overnight", "label": "Overnight" },
+            { "value": "full_day", "label": "The full day" },
+            { "value": "not_sure", "label": "Not sure yet", "exclusive": true }
+          ]
+        },
+        {
+          "id": "cover_type",
+          "record": "Type of cover",
+          "asked": "What type of cover are you considering?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "visits", "label": "Visits" },
+            { "value": "daytime", "label": "Daytime care" },
+            { "value": "live_in", "label": "Live-in care" },
+            { "value": "night", "label": "Night care" },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true }
+          ]
+        },
+        {
+          "id": "start_when",
+          "record": "Preferred start",
+          "asked": "When would you like care to start?",
+          "type": "date",
+          "required": false,
+          "help": null
+        },
+        {
+          "id": "expected_duration",
+          "record": "Expected duration",
+          "asked": "How long do you expect to need support?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "under_a_month", "label": "Less than a month" },
+            { "value": "one_to_three_months", "label": "One to three months" },
+            { "value": "three_to_six_months", "label": "Three to six months" },
+            { "value": "six_months_plus", "label": "More than six months" },
+            { "value": "ongoing", "label": "Ongoing" },
+            { "value": "not_sure", "label": "Not sure", "exclusive": true }
+          ]
+        },
+        {
+          "id": "budget_band",
+          "record": "Budget",
+          "asked": "Which of these is closest to the budget you have in mind?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "optionsFrom": "budget_bands",
+          "options": []
+        },
+        {
+          "id": "heard_about",
+          "record": "How they heard about us",
+          "asked": "How did you hear about Medic Connect?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "search", "label": "A search engine" },
+            { "value": "social", "label": "Social media" },
+            { "value": "friend_or_family", "label": "A friend or family member" },
+            { "value": "hospital_or_clinic", "label": "A hospital or clinic" },
+            { "value": "employer", "label": "An employer or insurer" },
+            { "value": "other", "label": "Other" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_f",
+      "title": "Preparing for the visit",
+      "when": "always",
+      "fields": [
+        {
+          "id": "address_line",
+          "record": "Address",
+          "asked": "What is the home address, including a nearby landmark?",
+          "type": "long_text",
+          "required": true,
+          "help": null
+        },
+        {
+          "id": "lga",
+          "record": "Area",
+          "asked": "Which area is that?",
+          "type": "choice",
+          "required": true,
+          "help": null,
+          "options": [
+            { "value": "agege", "label": "Agege" },
+            { "value": "ajeromi_ifelodun", "label": "Ajeromi-Ifelodun" },
+            { "value": "alimosho", "label": "Alimosho" },
+            { "value": "amuwo_odofin", "label": "Amuwo-Odofin" },
+            { "value": "apapa", "label": "Apapa" },
+            { "value": "badagry", "label": "Badagry" },
+            { "value": "epe", "label": "Epe" },
+            { "value": "eti_osa", "label": "Eti-Osa" },
+            { "value": "ibeju_lekki", "label": "Ibeju-Lekki" },
+            { "value": "ifako_ijaiye", "label": "Ifako-Ijaiye" },
+            { "value": "ikeja", "label": "Ikeja" },
+            { "value": "ikorodu", "label": "Ikorodu" },
+            { "value": "kosofe", "label": "Kosofe" },
+            { "value": "lagos_island", "label": "Lagos Island" },
+            { "value": "lagos_mainland", "label": "Lagos Mainland" },
+            { "value": "mushin", "label": "Mushin" },
+            { "value": "ojo", "label": "Ojo" },
+            { "value": "oshodi_isolo", "label": "Oshodi-Isolo" },
+            { "value": "shomolu", "label": "Shomolu" },
+            { "value": "surulere", "label": "Surulere" },
+            { "value": "outside_lagos", "label": "Outside Lagos" }
+          ]
+        },
+        {
+          "id": "lga_other",
+          "record": "Area outside Lagos",
+          "asked": "Which town or state is that?",
+          "type": "text",
+          "required": false,
+          "help": null,
+          "showWhen": { "field": "lga", "in": ["outside_lagos"] }
+        },
+        {
+          "id": "who_at_home",
+          "record": "Who will be at home",
+          "asked": "Who will be at home when the nurse visits?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "the_person", "label": "The person receiving care" },
+            { "value": "you", "label": "You" },
+            { "value": "another_relative", "label": "Another relative" },
+            { "value": "household_staff", "label": "Household staff" },
+            { "value": "not_decided", "label": "Not decided yet", "exclusive": true }
+          ]
+        },
+        {
+          "id": "visit_days",
+          "record": "Days that suit for the visit",
+          "asked": "Which days would suit you for the visit?",
+          "type": "multi",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "monday", "label": "Monday" },
+            { "value": "tuesday", "label": "Tuesday" },
+            { "value": "wednesday", "label": "Wednesday" },
+            { "value": "thursday", "label": "Thursday" },
+            { "value": "friday", "label": "Friday" },
+            { "value": "saturday", "label": "Saturday" },
+            { "value": "sunday", "label": "Sunday" },
+            { "value": "any_day", "label": "Any day", "exclusive": true }
+          ]
+        },
+        {
+          "id": "visit_time",
+          "record": "Time of day for the visit",
+          "asked": "What time of day suits best?",
+          "type": "choice",
+          "required": false,
+          "help": null,
+          "options": [
+            { "value": "morning", "label": "Morning" },
+            { "value": "afternoon", "label": "Afternoon" },
+            { "value": "evening", "label": "Evening" },
+            { "value": "flexible", "label": "Any time" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consent",
+      "title": "Before you send this",
+      "when": "always",
+      "intro": "Your answers, and any documents or photographs you upload, are held as part of your care record. They are used by the nurse who visits and by the clinical team arranging your care, and shared with the care worker assigned to you where they need to know. We will not share them for any other purpose without asking you. You can ask to see, correct or delete what we hold: see our privacy notice.",
+      "introLinks": [{ "text": "privacy notice", "href": "https://www.medicconnect.co/privacy" }],
+      "fields": [
+        {
+          "id": "consent_hold",
+          "record": "Consent to hold answers",
+          "asked": "I am happy for Medic Connect to hold these answers to prepare for the visit",
+          "type": "choice",
+          "required": true,
+          "blocking": true,
+          "help": null,
+          "options": [{ "value": "yes", "label": "I am happy for Medic Connect to hold these answers to prepare for the visit" }]
+        },
+        {
+          "id": "consent_authority",
+          "record": "Authority to give details",
+          "asked": "I have the authority to provide these details on their behalf",
+          "type": "choice",
+          "required": true,
+          "blocking": true,
+          "help": null,
+          "hideWhenFiller": ["client"],
+          "options": [{ "value": "yes", "label": "I have the authority to provide these details on their behalf" }]
+        }
+      ]
+    }
+  ]
+}

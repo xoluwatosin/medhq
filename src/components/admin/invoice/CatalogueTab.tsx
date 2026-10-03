@@ -1,0 +1,271 @@
+import { useState } from "react";
+import { useCatalogue } from "@/hooks/useCatalogue";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
+import { Plus, Trash2, RotateCcw, Pencil, Check, X } from "lucide-react";
+
+export function CatalogueTab() {
+  const {
+    categories,
+    services,
+    isLoading,
+    seedDefaults,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addService,
+    updateService,
+    deleteService,
+  } = useCatalogue();
+
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editingCatName, setEditingCatName] = useState("");
+  const [newServiceData, setNewServiceData] = useState<Record<string, { name: string; price: string }>>({});
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    addCategory.mutate(newCategoryName.trim(), {
+      onSuccess: () => {
+        setNewCategoryName("");
+        toast.success("Category added");
+      },
+      onError: (e) => toast.error(e.message),
+    });
+  };
+
+  const handleResetDefaults = () => {
+    seedDefaults.mutate(undefined, {
+      onSuccess: () => toast.success("Catalogue reset to defaults"),
+      onError: (e) => toast.error(e.message),
+    });
+  };
+
+  const startEditCategory = (id: string, name: string) => {
+    setEditingCatId(id);
+    setEditingCatName(name);
+  };
+
+  const saveEditCategory = () => {
+    if (!editingCatId || !editingCatName.trim()) return;
+    updateCategory.mutate(
+      { id: editingCatId, name: editingCatName.trim() },
+      {
+        onSuccess: () => {
+          setEditingCatId(null);
+          toast.success("Category updated");
+        },
+        onError: (e) => toast.error(e.message),
+      }
+    );
+  };
+
+  const handleAddService = (categoryId: string) => {
+    const svcData = newServiceData[categoryId];
+    if (!svcData?.name?.trim()) return;
+    addService.mutate(
+      { categoryId, name: svcData.name.trim(), price: parseFloat(svcData.price) || 0 },
+      {
+        onSuccess: () => {
+          setNewServiceData((prev) => ({ ...prev, [categoryId]: { name: "", price: "" } }));
+          toast.success("Service added");
+        },
+        onError: (e) => toast.error(e.message),
+      }
+    );
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Loading catalogue...</div>;
+  }
+
+  return (
+    <div className="space-y-6 no-print">
+      {/* Actions bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex gap-2 flex-1 min-w-[200px]">
+          <Input
+            placeholder="New category name..."
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+          />
+          <Button onClick={handleAddCategory} disabled={addCategory.isPending}>
+            <Plus className="h-4 w-4 mr-1" /> Add Category
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleResetDefaults}
+          disabled={seedDefaults.isPending}
+        >
+          <RotateCcw className="h-4 w-4 mr-1" /> Reset to Defaults
+        </Button>
+      </div>
+
+      {/* Category cards */}
+      {categories.map((cat) => {
+        const catServices = services.filter((s) => s.category_id === cat.id);
+        const svcInput = newServiceData[cat.id] ?? { name: "", price: "" };
+
+        return (
+          <Card key={cat.id}>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              {editingCatId === cat.id ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editingCatName}
+                    onChange={(e) => setEditingCatName(e.target.value)}
+                    className="h-8 w-60"
+                    onKeyDown={(e) => e.key === "Enter" && saveEditCategory()}
+                  />
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={saveEditCategory}>
+                    <Check className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCatId(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-base">{cat.name}</CardTitle>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditCategory(cat.id, cat.name)}>
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() =>
+                  deleteCategory.mutate(cat.id, {
+                    onSuccess: () => toast.success("Category deleted"),
+                    onError: (e) => toast.error(e.message),
+                  })
+                }
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service Name</TableHead>
+                    <TableHead className="w-32">Price (₦)</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {catServices.map((svc) => (
+                    <TableRow key={svc.id}>
+                      <TableCell>
+                        <Input
+                          defaultValue={svc.name}
+                          onBlur={(e) => {
+                            if (e.target.value !== svc.name)
+                              updateService.mutate({ id: svc.id, name: e.target.value });
+                          }}
+                          className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          defaultValue={svc.price}
+                          onBlur={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (val !== svc.price)
+                              updateService.mutate({ id: svc.id, price: val });
+                          }}
+                          className="border-0 bg-transparent p-0 h-auto w-28 font-mono focus-visible:ring-0"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() =>
+                            deleteService.mutate(svc.id, {
+                              onSuccess: () => toast.success("Service deleted"),
+                              onError: (e) => toast.error(e.message),
+                            })
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {/* Add new service row */}
+                  <TableRow>
+                    <TableCell>
+                      <Input
+                        placeholder="New service name..."
+                        value={svcInput.name}
+                        onChange={(e) =>
+                          setNewServiceData((prev) => ({
+                            ...prev,
+                            [cat.id]: { ...svcInput, name: e.target.value },
+                          }))
+                        }
+                        onKeyDown={(e) => e.key === "Enter" && handleAddService(cat.id)}
+                        className="border-0 bg-transparent p-0 h-auto focus-visible:ring-0"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={svcInput.price}
+                        onChange={(e) =>
+                          setNewServiceData((prev) => ({
+                            ...prev,
+                            [cat.id]: { ...svcInput, price: e.target.value },
+                          }))
+                        }
+                        onKeyDown={(e) => e.key === "Enter" && handleAddService(cat.id)}
+                        className="border-0 bg-transparent p-0 h-auto w-28 font-mono focus-visible:ring-0"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleAddService(cat.id)}
+                      >
+                        <Plus className="h-3.5 w-3.5 text-primary" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {categories.length === 0 && (
+        <div className="text-center py-12 space-y-3">
+          <p className="text-muted-foreground">No service categories yet.</p>
+          <Button onClick={handleResetDefaults} disabled={seedDefaults.isPending}>
+            <RotateCcw className="h-4 w-4 mr-1" /> Load Default Catalogue
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

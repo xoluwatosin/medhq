@@ -1,0 +1,59 @@
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: var(--font-sans); fill: hsl(var(--foreground)); }
+    .lbl { font-size: 14px; font-weight: 480; }
+    .note { font-size: 12px; fill: hsl(var(--muted-foreground)); }
+    .tag { font-size: 11px; fill: hsl(var(--muted-foreground)); }
+    .box { fill: none; stroke: hsl(var(--muted-foreground)); stroke-width: 1; }
+    .zone { fill: none; stroke: hsl(var(--border)); stroke-width: 1; stroke-dasharray: 4 3; }
+    .wire { stroke: hsl(var(--muted-foreground)); stroke-width: 1; fill: none; }
+    .acc { fill: none; stroke: hsl(var(--accent)); stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L8 4 L0 8" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <rect class="zone" x="8" y="16" width="188" height="176" rx="8"/>
+  <text class="tag" x="18" y="34">authored once</text>
+
+  <rect class="box" x="26" y="46" width="152" height="46" rx="8"/>
+  <text class="lbl" x="42" y="68">Contract template</text>
+  <text class="note" x="42" y="84">wording and shared terms</text>
+
+  <rect class="box" x="26" y="112" width="152" height="62" rx="8"/>
+  <text class="lbl" x="42" y="134">Annex library</text>
+  <text class="note" x="42" y="150">edited in the app, or</text>
+  <text class="note" x="42" y="164">an attached file</text>
+
+  <line class="wire" x1="102" y1="112" x2="102" y2="94" marker-end="url(#a)"/>
+
+  <line class="wire" x1="196" y1="70" x2="248" y2="70" marker-end="url(#a)"/>
+  <rect class="box" x="252" y="40" width="150" height="58" rx="8"/>
+  <text class="lbl" x="268" y="64">Accepted offers</text>
+  <text class="note" x="268" y="80">the people to hire</text>
+
+  <line class="wire" x1="327" y1="98" x2="327" y2="124" marker-end="url(#a)"/>
+
+  <rect class="acc" x="216" y="128" width="222" height="86" rx="8"/>
+  <text class="lbl" x="234" y="152">Review table</text>
+  <text class="note" x="234" y="170">one row per person, prefilled</text>
+  <text class="note" x="234" y="186">missing terms flagged</text>
+  <text class="note" x="234" y="202">open any one in full</text>
+
+  <line class="wire" x1="438" y1="171" x2="486" y2="171" marker-end="url(#a)"/>
+  <rect class="box" x="490" y="140" width="140" height="62" rx="8"/>
+  <text class="lbl" x="506" y="164">Issue to all</text>
+  <text class="note" x="506" y="180">one contract each,</text>
+  <text class="note" x="506" y="194">wording frozen</text>
+
+  <line class="wire" x1="560" y1="140" x2="560" y2="106" marker-end="url(#a)"/>
+  <rect class="box" x="466" y="46" width="164" height="58" rx="8"/>
+  <text class="lbl" x="482" y="70">Sign, file, unchanged</text>
+  <text class="note" x="482" y="86">same page, PDF, record</text>
+
+  <circle cx="228" cy="128" r="9" fill="hsl(var(--accent))"/>
+  <text x="228" y="132" text-anchor="middle" font-size="11" font-weight="600" fill="hsl(var(--accent-foreground))">1</text>
+  <text class="note" x="216" y="240">1. The only new decision point: confirm the terms the template could not know.</text>
+</svg>
