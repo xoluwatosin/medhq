@@ -6,8 +6,7 @@ import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
 import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
 import { KitMain } from "@/components/kit/KitLayout";
-import { Watermark } from "@/components/mc/brand";
-import { MOBILE_HEROES } from "./care-at-home-mobile-mocks";
+import { Highlight, Watermark } from "@/components/mc/brand";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
 
@@ -30,7 +29,8 @@ const homeServices: ServiceCard[] = [
   { title: "Care from abroad", line: "One contact in Nigeria for families overseas.", href: "/care-from-abroad", price: "", art: art.diasporaSon },
 ];
 
-const mobileMock = () => MOBILE_HEROES[new URLSearchParams(window.location.search).get("m") ?? ""];
+const lead =
+  "Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000 care needs assessment.";
 
 const CareAtHome = () => (
   <div className="min-h-dvh bg-background animate-fade-in">
@@ -44,19 +44,36 @@ const CareAtHome = () => (
 
     {/* Shorter navy hero; on desktop the first row of service cards hangs across
         its bottom edge, the way the home page doors do. */}
-    {(() => { const M = mobileMock(); return M ? <M.Hero /> : null; })()}
-    <section className={`relative -mt-[80px] overflow-hidden bg-navy pt-[112px] sm:-mt-[114px] sm:pt-[150px] ${mobileMock() ? "hidden lg:block" : ""}`}>
+    {/* Phones and tablets: big plain type with the family at the door beside it. */}
+    <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px] lg:hidden">
+      <Watermark glyph="o" size={360} opacity={0.12} className="-right-[150px] -top-[90px]" />
+      <div className="relative mx-auto max-w-[720px] px-[22px] pb-12 sm:px-[50px]">
+        <h1 className="text-[44px] leading-[0.96] tracking-[-0.06em] !text-white min-[375px]:text-[50px] sm:max-w-[9ch] sm:text-[72px]">
+          Care that comes to your <Highlight>door</Highlight>.
+        </h1>
+        <p className="mt-6 max-w-[52%] text-[15px] leading-[1.55] text-body-navy sm:max-w-[34ch] sm:text-[18px]">{lead}</p>
+      </div>
+      {/* The family stands on the bottom edge of the band, beside the paragraph,
+          so neither the headline nor the paragraph ever runs into it. */}
+      <img
+        src={art.familyDoorNurse}
+        alt=""
+        className="pointer-events-none absolute bottom-0 right-2 h-[170px] max-w-[42%] object-contain object-right-bottom sm:right-[50px] sm:h-[250px]"
+      />
+    </section>
+
+    {/* Desktop: shorter navy hero; the first row of service cards hangs across
+        its bottom edge, the way the home page doors do. */}
+    <section className="relative -mt-[114px] hidden overflow-hidden bg-navy pt-[150px] lg:block">
       <Watermark glyph="o" size={620} opacity={0.12} className="-right-[220px] -top-[160px]" />
-      <div className="relative mx-auto max-w-[920px] px-[22px] pb-10 text-center sm:px-[50px] lg:pb-[200px]">
+      <div className="relative mx-auto max-w-[920px] px-[50px] pb-[200px] text-center">
+        {/* Only one hero shows at a time; the hidden one is display:none, so the page has one visible h1. */}
         <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" />
-        <p className="mx-auto mt-6 max-w-[58ch] text-[17px] leading-[1.6] text-body-navy sm:text-[20px]">
-          Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000
-          care needs assessment.
-        </p>
+        <p className="mx-auto mt-6 max-w-[58ch] text-[20px] leading-[1.6] text-body-navy">{lead}</p>
       </div>
     </section>
 
-    <KitMain className={`relative lg:-mt-[160px] lg:pt-0 ${mobileMock()?.overlap ? "-mt-[64px] pt-0" : "pt-10"}`}>
+    <KitMain className="relative pt-10 lg:-mt-[160px] lg:pt-0">
       <section aria-labelledby="services-heading" className="relative">
         {/* The line the first row of cards hangs from. */}
         <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />

@@ -30,7 +30,7 @@ const Price = ({ s, size }: { s: ServiceCard; size: "tag" | "tile" }) =>
     size === "tag" ? (
       <span className="block max-w-[96px] text-[13px] font-extrabold leading-tight text-navy">Quoted after assessment</span>
     ) : (
-      <span className="text-[12px] font-bold text-muted-foreground">Quoted after assessment</span>
+      <span className="block text-[12px] font-bold leading-tight text-muted-foreground">Quoted after assessment</span>
     )
   );
 
