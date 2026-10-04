@@ -90,7 +90,11 @@ begin
     ('analytics-refresh', '*/15 * * * *', 'select private.analytics_refresh_all(); select private.analytics_check_alerts();'),
     ('followup-queue-sweep', '0 9 * * *', 'select private.analytics_refresh_all(); select private.followup_queue_sweep();'),
     ('followup-queue-dispatch', '30 9 * * *', 'select private.followup_queue_dispatch();'),
-    ('metrics-audit', '45 8 * * *', 'select private.metrics_audit_run();')
+    ('metrics-audit', '45 8 * * *', 'select private.metrics_audit_run();'),
+    -- System health (supabase/migrations/20261003233000_system_health_and_alerts.sql).
+    ('ops-run-checks', '*/5 * * * *', 'select private.ops_run_checks();'),
+    ('ops-probe', '*/30 * * * *', $c$select private.ops_call_function('ops-probe');$c$),
+    ('ops-daily-digest', '45 6 * * *', $c$select private.ops_call_function('send-admin-alert', '{"mode": "digest"}'::jsonb);$c$)
   ) as t(name, schedule, command)
   loop
     perform cron.alter_job(cron.schedule(j.name, j.schedule, j.command), active := false);

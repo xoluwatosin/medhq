@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { kitEmail, kitFacts, kitMarkdown } from "../_shared/kit-email.ts";
 import { emailTags } from "../_shared/email-tags.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 // Audience group names
 const CONTACT_GROUP_NAME = "Contact Enquiries";
@@ -422,4 +423,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+serve(withOpsLog("send-form-notification", handler));

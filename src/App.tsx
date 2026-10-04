@@ -87,6 +87,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Intelligence from "./pages/admin/Intelligence";
 import AlertKeys from "./pages/admin/AlertKeys";
+import SystemHealth from "./pages/admin/SystemHealth";
 import PostsList from "./pages/admin/PostsList";
 import Seo from "./pages/admin/Seo";
 import SeoPageRecord from "./pages/admin/SeoPageRecord";
@@ -286,6 +287,7 @@ const App = () => (
               <Route path="email-templates" element={<EmailTemplates />} />
               <Route path="creator-applications" element={<CreatorApplications />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="system" element={<SystemHealth />} />
               <Route path="control-centre" element={<ControlCentre />} />
               <Route path="approvals" element={<Approvals />} />
               {/* Match Universe — unified admin workspace for talent pool and opportunities */}

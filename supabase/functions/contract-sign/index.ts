@@ -5,6 +5,7 @@
 // signature, the address it came from and the device used, is captured by us
 // and not offered up by the browser.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ const clientIp = (req: Request) =>
   req.headers.get("cf-connecting-ip") ||
   null;
 
-Deno.serve(async (req) => {
+Deno.serve(withOpsLog("contract-sign", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -118,4 +119,4 @@ Deno.serve(async (req) => {
     console.error("contract-sign", err);
     return json({ error: "Something went wrong. Please try again." }, 500);
   }
-});
+}));

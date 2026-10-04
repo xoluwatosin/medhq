@@ -2,8 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "node:crypto";
 import { mapStatus } from "../_shared/paystack-invoice.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
-serve(async (req) => {
+serve(withOpsLog("paystack-invoice-webhook", async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   const key = Deno.env.get("PAYSTACK_SECRET_KEY");
@@ -49,4 +50,4 @@ serve(async (req) => {
     .eq("request_code", data.request_code ?? requestCode);
 
   return new Response("ok", { status: 200 });
-});
+}));

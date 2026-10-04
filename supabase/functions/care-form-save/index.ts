@@ -11,6 +11,7 @@ import {
   withoutDerived,
   type ControlledRefs, type FormDefinition, type FormSection,
 } from "../_shared/care-form.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 
 const corsHeaders = {
@@ -151,7 +152,7 @@ const evaluationGroups = (
       ];
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withOpsLog("care-form-save", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -494,4 +495,4 @@ Deno.serve(async (req) => {
     console.error("care-form-save failed", e instanceof Error ? e.message : e);
     return json({ error: "Could not save your answers" }, 500);
   }
-});
+}));

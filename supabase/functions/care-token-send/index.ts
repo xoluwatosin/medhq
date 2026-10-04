@@ -8,6 +8,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { hashToken, LINK_SEGMENT, newSecret } from "../_shared/care-form.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 import { dispatchNotification } from "../_shared/care-notify.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +23,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const METHODS = ["email", "whatsapp", "copied"];
 
 
-Deno.serve(async (req) => {
+Deno.serve(withOpsLog("care-token-send", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -181,4 +182,4 @@ If anything is difficult to answer, leave it and tell the nurse on the day.`,
     console.error("care-token-send failed", e instanceof Error ? e.message : e);
     return json({ error: "Could not send the link" }, 500);
   }
-});
+}));

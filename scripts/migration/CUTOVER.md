@@ -21,12 +21,12 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
 3. Export from Lovable Cloud (Cloud → Overview → Advanced settings → Export project data).
 4. Reset the new database (Dashboard → Database → Settings → Reset, or a fresh project). The restore script expects an empty database.
 5. `restore.sh` then `apply-acls.sh` with the new export.
-6. `post-restore.sql`.
+6. `post-restore.sql`, then the migrations in `supabase/migrations` dated after the export, starting with `20261003233000_system_health_and_alerts.sql` (System health). Its scheduled jobs stay paused with the rest.
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.
 8. Copy storage files from the old buckets (`applications`, `care-uploads`, `blog-images`, `creator-uploads`). Delete the `database_export_*` bucket.
 9. Point DNS for medicconnect.co at the new host.
 10. Activate the jobs: `select cron.alter_job(jobid, active := true) from cron.job;`
-11. Smoke test: contact form email, candidate sign-in, pre-assessment link, contract signing, an invoice.
+11. Smoke test: contact form email, candidate sign-in, pre-assessment link, contract signing, an invoice. Then open Admin → System health and press **Check now**: every area should be green or explain itself, and **Send test alert** on Alert keys should reach hello@medicconnect.co.
 
 ## After cutover
 

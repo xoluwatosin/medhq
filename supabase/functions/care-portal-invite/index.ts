@@ -8,6 +8,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { hashToken } from "../_shared/care-form.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 import { dispatchNotification } from "../_shared/care-notify.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ const secret = () => {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withOpsLog("care-portal-invite", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -202,4 +203,4 @@ Deno.serve(async (req) => {
     console.error("care-portal-invite failed", e instanceof Error ? e.message : e);
     return json({ error: "Could not send the invitation" }, 500);
   }
-});
+}));

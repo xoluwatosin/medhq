@@ -9,6 +9,7 @@ import {
   paystackLineItems,
   type InvoiceLineInput,
 } from "../_shared/paystack-invoice.ts";
+import { withOpsLog } from "../_shared/ops-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +37,7 @@ async function paystack(path: string, key: string, init?: RequestInit) {
   return { ok: res.ok && body?.status !== false, body };
 }
 
-serve(async (req) => {
+serve(withOpsLog("paystack-invoice", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -225,4 +226,4 @@ serve(async (req) => {
   } catch (err) {
     return json({ error: (err as Error).message }, 500);
   }
-});
+}));

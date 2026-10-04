@@ -22,6 +22,8 @@ import {
   visibleDomains, myProfileDomain, domainLanding, domainDestinations, locateRoute,
   isNavItemActive, type AdminDomain,
 } from "@/lib/admin-nav";
+import { HEALTH_PERMISSION } from "@/lib/system-health";
+import AlertBell from "@/components/admin/AlertBell";
 
 /** The rail head: full lockup when open, the mark alone when retracted. */
 const RailHead = () => {
@@ -70,6 +72,7 @@ const AdminLayout = () => {
   // Staff who hold nothing but "own profile only" get a single door: their own
   // record. Every other admin path bounces back to it.
   const profileOnly = !isSuperAdmin && permissions.includes("profile_only");
+  const seesHealth = !profileOnly && (isSuperAdmin || permissions.includes(HEALTH_PERMISSION));
 
   const domains: AdminDomain[] = useMemo(
     () => (profileOnly ? [myProfileDomain] : visibleDomains({ isSuperAdmin, permissions })),
@@ -291,6 +294,7 @@ const AdminLayout = () => {
             </nav>
 
             <div className="ml-auto flex items-center gap-2">
+              {seesHealth && <AlertBell />}
               <Button
                 variant="outline"
                 size="sm"

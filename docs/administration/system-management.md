@@ -1,6 +1,6 @@
 # System management: plan
 
-Revision 1, 3 October 2026. Draft for approval.
+Revision 2, 4 October 2026. Approved: alerts go to hello@medicconnect.co, the digest goes at 07:45 Lagos time every day, thresholds start as in A1.
 
 The Admin runs the business well and the system poorly. People, care, talent and content each have a proper work surface; the platform underneath them does not. This plan covers the five things an operator of a growing health business needs from Administration, sized so that one admin can run it today and a team can share it later without a rebuild.
 
@@ -12,7 +12,7 @@ The Admin runs the business well and the system poorly. People, care, talent and
 
 | Area | Today | Gap |
 |---|---|---|
-| Health | Intake spike alerts only (`admin_alerts`, `private.analytics_check_alerts()`, `send-admin-alert` to a hard-coded address) | Seven cron jobs, about fifty edge functions, `care_notifications`, email bounces, parse queues and Paystack webhooks fail silently |
+| Health | Intake spike alerts only (`admin_alerts`, `private.analytics_check_alerts()`, `send-admin-alert` to a hard-coded address) | Twelve cron jobs, about fifty edge functions, `care_notifications`, email bounces, parse queues and Paystack webhooks fail silently |
 | Audit | Nine separate logs: `admin_access_log`, `admin_login_log`, `care_access_log`, `care_activity`, `mu_activity`, `care_form_revision_events`, `job_key_audit`, `campaign_events`, `mu_contract_events` | No single answer to "what did this person do" or "who touched this record"; settings, templates and invoices changes are not logged at all |
 | Configuration | `admin_settings`: three boolean switches | Alert recipients, sender addresses, working calendar, feature flags and maintenance mode live in code or secrets |
 | Access | Per-person tick boxes, delegation, password reset, forced sign-out, email OTP at sign-in | No roles, no review, no dormant-account detection, no leaver process, `care_coordinator` and `care_clinical` still unassigned |
@@ -156,7 +156,18 @@ Retention periods per kind of record are configuration (C1). A nightly job repor
 
 Each step ends verified: migrations applied to a Supabase branch first, then production, with unit tests for the catalogues and checks, and a populated browser walkthrough at phone and desktop widths.
 
-## 9. Decisions for approval
+## 9. Section A as built
+
+Migration `supabase/migrations/20261003233000_system_health_and_alerts.sql`; functions `send-admin-alert` (rewritten) and `ops-probe` (new); `_shared/ops-log.ts` wraps `paystack-invoice-webhook`, `paystack-invoice`, `resend-webhook`, `care-token-send`, `care-portal-invite`, `contract-sign`, `care-form-save` and `send-form-notification`; screen at `/admin/system`.
+
+- Thresholds live in `ops_checks.config` until C1 gives them a screen.
+- Failed care notifications are resent from the client record, which the alert links to; the alert clears itself once a later send of the same kind succeeds.
+- No check sits in the Payments area yet: Paystack is covered by the function-error check (any error is critical) and the outside-services probe.
+- Recipients come from the `OPS_ALERT_RECIPIENTS` secret, defaulting to hello@medicconnect.co, until C1.
+- Super admin is a single hard-coded user id in `private.is_super_admin`. A second super admin needs that moved to a table, which D1 does.
+- Applying it: with the cutover, after `post-restore.sql` (see `scripts/migration/CUTOVER.md` step 6). Its jobs start paused while the other jobs are paused.
+
+## 10. Decisions (approved 4 October 2026)
 
 1. Alert recipients to start: the operations inbox (currently `hello@medicconnect.co`) plus your own address?
 2. Digest at 07:45 Lagos time, every day including weekends?

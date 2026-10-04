@@ -2,7 +2,7 @@ import {
   FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, Archive, MailOpen,
   Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Heart, Orbit, HeartPulse,
   Briefcase, ShieldCheck, Inbox, CalendarDays, Copy, ClipboardList, UserCog, IdCard,
-  BarChart3, KeyRound, FileSignature, Library, Layers, Search,
+  BarChart3, KeyRound, FileSignature, Library, Layers, Search, Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -168,6 +168,7 @@ export const adminDomains: AdminDomain[] = [
     icon: Shield,
     url: "/admin/settings",
     items: [
+      { title: "System health", url: "/admin/system", icon: Activity, perm: "system_health", keywords: "status alerts monitoring scheduled jobs cron errors uptime incidents digest" },
       { title: "Settings", url: "/admin/settings", icon: Settings, perm: "settings", keywords: "configuration notifications" },
       { title: "Admin access", url: "/admin/control-centre", icon: Shield, perm: "admin_access", keywords: "Access control admins permissions Control Centre" },
     ],
