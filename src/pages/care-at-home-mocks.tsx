@@ -185,4 +185,79 @@ export const CardsMix = () => (
   </>
 );
 
-export const CARD_MOCKS: Record<string, () => JSX.Element> = { a: CardsA, b: CardsB, c: CardsC, mix: CardsMix };
+
+/** Phone option 1: A's cards in a swipe row, with a counter. */
+const SwipeA = () => {
+  const [at, setAt] = useState(1);
+  return (
+    <div>
+      <div
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setAt(Math.min(ALL.length, Math.round(el.scrollLeft / (el.scrollWidth / ALL.length)) + 1));
+        }}
+        className="-mx-[22px] flex snap-x snap-mandatory gap-5 overflow-x-auto px-[22px] pb-4 pt-3 [scrollbar-width:none]"
+      >
+        {ALL.map((s) => (
+          <Link key={s.href} to={s.href} className="relative flex w-[78%] shrink-0 snap-start flex-col border-2 border-navy bg-white shadow-offset-sm">
+            <div className="relative m-2 mb-0 h-[130px] bg-tint">
+              <img src={s.art} alt="" className="absolute bottom-0 left-4 h-[120px] object-contain" />
+            </div>
+            <span className={cn("mc-tag-left absolute -right-2 top-[104px] rotate-[-4deg] py-1.5 pl-5 pr-3 shadow-offset-sm", s.price ? "bg-white" : "bg-tint")}>
+              <PriceText s={s} small />
+            </span>
+            <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3">
+              <h3 className="text-[20px] leading-[1.1] tracking-[-0.04em]">{s.title}</h3>
+              <p className="text-[14px] leading-[1.5] text-body">{s.line}</p>
+              <span className="mt-auto pt-1.5 text-[14px] font-extrabold text-brand">See more <span aria-hidden="true">→</span></span>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <p className="label-caps mt-1 tabular-nums">
+        {at} of {ALL.length} <span aria-hidden="true" className="ml-1 text-brand">swipe →</span>
+      </p>
+    </div>
+  );
+};
+
+/** Phone option 2: two-column tiles. */
+const Tiles = () => (
+  <div className="grid grid-cols-2 gap-3">
+    {ALL.map((s) => (
+      <Link key={s.href} to={s.href} className="flex flex-col border-2 border-navy bg-white shadow-offset-sm active:bg-tint">
+        <div className="relative m-1.5 mb-0 h-[92px] bg-tint">
+          <img src={s.art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[86px] object-contain" />
+        </div>
+        <div className="flex flex-1 flex-col gap-1 p-3">
+          <b className="text-[15px] font-extrabold leading-[1.15] text-navy">{s.title}</b>
+          <span className="mt-auto pt-1 text-[13px]">
+            {s.price ? (
+              <span className="whitespace-nowrap">
+                {s.from && <span className="mr-1 text-[11px] font-bold text-ink">from</span>}
+                <b className="font-extrabold text-price">{s.price}</b>
+              </span>
+            ) : (
+              <span className="text-[12px] font-bold text-muted-foreground">Quoted after assessment</span>
+            )}
+          </span>
+        </div>
+      </Link>
+    ))}
+  </div>
+);
+
+/** Phone option 3: compact rows. */
+const Rows = () => <div className="border-2 border-navy bg-white px-4 shadow-offset-sm">{ALL.map((s) => <Row key={s.href} s={s} />)}</div>;
+
+const desktopA = (Phone: () => JSX.Element) => () => (
+  <>
+    <div className="hidden lg:block"><CardsA /></div>
+    <div className="lg:hidden"><Phone /></div>
+  </>
+);
+
+export const CARD_MOCKS: Record<string, () => JSX.Element> = {
+  a: CardsA, b: CardsB, c: CardsC, mix: CardsMix,
+  m1: desktopA(SwipeA), m2: desktopA(Tiles), m3: desktopA(Rows),
+};
