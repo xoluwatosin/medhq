@@ -7,7 +7,7 @@ import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
 import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
 import { KitMain, kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
-import { ClipArt, Highlight, NotchTag, PillSticker, PriceTag } from "@/components/mc/brand";
+import { ClipArt, Highlight } from "@/components/mc/brand";
 import { MessageCircle } from "lucide-react";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
@@ -23,7 +23,7 @@ const homeServices: ServiceCard[] = [
   { title: "Antenatal care", line: "Pregnancy checks and support at home.", href: "/antenatal-care", price: "₦30,000", unit: "per visit", art: art.midwifePregnantBp },
   { title: "Postnatal care and Omugwo", line: "Rest, recover and bond with your baby.", href: "/postnatal-care", price: "₦30,000", unit: "per visit", art: art.proPostnatal },
   { title: "Nanny and childcare", line: "Trusted nannies matched to your family.", href: "/nanny-childcare", price: "", art: art.nannyReading },
-  { title: "Pediatric and special needs", line: "Support for children with medical or developmental needs.", href: "/pediatric-care", price: "", art: art.charBoy },
+  { title: "Paediatric and additional needs", line: "Support for children with medical or developmental needs.", href: "/pediatric-care", price: "", art: art.charBoy },
   { title: "Eldercare", line: "Dignified care that keeps older relatives independent.", href: "/eldercare", price: "₦18,000", unit: "per 4 hours", art: art.charGrandma },
   // /caregiver owns the "hire a caregiver" search; this page owns home care in
   // general, so it links down rather than competing for the same query.
@@ -72,18 +72,11 @@ const CareAtHome = () => (
       <section aria-labelledby="services-heading">
         <div className="relative mb-10 grid items-end gap-6 border-t-4 border-navy pt-8 lg:mb-14 lg:grid-cols-[minmax(0,1fr)_220px] lg:pt-10">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <NotchTag tone="blue" tilt={-2}>{homeServices.length} services</NotchTag>
-              <PillSticker tone="tint" tilt={4} className="!px-4 !py-2 !text-[13px]">
-                from <span className="text-price">₦18,000</span>
-              </PillSticker>
-            </div>
-            <h2 id="services-heading" className="mt-5 text-[42px] leading-[1.08] tracking-[-0.055em] sm:text-[56px] lg:text-[72px] lg:leading-[0.96]">
+            <h2 id="services-heading" className="text-[42px] leading-[1.08] tracking-[-0.055em] sm:text-[56px] lg:text-[72px] lg:leading-[0.96]">
               Care <Highlight>at home</Highlight> services
             </h2>
             <p className="mt-5 max-w-[56ch] text-[16px] leading-[1.65] text-body sm:text-[18px]">
-              Every plan begins with a <PriceTag amount="₦35,000" className="text-[15px] sm:text-[17px]" /> home care needs
-              assessment, then we match a vetted professional to the household.
+              Services may begin with a care needs assessment.
             </p>
           </div>
           <ClipArt src={art.objHouseHeart} size={200} className="hidden lg:block" />
