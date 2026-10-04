@@ -6,13 +6,14 @@ import MedicHeader from "@/components/MedicHeader";
 import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import HoverCard from "@/components/HoverCard";
+import NairaIcon from "@/components/mc/NairaIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Check, ChevronsUpDown, DollarSign, Handshake, Heart, MessageCircle, Upload } from "lucide-react";
+import { Check, ChevronsUpDown, Handshake, Heart, MessageCircle, Upload } from "lucide-react";
 
 const COUNTRY_CODES = [
   { code: "+213", country: "Algeria", flag: "🇩🇿" },
@@ -262,7 +263,7 @@ const Creator = () => {
   ];
 
   const benefits = [
-    { title: "Paid Partnerships", description: "Per post fees and monthly retainer options for consistent, quality collaboration.", icon: DollarSign },
+    { title: "Paid Partnerships", description: "Per post fees and monthly retainer options for consistent, quality collaboration.", icon: NairaIcon },
     { title: "Long-term Collaboration", description: "Grow alongside a Pan-African healthcare brand that's just getting started.", icon: Handshake },
     { title: "Meaningful Impact", description: "Contribute to something that genuinely changes lives across Africa.", icon: Heart },
   ];
