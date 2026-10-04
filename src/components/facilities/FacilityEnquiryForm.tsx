@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 /**
  * The facility enquiry, in two short steps: what the facility needs, then who
  * is asking. It lands in the same enquiry desk as care requests, on the
- * hospital_staffing or hospital_support line, so the admin inbox shows each
+ * hospital_staffing, hospital_support or clinical_research line, so the admin inbox shows each
  * answer as a row and the tailored reply with the brochure goes out.
  *
  * Answer keys and options match the facility questions in the enquiry desk
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const SERVICES = [
   { key: "staffing", label: "Clinical staff", line: "hospital_staffing", lineName: "Hospital staffing" },
   { key: "support", label: "Support services", line: "hospital_support", lineName: "Hospital support services" },
-  { key: "research", label: "Clinical research staff", line: "hospital_staffing", lineName: "Hospital staffing" },
+  { key: "research", label: "Clinical research staff", line: "clinical_research", lineName: "Clinical research" },
   { key: "other", label: "Something else", line: "general", lineName: "Something else" },
 ] as const;
 type ServiceKey = (typeof SERVICES)[number]["key"];
