@@ -123,6 +123,25 @@ import objSoap from "@/assets/mc/obj-soap.webp";
 import postnatalSpecialist from "@/assets/mc/postnatal-specialist.webp";
 import postnatalSpecialist2 from "@/assets/mc/postnatal-specialist-2.webp";
 import videoCallFamily from "@/assets/mc/video-call-family.webp";
+import carerSupportsManCar from "@/assets/mc/carer-supports-man-car.webp";
+import communityBpCheck from "@/assets/mc/community-bp-check.webp";
+import coordinatorDeskPhone from "@/assets/mc/coordinator-desk-phone.webp";
+import eventMedicFirstAid from "@/assets/mc/event-medic-first-aid.webp";
+import friendsTrio from "@/assets/mc/friends-trio.webp";
+import grandparentsVideoCall from "@/assets/mc/grandparents-video-call.webp";
+import motherDaughterVideoCall from "@/assets/mc/mother-daughter-video-call.webp";
+import motherNewbornSuitcase from "@/assets/mc/mother-newborn-suitcase.webp";
+import nurseFootCheck from "@/assets/mc/nurse-foot-check.webp";
+import objAlarmBeacon from "@/assets/mc/obj-alarm-beacon.webp";
+import objAlarmBeaconNavy from "@/assets/mc/obj-alarm-beacon-navy.webp";
+import objBrainHeart from "@/assets/mc/obj-brain-heart.webp";
+import objEnteralSyringeFormula from "@/assets/mc/obj-enteral-syringe-formula.webp";
+import objNewbornBonnet from "@/assets/mc/obj-newborn-bonnet.webp";
+import objOxygenConcentrator from "@/assets/mc/obj-oxygen-concentrator.webp";
+import objPadlock from "@/assets/mc/obj-padlock.webp";
+import objSyringeVial from "@/assets/mc/obj-syringe-vial.webp";
+import speechTherapyAppleCard from "@/assets/mc/speech-therapy-apple-card.webp";
+import tutorBoyDesk from "@/assets/mc/tutor-boy-desk.webp";
 import iconEmail from "@/assets/mc/icons/email.svg";
 import iconPhone from "@/assets/mc/icons/phone.svg";
 import markGlyph from "@/assets/mc/medicconnect-mark.svg";
@@ -252,6 +271,26 @@ export const art = {
   postnatalSpecialist,
   postnatalSpecialist2,
   videoCallFamily,
+  // The October request list: scenes for specific service pages, and icon objects.
+  carerSupportsManCar,
+  communityBpCheck,
+  coordinatorDeskPhone,
+  eventMedicFirstAid,
+  friendsTrio,
+  grandparentsVideoCall,
+  motherDaughterVideoCall,
+  motherNewbornSuitcase,
+  nurseFootCheck,
+  objAlarmBeacon,
+  objAlarmBeaconNavy,
+  objBrainHeart,
+  objEnteralSyringeFormula,
+  objNewbornBonnet,
+  objOxygenConcentrator,
+  objPadlock,
+  objSyringeVial,
+  speechTherapyAppleCard,
+  tutorBoyDesk,
   // Line icons for contact details.
   iconEmail,
   iconPhone,
