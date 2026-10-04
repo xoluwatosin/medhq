@@ -94,17 +94,17 @@ const JoinRoutePicker = () => {
         </div>
       </section>
 
-      {/* Desktop: the professionals stand on the line the route cards hang from. */}
+      {/* Desktop: the professionals stand beside the headline blocks, clear of the lead text. */}
       <section className="relative -mt-[114px] hidden overflow-hidden bg-navy pt-[150px] lg:block">
         <Watermark glyph="inf" size={980} opacity={0.12} className="-right-[260px] top-[40px]" />
         <div className="relative mx-auto max-w-[1440px] px-[50px] pb-[260px]">
-          <div className="max-w-[640px]">
+          <div className="max-w-[520px] xl:max-w-[640px]">
             <p className="eyebrow !text-brand-soft">Join the network</p>
             <div className="mt-4">
               {/* Only one hero shows at a time; the hidden one is display:none, so the page has one visible h1. */}
               <KitPillHeading text="Work that fits your skills" accent={[3]} align="left" />
             </div>
-            <p className="mt-6 max-w-[46ch] text-[20px] leading-[1.6] text-body-navy">{lead}</p>
+            <p className="mt-6 max-w-[42ch] text-[19px] leading-[1.6] text-body-navy xl:text-[20px]">{lead}</p>
             <p className="mt-4 text-[16px] text-body-navy">
               Already joined?{" "}
               <Link to="/portal/login" className="font-extrabold text-white underline underline-offset-4 hover:text-brand-soft">
@@ -112,9 +112,15 @@ const JoinRoutePicker = () => {
               </Link>
             </p>
           </div>
-          <div className="pointer-events-none absolute bottom-[86px] right-[80px] flex items-end xl:right-[140px]">
+          <div className="pointer-events-none absolute right-[50px] top-[10px] flex items-end xl:right-[110px]">
             {[art.proNurseKit, art.proDoctor, art.proPostnatal, art.proNurseCoat].map((src, i) => (
-              <img key={src} src={src} alt="" className={cn("h-[300px] object-contain", i > 0 && "-ml-10")} />
+              // Narrower laptops show three, so the group never runs into the headline.
+              <img
+                key={src}
+                src={src}
+                alt=""
+                className={cn("h-[250px] object-contain xl:h-[320px]", i > 0 && "-ml-8 xl:-ml-10", i === 0 && "hidden xl:block", i === 1 && "ml-0 xl:-ml-10")}
+              />
             ))}
           </div>
         </div>
