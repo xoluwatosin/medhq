@@ -18,6 +18,7 @@ import eldercareImg from "@/assets/services/eldercare.jpg";
 import pediatricImg from "@/assets/services/pediatric-care.jpg";
 import caregiverImg from "@/assets/services/eldercare-companionship.jpg";
 import KitPillHeading from "@/components/kit/KitPillHeading";
+import { CARD_MOCKS } from "./care-at-home-mocks";
 
 const homeServices: KitService[] = [
   {
@@ -145,11 +146,16 @@ const CareAtHome = () => (
 
     <KitMain>
       <KitSection eyebrow="Services" title="Care at home services" intro="Every plan begins with a home care needs assessment, then we match a vetted professional to the household.">
+        {(() => {
+          const Mock = CARD_MOCKS[new URLSearchParams(window.location.search).get("cards") ?? ""];
+          return Mock ? <Mock /> : (
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
           {homeServices.map((service) => (
             <KitFlipCard key={service.href} {...service} />
           ))}
         </div>
+          );
+        })()}
       </KitSection>
 
       <CTASection
