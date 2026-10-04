@@ -50,6 +50,11 @@ export const INDEXABLE_EXPANSION_PATHS: string[] = [
   "/caregiver-cost-in-lagos",
   "/diabetes-care-at-home",
   "/cancer-care-at-home",
+  "/night-nurse-for-newborn",
+  "/live-in-nanny",
+  "/live-in-caregiver",
+  "/continence-care-at-home",
+  "/orthopaedic-recovery-at-home",
 ];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);

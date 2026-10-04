@@ -28,13 +28,13 @@ distinct question with no owner, and is listed in `INDEXABLE_EXPANSION_PATHS`:
 
 | Route | Competes with | Proposed |
 | --- | --- | --- |
-| /continence-care-at-home | /catheter-care-at-home | REFRAME to dignity-led personal care, linking to catheter care |
+| /continence-care-at-home | /catheter-care-at-home | REFRAMED to dignity-led personal care, APPROVED |
 | /physiotherapy-after-stroke | /stroke-recovery-at-home, /physiotherapy-at-home | MERGED → /stroke-recovery-at-home |
-| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAME to fractures and joint replacement |
+| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAMED to hip replacement and fractures, APPROVED |
 | /ngo-health-programme-implementation, /community-health-outreach-services | /ngo-healthcare-staffing | MERGED |
-| /night-nurse-for-newborn | /newborn-care | REFRAME to overnight only |
-| /live-in-nanny | /professional-nanny | REFRAME to live-in only |
-| /live-in-caregiver | /caregiver, /24-hour-nursing-care | REFRAME to live-in only |
+| /night-nurse-for-newborn | /newborn-care | REFRAMED to overnight only, APPROVED |
+| /live-in-nanny | /professional-nanny | REFRAMED to live-in only, APPROVED |
+| /live-in-caregiver | /caregiver, /24-hour-nursing-care | REFRAMED to live-in only, APPROVED |
 | /managed-postpartum-stay-in-nigeria | /omugwo, /professional-omugwo, /care-from-abroad | MERGED → /professional-omugwo |
 | /diabetes-care-at-home | /chronic-care-at-home | APPROVED, links up to the parent |
 | /cancer-care-at-home | /palliative-care-at-home | APPROVED, treatment-stage support, links to palliative |
