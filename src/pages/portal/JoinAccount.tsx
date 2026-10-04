@@ -6,6 +6,7 @@ import { CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 import { CxJoinShell, CxJoinAside } from "@/components/candidate/CxJoinShell";
+import { TRACK_ART } from "@/components/candidate/track-art";
 import { CxCard, CxButton, CxField, cxInputClass } from "@/components/candidate/primitives";
 import { CxAuthPassword } from "@/components/candidate/CxAuthShell";
 import { PasswordRequirements } from "@/components/candidate/PasswordRequirements";
@@ -237,6 +238,7 @@ const JoinAccount = () => {
       heading={invited ? "You are on our list. Make it a profile." : "One profile, and the work comes to you."}
       lede={`Typical for ${track.examples.toLowerCase()}. About ${track.minutes} minutes.`}
       items={track.steps.map((s) => ({ title: s }))}
+      art={TRACK_ART[track.slug]}
     />
   );
 
@@ -249,7 +251,7 @@ const JoinAccount = () => {
           Start with your details. You can add documents and work preferences after you sign in.
         </p>
         <div className="mt-5 flex items-center gap-3 border-t border-hairline-navy pt-4">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-navy">1</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-white text-[13px] font-extrabold text-navy shadow-[3px_3px_0_hsl(var(--brand))]">1</span>
           <div>
             <p className="text-[14.5px] font-bold text-white">Account details</p>
             <p className="text-[13px] text-muted-navy">Documents and availability come next.</p>
@@ -266,6 +268,7 @@ const JoinAccount = () => {
         title="Create your account"
         eyebrow={track.label}
         back="/join"
+        step={0}
         aside={aside}
         mobileLead={mobileLead}
         className="pb-28 pt-6 md:pb-[34px] md:pt-[34px]"
@@ -291,7 +294,7 @@ const JoinAccount = () => {
         </div>
 
         <div className="grid gap-6">
-          <CxCard kind="quiet" className="border-0 bg-transparent p-0 md:border md:bg-white md:p-8">
+          <CxCard kind="quiet" className="cx-flat-sm border-0 bg-transparent p-0 md:border md:bg-white md:p-8">
 
             {onFile ? (
               <div className="space-y-4">

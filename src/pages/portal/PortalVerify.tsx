@@ -9,6 +9,7 @@ import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { CxJoinShell, CxJoinAside } from "@/components/candidate/CxJoinShell";
+import { art } from "@/components/mc/art";
 import { CxCard, CxButton, CxField } from "@/components/candidate/primitives";
 
 const CODE_LENGTH = 6;
@@ -146,10 +147,12 @@ const PortalVerify = () => {
       <CxJoinShell
         title="Confirm it is you"
         eyebrow="One step left"
+        step={1}
         aside={
           <CxJoinAside
             eyebrow="Almost there"
             heading="One code, and your profile is open."
+            art={art.coordinatorDeskPhoneCutout}
             lede="We check every candidate is reachable before we put them in front of a client. It takes a moment and it only happens once."
             items={[
               { title: "Enter the code", body: "Six digits, sent to the email you signed up with." },

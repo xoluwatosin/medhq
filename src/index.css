@@ -387,6 +387,22 @@ All colors MUST be HSL.
   .cx p, .cx-prose { text-wrap: pretty; }
   .cx-measure { max-width: 58ch; }
 
+  /* Sign-up follows the public site: square paper with a hard navy offset,
+     heavier headings and firmer fields. Scoped to the join shell only. */
+  .cx-join .cx-card,
+  .cx-join .cx-card-emph { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  .cx-join .cx-heading { font-weight: 800; letter-spacing: -0.04em; }
+  /* A card that is open paper on phones, with no frame. */
+  @media (max-width: 767px) {
+    .cx-join .cx-card.cx-flat-sm { border: 0; box-shadow: none; }
+  }
+  .cx-join input.cx-chip,
+  .cx-join select.cx-chip,
+  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); }
+  .cx-join input.cx-chip:focus,
+  .cx-join select.cx-chip:focus,
+  .cx-join textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
+
   .surface-quiet {
     border: 1px solid hsl(var(--line));
     border-radius: 16px;

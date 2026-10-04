@@ -8,6 +8,7 @@ import KitPillHeading from "@/components/kit/KitPillHeading";
 import { NotchTag, Watermark } from "@/components/mc/brand";
 import { SectionHead } from "@/components/mc/service-sections";
 import { art } from "@/components/mc/art";
+import { TRACK_ART } from "@/components/candidate/track-art";
 import { JOIN_TRACKS, type JoinTrack } from "@/lib/join-tracks";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +23,7 @@ import { cn } from "@/lib/utils";
  * The copy makes no promises about work, pay or timing.
  */
 
-const TRACK_ART: Record<string, string> = {
-  "clinical-professional": art.charNurse,
-  "support-care-worker": art.caregiverSuitcase,
-  "non-clinical-professional": art.receptionistFrontDesk,
-  student: art.nursingStudentTextbooks,
-};
+
 
 const STEPS = [
   { title: "Tell us who you are", text: "A few details and a password. Two minutes." },
