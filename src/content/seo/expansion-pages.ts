@@ -149,6 +149,12 @@ const guideChecklist = (page: PageSeed) => {
   return { heading: page.h1.endsWith("?") ? "How to decide" : "What to check", items: record.points };
 };
 
+/** Condition pages link up to the governed page that owns the wider topic. */
+const RELATED_OVERRIDES: Record<string, ExpansionPage["related"]> = {
+  "diabetes-care-at-home": [{ label: "Chronic condition care at home", path: "/chronic-care-at-home" }, { label: "Diabetic foot care at home", path: "/diabetic-foot-care-at-home" }],
+  "cancer-care-at-home": [{ label: "Palliative care at home", path: "/palliative-care-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
+};
+
 const toPage = (page: PageSeed): ExpansionPage => {
   const visuals = visualSet(page);
   const marketText = page.slug === "caregiver-cost-in-lagos" ? "in Lagos" : "in Lagos, Abuja/FCT, Ogun and Ibadan/Oyo";
@@ -171,7 +177,7 @@ const toPage = (page: PageSeed): ExpansionPage => {
     moduleCodes: page.modules,
     feeSkus: page.fees,
     checklist: page.template === "guide" ? guideChecklist(page) : undefined,
-    related: page.template === "jobs" ? [{ label: "Careers", path: "/careers" }, { label: "Candidate applications", path: "/join" }] : page.template === "staffing" ? [{ label: "Hospital staffing", path: "/hospital-staffing" }, { label: "For facilities", path: "/for-facilities" }] : [{ label: "Clinical home care", path: "/clinical-home-care" }, { label: "Care at home", path: "/care-at-home" }],
+    related: RELATED_OVERRIDES[page.slug] ?? (page.template === "jobs" ? [{ label: "Careers", path: "/careers" }, { label: "Candidate applications", path: "/join" }] : page.template === "staffing" ? [{ label: "Hospital staffing", path: "/hospital-staffing" }, { label: "For facilities", path: "/for-facilities" }] : [{ label: "Clinical home care", path: "/clinical-home-care" }, { label: "Care at home", path: "/care-at-home" }]),
   };
 };
 

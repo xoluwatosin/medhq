@@ -28,16 +28,16 @@ distinct question with no owner, and is listed in `INDEXABLE_EXPANSION_PATHS`:
 
 | Route | Competes with | Proposed |
 | --- | --- | --- |
-| /continence-care-at-home | /catheter-care-at-home | MERGE |
-| /physiotherapy-after-stroke | /stroke-recovery-at-home, /physiotherapy-at-home | MERGE → /stroke-recovery-at-home |
-| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAME or MERGE |
-| /ngo-health-programme-implementation, /community-health-outreach-services | /ngo-healthcare-staffing | MERGE |
+| /continence-care-at-home | /catheter-care-at-home | REFRAME to dignity-led personal care, linking to catheter care |
+| /physiotherapy-after-stroke | /stroke-recovery-at-home, /physiotherapy-at-home | MERGED → /stroke-recovery-at-home |
+| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAME to fractures and joint replacement |
+| /ngo-health-programme-implementation, /community-health-outreach-services | /ngo-healthcare-staffing | MERGED |
 | /night-nurse-for-newborn | /newborn-care | REFRAME to overnight only |
 | /live-in-nanny | /professional-nanny | REFRAME to live-in only |
 | /live-in-caregiver | /caregiver, /24-hour-nursing-care | REFRAME to live-in only |
-| /managed-postpartum-stay-in-nigeria | /omugwo, /professional-omugwo, /care-from-abroad | MERGE |
-| /diabetes-care-at-home | /chronic-care-at-home | KEEP as a condition page linking to the parent |
-| /cancer-care-at-home | /palliative-care-at-home | KEEP, treatment-stage support only |
+| /managed-postpartum-stay-in-nigeria | /omugwo, /professional-omugwo, /care-from-abroad | MERGED → /professional-omugwo |
+| /diabetes-care-at-home | /chronic-care-at-home | APPROVED, links up to the parent |
+| /cancer-care-at-home | /palliative-care-at-home | APPROVED, treatment-stage support, links to palliative |
 
 Already indexed pairs that compete with each other: /omugwo and /professional-omugwo,
 /nanny-childcare and /professional-nanny, /care-at-home and /caregiver.

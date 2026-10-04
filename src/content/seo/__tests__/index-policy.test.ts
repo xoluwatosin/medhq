@@ -13,6 +13,10 @@ describe("expansion indexing policy", () => {
     expect(canonicalOwnerFor("/antenatal-care-at-home")).toBe("/antenatal-care");
     expect(canonicalOwnerFor("/clinical-research-staffing")).toBe("/clinical-research");
     expect(canonicalOwnerFor("/hospital-support-services")).toBe("/hospital-support");
+    expect(canonicalOwnerFor("/ngo-health-programme-implementation")).toBe("/ngo-healthcare-staffing");
+    expect(canonicalOwnerFor("/community-health-outreach-services")).toBe("/ngo-healthcare-staffing");
+    expect(canonicalOwnerFor("/physiotherapy-after-stroke")).toBe("/stroke-recovery-at-home");
+    expect(canonicalOwnerFor("/managed-postpartum-stay-in-nigeria")).toBe("/professional-omugwo");
   });
 
   it("treats a route as indexable only when the policy lists it", () => {

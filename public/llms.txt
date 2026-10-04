@@ -303,6 +303,8 @@ Phone +234 812 698 8237, email hello@medicconnect.co, WhatsApp https://wa.me/234
 - [Tracheostomy care at home](/tracheostomy-care-at-home): complex tracheostomy support at home where clinically appropriate.
 - [Ventilator care at home](/ventilator-care-at-home): complex ventilator support at home where clinically appropriate.
 - [Medication administration at home](/medication-administration-at-home): prescribed medicines administered at home within nursing scope.
+- [Diabetes care at home](/diabetes-care-at-home): nursing observations, medicine support and daily routines for diabetes.
+- [Cancer care at home](/cancer-care-at-home): supportive nursing and daily-living care at home alongside hospital treatment.
 - [Diabetic foot care at home](/diabetic-foot-care-at-home): nurse-led wound care for diabetic foot problems where home treatment is suitable.
 - [Medical escort services](/medical-escort-services): professional accompaniment and coordination for medical appointments.
 - [Transport to medical appointments](/transport-to-medical-appointments): how Medic Connect coordinates third-party transport and appointment support.

@@ -9,15 +9,15 @@ const genericPlaceholders = [
 ];
 
 describe("expansion SEO content quality", () => {
-  it("keeps exactly 71 unique expansion routes, the three merged routes excluded", () => {
-    expect(EXPANSION_PAGES).toHaveLength(71);
-    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(71);
+  it("keeps exactly 67 unique expansion routes, the seven merged routes excluded", () => {
+    expect(EXPANSION_PAGES).toHaveLength(67);
+    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(67);
   });
 
   it("gives every page a unique direct answer", () => {
     const answers = EXPANSION_PAGES.map((page) => page.intro.join(" "));
     expect(answers.every((text) => text.length >= 120)).toBe(true);
-    expect(new Set(answers).size).toBe(71);
+    expect(new Set(answers).size).toBe(EXPANSION_PAGES.length);
     expect(answers.some((text) => genericPlaceholders.some((placeholder) => text.includes(placeholder)))).toBe(false);
   });
 

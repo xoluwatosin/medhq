@@ -17,6 +17,10 @@ export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/antenatal-care-at-home": "/antenatal-care",
   "/clinical-research-staffing": "/clinical-research",
   "/hospital-support-services": "/hospital-support",
+  "/ngo-health-programme-implementation": "/ngo-healthcare-staffing",
+  "/community-health-outreach-services": "/ngo-healthcare-staffing",
+  "/physiotherapy-after-stroke": "/stroke-recovery-at-home",
+  "/managed-postpartum-stay-in-nigeria": "/professional-omugwo",
 };
 
 /**
@@ -44,6 +48,8 @@ export const INDEXABLE_EXPANSION_PATHS: string[] = [
   "/how-to-verify-a-nurse-in-nigeria",
   "/how-to-verify-a-doctor-in-nigeria",
   "/caregiver-cost-in-lagos",
+  "/diabetes-care-at-home",
+  "/cancer-care-at-home",
 ];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);
