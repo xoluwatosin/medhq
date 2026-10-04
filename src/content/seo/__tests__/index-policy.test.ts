@@ -17,6 +17,7 @@ describe("expansion indexing policy", () => {
     expect(canonicalOwnerFor("/community-health-outreach-services")).toBe("/ngo-healthcare-staffing");
     expect(canonicalOwnerFor("/physiotherapy-after-stroke")).toBe("/stroke-recovery-at-home");
     expect(canonicalOwnerFor("/managed-postpartum-stay-in-nigeria")).toBe("/professional-omugwo");
+    expect(canonicalOwnerFor("/medic-connect-talent-pool")).toBe("/careers");
   });
 
   it("treats a route as indexable only when the policy lists it", () => {

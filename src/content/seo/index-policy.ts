@@ -21,6 +21,7 @@ export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/community-health-outreach-services": "/ngo-healthcare-staffing",
   "/physiotherapy-after-stroke": "/stroke-recovery-at-home",
   "/managed-postpartum-stay-in-nigeria": "/professional-omugwo",
+  "/medic-connect-talent-pool": "/careers",
 };
 
 /**
@@ -55,6 +56,29 @@ export const INDEXABLE_EXPANSION_PATHS: string[] = [
   "/live-in-caregiver",
   "/continence-care-at-home",
   "/orthopaedic-recovery-at-home",
+  "/caregiver-jobs-and-opportunities",
+  "/nanny-jobs-and-opportunities",
+  "/doctor-jobs-and-opportunities",
+  "/midwife-jobs-and-opportunities",
+  "/pharmacist-jobs-and-opportunities",
+  "/laboratory-scientist-jobs-and-opportunities",
+  "/physiotherapist-jobs-and-opportunities",
+  "/doctor-staffing",
+  "/pharmacist-staffing",
+  "/laboratory-scientist-staffing",
+  "/physiotherapist-staffing",
+  "/school-healthcare-staffing",
+  "/corporate-healthcare-staffing",
+  "/correctional-healthcare-support",
+  "/c-section-recovery-at-home",
+  "/breastfeeding-support-at-home",
+  "/nicu-to-home-support",
+  "/coming-to-nigeria-after-giving-birth",
+  "/who-should-i-hire-for-a-newborn",
+  "/equipment-needed-after-hospital-discharge",
+  "/how-to-prepare-the-home-before-hospital-discharge",
+  "/shadow-teacher",
+  "/stroke-recovery-at-home",
 ];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);

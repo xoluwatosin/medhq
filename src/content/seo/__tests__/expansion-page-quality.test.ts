@@ -9,9 +9,9 @@ const genericPlaceholders = [
 ];
 
 describe("expansion SEO content quality", () => {
-  it("keeps exactly 67 unique expansion routes, the seven merged routes excluded", () => {
-    expect(EXPANSION_PAGES).toHaveLength(67);
-    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(67);
+  it("keeps exactly 66 unique expansion routes, the eight merged routes excluded", () => {
+    expect(EXPANSION_PAGES).toHaveLength(66);
+    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(66);
   });
 
   it("gives every page a unique direct answer", () => {
@@ -33,8 +33,8 @@ describe("expansion SEO content quality", () => {
   it("keeps work routes accurate and candidate registration qualified", () => {
     const jobs = EXPANSION_PAGES.filter((page) => page.template === "jobs");
     for (const page of jobs) expect(page.intro.join(" ").toLowerCase()).toContain("not an offer");
-    const pool = EXPANSION_PAGES.find((page) => page.path === "/medic-connect-talent-pool");
-    expect(pool?.cards.map((card) => card.title)).toEqual(["Register your profile", "Complete vetting", "Be considered"]);
+    // Candidate registration lives on /careers; the old pool route redirects there.
+    expect(EXPANSION_PAGES.find((page) => page.path === "/medic-connect-talent-pool")).toBeUndefined();
   });
 
   it("uses only governed module and fee references", () => {

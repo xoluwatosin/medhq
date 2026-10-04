@@ -157,6 +157,16 @@ const RELATED_OVERRIDES: Record<string, ExpansionPage["related"]> = {
   "live-in-caregiver": [{ label: "24-hour nursing care", path: "/24-hour-nursing-care" }, { label: "Caregiver services", path: "/caregiver" }],
   "continence-care-at-home": [{ label: "Catheter care at home", path: "/catheter-care-at-home" }, { label: "Eldercare at home", path: "/eldercare" }],
   "orthopaedic-recovery-at-home": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Physiotherapy at home", path: "/physiotherapy-at-home" }],
+  "midwife-jobs-and-opportunities": [{ label: "Nursing careers", path: "/careers/nursing" }, { label: "Careers", path: "/careers" }],
+  "c-section-recovery-at-home": [{ label: "Postnatal care at home", path: "/postnatal-care" }, { label: "Night nurse for a newborn", path: "/night-nurse-for-newborn" }],
+  "breastfeeding-support-at-home": [{ label: "Postnatal care at home", path: "/postnatal-care" }, { label: "Newborn care at home", path: "/newborn-care" }],
+  "nicu-to-home-support": [{ label: "Newborn care at home", path: "/newborn-care" }, { label: "Postnatal care at home", path: "/postnatal-care" }],
+  "coming-to-nigeria-after-giving-birth": [{ label: "Professional Omugwo", path: "/professional-omugwo" }, { label: "Care from abroad", path: "/care-from-abroad" }],
+  "who-should-i-hire-for-a-newborn": [{ label: "Newborn care at home", path: "/newborn-care" }, { label: "Professional Omugwo", path: "/professional-omugwo" }],
+  "equipment-needed-after-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "How to prepare the home before discharge", path: "/how-to-prepare-the-home-before-hospital-discharge" }],
+  "how-to-prepare-the-home-before-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Equipment needed after discharge", path: "/equipment-needed-after-hospital-discharge" }],
+  "shadow-teacher": [{ label: "Nanny and childcare", path: "/nanny-childcare" }, { label: "Pediatric care", path: "/pediatric-care" }],
+  "stroke-recovery-at-home": [{ label: "Physiotherapy at home", path: "/physiotherapy-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
   "cancer-care-at-home": [{ label: "Palliative care at home", path: "/palliative-care-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
 };
 

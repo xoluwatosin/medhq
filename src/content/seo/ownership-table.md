@@ -42,8 +42,12 @@ distinct question with no owner, and is listed in `INDEXABLE_EXPANSION_PATHS`:
 Already indexed pairs that compete with each other: /omugwo and /professional-omugwo,
 /nanny-childcare and /professional-nanny, /care-at-home and /caregiver.
 
-Note: /medic-connect-talent-pool is marked MERGE below but is not in `EXPANSION_REDIRECTS`,
-so it still renders.
+## Group four, approved (2026-10-04)
+
+Profession jobs and staffing pages, the maternity and discharge pages, /shadow-teacher,
+/stroke-recovery-at-home and /who-should-i-hire-for-a-newborn are approved; each links up to
+the page owning the wider topic. /medic-connect-talent-pool now redirects to /careers, which
+already owns joining the candidate pool.
 
 ## Merged now
 
