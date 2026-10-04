@@ -20,10 +20,31 @@ export const EXPANSION_REDIRECTS: Record<string, string> = {
 };
 
 /**
- * Expansion routes approved for indexing. Empty until the ownership review
- * decides which routes have a distinct purpose against the established pages.
+ * Expansion routes approved for indexing after the ownership review: each
+ * answers a distinct question with no established or governed page owning it.
+ * Overlapping routes stay unindexed until their cluster is resolved; see
+ * ownership-table.md.
  */
-export const INDEXABLE_EXPANSION_PATHS: string[] = [];
+export const INDEXABLE_EXPANSION_PATHS: string[] = [
+  "/wound-dressing-at-home",
+  "/blood-sample-collection-at-home",
+  "/iv-therapy-at-home",
+  "/injection-at-home",
+  "/stoma-care-at-home",
+  "/peg-feeding-support-at-home",
+  "/tracheostomy-care-at-home",
+  "/ventilator-care-at-home",
+  "/medication-administration-at-home",
+  "/diabetic-foot-care-at-home",
+  "/medical-escort-services",
+  "/home-care-vs-care-home",
+  "/nurse-vs-caregiver",
+  "/who-do-i-need-after-surgery",
+  "/transport-to-medical-appointments",
+  "/how-to-verify-a-nurse-in-nigeria",
+  "/how-to-verify-a-doctor-in-nigeria",
+  "/caregiver-cost-in-lagos",
+];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);
 

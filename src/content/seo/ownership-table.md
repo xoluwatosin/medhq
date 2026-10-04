@@ -12,6 +12,39 @@ Decisions used:
 - **REFRAME** — overlaps an established page. Must be narrowed to a different question, or merged.
 - **HOLD** — no distinct search demand established yet, or the claim base is not settled.
 
+## Approved for indexing (2026-10-04)
+
+Checked against both the established pages and the governed SEO pages. Each answers a
+distinct question with no owner, and is listed in `INDEXABLE_EXPANSION_PATHS`:
+
+/wound-dressing-at-home, /blood-sample-collection-at-home, /iv-therapy-at-home,
+/injection-at-home, /stoma-care-at-home, /peg-feeding-support-at-home,
+/tracheostomy-care-at-home, /ventilator-care-at-home, /medication-administration-at-home,
+/diabetic-foot-care-at-home, /medical-escort-services, /home-care-vs-care-home,
+/nurse-vs-caregiver, /who-do-i-need-after-surgery, /transport-to-medical-appointments,
+/how-to-verify-a-nurse-in-nigeria, /how-to-verify-a-doctor-in-nigeria, /caregiver-cost-in-lagos
+
+## Overlaps with governed pages, not covered by the clusters below
+
+| Route | Competes with | Proposed |
+| --- | --- | --- |
+| /continence-care-at-home | /catheter-care-at-home | MERGE |
+| /physiotherapy-after-stroke | /stroke-recovery-at-home, /physiotherapy-at-home | MERGE → /stroke-recovery-at-home |
+| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAME or MERGE |
+| /ngo-health-programme-implementation, /community-health-outreach-services | /ngo-healthcare-staffing | MERGE |
+| /night-nurse-for-newborn | /newborn-care | REFRAME to overnight only |
+| /live-in-nanny | /professional-nanny | REFRAME to live-in only |
+| /live-in-caregiver | /caregiver, /24-hour-nursing-care | REFRAME to live-in only |
+| /managed-postpartum-stay-in-nigeria | /omugwo, /professional-omugwo, /care-from-abroad | MERGE |
+| /diabetes-care-at-home | /chronic-care-at-home | KEEP as a condition page linking to the parent |
+| /cancer-care-at-home | /palliative-care-at-home | KEEP, treatment-stage support only |
+
+Already indexed pairs that compete with each other: /omugwo and /professional-omugwo,
+/nanny-childcare and /professional-nanny, /care-at-home and /caregiver.
+
+Note: /medic-connect-talent-pool is marked MERGE below but is not in `EXPANSION_REDIRECTS`,
+so it still renders.
+
 ## Merged now
 
 | Route | Owner | Reason |
