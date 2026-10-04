@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
  * Rules locked with the brand guide:
  *  - one page container width (1440) with 22 / 50px gutters
  *  - section = eyebrow + heading + hairline rule + content
- *  - surfaces use the asymmetric "kit curve" radius, never full rounding
- *  - medium density: generous but functional vertical rhythm
+ *  - surfaces are square with hard offset shadows; 10px only on controls
+ *  - headings are 800 with tight tracking; a heavy navy rule opens a section
  */
 
 export const KitMain = ({ children, className }: { children: ReactNode; className?: string }) => (
@@ -29,14 +29,14 @@ interface KitSectionProps {
 
 export const KitSection = ({ title, eyebrow, intro, narrow, children, className }: KitSectionProps) => (
   <section className={cn("mt-14 first:mt-0 sm:mt-20", narrow && "mx-auto max-w-[820px]", className)}>
+    {(title || intro) && <hr className="mb-6 border-t-4 border-navy" />}
     {eyebrow && <p className="eyebrow">{eyebrow}</p>}
     {title && (
-      <h2 className={cn("text-[26px] font-medium tracking-[-0.02em] text-ink sm:text-[34px]", eyebrow && "mt-3")}>
+      <h2 className={cn("text-[32px] leading-[1] tracking-[-0.05em] sm:text-[44px]", eyebrow && "mt-3")}>
         {title}
       </h2>
     )}
     {intro && <p className="mt-4 max-w-[62ch] text-[16px] leading-[1.7] text-body sm:text-[17px]">{intro}</p>}
-    {(title || intro) && <hr className="mt-5 border-hairline-warm" />}
     <div className={cn(title || intro ? "mt-8" : undefined)}>{children}</div>
   </section>
 );
@@ -53,9 +53,9 @@ export const KitPanel = ({
   <div
     className={cn(
       "kit-curve p-6 sm:p-8",
-      tone === "card" && "border border-hairline-warm bg-card",
+      tone === "card" && "border-2 border-navy bg-card shadow-offset-tint",
       tone === "tint" && "bg-muted",
-      tone === "navy" && "bg-navy text-body-navy",
+      tone === "navy" && "bg-navy text-body-navy shadow-offset-blue",
       className,
     )}
   >
@@ -75,16 +75,16 @@ export const KitFacts = ({ items }: { items: { label: string; value: ReactNode }
 );
 
 export const kitPrimaryButton =
-  "kit-curve-sm inline-flex items-center justify-center gap-2 bg-brand px-7 py-3.5 text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-navy";
+  "kit-curve-sm inline-flex min-h-[48px] items-center justify-center gap-2 bg-brand px-7 py-3.5 text-[16px] font-extrabold text-white transition-colors duration-200 hover:bg-navy";
 
 export const kitSecondaryButton =
-  "kit-curve-sm inline-flex items-center justify-center gap-2 border-[1.5px] border-hairline-warm bg-white px-7 py-3.5 text-[16px] font-semibold text-ink transition-colors duration-200 hover:border-brand hover:text-brand";
+  "kit-curve-sm inline-flex min-h-[48px] items-center justify-center gap-2 border-[1.5px] border-brand bg-white px-7 py-3.5 text-[16px] font-extrabold text-brand transition-colors duration-200 hover:border-navy hover:text-navy";
 
 export const kitHeroPrimaryButton =
-  "kit-curve-sm inline-flex items-center justify-center gap-2 bg-white px-7 py-3.5 text-[16px] font-semibold text-navy transition-opacity duration-200 hover:opacity-90";
+  "kit-curve-sm inline-flex min-h-[48px] items-center justify-center gap-2 bg-white px-7 py-3.5 text-[16px] font-extrabold text-navy transition-colors duration-200 hover:bg-tint";
 
 export const kitHeroSecondaryButton =
-  "kit-curve-sm inline-flex items-center justify-center gap-2 border-[1.5px] border-outline-navy px-7 py-3.5 text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-hairline-navy";
+  "kit-curve-sm inline-flex min-h-[48px] items-center justify-center gap-2 border-[1.5px] border-outline-navy px-7 py-3.5 text-[16px] font-extrabold text-white transition-colors duration-200 hover:bg-hairline-navy";
 
 export const kitInput =
-  "mt-2 w-full border border-input bg-white px-4 py-3 text-[16px] text-ink outline-none transition-colors focus:border-brand";
+  "kit-curve-sm mt-2 w-full border-[1.5px] border-input bg-white px-4 py-3 text-[16px] text-ink outline-none transition-colors focus:border-brand";

@@ -75,7 +75,8 @@ const KitFlipCard = ({
   const [flipped, setFlipped] = useState(false);
   const backId = useId();
   const external = href.startsWith("http");
-  const radius = "0 28px 0 28px";
+  // Square, with a hard offset that alternates by back treatment.
+  const radius = "0";
   const s = backStyles[back];
 
   const faceBase =
@@ -85,7 +86,7 @@ const KitFlipCard = ({
 
   return (
     <div
-      className={`${height} cursor-pointer [perspective:1400px]`}
+      className={`${height} cursor-pointer [perspective:1400px] ${back === "brand" || back === "tint" ? "shadow-offset-blue" : "shadow-offset"}`}
       onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) setFlipped(true); }}
       onMouseLeave={() => { if (window.matchMedia("(hover: hover)").matches) setFlipped(false); }}
       onClick={() => setFlipped((v) => !v)}
@@ -107,7 +108,7 @@ const KitFlipCard = ({
           <div className="absolute inset-0 bg-navy/55" />
           <div className={`absolute inset-x-0 bottom-0 ${pad}`}>
             <h3
-              className="font-semibold text-white drop-shadow-lg text-[15px] leading-[1.3] sm:text-xl sm:leading-[1.25]"
+              className="self-start bg-white px-2 py-1 font-extrabold !text-navy text-[15px] leading-[1.2] tracking-[-0.03em] sm:text-[21px]"
             >
               {title}
             </h3>
@@ -155,7 +156,7 @@ const KitFlipCard = ({
           <div className={`relative flex h-full flex-col ${pad}`}>
             <p className={`eyebrow ${s.eyebrow} !text-[10px] sm:!text-[12px]`}>{eyebrow}</p>
             <h3
-              className={`line-clamp-2 font-semibold ${s.title} mt-1.5 text-[13px] leading-[1.2] sm:mt-3 sm:text-[19px] sm:leading-[1.3]`}
+              className={`line-clamp-2 font-extrabold ${s.title} mt-1.5 text-[13px] leading-[1.2] sm:mt-3 sm:text-[19px] sm:leading-[1.3]`}
             >
               {title}
             </h3>
@@ -175,7 +176,7 @@ const KitFlipCard = ({
                   rel="noopener noreferrer"
                   tabIndex={flipped ? 0 : -1}
                   onClick={(e) => e.stopPropagation()}
-                  className={`inline-block font-semibold underline underline-offset-4 ${s.link} text-[12px] sm:text-[14px]`}
+                  className={`inline-block font-extrabold underline underline-offset-4 ${s.link} text-[12px] sm:text-[14px]`}
                 >
                   Visit the site
                 </a>
@@ -184,7 +185,7 @@ const KitFlipCard = ({
                   to={href}
                   tabIndex={flipped ? 0 : -1}
                   onClick={(e) => e.stopPropagation()}
-                  className={`inline-block font-semibold underline underline-offset-4 ${s.link} text-[12px] sm:text-[14px]`}
+                  className={`inline-block font-extrabold underline underline-offset-4 ${s.link} text-[12px] sm:text-[14px]`}
                 >
                   Read more
                 </Link>

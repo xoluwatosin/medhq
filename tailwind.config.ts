@@ -53,7 +53,12 @@ export default {
   			]
   		},
   		colors: {
-  			navy: 'hsl(var(--navy))',
+  			navy: {
+  				DEFAULT: 'hsl(var(--navy))',
+  				mid: 'hsl(var(--navy-mid))'
+  			},
+  			canvas: 'hsl(var(--canvas))',
+  			'tint-deep': 'hsl(var(--tint-deep))',
   			brand: {
   				DEFAULT: 'hsl(var(--brand))',
   				soft: 'hsl(var(--brand-soft))'
@@ -145,9 +150,11 @@ export default {
   			}
   		},
   		borderRadius: {
+  			// Square everywhere. md is what controls use, so it carries the 10px.
   			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			md: 'var(--radius-control)',
+  			sm: 'var(--radius)',
+  			control: 'var(--radius-control)'
   		},
   		keyframes: {
   			'accordion-down': {
@@ -172,6 +179,12 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		boxShadow: {
+  			'offset-sm': '4px 4px 0 hsl(var(--navy))',
+  			offset: '6px 6px 0 hsl(var(--navy))',
+  			'offset-tint': '8px 8px 0 hsl(var(--tint))',
+  			'offset-blue': '6px 6px 0 hsl(var(--brand))',
+  			float: '0 14px 30px rgba(38,48,107,0.16)',
+  			page: '0 8px 26px rgba(26,31,46,0.08)',
   			'2xs': 'var(--shadow-2xs)',
   			xs: 'var(--shadow-xs)',
   			sm: 'var(--shadow-sm)',
