@@ -18,16 +18,16 @@ import KitPillHeading from "@/components/kit/KitPillHeading";
  * published; the card says it is quoted after assessment.
  */
 const homeServices: ServiceCard[] = [
-  { title: "Clinical home care", line: "Skilled nursing and medical support at home.", href: "/clinical-home-care", price: "₦20,000", unit: "per visit", art: art.proNurseKit },
-  { title: "Post-surgical care", line: "Wounds, drains, medication and mobility after surgery.", href: "/post-surgical-care", price: "₦25,000", unit: "per visit", art: art.objWalkingFrame },
-  { title: "Antenatal care", line: "Pregnancy checks and support at home.", href: "/antenatal-care", price: "₦30,000", unit: "per visit", art: art.midwifePregnantBp },
-  { title: "Postnatal care and Omugwo", line: "Rest, recover and bond with your baby.", href: "/postnatal-care", price: "₦30,000", unit: "per visit", art: art.proPostnatal },
+  { title: "Clinical home care", line: "Skilled nursing and medical support at home.", href: "/clinical-home-care", price: "₦20,000", art: art.proNurseKit },
+  { title: "Post-surgical care", line: "Wounds, drains, medication and mobility after surgery.", href: "/post-surgical-care", price: "₦25,000", art: art.objWalkingFrame },
+  { title: "Antenatal care", line: "Pregnancy checks and support at home.", href: "/antenatal-care", price: "₦30,000", art: art.midwifePregnantBp },
+  { title: "Postnatal care and Omugwo", line: "Rest, recover and bond with your baby.", href: "/postnatal-care", price: "₦30,000", art: art.proPostnatal },
   { title: "Nanny and childcare", line: "Trusted nannies matched to your family.", href: "/nanny-childcare", price: "", art: art.nannyReading },
   { title: "Paediatric and additional needs", line: "Support for children with medical or developmental needs.", href: "/pediatric-care", price: "", art: art.charBoy },
-  { title: "Eldercare", line: "Dignified care that keeps older relatives independent.", href: "/eldercare", price: "₦18,000", unit: "per 4 hours", art: art.charGrandma },
+  { title: "Eldercare", line: "Dignified care that keeps older relatives independent.", href: "/eldercare", price: "₦18,000", art: art.charGrandma },
   // /caregiver owns the "hire a caregiver" search; this page owns home care in
   // general, so it links down rather than competing for the same query.
-  { title: "Caregivers", line: "Personal care, company and appointment escort.", href: "/caregiver", price: "₦18,000", unit: "per 4 hours", art: art.charCaregiver },
+  { title: "Caregivers", line: "Personal care, company and appointment escort.", href: "/caregiver", price: "₦18,000", art: art.charCaregiver },
   { title: "Care from abroad", line: "One contact in Nigeria for families overseas.", href: "/care-from-abroad", price: "", art: art.diasporaSon },
 ];
 

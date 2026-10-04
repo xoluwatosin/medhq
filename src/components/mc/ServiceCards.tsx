@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
  * A list of services with starting prices, built twice:
  *  - desktop: illustrated cards with the price on a luggage tag, slightly tilted;
  *  - phones: two-column tiles with the illustration, name and price only.
- * Every published price shows "from": these are starting prices for a service
- * line, and the care plan sets the final figure. Leave `price` empty when no
- * price is published; the card then says it is quoted after assessment.
+ * Every published price shows "from" and no unit: these are starting prices
+ * for a service line, and the care plan sets the final figure. Leave `price`
+ * empty when no price is published; the card then says it is quoted after
+ * assessment.
  */
 export interface ServiceCard {
   title: string;
@@ -16,7 +17,6 @@ export interface ServiceCard {
   href: string;
   /** "₦20,000", or "" when quoted after assessment. */
   price: string;
-  unit?: string;
   art: string;
 }
 
@@ -25,10 +25,11 @@ const Price = ({ s, size }: { s: ServiceCard; size: "tag" | "tile" }) =>
     <span className="whitespace-nowrap tabular-nums">
       <span className={cn("mr-1 font-bold text-ink", size === "tag" ? "text-[12px]" : "text-[11px]")}>from</span>
       <b className={cn("font-extrabold tracking-[-0.03em] text-price", size === "tag" ? "text-[20px]" : "text-[15px]")}>{s.price}</b>
-      {size === "tag" && s.unit && <span className="ml-1 text-[12px] font-semibold text-muted-foreground">{s.unit}</span>}
     </span>
   ) : (
-    <span className="text-[12px] font-bold text-muted-foreground">Quoted after assessment</span>
+    <span className={cn("block font-bold leading-tight text-muted-foreground", size === "tag" ? "max-w-[92px] text-[12px]" : "text-[12px]")}>
+      Quoted after assessment
+    </span>
   );
 
 const TILTS = [-1.2, 0.8, -0.6];
@@ -45,7 +46,8 @@ const ServiceCards = ({ services }: { services: ServiceCard[] }) => (
           className="mc-tilt group relative flex flex-col border-2 border-navy bg-white shadow-offset"
         >
           <div className="relative m-2.5 mb-0 h-[150px] bg-tint">
-            <img src={s.art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[138px] object-contain" />
+            {/* Art stands left so the price tag on the right never covers a face. */}
+            <img src={s.art} alt="" className="absolute bottom-0 left-5 h-[138px] max-w-[52%] object-contain object-left-bottom" />
           </div>
           <span
             className={cn(
