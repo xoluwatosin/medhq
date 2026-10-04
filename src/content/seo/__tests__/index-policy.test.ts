@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { describe, expect, it } from "vitest";
 import { EXPANSION_REDIRECTS, INDEXABLE_EXPANSION_PATHS, canonicalOwnerFor, isExpansionIndexable } from "@/content/seo/index-policy";
 import { EXPANSION_PAGE_PATHS } from "@/content/seo/expansion-pages";
@@ -16,7 +18,9 @@ describe("expansion indexing policy", () => {
     expect(canonicalOwnerFor("/ngo-health-programme-implementation")).toBe("/ngo-healthcare-staffing");
     expect(canonicalOwnerFor("/community-health-outreach-services")).toBe("/ngo-healthcare-staffing");
     expect(canonicalOwnerFor("/physiotherapy-after-stroke")).toBe("/stroke-recovery-at-home");
-    expect(canonicalOwnerFor("/managed-postpartum-stay-in-nigeria")).toBe("/professional-omugwo");
+    expect(canonicalOwnerFor("/managed-postpartum-stay-in-nigeria")).toBe("/omugwo");
+    expect(canonicalOwnerFor("/professional-omugwo")).toBe("/omugwo");
+    expect(canonicalOwnerFor("/professional-nanny")).toBe("/nanny-childcare");
     expect(canonicalOwnerFor("/medic-connect-talent-pool")).toBe("/careers");
   });
 
@@ -31,5 +35,20 @@ describe("expansion indexing policy", () => {
     for (const path of unreviewed) {
       expect(isExpansionIndexable(path)).toBe(false);
     }
+  });
+
+  it("serves every merged route as a permanent server redirect", () => {
+    const config = JSON.parse(readFileSync(resolve("vercel.json"), "utf8"));
+    const served = Object.fromEntries(
+      (config.redirects ?? []).map((r: { source: string; destination: string; permanent: boolean }) => {
+        expect(r.permanent).toBe(true);
+        return [r.source, r.destination];
+      }),
+    );
+    expect(served).toEqual(EXPANSION_REDIRECTS);
+  });
+
+  it("never redirects to a route that itself redirects", () => {
+    for (const to of Object.values(EXPANSION_REDIRECTS)) expect(EXPANSION_REDIRECTS[to]).toBeUndefined();
   });
 });

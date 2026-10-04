@@ -275,33 +275,4 @@ export const PAGE_VISUALS: Record<string, PageVisuals> = {
       { title: "Neuro-rehabilitation", description: "Neuro-rehabilitation is provided where clinically appropriate.", image: clinicalHomeCare },
     ],
   },
-  "/professional-nanny": {
-    heroImage: nannyHero,
-    audience: [
-      "Families with newborns",
-      "Families with toddlers",
-      "Families with school-age children",
-      "Households needing after-school or holiday cover",
-    ],
-    cards: [
-      { title: "Matched to the household", description: "Nannies are matched on experience, the ages of the children, the routine and the hours required.", image: nannyInfant },
-      { title: "Agreed duties", description: "Duties are agreed in the care agreement and can include feeding, routine and homework support.", image: nannyEarlyLearning },
-      { title: "Named pickup authorisation", description: "A child is released only to the family or to people the family has named in writing in advance.", image: nannyAfterSchool },
-      { title: "Specialist child support", description: "Specialist child support is delivered by Medic Connect specialists or coordinated with specialist partners.", image: pediatricDaily },
-    ],
-  },
-  "/professional-omugwo": {
-    heroImage: postnatalHero,
-    audience: [
-      "New mothers",
-      "Families arranging managed support after birth",
-      "Families abroad coordinating care at home",
-      "Households needing clinical and practical support together",
-    ],
-    cards: [
-      { title: "Clinical support", description: "Professional Omugwo combines clinical and practical support, depending on the package agreed.", image: postnatalCare },
-      { title: "Practical support", description: "Meals, household help and night support form part of the package where agreed.", image: nannyHousehold },
-      { title: "Managed and documented", description: "Managed care is documented against the care plan, with a named care management contact.", image: antenatalCare },
-    ],
-  },
 };

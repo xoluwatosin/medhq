@@ -287,6 +287,7 @@ export const GOVERNED_PAGES: GovernedPage[] = [
     intro: [
       "Omugwo support is arranged after an assessment that sets the package, the professionals and the hours.",
       "It is a professional service, not a family arrangement, and it is not limited to nursing.",
+      "Managed care is documented against the care plan, with a named care management contact.",
     ],
     moduleCodes: ["MOD-10", "MOD-02", "MOD-09", "MOD-01", "MOD-04", "MOD-05", "MOD-06"],
     feeSkus: ["PUB-ASSESSMENT"],
@@ -348,34 +349,6 @@ export const GOVERNED_PAGES: GovernedPage[] = [
     moduleCodes: ["MOD-10", "MOD-03", "MOD-08", "MOD-02", "MOD-01", "MOD-04", "MOD-05", "MOD-06"],
     feeSkus: ["PUB-ASSESSMENT", "PUB-POSTNATAL-VISIT", "PUB-CSECTION-WOUND", "PUB-BREASTFEEDING"],
     hasExistingPage: true,
-  },
-  {
-    path: "/professional-nanny",
-    title: "Professional Nanny Services in Nigeria | Medic Connect",
-    h1: "Professional nanny services",
-    metaDescription:
-      "Trained, vetted nannies for newborns, toddlers and school-age children, with safeguarding onboarding and named pickup authorisation.",
-    promise: "A trained nanny, matched to the household and the children named in the care agreement.",
-    intro: [
-      "Nannies are matched on experience, the ages of the children, the routine and the hours required.",
-      "Specialist child support is delivered by Medic Connect specialists or coordinated with specialist partners.",
-    ],
-    moduleCodes: ["MOD-11", "MOD-02", "MOD-09", "MOD-01", "MOD-04", "MOD-05", "MOD-06"],
-    feeSkus: ["PUB-ASSESSMENT"],
-  },
-  {
-    path: "/professional-omugwo",
-    title: "Professional Omugwo Care in Nigeria | Medic Connect",
-    h1: "Professional Omugwo",
-    metaDescription:
-      "Paid nurses and caregivers delivering Omugwo: maternal and newborn care, feeding and night support, meals and household help.",
-    promise: "Omugwo delivered as a managed professional service, documented and supervised.",
-    intro: [
-      "Professional Omugwo combines clinical and practical support, depending on the package agreed.",
-      "Managed care is documented against the care plan, with a named care management contact.",
-    ],
-    moduleCodes: ["MOD-10", "MOD-02", "MOD-07", "MOD-09", "MOD-01", "MOD-04", "MOD-05", "MOD-06"],
-    feeSkus: ["PUB-ASSESSMENT"],
   },
 ];
 

@@ -65,6 +65,17 @@ Redirected: /school-companion → /shadow-teacher; /additional-needs-childcare,
 
 Held: /occupational-therapy-for-children, until supplying occupational therapists is confirmed.
 
+## Competing live pages, resolved (2026-10-04)
+
+| Pair | Decision |
+| --- | --- |
+| /omugwo and /professional-omugwo | MERGED → /omugwo, the head term; its "managed and documented" line moved across |
+| /nanny-childcare and /professional-nanny | MERGED → /nanny-childcare, whose title already targets "professional nanny" |
+| /care-at-home and /caregiver | KEPT both: general home care vs hiring a caregiver; /care-at-home now links to /caregiver |
+
+Every merged route is also a permanent (301) redirect in `vercel.json`, so search engines
+transfer the old page's standing without running the app. A test keeps the two lists equal.
+
 ## Merged now
 
 | Route | Owner | Reason |

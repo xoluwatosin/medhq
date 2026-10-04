@@ -16,6 +16,7 @@ import postnatalImg from "@/assets/services/postnatal-care.jpg";
 import nannyImg from "@/assets/services/nanny-childcare.jpg";
 import eldercareImg from "@/assets/services/eldercare.jpg";
 import pediatricImg from "@/assets/services/pediatric-care.jpg";
+import caregiverImg from "@/assets/services/eldercare-companionship.jpg";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 
 const homeServices: KitService[] = [
@@ -90,6 +91,18 @@ const homeServices: KitService[] = [
     href: "/pediatric-care",
     image: pediatricImg,
     back: "tint",
+  },
+  // /caregiver owns the "hire a caregiver" search; this page owns home care in
+  // general, so it links down rather than competing for the same query.
+  {
+    eyebrow: "Daily living",
+    title: "Caregivers",
+    description:
+      "Vetted caregivers for personal care, companionship, mobility and appointment escort at home.",
+    price: "Companion care from ₦18,000 per four hours",
+    href: "/caregiver",
+    image: caregiverImg,
+    back: "navy",
   },
 ];
 

@@ -10,8 +10,9 @@
  */
 
 /**
- * Expansion routes that duplicate an established page. The established URL
- * owns the topic; the duplicate redirects to it and never renders content.
+ * Routes that duplicate an established page. The established URL owns the
+ * topic; the duplicate redirects to it and never renders content. vercel.json
+ * serves the same list as permanent (301) redirects, checked by a test.
  */
 export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/antenatal-care-at-home": "/antenatal-care",
@@ -20,7 +21,9 @@ export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/ngo-health-programme-implementation": "/ngo-healthcare-staffing",
   "/community-health-outreach-services": "/ngo-healthcare-staffing",
   "/physiotherapy-after-stroke": "/stroke-recovery-at-home",
-  "/managed-postpartum-stay-in-nigeria": "/professional-omugwo",
+  "/managed-postpartum-stay-in-nigeria": "/omugwo",
+  "/professional-omugwo": "/omugwo",
+  "/professional-nanny": "/nanny-childcare",
   "/medic-connect-talent-pool": "/careers",
   "/school-companion": "/shadow-teacher",
   "/additional-needs-childcare": "/pediatric-care",

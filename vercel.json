@@ -3,5 +3,107 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "redirects": [
+    {
+      "source": "/antenatal-care-at-home",
+      "destination": "/antenatal-care",
+      "permanent": true
+    },
+    {
+      "source": "/clinical-research-staffing",
+      "destination": "/clinical-research",
+      "permanent": true
+    },
+    {
+      "source": "/hospital-support-services",
+      "destination": "/hospital-support",
+      "permanent": true
+    },
+    {
+      "source": "/ngo-health-programme-implementation",
+      "destination": "/ngo-healthcare-staffing",
+      "permanent": true
+    },
+    {
+      "source": "/community-health-outreach-services",
+      "destination": "/ngo-healthcare-staffing",
+      "permanent": true
+    },
+    {
+      "source": "/physiotherapy-after-stroke",
+      "destination": "/stroke-recovery-at-home",
+      "permanent": true
+    },
+    {
+      "source": "/managed-postpartum-stay-in-nigeria",
+      "destination": "/omugwo",
+      "permanent": true
+    },
+    {
+      "source": "/professional-omugwo",
+      "destination": "/omugwo",
+      "permanent": true
+    },
+    {
+      "source": "/professional-nanny",
+      "destination": "/nanny-childcare",
+      "permanent": true
+    },
+    {
+      "source": "/medic-connect-talent-pool",
+      "destination": "/careers",
+      "permanent": true
+    },
+    {
+      "source": "/school-companion",
+      "destination": "/shadow-teacher",
+      "permanent": true
+    },
+    {
+      "source": "/additional-needs-childcare",
+      "destination": "/pediatric-care",
+      "permanent": true
+    },
+    {
+      "source": "/early-intervention-support",
+      "destination": "/pediatric-care",
+      "permanent": true
+    },
+    {
+      "source": "/behaviour-support",
+      "destination": "/pediatric-care",
+      "permanent": true
+    },
+    {
+      "source": "/hospital-to-home-care",
+      "destination": "/care-after-hospital-discharge",
+      "permanent": true
+    },
+    {
+      "source": "/care-for-elderly-parents",
+      "destination": "/eldercare",
+      "permanent": true
+    },
+    {
+      "source": "/blood-sugar-monitoring-at-home",
+      "destination": "/diabetes-care-at-home",
+      "permanent": true
+    },
+    {
+      "source": "/blood-pressure-monitoring-at-home",
+      "destination": "/chronic-care-at-home",
+      "permanent": true
+    },
+    {
+      "source": "/speech-delay-support",
+      "destination": "/speech-therapist-for-children",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

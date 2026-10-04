@@ -65,8 +65,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/omugwo", changefreq: "monthly", priority: "0.9" },
   { path: "/palliative-care-at-home", changefreq: "monthly", priority: "0.9" },
   { path: "/physiotherapy-at-home", changefreq: "monthly", priority: "0.9" },
-  { path: "/professional-nanny", changefreq: "monthly", priority: "0.9" },
-  { path: "/professional-omugwo", changefreq: "monthly", priority: "0.9" },
   ...expansionPaths.map((path) => ({ path, changefreq: "monthly" as const, priority: "0.8" })),
 ];
 
