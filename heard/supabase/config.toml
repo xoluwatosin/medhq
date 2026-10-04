@@ -1,5 +1,0 @@
-# Set to the Heard Supabase project ref once it exists.
-project_id = "heard"
-
-# heard-submit keeps the default JWT check: the browser calls it with the
-# project's anon key, and the function itself validates every payload.
