@@ -4,7 +4,7 @@ export const PROCESS_SUMMARIES: Record<string, string> = {
   "MOD-02": "An assessor reviews the person’s needs, home, routines and risks, then confirms the care plan, professionals and hours required.",
   "MOD-03": "Care is delivered at home only when the assessment, professional scope and home environment make it safe and appropriate.",
   "MOD-04": "Staff follow a documented escalation process, but emergencies must go directly to the emergency services.",
-  "MOD-05": "The assessment is fixed-price; defined services use published prices, while ongoing, live-in and package care is quoted after assessment.",
+  "MOD-05": "The assessment is fixed-price; defined services use published prices, live-in care has a from price, and other ongoing and package care is quoted after assessment.",
   "MOD-06": "We confirm professional availability and a safe start date in Lagos, Abuja/FCT, Ogun or Ibadan/Oyo after reviewing the request.",
   "MOD-07": "Managed care is recorded against the care plan and reviewed when needs, risks or circumstances change.",
   "MOD-08": "A nurse can administer prescribed medicines and maintain the medication record within the agreed care plan and professional scope.",

@@ -103,7 +103,7 @@ export const GOVERNED_PAGES: GovernedPage[] = [
       "The assessment sets the duties, the hours and the level of professional required.",
     ],
     moduleCodes: ["MOD-02", "MOD-09", "MOD-07", "MOD-01", "MOD-04", "MOD-05", "MOD-06"],
-    feeSkus: ["PUB-ASSESSMENT", "PUB-COMPANION-4H", "PUB-ESCORT"],
+    feeSkus: ["PUB-ASSESSMENT", "PUB-COMPANION-4H", "PUB-ESCORT", "PUB-LIVE-IN"],
   },
   {
     path: "/catheter-care-at-home",

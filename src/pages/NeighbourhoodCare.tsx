@@ -113,10 +113,10 @@ const NeighbourhoodCare = ({ slug }: NeighbourhoodCareProps) => {
             ],
             offers: {
               lowPrice: 18000,
-              highPrice: 60000,
-              offerCount: 4,
+              highPrice: 300000,
+              offerCount: 5,
               description:
-                "Companion care from ₦18,000. Nursing visits from ₦18,000. 8-hour nursing shift ₦60,000. Live-in and 24-hour care quoted after the assessment. Initial home assessment ₦35,000.",
+                "Companion care from ₦18,000. Nursing visits from ₦18,000. 8-hour nursing shift ₦60,000. Live-in caregivers from ₦300,000 a month. 24-hour care quoted after the assessment. Initial home assessment ₦35,000.",
             },
           }),
           faqSchema(n.faqs),

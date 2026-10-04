@@ -54,7 +54,7 @@ const config: ServicePageConfig = {
     { worry: "What if their health gets worse?", answer: "We escalate to a nurse or doctor, and keep you informed." },
     { worry: "How will I know they are okay?", answer: "A short note on WhatsApp after every visit." },
   ],
-  feeSkus: ["PUB-COMPANION-4H", "PUB-NURSING-BASIC", "PUB-ESCORT"],
+  feeSkus: ["PUB-COMPANION-4H", "PUB-NURSING-BASIC", "PUB-LIVE-IN"],
   steps: [
     { title: "Tell us about them", text: "Message us or request care with a few details about your relative and their routine." },
     { title: "The home assessment", text: "A one-off ₦35,000 visit from a care coordinator, before any care starts." },
@@ -96,12 +96,12 @@ const Eldercare = () => (
           "Chronic disease monitoring (hypertension, diabetes)",
           "24-hour live-in nursing",
         ],
-        // From the published price list: companion care, basic nursing visit, appointment escort.
+        // From the published price list: companion care, basic nursing visit, live-in caregiver.
         offers: {
           lowPrice: 18000,
-          highPrice: 24000,
+          highPrice: 300000,
           offerCount: 3,
-          description: "From ₦18,000. Every care plan starts with a one-off ₦35,000 home assessment.",
+          description: "From ₦18,000. Live-in caregivers from ₦300,000 a month. Every care plan starts with a one-off ₦35,000 home assessment.",
         },
       })}
     />
