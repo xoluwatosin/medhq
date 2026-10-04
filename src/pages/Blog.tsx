@@ -10,7 +10,6 @@ import { KitMain } from "@/components/kit/KitLayout";
 import { Chevrons, PillSticker, SpeechBubble, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 import PostCard, { firstParagraph, postDate, postImage, type PostCardData } from "@/components/blog/PostCard";
-import Clothesline from "@/components/blog/Clothesline";
 import { cn } from "@/lib/utils";
 
 interface PostRow extends PostCardData {
@@ -94,22 +93,19 @@ const Blog = () => {
       <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
         <Watermark glyph="o" size={620} opacity={0.12} className="-right-[200px] -top-[120px] hidden lg:block" />
         <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
-        <div className="relative mx-auto grid max-w-[1440px] items-center gap-10 px-[22px] pb-14 sm:px-[50px] lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:pb-20">
-          <div>
-            <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 lg:mt-4">
-              <KitPillHeading text="The Bridge" accent={[1]} align="left" />
-              {posts.length > 0 && (
-                <PillSticker tone="blue" tilt={-6}>
-                  {posts.length} {posts.length === 1 ? "story" : "stories"} so far
-                </PillSticker>
-              )}
-            </div>
-            <p className="mt-5 max-w-[46ch] text-[15px] leading-[1.55] text-body-navy sm:text-[18px] lg:mt-6 lg:text-[19px]">
-              Stories, insights and field notes from nurses, carers and families, at home and in hospital.
-            </p>
+        <div className="relative mx-auto max-w-[1440px] px-[22px] pb-14 sm:px-[50px] lg:pb-20">
+          <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
+          <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-4 lg:mt-6">
+            <KitPillHeading text="The Bridge" accent={[1]} align="left" size="xl" />
+            {posts.length > 0 && (
+              <PillSticker tone="blue" tilt={-6} className="mb-2">
+                {posts.length} {posts.length === 1 ? "story" : "stories"} so far
+              </PillSticker>
+            )}
           </div>
-          <Clothesline posts={posts} loading={loading} className="lg:-mt-6" />
+          <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.55] text-body-navy sm:text-[19px] lg:mt-8 lg:text-[21px]">
+            Stories, insights and field notes from nurses, carers and families, at home and in hospital.
+          </p>
         </div>
       </section>
 

@@ -7,7 +7,7 @@ interface KitPillHeadingProps {
   align?: "left" | "centre";
   className?: string;
   /** "md" for long headings, so a six- or eight-word title stays a few lines. */
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 }
 
 /**
@@ -23,14 +23,16 @@ const KitPillHeading = ({ text, accent = [], align = "centre", className = "", s
   const type =
     size === "md"
       ? "px-2.5 py-1 text-[26px] sm:px-4 sm:py-2 sm:text-[40px]"
-      : "px-3 py-1.5 text-[30px] sm:px-6 sm:py-3 sm:text-[54px]";
+      : size === "xl"
+        ? "px-4 py-2 text-[56px] sm:px-8 sm:py-4 sm:text-[96px] lg:px-10 lg:text-[136px]"
+        : "px-3 py-1.5 text-[30px] sm:px-6 sm:py-3 sm:text-[54px]";
 
   return (
     <h1 className={`block ${className}`}>
       <span className="sr-only">{text}</span>
       <span
         aria-hidden="true"
-        className={`flex flex-wrap items-center ${size === "md" ? "gap-2 sm:gap-3" : "gap-2.5 sm:gap-3.5"} ${
+        className={`flex flex-wrap items-center ${size === "md" ? "gap-2 sm:gap-3" : size === "xl" ? "gap-3 sm:gap-5" : "gap-2.5 sm:gap-3.5"} ${
           align === "centre" ? "justify-center" : "justify-start"
         }`}
       >
