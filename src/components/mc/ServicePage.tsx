@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
@@ -58,6 +58,9 @@ export interface ServicePageConfig {
 const TILTS = [-1.1, 0.9, -0.7];
 
 const ServicePage = ({ c }: { c: ServicePageConfig }) => {
+  // Phones: one step and one worry open at a time; the first of each starts open.
+  const [step, setStep] = useState(0);
+  const [openWorry, setOpenWorry] = useState(0);
   const fees = c.feeSkus.map((s) => GOVERNED_FEES[s]).filter((f) => f && f.sku !== "PUB-ASSESSMENT");
 
   const buttons = (onPhone: boolean) => (
@@ -206,22 +209,26 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
 
         {/* Prices: the care price, then the assessment, shown apart so the two are never confused. */}
         <section aria-labelledby="prices-heading" className="mt-20 lg:mt-28">
-          <SectionHead id="prices-heading" eyebrow="What it costs" title="Prices" />
+          <SectionHead
+            id="prices-heading"
+            eyebrow="What it costs"
+            title="Indicative fees"
+            intro="A guide to what care typically costs. Your fee is confirmed in the care plan agreed after the assessment."
+          />
           <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-7">
             <div>
-              <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">The care</p>
-              <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">Care, by way of example</p>
+              <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
                 {fees.map((f) => (
-                  <li key={f.sku} className="flex flex-col gap-2 border-2 border-navy bg-white p-5">
+                  <li key={f.sku} className="flex items-center justify-between gap-3 border-2 border-navy bg-white px-4 py-3 sm:flex-col sm:items-stretch sm:justify-start sm:gap-2 sm:p-5">
                     {/* Prices read as "from" with no hours or units, so the label drops any duration too. */}
                     <p className="text-[16px] font-extrabold leading-[1.25] text-navy">{f.label.replace(/,\s*\d+\s*hours?$/i, "")}</p>
-                    <p className="mt-auto pt-2 text-[28px] font-black tracking-[-0.04em] text-price tabular-nums">
+                    <p className="shrink-0 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-price tabular-nums sm:mt-auto sm:pt-2 sm:text-[28px]">
                       <span className="mr-1.5 text-[15px] font-bold tracking-normal text-ink">from</span>₦{f.amountNaira.toLocaleString("en-NG")}
                     </p>
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-[15px] leading-[1.6] text-body">Your final price depends on the care plan agreed after the assessment.</p>
             </div>
             <div className="relative mt-4 flex flex-col gap-3 bg-navy p-6 pt-8 shadow-offset-blue lg:mt-0">
               <NotchTag tone="tint" outlined size="sm" className="absolute -top-3 left-6">
@@ -240,7 +247,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
         {/* How it starts. */}
         <section aria-labelledby="how-heading" className="mt-20 lg:mt-28">
           <SectionHead id="how-heading" eyebrow="How it starts" title="From first message to first visit" />
-          <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          <ol className="hidden gap-6 lg:grid lg:grid-cols-4">
             {c.steps.map((st, i) => (
               <li key={st.title} className="relative border-t-4 border-navy pt-5">
                 <span className={cn("grid h-11 w-11 place-items-center text-[20px] font-black text-white shadow-offset-sm", i === c.steps.length - 1 ? "bg-navy" : "bg-brand")}>
@@ -251,12 +258,43 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
               </li>
             ))}
           </ol>
+          {/* Phones: the steps as arrows; tap one to read it. */}
+          <div className="lg:hidden">
+            <div role="tablist" aria-label="Steps" className="flex items-stretch">
+              {c.steps.map((st, i) => (
+                <button
+                  key={st.title}
+                  type="button"
+                  role="tab"
+                  aria-selected={step === i}
+                  aria-label={`Step ${i + 1}: ${st.title}`}
+                  onClick={() => setStep(i)}
+                  className={cn(
+                    "min-h-[48px] min-w-0 flex-1 text-[17px] font-black transition-colors",
+                    i ? "mc-step -ml-1.5 pl-4" : "mc-step-first",
+                    step === i ? "bg-brand text-white" : i < step ? "bg-navy text-white" : "bg-tint text-navy",
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel" className="mt-4 border-l-4 border-brand pl-4">
+              <h3 className="text-[20px] leading-[1.15] tracking-[-0.035em]">{c.steps[step].title}</h3>
+              <p className="mt-1.5 text-[15.5px] leading-[1.6] text-body">{c.steps[step].text}</p>
+              {step < c.steps.length - 1 && (
+                <button type="button" onClick={() => setStep(step + 1)} className="mt-3 text-[15px] font-extrabold text-brand">
+                  Next step <span aria-hidden="true">→</span>
+                </button>
+              )}
+            </div>
+          </div>
         </section>
 
         {/* Worries, answered: the family's worry in grey, our answer in navy. */}
         <section aria-labelledby="worries-heading" className="mt-20 lg:mt-28">
           <SectionHead id="worries-heading" eyebrow="If something changes" title="Your worries, answered" />
-          <ul className="grid gap-4 sm:grid-cols-2 lg:gap-6">
+          <ul className="hidden gap-6 lg:grid lg:grid-cols-2">
             {c.worries.map((w) => (
               <li key={w.worry} className="flex flex-col gap-2 bg-tint px-6 py-6 sm:px-7">
                 <span className="text-[20px] font-medium leading-[1.25] tracking-[-0.03em] text-muted-foreground sm:text-[22px]">
@@ -265,6 +303,26 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
                 <span className="text-[19px] font-extrabold leading-[1.25] tracking-[-0.03em] text-navy sm:text-[21px]">{w.answer}</span>
               </li>
             ))}
+          </ul>
+          {/* Phones: the first worry open; tap the others to read the answer. */}
+          <ul className="flex flex-col gap-2 lg:hidden">
+            {c.worries.map((w, i) => {
+              const isOpen = openWorry === i;
+              return (
+                <li key={w.worry} className="bg-tint">
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenWorry(isOpen ? -1 : i)}
+                    className="flex min-h-[52px] w-full items-center justify-between gap-3 px-5 py-3.5 text-left"
+                  >
+                    <span className="text-[17px] font-medium leading-[1.3] tracking-[-0.02em] text-muted-foreground">&#8220;{w.worry}&#8221;</span>
+                    <span aria-hidden="true" className="text-[20px] font-black text-navy">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && <p className="px-5 pb-4 text-[18px] font-extrabold leading-[1.3] tracking-[-0.02em] text-navy">{w.answer}</p>}
+                </li>
+              );
+            })}
           </ul>
           <EmergencyBox className="mt-6 lg:max-w-[640px]" />
         </section>
