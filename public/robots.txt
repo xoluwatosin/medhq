@@ -3,7 +3,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 Disallow: /posts
 Disallow: /hm
@@ -13,7 +12,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 Disallow: /posts
 Disallow: /hm
@@ -29,7 +27,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: OAI-SearchBot
@@ -37,7 +34,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: ChatGPT-User
@@ -45,7 +41,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: ClaudeBot
@@ -53,7 +48,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: Claude-User
@@ -61,7 +55,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: anthropic-ai
@@ -69,7 +62,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: PerplexityBot
@@ -77,7 +69,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: Google-Extended
@@ -85,7 +76,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: CCBot
@@ -93,7 +83,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 
 User-agent: *
@@ -101,7 +90,6 @@ Allow: /
 Disallow: /auth
 Disallow: /set-password
 Disallow: /admin
-Disallow: /heard-preview
 Disallow: /invoices
 Disallow: /posts
 Disallow: /hm

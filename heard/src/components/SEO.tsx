@@ -1,37 +1,21 @@
 import { Helmet } from "react-helmet-async";
 
-const SITE_URL = "https://www.medicconnect.co";
-const DEFAULT_IMAGE = `${SITE_URL}/social-cover.png`;
+const SITE_URL = "https://heard.medicconnect.co";
+// No Heard share image yet; the Medic Connect cover is used until one exists.
+const DEFAULT_IMAGE = "https://www.medicconnect.co/social-cover.png";
 
 // Friendly labels for BreadcrumbList — keeps crawlers and AI assistants on-brand.
 const PATH_LABELS: Record<string, string> = {
   "/": "Home",
+  "/write": "Write to us",
+  "/story-swap": "Story Swap",
+  "/letters": "Letter Room",
+  "/letters/leave": "Leave a letter",
+  "/talk": "Talk",
   "/about": "About",
-  "/contact": "Contact",
-  "/join": "Join Our Network",
-  "/blog": "The Bridge",
-  "/creator": "Creator Programme",
+  "/support": "Support",
   "/privacy": "Privacy",
-  "/terms": "Terms",
-  "/clinical-home-care": "Clinical Home Care",
-  "/antenatal-care": "Antenatal Care at Home",
-  "/postnatal-care": "Postnatal Care & Omugwo",
-  "/nanny-childcare": "Nanny & Childcare",
-  "/eldercare": "Eldercare & Companion Care",
-  "/pediatric-care": "Pediatric & Special Needs Care",
-  "/hospital-staffing": "Hospital & Corporate Staffing",
-  "/hospital-support": "Hospital Support Services",
-  "/clinical-research": "Clinical Research & Support",
-  "/post-surgical-care": "Post-Surgical Home Care",
-  "/care-from-abroad": "Care from Abroad",
-  "/agency-vs-private-nurse-lagos": "Agency vs Private Nurse in Lagos",
-  "/home-care-ikoyi": "Home Care in Ikoyi",
-  "/home-care-lekki": "Home Care in Lekki",
-  "/home-care-victoria-island": "Home Care in Victoria Island",
-  "/home-care-ikeja": "Home Care in Ikeja",
-  "/home-care-ajah": "Home Care in Ajah",
-  "/home-care-surulere": "Home Care in Surulere",
-  "/home-care-yaba": "Home Care in Yaba",
+  "/get-involved": "Get involved",
 };
 
 interface BreadcrumbCrumb {

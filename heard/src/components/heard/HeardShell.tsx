@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useHeardPath } from "@/components/heard/HeardBase";
-import { isHeardHost } from "@/lib/heard-host";
 
 const NAV_LINKS = [
   { href: "#what", label: "What we're building" },
@@ -109,11 +108,7 @@ const HeardFooter = () => {
         <div className="mt-16 pt-8 border-t border-[color:var(--heard-line)] flex flex-col sm:flex-row justify-between gap-4 text-sm text-[color:var(--heard-ink-soft)]">
           <p>
             Heard is a service of{" "}
-            {isHeardHost() ? (
-              <a href="https://www.medicconnect.co/" className="heard-plain underline">Medic Connect</a>
-            ) : (
-              <Link to="/" className="heard-plain underline">Medic Connect</Link>
-            )}
+            <a href="https://www.medicconnect.co/" className="heard-plain underline">Medic Connect</a>
             .
             {/* [confirm: one line on what Medic Connect is / does] */}
           </p>

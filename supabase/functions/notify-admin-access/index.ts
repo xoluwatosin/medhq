@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     dashboard: "Dashboard", blog: "The Bridge", campaigns: "Campaigns",
     archives: "Archives", enquiries: "Enquiries", creator_applications: "Creator applications",
     audience: "Audience", applications: "Applications", matchmakers: "Matchmakers",
-    email_templates: "Email templates", heard: "Heard", match_universe: "Match Universe",
+    email_templates: "Email templates", match_universe: "Match Universe",
     workforce: "Workforce",
   };
   const areas = ((perms?.permissions as string[] | null) ?? []).map((p) => labels[p] ?? p);

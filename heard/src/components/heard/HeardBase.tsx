@@ -10,9 +10,7 @@ import { heardBase } from "@/lib/heard-host";
  * Heard links and page paths are built through heardPath() so one component
  * tree serves both mount points without duplicating any page.
  */
-// Default "/heard": the legacy pre-launch page and its thank-you page still
-// live under /heard on Medic Connect hosts and are not part of the new mount.
-const HeardBaseContext = createContext<string>("/heard");
+const HeardBaseContext = createContext<string>("");
 
 export const HeardBaseProvider = ({
   base,

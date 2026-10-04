@@ -43,20 +43,17 @@ import Creator from "./pages/Creator";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Matchmakers from "./pages/Matchmakers";
-import Heard from "./pages/Heard";
-import HeardRoutes from "./pages/heard/HeardRoutes";
-import { isHeardHost, HEARD_PREVIEW_BASE } from "@/lib/heard-host";
-import HeardThanks from "./pages/HeardThanks";
-import HeardVolunteers from "./pages/admin/HeardVolunteers";
 
-/**
- * The accessibility panel and live chat belong to Medic Connect. Heard has its
- * own visual system and its own support routes, so they are not shown there.
- */
-const MedicConnectWidgets = () => {
+/** Heard moved to its own site; old links on this domain go there. */
+const HEARD_URL = "https://heard.medicconnect.co";
+const HeardRedirect = () => {
   const { pathname } = useLocation();
-  const onHeard = isHeardHost() || pathname.startsWith(HEARD_PREVIEW_BASE) || pathname.startsWith("/heard");
-  if (onHeard) return null;
+  const rest = pathname.replace(/^\/(heard-preview|heard)/, "");
+  window.location.replace(HEARD_URL + (rest === "/thanks" ? "/thanks" : rest || "/"));
+  return null;
+};
+
+const MedicConnectWidgets = () => {
   return (
     <>
       <AccessibilityPanel />
@@ -172,7 +169,6 @@ const App = () => (
         <IPhoneScreenEdges />
         <Analytics />
         <AuthProvider>
-          {isHeardHost() ? <HeardRoutes base="" /> : (
           <div className="mc-a11y-public">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -252,10 +248,9 @@ const App = () => (
             <Route path="/hm" element={<Matchmakers />} />
             <Route path="/hm/:slug" element={<MatchmakerOpportunity />} />
             <Route path="/hm/:slug/apply" element={<MatchmakerApply />} />
-            <Route path="/heard" element={<Heard />} />
-            <Route path="/heard/thanks" element={<HeardThanks />} />
-            {/* Heard preview namespace: the same Heard routes on non-Heard hosts. */}
-            <Route path={`${HEARD_PREVIEW_BASE}/*`} element={<HeardRoutes base={HEARD_PREVIEW_BASE} />} />
+            <Route path="/heard/*" element={<HeardRedirect />} />
+            <Route path="/heard" element={<HeardRedirect />} />
+            <Route path="/heard-preview/*" element={<HeardRedirect />} />
             <Route path="/care/start/:token" element={<CareOnboarding />} />
             <Route path="/pre-assessment/:token" element={<PreAssessment />} />
             <Route path="/care/proposal" element={<CareProposalView />} />
@@ -317,7 +312,6 @@ const App = () => (
               <Route path="matchmakers/templates" element={<Navigate to="/admin/match-universe/opportunities/templates" replace />} />
               <Route path="matchmakers/:id/*" element={<MatchmakerRedirect />} />
 
-              <Route path="heard" element={<HeardVolunteers />} />
 
               {/* Domain landings. Every historic URL above still resolves; these
                   only give each business domain a front door of its own. */}
@@ -331,7 +325,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </div>
-          )}
           <MedicConnectWidgets />
         </AuthProvider>
       </BrowserRouter>

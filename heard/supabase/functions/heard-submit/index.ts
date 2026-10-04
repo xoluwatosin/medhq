@@ -9,12 +9,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 const EXTRA_ORIGINS = (Deno.env.get("EXTRA_ALLOWED_ORIGINS") ?? "")
   .split(",").map((o) => o.trim()).filter(Boolean);
 const ALLOWED_ORIGINS = new Set<string>([
-  "https://medicconnect.co",
-  "https://www.medicconnect.co",
   "https://heard.medicconnect.co",
   ...EXTRA_ORIGINS,
 ]);
-const DEFAULT_ORIGIN = "https://medicconnect.co";
+const DEFAULT_ORIGIN = "https://heard.medicconnect.co";
 
 const isAllowedOrigin = (origin: string) =>
   ALLOWED_ORIGINS.has(origin);

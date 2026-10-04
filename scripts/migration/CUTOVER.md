@@ -24,10 +24,11 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
 6. `post-restore.sql`.
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.
 8. Copy storage files from the old buckets (`applications`, `care-uploads`, `blog-images`, `creator-uploads`). Delete the `database_export_*` bucket.
-9. Point DNS for medicconnect.co **and heard.medicconnect.co** at the `medhq` Vercel project (add both as domains there). The app serves Heard on the heard host; leaving that subdomain on Lovable would keep Heard on the old database. Set Supabase Auth Site URL and the `SITE_URL`/`PUBLIC_SITE_URL` secrets back to https://medicconnect.co and remove `EXTRA_ALLOWED_ORIGINS`.
+9. Point DNS for medicconnect.co at the `medhq` Vercel project, and heard.medicconnect.co at the `heard` Vercel project (see `heard/README.md`). Copy Heard's rows across first: `pg_dump "$MC_DATABASE_URL" --data-only --table=public.heard_volunteers --table=public.heard_waitlist | psql "$HEARD_DATABASE_URL"`. Set Supabase Auth Site URL and the `SITE_URL`/`PUBLIC_SITE_URL` secrets back to https://medicconnect.co and remove `EXTRA_ALLOWED_ORIGINS`.
 10. Activate the jobs: `select cron.alter_job(jobid, active := true) from cron.job;`
 11. Smoke test: contact form email, candidate sign-in, pre-assessment link, contract signing, an invoice.
 
 ## After cutover
 
-Held until the cutover is verified: Heard as its own repo, Vercel project and Supabase project, staying on heard.medicconnect.co (only that subdomain's DNS moves), and the account-model addendum for one sign-in across roles.
+- Drop the `heard_*` tables and functions from the Medic Connect database once Heard is live on its own project.
+- The account-model addendum for one sign-in across roles.

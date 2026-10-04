@@ -43,7 +43,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/home-care-ajah", changefreq: "monthly", priority: "0.9" },
   { path: "/home-care-surulere", changefreq: "monthly", priority: "0.9" },
   { path: "/home-care-yaba", changefreq: "monthly", priority: "0.9" },
-  { path: "/heard", changefreq: "weekly", priority: "0.8" },
   { path: "/creator", changefreq: "monthly", priority: "0.7" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
