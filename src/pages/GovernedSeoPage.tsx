@@ -1,21 +1,6 @@
-import { useLocation, Link } from "react-router-dom";
-import { HeartHandshake, MessageCircle } from "lucide-react";
-import MedicHeader from "@/components/MedicHeader";
-import Footer from "@/components/Footer";
-import SEO from "@/components/SEO";
-import CTASection from "@/components/CTASection";
-import { otherPersonThan } from "@/components/mc/people";
-import CareRequestDialog from "@/components/CareRequestDialog";
-import { kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
-import {
-  AnswerPanel,
-  AudienceNotes,
-  IncludedCards,
-  PriceTags,
-  ProcessSteps,
-  ServiceHero,
-  WhyBand,
-} from "@/components/mc/service-sections";
+import { useLocation } from "react-router-dom";
+import SeoPage, { type SeoKind } from "@/components/mc/SeoPage";
+import { HERO_ART, photoFor } from "@/content/seo/seo-look";
 import { GOVERNED_PAGE_BY_PATH, type GovernedPage } from "@/content/seo/governed-pages";
 import { PAGE_VISUALS } from "@/content/seo/page-visuals";
 import { GOVERNED_FEES, GOVERNED_MODULES } from "@/content/seo/governed-modules";
@@ -96,109 +81,37 @@ const GovernedSeoPage = () => {
   if (!page) return <NotFound />;
 
   const visuals = PAGE_VISUALS[page.path];
-  const modules = page.moduleCodes.map((code) => GOVERNED_MODULES[code]).filter(Boolean);
-  const fees = page.feeSkus.map((sku) => GOVERNED_FEES[sku]).filter(Boolean);
   const isCandidate = CANDIDATE_PATHS.has(page.path);
   const isEmployer = EMPLOYER_PATHS.has(page.path);
-
-  const primaryAction = isCandidate ? (
-    <Link to="/join" className={kitHeroPrimaryButton}>
-      <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-      Join our network
-    </Link>
-  ) : isEmployer ? (
-    <Link to="/contact" className={kitHeroPrimaryButton}>
-      <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-      Discuss your staffing
-    </Link>
-  ) : (
-    <CareRequestDialog
-      source={`hero:${page.path}`}
-      trigger={
-        <button className={kitHeroPrimaryButton}>
-          <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-          Request care
-        </button>
-      }
-    />
-  );
+  const kind: SeoKind = isCandidate ? "jobs" : isEmployer ? "staffing" : page.path.startsWith("/guides/") ? "guide" : "care";
 
   return (
-    <div className="min-h-dvh bg-background animate-fade-in">
-      <SEO title={page.title} description={page.metaDescription} path={page.path} jsonLd={[serviceSchema(page), breadcrumbSchema(page)]} />
-      <MedicHeader />
-
-      <ServiceHero
-        tag={heroTag(page.path)}
-        title={page.h1}
-        promise={page.promise}
-        image={visuals?.heroImage}
-        actions={
-          <>
-            {primaryAction}
-            <a href="https://wa.me/2348126988237" className={kitHeroSecondaryButton}>
-              <MessageCircle className="h-5 w-5" aria-hidden="true" />
-              WhatsApp us
-            </a>
-          </>
+    <SeoPage
+      path={page.path}
+      kind={kind}
+      eyebrow={heroTag(page.path)}
+      title={page.title}
+      metaDescription={page.metaDescription}
+      jsonLd={[serviceSchema(page), breadcrumbSchema(page)]}
+      h1={page.h1}
+      promise={page.promise}
+      heroArt={HERO_ART[page.path] ?? [isCandidate ? art.charCaregiver : isEmployer ? art.charDoctor : art.charNurse]}
+      photo={photoFor(page.path, kind)}
+      answer={{ heading: "What this covers", paragraphs: page.intro, points: [] }}
+      audience={
+        visuals && { title: isCandidate ? "Who we engage" : isEmployer ? "Who we staff" : "Who this is for", entries: visuals.audience }
+      }
+      included={
+        visuals && {
+          title: isCandidate ? "Routes into work" : isEmployer ? "How we staff" : "What is included",
+          cards: visuals.cards,
         }
-      />
-
-      <main className="mx-auto max-w-[1440px] px-[22px] py-14 sm:px-[50px] sm:py-20">
-        {page.intro.length > 0 && <AnswerPanel
-            heading="What this covers"
-            paragraphs={page.intro}
-            art={isCandidate ? art.objCalendar : isEmployer ? art.objClipboard : art.objCarePlan}
-          />}
-
-        {visuals && visuals.audience.length > 0 && (
-          <AudienceNotes
-            title={isCandidate ? "Who we engage" : isEmployer ? "Who we staff" : "Who this is for"}
-            entries={visuals.audience}
-          />
-        )}
-
-        {visuals && visuals.cards.length > 0 && (
-          <IncludedCards
-            title={isCandidate ? "Routes into work" : isEmployer ? "How we staff" : "What is included"}
-            cards={visuals.cards}
-          />
-        )}
-
-        {fees.length > 0 && <PriceTags fees={fees} />}
-
-        {modules.length > 0 && <ProcessSteps modules={modules} />}
-
-        <WhyBand
-          eyebrow={isCandidate || isEmployer ? "Why work with us" : "Why families choose us"}
-          reasons={BENEFITS}
-          person={otherPersonThan(page.path, isCandidate ? art.charCaregiver : isEmployer ? art.charDoctor : art.charNurse)}
-        />
-
-        {isCandidate ? (
-          <CTASection
-            headline="Work with Medic Connect"
-            body="Join the candidate pool or apply for an advertised opportunity."
-            hideRequestCare
-            primaryButton={{ text: "Join our network", href: "/join" }}
-          />
-        ) : isEmployer ? (
-          <CTASection
-            headline="Staff your service"
-            body="Tell us the roles, the shifts and the location, and we will scope the cover."
-            hideRequestCare
-            primaryButton={{ text: "Contact us", href: "/contact" }}
-          />
-        ) : (
-          <CTASection
-            headline="Ready to arrange care?"
-            body="Tell us what is needed and we will arrange the assessment."
-          />
-        )}
-      </main>
-
-      <Footer />
-    </div>
+      }
+      fees={page.feeSkus.map((sku) => GOVERNED_FEES[sku]).filter((f) => f && f.sku !== "PUB-ASSESSMENT")}
+      modules={page.moduleCodes.map((code) => GOVERNED_MODULES[code]).filter(Boolean)}
+      reasons={BENEFITS}
+      bandPerson={isCandidate ? art.charCaregiver : isEmployer ? art.charDoctor : art.charNurse}
+    />
   );
 };
 
