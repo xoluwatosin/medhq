@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { KitMain } from "@/components/kit/KitLayout";
-import { Chevrons, PillSticker, SpeechBubble, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
+import { Chevrons, SpeechBubble, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 import PostCard, { firstParagraph, postDate, postImage, type PostCardData } from "@/components/blog/PostCard";
 import { cn } from "@/lib/utils";
@@ -95,13 +95,8 @@ const Blog = () => {
         <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
         <div className="relative mx-auto max-w-[1440px] px-[22px] pb-14 sm:px-[50px] lg:pb-20">
           <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
-          <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-4 lg:mt-6">
+          <div className="mt-4 lg:mt-6">
             <KitPillHeading text="The Bridge" accent={[1]} align="left" size="xl" />
-            {posts.length > 0 && (
-              <PillSticker tone="blue" tilt={-6} className="mb-2">
-                {posts.length} {posts.length === 1 ? "story" : "stories"} so far
-              </PillSticker>
-            )}
           </div>
           <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.55] text-body-navy sm:text-[19px] lg:mt-8 lg:text-[21px]">
             Stories, insights and field notes from nurses, carers and families, at home and in hospital.
