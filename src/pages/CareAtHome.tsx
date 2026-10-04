@@ -6,7 +6,7 @@ import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
 import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
 import { KitMain } from "@/components/kit/KitLayout";
-import { Highlight, Watermark } from "@/components/mc/brand";
+import { Watermark } from "@/components/mc/brand";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
 
@@ -44,22 +44,23 @@ const CareAtHome = () => (
 
     {/* Shorter navy hero; on desktop the first row of service cards hangs across
         its bottom edge, the way the home page doors do. */}
-    {/* Phones and tablets: big plain type with the family at the door beside it. */}
+    {/* Phones and tablets (design 1): the boxed headline aligned left, the
+        paragraph beside the family at the door, and the first row of tiles
+        rising over the band's bottom edge. */}
     <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px] lg:hidden">
       <Watermark glyph="o" size={360} opacity={0.12} className="-right-[150px] -top-[90px]" />
-      <div className="relative mx-auto max-w-[720px] px-[22px] pb-12 sm:px-[50px]">
-        <h1 className="text-[44px] leading-[0.96] tracking-[-0.06em] !text-white min-[375px]:text-[50px] sm:max-w-[9ch] sm:text-[72px]">
-          Care that comes to your <Highlight>door</Highlight>.
-        </h1>
-        <p className="mt-6 max-w-[52%] text-[15px] leading-[1.55] text-body-navy sm:max-w-[34ch] sm:text-[18px]">{lead}</p>
+      <div className="relative mx-auto max-w-[720px] px-[22px] pb-[86px] sm:px-[50px]">
+        {/* On tablets the illustration is taller, so the headline keeps to its left. */}
+        <div className="sm:max-w-[60%]">
+          <KitPillHeading text="Care that comes to your door" accent={[0]} align="left" />
+        </div>
+        <p className="mt-5 max-w-[54%] text-[15px] leading-[1.55] text-body-navy sm:max-w-[48%] sm:text-[18px]">{lead}</p>
+        <img
+          src={art.familyDoorNurse}
+          alt=""
+          className="pointer-events-none absolute bottom-[70px] -right-4 h-[170px] max-w-[46%] object-contain object-right-bottom sm:right-[50px] sm:h-[230px]"
+        />
       </div>
-      {/* The family stands on the bottom edge of the band, beside the paragraph,
-          so neither the headline nor the paragraph ever runs into it. */}
-      <img
-        src={art.familyDoorNurse}
-        alt=""
-        className="pointer-events-none absolute bottom-0 right-2 h-[170px] max-w-[42%] object-contain object-right-bottom sm:right-[50px] sm:h-[250px]"
-      />
     </section>
 
     {/* Desktop: shorter navy hero; the first row of service cards hangs across
@@ -73,7 +74,7 @@ const CareAtHome = () => (
       </div>
     </section>
 
-    <KitMain className="relative pt-10 lg:-mt-[160px] lg:pt-0">
+    <KitMain className="relative -mt-[64px] pt-0 lg:-mt-[160px]">
       <section aria-labelledby="services-heading" className="relative">
         {/* The line the first row of cards hangs from. */}
         <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />
