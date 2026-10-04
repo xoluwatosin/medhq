@@ -39,7 +39,10 @@ export interface ServicePageConfig {
   /** Three short facts that hang from the hero: a big value and a line. */
   facts: { value: string; label: string }[];
   moment: { photo: string; alt: string; title: string; body: string; aside?: { title: string; body: string } };
-  audience: { label: string; art: string }[];
+  /** Who the service is for, as a ticked list. */
+  audience: string[];
+  /** One person standing beside the list. */
+  audienceArt: string;
   included: { title: string; text: string; art: string }[];
   feeSkus: string[];
   steps: { title: string; text: string }[];
@@ -163,17 +166,24 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
           </div>
         </section>
 
-        {/* Who it is for. */}
+        {/* Who it is for: a plain ticked list beside one person, so the objects stay with the services below. */}
         <section aria-labelledby="who-heading" className="mt-20 lg:mt-28">
           <SectionHead id="who-heading" eyebrow="Who it is for" title="Is this the right care?" />
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-5">
-            {c.audience.map((a) => (
-              <li key={a.label} className="flex flex-col items-start gap-3 border-2 border-navy/15 bg-white p-4 lg:p-5">
-                <img src={a.art} alt="" loading="lazy" className="h-[56px] w-[56px] object-contain" />
-                <span className="text-[15px] font-bold leading-[1.35] text-navy">{a.label}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16">
+            <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
+              {c.audience.map((a) => (
+                <li key={a} className="flex items-start gap-3.5">
+                  <span aria-hidden="true" className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center bg-navy text-[15px] font-black text-white">
+                    ✓
+                  </span>
+                  <span className="text-[17px] font-bold leading-[1.4] text-navy">{a}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="relative hidden h-[300px] bg-tint lg:block">
+              <img src={c.audienceArt} alt="" loading="lazy" className="absolute inset-x-0 bottom-0 mx-auto h-[280px] object-contain" />
+            </div>
+          </div>
         </section>
 
         {/* What is included: everything visible, an object for each. */}
