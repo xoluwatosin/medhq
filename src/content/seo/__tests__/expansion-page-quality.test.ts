@@ -9,9 +9,9 @@ const genericPlaceholders = [
 ];
 
 describe("expansion SEO content quality", () => {
-  it("keeps exactly 66 unique expansion routes, the eight merged routes excluded", () => {
-    expect(EXPANSION_PAGES).toHaveLength(66);
-    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(66);
+  it("keeps exactly 57 unique expansion routes, the seventeen merged routes excluded", () => {
+    expect(EXPANSION_PAGES).toHaveLength(57);
+    expect(new Set(EXPANSION_PAGES.map((page) => page.path)).size).toBe(57);
   });
 
   it("gives every page a unique direct answer", () => {

@@ -291,7 +291,10 @@ Phone +234 812 698 8237, email hello@medicconnect.co, WhatsApp https://wa.me/234
 - [Postnatal care at home](/postnatal-care): Maternal and newborn observations, C-section wound care and professional breastfeeding support at home. Visits from ₦30,000.
 - [Professional nanny services](/professional-nanny): Trained, vetted nannies for newborns, toddlers and school-age children, with safeguarding onboarding and named pickup authorisation.
 - [Professional Omugwo](/professional-omugwo): Paid nurses and caregivers delivering Omugwo: maternal and newborn care, feeding and night support, meals and household help.
+- [Autism support at home](/autism-support-at-home): structured home support for an autistic child.
 - [Shadow teacher](/shadow-teacher): one-to-one support for a child in school.
+- [Speech therapist for children](/speech-therapist-for-children): speech and communication support for children.
+- [What does a shadow teacher do?](/what-does-a-shadow-teacher-do): a clear account of one-to-one classroom support.
 - [Wound dressing at home](/wound-dressing-at-home): nurse-led wound dressing and review at home.
 - [Live-in caregiver](/live-in-caregiver): one trusted caregiver living in the home, for daily living, company and routine.
 - [Stroke recovery at home](/stroke-recovery-at-home): nursing, rehabilitation and daily-living support after stroke.
@@ -302,14 +305,18 @@ Phone +234 812 698 8237, email hello@medicconnect.co, WhatsApp https://wa.me/234
 - [Nurse vs caregiver](/nurse-vs-caregiver): the difference between clinical nursing and daily-living support.
 - [Who do I need after surgery?](/who-do-i-need-after-surgery): how clinical needs and daily-living needs determine the right support.
 - [Who should I hire for a newborn?](/who-should-i-hire-for-a-newborn): the difference between postnatal clinical care, a newborn nanny and professional Omugwo.
+- [How Medic Connect home care works](/how-medic-connect-home-care-works): the steps from formal assessment to a documented care plan and managed care.
+- [Healthcare facility management support](/healthcare-facility-management-support): managed workforce and operational support for healthcare facilities.
 - [Coming to Nigeria after giving birth](/coming-to-nigeria-after-giving-birth): how to plan postpartum care, travel, accommodation and local support.
 - [Night nurse for a newborn](/night-nurse-for-newborn): overnight newborn support, so parents can rest while a professional watches, feeds and settles the baby.
 - [Live-in nanny](/live-in-nanny): a nanny who lives in your home, with hours, rest days and duties agreed in writing before they start.
 - [C-section recovery at home](/c-section-recovery-at-home): postnatal nursing and practical support after a Caesarean birth.
+- [Care after hospital discharge](/care-after-hospital-discharge): assessment-led care for a safe return home after hospital treatment.
 - [Equipment needed after hospital discharge](/equipment-needed-after-hospital-discharge): an assessment-led checklist for equipment and supplies at home.
 - [How to prepare the home before hospital discharge](/how-to-prepare-the-home-before-hospital-discharge): a practical home-readiness checklist before discharge.
 - [Caregiver jobs and opportunities](/caregiver-jobs-and-opportunities): caregiver shifts, live-in assignments, contracts, employment and permanent placements.
 - [Nanny jobs and opportunities](/nanny-jobs-and-opportunities): nanny and childcare work through assignments, employment and permanent placements.
+- [ADHD support at home](/adhd-support-at-home): structured routines and specialist-coordinated support for a child with ADHD.
 - [Stoma care at home](/stoma-care-at-home): nurse-led stoma care, review and documentation at home.
 - [PEG feeding support at home](/peg-feeding-support-at-home): PEG support by appropriately skilled nurses where home care is suitable.
 - [Tracheostomy care at home](/tracheostomy-care-at-home): complex tracheostomy support at home where clinically appropriate.
@@ -320,6 +327,7 @@ Phone +234 812 698 8237, email hello@medicconnect.co, WhatsApp https://wa.me/234
 - [Cancer care at home](/cancer-care-at-home): supportive nursing and daily-living care at home alongside hospital treatment.
 - [Diabetic foot care at home](/diabetic-foot-care-at-home): nurse-led wound care for diabetic foot problems where home treatment is suitable.
 - [Recovery at home after a hip replacement or fracture](/orthopaedic-recovery-at-home): nursing, physiotherapy and mobility help after a hip or knee replacement or a broken bone.
+- [High-risk pregnancy support at home](/high-risk-pregnancy-support-at-home): supplementary home support alongside hospital-led high-risk maternity care.
 - [Breastfeeding support at home](/breastfeeding-support-at-home): professional feeding support for mother and baby at home.
 - [NICU-to-home support](/nicu-to-home-support): assessment-led preparation and support after neonatal intensive care discharge.
 - [Medical escort services](/medical-escort-services): professional accompaniment and coordination for medical appointments.

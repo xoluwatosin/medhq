@@ -167,6 +167,14 @@ const RELATED_OVERRIDES: Record<string, ExpansionPage["related"]> = {
   "how-to-prepare-the-home-before-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Equipment needed after discharge", path: "/equipment-needed-after-hospital-discharge" }],
   "shadow-teacher": [{ label: "Nanny and childcare", path: "/nanny-childcare" }, { label: "Pediatric care", path: "/pediatric-care" }],
   "stroke-recovery-at-home": [{ label: "Physiotherapy at home", path: "/physiotherapy-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
+  "autism-support-at-home": [{ label: "Pediatric and special needs care", path: "/pediatric-care" }, { label: "Shadow teacher", path: "/shadow-teacher" }],
+  "adhd-support-at-home": [{ label: "Pediatric and special needs care", path: "/pediatric-care" }, { label: "Shadow teacher", path: "/shadow-teacher" }],
+  "speech-therapist-for-children": [{ label: "Pediatric and special needs care", path: "/pediatric-care" }, { label: "Autism support at home", path: "/autism-support-at-home" }],
+  "what-does-a-shadow-teacher-do": [{ label: "Shadow teacher", path: "/shadow-teacher" }, { label: "Pediatric and special needs care", path: "/pediatric-care" }],
+  "care-after-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Equipment needed after discharge", path: "/equipment-needed-after-hospital-discharge" }],
+  "high-risk-pregnancy-support-at-home": [{ label: "Antenatal care at home", path: "/antenatal-care" }, { label: "Postnatal care at home", path: "/postnatal-care" }],
+  "how-medic-connect-home-care-works": [{ label: "Care at home", path: "/care-at-home" }, { label: "Caregiver cost in Lagos", path: "/caregiver-cost-in-lagos" }],
+  "healthcare-facility-management-support": [{ label: "Hospital support", path: "/hospital-support" }, { label: "For facilities", path: "/for-facilities" }],
   "cancer-care-at-home": [{ label: "Palliative care at home", path: "/palliative-care-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
 };
 

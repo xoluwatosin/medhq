@@ -49,6 +49,22 @@ Profession jobs and staffing pages, the maternity and discharge pages, /shadow-t
 the page owning the wider topic. /medic-connect-talent-pool now redirects to /careers, which
 already owns joining the candidate pool.
 
+## Group three, decided (2026-10-04)
+
+Approved: /autism-support-at-home, /adhd-support-at-home, /speech-therapist-for-children
+(speech therapists confirmed as a service), /what-does-a-shadow-teacher-do,
+/care-after-hospital-discharge, /high-risk-pregnancy-support-at-home,
+/how-medic-connect-home-care-works, /healthcare-facility-management-support (managed
+departments confirmed as a service).
+
+Redirected: /school-companion → /shadow-teacher; /additional-needs-childcare,
+/early-intervention-support, /behaviour-support → /pediatric-care; /hospital-to-home-care →
+/care-after-hospital-discharge; /care-for-elderly-parents → /eldercare;
+/blood-sugar-monitoring-at-home → /diabetes-care-at-home; /blood-pressure-monitoring-at-home →
+/chronic-care-at-home; /speech-delay-support → /speech-therapist-for-children.
+
+Held: /occupational-therapy-for-children, until supplying occupational therapists is confirmed.
+
 ## Merged now
 
 | Route | Owner | Reason |

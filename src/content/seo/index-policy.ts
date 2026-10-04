@@ -22,6 +22,15 @@ export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/physiotherapy-after-stroke": "/stroke-recovery-at-home",
   "/managed-postpartum-stay-in-nigeria": "/professional-omugwo",
   "/medic-connect-talent-pool": "/careers",
+  "/school-companion": "/shadow-teacher",
+  "/additional-needs-childcare": "/pediatric-care",
+  "/early-intervention-support": "/pediatric-care",
+  "/behaviour-support": "/pediatric-care",
+  "/hospital-to-home-care": "/care-after-hospital-discharge",
+  "/care-for-elderly-parents": "/eldercare",
+  "/blood-sugar-monitoring-at-home": "/diabetes-care-at-home",
+  "/blood-pressure-monitoring-at-home": "/chronic-care-at-home",
+  "/speech-delay-support": "/speech-therapist-for-children",
 };
 
 /**
@@ -79,6 +88,14 @@ export const INDEXABLE_EXPANSION_PATHS: string[] = [
   "/how-to-prepare-the-home-before-hospital-discharge",
   "/shadow-teacher",
   "/stroke-recovery-at-home",
+  "/autism-support-at-home",
+  "/adhd-support-at-home",
+  "/what-does-a-shadow-teacher-do",
+  "/care-after-hospital-discharge",
+  "/high-risk-pregnancy-support-at-home",
+  "/how-medic-connect-home-care-works",
+  "/speech-therapist-for-children",
+  "/healthcare-facility-management-support",
 ];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);
