@@ -219,8 +219,7 @@ const Home = () => (
       </div>
     </section>
 
-    {/* The doors above are this page's content, so the footer skips its own row of them. */}
-    <Footer showDoors={false} />
+    <Footer />
     {/* Room for the sticky bar on phones, in the footer's navy so no white strip shows. */}
     <div aria-hidden="true" className="h-[calc(76px+env(safe-area-inset-bottom))] bg-navy lg:hidden" />
     <MobileWhatsAppBar />

@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import lockupWhite from "@/assets/brand/medicconnect-logo-white.svg";
-import { Chevrons, NotchTag, TickerStrip } from "@/components/mc/brand";
+import { NotchTag } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 
 type FooterLink = { label: string; href: string; external?: boolean };
@@ -56,35 +56,11 @@ const footerColumns: FooterColumn[] = [
   },
 ];
 
-/** showDoors: false on pages whose own content is the three doors (the home page). */
-const Footer = ({ showDoors = true }: { showDoors?: boolean }) => {
+// The footer carries no ticker band or door cards: the menu and the link columns cover those pages.
+const Footer = () => {
   return (
     <footer className="relative mt-8 overflow-hidden bg-navy text-body-navy">
-      <TickerStrip tone="blue" items={["Care at home", "For facilities", "Join the network", "WhatsApp +234 812 698 8237"]} />
-      <div className="relative max-w-[1440px] mx-auto px-[22px] sm:px-[50px] pt-14 pb-12">
-        {/* Three doors, matching the homepage entry points */}
-        {showDoors && (
-        <div className="grid gap-5 sm:grid-cols-3 mb-12">
-          {[
-            { label: "Care at home", href: "/care-at-home", note: "Families", tilt: -1.5 },
-            { label: "For facilities", href: "/for-facilities", note: "Hospitals and clinics", tilt: 1 },
-            { label: "Join the network", href: "/join", note: "Professionals", tilt: -1 },
-          ].map((door) => (
-            <Link
-              key={door.href}
-              to={door.href}
-              style={{ ["--mc-tilt" as string]: `${door.tilt}deg` }}
-              className="mc-tilt group flex items-center justify-between gap-4 bg-white px-5 py-4 shadow-offset-blue"
-            >
-              <span>
-                <span className="label-caps block">{door.note}</span>
-                <span className="mt-1 block text-[19px] font-extrabold tracking-[-0.03em] text-navy">{door.label}</span>
-              </span>
-              <Chevrons colors={["hsl(var(--brand))", "hsl(var(--brand))", "hsl(var(--navy))"]} size={14} />
-            </Link>
-          ))}
-        </div>
-        )}
+      <div className="relative max-w-[1440px] mx-auto px-[22px] sm:px-[50px] pt-6 pb-12 md:pt-14">
 
         {/* Full footer for desktop - reference layout */}
         <div className="hidden md:grid grid-cols-12 gap-8 mb-8">
