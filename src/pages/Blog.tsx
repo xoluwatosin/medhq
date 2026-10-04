@@ -73,9 +73,9 @@ const Blog = () => {
         <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
         <div className="relative mx-auto max-w-[1440px] px-[22px] pb-14 sm:px-[50px] lg:pb-20">
           <div className="max-w-[60%] lg:max-w-[720px]">
-            <p className="eyebrow !text-brand-soft">The Bridge</p>
+            <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
             <div className="mt-3 lg:mt-4">
-              <KitPillHeading text="Notes on caring well." accent={[2]} align="left" />
+              <KitPillHeading text="The Bridge" accent={[1]} align="left" />
             </div>
             <p className="mt-5 max-w-[52ch] text-[15px] leading-[1.55] text-body-navy sm:text-[18px] lg:mt-6 lg:text-[19px]">
               Stories, insights and field notes from nurses, carers and families, at home and in hospital.
