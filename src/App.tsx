@@ -203,6 +203,14 @@ const App = () => (
             <Route path="/home-care-ajah" element={<NeighbourhoodCare slug="ajah" />} />
             <Route path="/home-care-surulere" element={<NeighbourhoodCare slug="surulere" />} />
             <Route path="/home-care-yaba" element={<NeighbourhoodCare slug="yaba" />} />
+            <Route path="/home-care-banana-island" element={<NeighbourhoodCare slug="banana-island" />} />
+            <Route path="/home-care-parkview" element={<NeighbourhoodCare slug="parkview" />} />
+            <Route path="/home-care-osborne-foreshore" element={<NeighbourhoodCare slug="osborne-foreshore" />} />
+            <Route path="/home-care-eko-atlantic" element={<NeighbourhoodCare slug="eko-atlantic" />} />
+            <Route path="/home-care-lekki-phase-1" element={<NeighbourhoodCare slug="lekki-phase-1" />} />
+            <Route path="/home-care-vgc" element={<NeighbourhoodCare slug="vgc" />} />
+            <Route path="/home-care-ikeja-gra" element={<NeighbourhoodCare slug="ikeja-gra" />} />
+            <Route path="/home-care-magodo-gra" element={<NeighbourhoodCare slug="magodo-gra" />} />
             <Route path="/antenatal-care" element={<AntenatalCare />} />
             <Route path="/postnatal-care" element={<PostnatalCare />} />
             <Route path="/nanny-childcare" element={<NannyChildcare />} />
