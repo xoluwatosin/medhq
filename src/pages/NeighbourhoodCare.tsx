@@ -27,19 +27,19 @@ interface NeighbourhoodCareProps {
 const LOOK: Record<string, { headline: string; accent: number; art: string; watermark: "o" | "cross" | "inf"; person: string }> = {
   ikoyi: { headline: "Quiet, expert care in Ikoyi.", accent: 1, art: art.grandfatherWalkingStick, watermark: "o", person: art.bedsideHandholding },
   "banana-island": { headline: "Discreet care on Banana Island.", accent: 0, art: art.caregiverSuitcase, watermark: "inf", person: art.elderWomanAdire },
-  parkview: { headline: "Care at home in Parkview.", accent: 2, art: art.elderWomanAdire, watermark: "cross", person: art.grandfatherWalkingStick },
+  parkview: { headline: "Care at home in Parkview.", accent: 2, art: art.elderWomanAdire, watermark: "inf", person: art.grandfatherWalkingStick },
   "osborne-foreshore": { headline: "Care on the Osborne waterfront.", accent: 4, art: art.doctorWelcomedDoor, watermark: "o", person: art.charCaregiver },
-  "victoria-island": { headline: "Care that fits a VI day.", accent: 4, art: art.nurseWomanBpCuff, watermark: "cross", person: art.proNurseCoat },
+  "victoria-island": { headline: "Care that fits a VI day.", accent: 4, art: art.nurseWomanBpCuff, watermark: "inf", person: art.proNurseCoat },
   "eko-atlantic": { headline: "Care in Eko Atlantic City.", accent: 3, art: art.nannyReading, watermark: "inf", person: art.nurseWomanBpCuff },
   lekki: { headline: "Lekki families, looked after.", accent: 2, art: art.postnatalSpecialist, watermark: "o", person: art.carerPlayBaby },
-  "lekki-phase-1": { headline: "Care for Lekki Phase 1 homes.", accent: 0, art: art.carerPlayBaby, watermark: "inf", person: art.postnatalSpecialist2 },
-  vgc: { headline: "Care inside VGC's gates.", accent: 3, art: art.schoolRun, watermark: "cross", person: art.charGrandma },
-  ajah: { headline: "Care along the Lekki-Epe corridor.", accent: 0, art: art.carerTableChild, watermark: "o", person: art.charNurse },
-  ikeja: { headline: "Mainland care, close to home.", accent: 1, art: art.elderWalkingFrame, watermark: "inf", person: art.nurseManKit },
-  "ikeja-gra": { headline: "Care in the heart of GRA.", accent: 4, art: art.grandparentsVideoCall, watermark: "cross", person: art.elderWalkingFrame },
+  "lekki-phase-1": { headline: "Care for Lekki Phase 1 homes.", accent: 0, art: art.postnatalSpecialist2, watermark: "inf", person: art.carerPlayBaby },
+  vgc: { headline: "Care inside VGC's gates.", accent: 3, art: art.schoolRun, watermark: "inf", person: art.charGrandma },
+  ajah: { headline: "Care along the Lekki-Epe corridor.", accent: 0, art: art.carerManJacket, watermark: "o", person: art.charNurse },
+  ikeja: { headline: "Mainland care, close to home.", accent: 1, art: art.charCaregiver, watermark: "inf", person: art.nurseManKit },
+  "ikeja-gra": { headline: "Care in the heart of GRA.", accent: 4, art: art.elderWalkingFrame, watermark: "inf", person: art.grandparentsVideoCall },
   "magodo-gra": { headline: "Care across Magodo GRA.", accent: 2, art: art.motherNewbornSuitcase, watermark: "o", person: art.grandfatherWalkingStick },
   surulere: { headline: "Care for Surulere's families.", accent: 0, art: art.charGrandma, watermark: "inf", person: art.charCaregiver },
-  yaba: { headline: "Care near LUTH and Yaba.", accent: 0, art: art.nurseManKit, watermark: "cross", person: art.charDoctor },
+  yaba: { headline: "Care near LUTH and Yaba.", accent: 0, art: art.nurseManKit, watermark: "inf", person: art.charDoctor },
 };
 
 /** The service page each common need links to, by keyword in its title. */
@@ -81,7 +81,7 @@ const NeighbourhoodCare = ({ slug }: NeighbourhoodCareProps) => {
         href={`https://wa.me/2348126988237?text=${encodeURIComponent(`Hi Medic Connect, I'd like to arrange care in ${n.name}.`)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-[48px] items-center justify-center rounded-control border-2 border-white/40 px-6 text-[16px] font-extrabold text-white transition-colors hover:bg-white/10"
+        className="inline-flex min-h-[48px] items-center justify-center whitespace-nowrap rounded-control border-2 border-white/40 px-4 text-[15px] font-extrabold text-white transition-colors hover:bg-white/10 sm:px-6 sm:text-[16px]"
       >
         Chat on WhatsApp
       </a>
@@ -129,21 +129,25 @@ const NeighbourhoodCare = ({ slug }: NeighbourhoodCareProps) => {
       <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
         <Watermark glyph={look.watermark} size={560} opacity={0.12} className="-right-[200px] -top-[120px]" />
         <div className="relative mx-auto max-w-[1440px] px-[22px] pb-12 sm:px-[50px] lg:pb-16">
-          <div className="max-w-[64%] lg:max-w-[760px]">
+          <div className="lg:max-w-[760px]">
             <p className="eyebrow !text-brand-soft">
               Home care in {n.name}, {n.axis === "Island" ? "Lagos Island" : "Lagos Mainland"}
             </p>
             <div className="mt-3 lg:mt-4">
               <KitPillHeading text={look.headline} accent={[look.accent]} align="left" />
             </div>
-            <p className="mt-5 text-[15px] leading-[1.55] text-body-navy sm:text-[18px] lg:max-w-[52ch] lg:text-[19px]">{n.intro}</p>
-            <div className="max-w-[340px] lg:max-w-none">{buttons}</div>
+            <p className="mt-5 text-[15px] leading-[1.55] text-body-navy sm:max-w-[52ch] sm:text-[18px] lg:text-[19px]">{n.intro}</p>
+            {/* Phones: the person stands beside the buttons, clear of the text and the floating chat button. */}
+            <div className="flex items-end gap-4 lg:block">
+              <div className="min-w-0 flex-1 sm:max-w-[340px] lg:max-w-none">{buttons}</div>
+              <img src={look.art} alt="" className="pointer-events-none h-[190px] w-[34%] shrink-0 object-contain object-bottom sm:h-[230px] lg:hidden" />
+            </div>
             <p className="mt-5 text-[14px] font-bold text-white/80 sm:text-[15px]">{n.responseLine}</p>
           </div>
           <img
             src={look.art}
             alt=""
-            className="pointer-events-none absolute bottom-0 right-3 h-[230px] max-w-[36%] object-contain object-right-bottom sm:right-[40px] sm:h-[300px] lg:right-[100px] lg:h-[380px] lg:max-w-none"
+            className="pointer-events-none absolute bottom-0 right-[100px] hidden h-[380px] object-contain object-right-bottom lg:block"
           />
         </div>
       </section>

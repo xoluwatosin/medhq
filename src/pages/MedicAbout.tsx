@@ -40,7 +40,7 @@ const vettingSteps = [
 
 const faqs = [
   { q: "What is Medic Connect?", a: "Medic Connect is The Care Operating System: a Lagos-based platform that places vetted nurses, carers, nannies and clinical staff in homes and hospitals across Nigeria." },
-  { q: "Where do you operate?", a: "Lagos, Nigeria. We also work with diaspora families in the UK, US, Canada and EU who are arranging care for loved ones in Lagos." },
+  { q: "Where do you operate?", a: "In select parts of Nigeria, with our head office in Lagos. We also work with diaspora families in the UK, US, Canada and EU who are arranging care for loved ones in Lagos." },
   { q: "How quickly can you place a carer?", a: "Most placements are confirmed within 48 hours of the initial consultation." },
   { q: "How much does care cost?", a: "Postnatal and Omugwo care starts from NGN 100,000 to 300,000 per week. Other services are quoted based on hours, clinical complexity and live-in versus live-out. Contact us for a tailored quote." },
   { q: "Are you accredited?", a: "Yes. Medic Connect is accredited by the Health Facility Monitoring and Accreditation Agency (HEFAMAA) of Lagos State, fully insured, a member of the Healthcare Federation of Nigeria and a partner of Flying Doctors Nigeria." },
@@ -55,7 +55,7 @@ const VALUE_ART = [art.objHandsHeart, art.objShieldCheck, art.objAccreditationCe
 const TILTS = [-1.1, 0.8, -0.6, 1];
 
 const facts = [
-  { value: "Lagos", label: "Based in Lagos, Nigeria" },
+  { value: "Nigeria", label: "In select parts of Nigeria, with our head office in Lagos" },
   { value: "HEFAMAA", label: "Accredited by Lagos State's health facility regulator" },
   { value: "HFN", label: "Member of the Healthcare Federation of Nigeria" },
 ];
@@ -77,7 +77,7 @@ const MedicAbout = () => (
     <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
       <Watermark glyph="full" size={520} opacity={0.12} className="-right-[140px] -top-[60px]" />
       <div className="relative mx-auto max-w-[1440px] px-[22px] pb-[120px] sm:px-[50px] lg:pb-[150px]">
-        <div className="max-w-[64%] lg:max-w-[720px]">
+        <div className="max-w-[60%] sm:max-w-[64%] lg:max-w-[720px]">
           <p className="eyebrow !text-brand-soft">About us</p>
           <div className="mt-3 lg:mt-4">
             <KitPillHeading text="Bridging the gap in healthcare." accent={[4]} align="left" />
@@ -86,13 +86,14 @@ const MedicAbout = () => (
             We exist to bring professional, compassionate care to homes and healthcare facilities across Nigeria.
           </p>
         </div>
-        <div className="pointer-events-none absolute bottom-[90px] right-3 flex max-w-[40%] items-end justify-end sm:right-[40px] lg:bottom-[110px] lg:right-[100px] lg:max-w-none">
+        <div className="pointer-events-none absolute bottom-[90px] right-3 flex max-w-[36%] items-end justify-end sm:right-[40px] lg:bottom-[110px] lg:right-[100px] lg:max-w-none">
           {[art.charCaregiver, art.proDoctor, art.proNurseKit].map((src, i) => (
             <img
               key={src}
               src={src}
               alt=""
-              className={cn("h-[200px] object-contain sm:h-[260px] lg:h-[330px]", i > 0 && "-ml-8 lg:-ml-10", i === 1 && "hidden sm:block")}
+              // Phones show one figure, so the group never runs under the text.
+              className={cn("h-[200px] object-contain sm:h-[260px] lg:h-[330px]", i > 0 && "-ml-8 hidden lg:-ml-10 lg:block")}
             />
           ))}
         </div>
