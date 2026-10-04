@@ -94,6 +94,35 @@ import objSun from "@/assets/mc/obj-sun.webp";
 import objThirdMainlandBridge from "@/assets/mc/obj-third-mainland-bridge.webp";
 import objUmbrellaCross from "@/assets/mc/obj-umbrella-cross.webp";
 import objVerifiedPortrait from "@/assets/mc/obj-verified-portrait.webp";
+import boyHoodie from "@/assets/mc/boy-hoodie.webp";
+import carerPlayBaby from "@/assets/mc/carer-play-baby.webp";
+import carerTableChild from "@/assets/mc/carer-table-child.webp";
+import coordinatorPhone from "@/assets/mc/coordinator-phone.webp";
+import doctorWoman from "@/assets/mc/doctor-woman.webp";
+import elderWalkingFrame from "@/assets/mc/elder-walking-frame.webp";
+import manCrutches from "@/assets/mc/man-crutches.webp";
+import manForearmCrutches from "@/assets/mc/man-forearm-crutches.webp";
+import motherMug from "@/assets/mc/mother-mug.webp";
+import motherMug2 from "@/assets/mc/mother-mug-2.webp";
+import nurseBlocksChild from "@/assets/mc/nurse-blocks-child.webp";
+import nurseMan2 from "@/assets/mc/nurse-man-2.webp";
+import nurseManKit from "@/assets/mc/nurse-man-kit.webp";
+import nurseWomanBpCuff from "@/assets/mc/nurse-woman-bp-cuff.webp";
+import nurseWomanCoat from "@/assets/mc/nurse-woman-coat.webp";
+import nurseWoundKit from "@/assets/mc/nurse-wound-kit.webp";
+import objArmchair from "@/assets/mc/obj-armchair.webp";
+import objBags from "@/assets/mc/obj-bags.webp";
+import objBottleMuslin from "@/assets/mc/obj-bottle-muslin.webp";
+import objBreastPump from "@/assets/mc/obj-breast-pump.webp";
+import objCrutchesBandage from "@/assets/mc/obj-crutches-bandage.webp";
+import objGlucoseMeter from "@/assets/mc/obj-glucose-meter.webp";
+import objHandover from "@/assets/mc/obj-handover.webp";
+import objLungsInhaler from "@/assets/mc/obj-lungs-inhaler.webp";
+import objPillBottle from "@/assets/mc/obj-pill-bottle.webp";
+import objSoap from "@/assets/mc/obj-soap.webp";
+import postnatalSpecialist from "@/assets/mc/postnatal-specialist.webp";
+import postnatalSpecialist2 from "@/assets/mc/postnatal-specialist-2.webp";
+import videoCallFamily from "@/assets/mc/video-call-family.webp";
 import iconEmail from "@/assets/mc/icons/email.svg";
 import iconPhone from "@/assets/mc/icons/phone.svg";
 import markGlyph from "@/assets/mc/medicconnect-mark.svg";
@@ -193,6 +222,36 @@ export const art = {
   objThirdMainlandBridge,
   objUmbrellaCross,
   objVerifiedPortrait,
+  // More people and objects from the design system (care scenes and kit).
+  boyHoodie,
+  carerPlayBaby,
+  carerTableChild,
+  coordinatorPhone,
+  doctorWoman,
+  elderWalkingFrame,
+  manCrutches,
+  manForearmCrutches,
+  motherMug,
+  motherMug2,
+  nurseBlocksChild,
+  nurseMan2,
+  nurseManKit,
+  nurseWomanBpCuff,
+  nurseWomanCoat,
+  nurseWoundKit,
+  objArmchair,
+  objBags,
+  objBottleMuslin,
+  objBreastPump,
+  objCrutchesBandage,
+  objGlucoseMeter,
+  objHandover,
+  objLungsInhaler,
+  objPillBottle,
+  objSoap,
+  postnatalSpecialist,
+  postnatalSpecialist2,
+  videoCallFamily,
   // Line icons for contact details.
   iconEmail,
   iconPhone,
