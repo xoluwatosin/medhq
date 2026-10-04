@@ -7,6 +7,7 @@ import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
 import { KitMain } from "@/components/kit/KitLayout";
 import { Watermark } from "@/components/mc/brand";
+import { MOBILE_HEROES } from "./care-at-home-mobile-mocks";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
 
@@ -29,6 +30,8 @@ const homeServices: ServiceCard[] = [
   { title: "Care from abroad", line: "One contact in Nigeria for families overseas.", href: "/care-from-abroad", price: "", art: art.diasporaSon },
 ];
 
+const mobileMock = () => MOBILE_HEROES[new URLSearchParams(window.location.search).get("m") ?? ""];
+
 const CareAtHome = () => (
   <div className="min-h-dvh bg-background animate-fade-in">
     <SEO
@@ -41,7 +44,8 @@ const CareAtHome = () => (
 
     {/* Shorter navy hero; on desktop the first row of service cards hangs across
         its bottom edge, the way the home page doors do. */}
-    <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[112px] sm:-mt-[114px] sm:pt-[150px]">
+    {(() => { const M = mobileMock(); return M ? <M.Hero /> : null; })()}
+    <section className={`relative -mt-[80px] overflow-hidden bg-navy pt-[112px] sm:-mt-[114px] sm:pt-[150px] ${mobileMock() ? "hidden lg:block" : ""}`}>
       <Watermark glyph="o" size={620} opacity={0.12} className="-right-[220px] -top-[160px]" />
       <div className="relative mx-auto max-w-[920px] px-[22px] pb-10 text-center sm:px-[50px] lg:pb-[200px]">
         <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" />
@@ -52,7 +56,7 @@ const CareAtHome = () => (
       </div>
     </section>
 
-    <KitMain className="relative pt-10 lg:-mt-[160px] lg:pt-0">
+    <KitMain className={`relative lg:-mt-[160px] lg:pt-0 ${mobileMock()?.overlap ? "-mt-[64px] pt-0" : "pt-10"}`}>
       <section aria-labelledby="services-heading" className="relative">
         {/* The line the first row of cards hangs from. */}
         <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />
