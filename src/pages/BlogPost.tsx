@@ -6,9 +6,9 @@ import Footer from "@/components/Footer";
 import { TEMPLATE_MAP, CleanEditorial } from "@/components/blog-templates";
 import SEO from "@/components/SEO";
 import CareRequestDialog from "@/components/CareRequestDialog";
-import { NotchTag, Watermark } from "@/components/mc/brand";
+import { Chevrons, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
-import PostCard, { firstParagraph, postDate } from "@/components/blog/PostCard";
+import PostCard, { firstParagraph, postDate, readMinutes } from "@/components/blog/PostCard";
 import { cn } from "@/lib/utils";
 
 interface BlogPostData {
@@ -168,13 +168,16 @@ const BlogPost = () => {
           <Link to="/blog" className="text-[14px] font-extrabold text-brand-soft hover:text-white">
             <span aria-hidden="true">←</span> The Bridge
           </Link>
-          {post.category && (
-            <div className="mt-5">
-              <NotchTag tone="blue" size="sm">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {post.category && (
+              <TapeLabel tone="blue" tilt={-2} className="uppercase">
                 {post.category}
-              </NotchTag>
-            </div>
-          )}
+              </TapeLabel>
+            )}
+            <TapeLabel tone="tint" tilt={2}>
+              {readMinutes(post.content)} MIN READ
+            </TapeLabel>
+          </div>
           <h1 className="mt-4 text-[32px] leading-[1.04] tracking-[-0.05em] !text-white sm:text-[48px] lg:text-[56px]">{post.title}</h1>
           {lede && <p className="mt-5 line-clamp-4 max-w-[60ch] text-[16px] leading-[1.6] text-body-navy sm:text-[19px]">{lede}</p>}
           <p className="mt-6 text-[14px] font-bold text-white">
@@ -186,10 +189,13 @@ const BlogPost = () => {
 
       {post.featured_image_url && (
         <div className="relative mx-auto -mt-[120px] max-w-[860px] px-[22px] sm:-mt-[190px] sm:px-[50px]">
-          <figure className={cn("relative bg-white p-3 pb-4 shadow-offset", post.hero_template === "polaroid" ? "rotate-[-1.5deg]" : "rotate-[-0.6deg]")}>
-            <span aria-hidden="true" className="absolute -top-3 left-1/2 h-6 w-28 -translate-x-1/2 rotate-[3deg] bg-tint-deep/80" />
+          <figure className={cn("relative border-2 border-navy bg-white p-3 pb-12 shadow-offset sm:p-4 sm:pb-14", post.hero_template === "polaroid" ? "rotate-[-2deg]" : "rotate-[-1deg]")}>
+            <Tape width={130} tilt={-3} className="-top-3 left-1/2 z-10 -ml-[65px]" />
+            <Tape width={70} tilt={40} className="-right-5 top-3 hidden sm:block" />
             <img fetchPriority="high" src={post.featured_image_url} alt="" className="aspect-[16/9] w-full object-cover" />
-            {post.polaroid_caption && <figcaption className="mt-3 text-center text-[14px] font-bold text-navy">{post.polaroid_caption}</figcaption>}
+            <figcaption className="absolute bottom-3 left-4 right-4 truncate text-[14px] font-extrabold text-navy sm:bottom-4 sm:left-5 sm:text-[15px]">
+              {post.polaroid_caption || `${post.category || "The Bridge"}, ${date}`}
+            </figcaption>
           </figure>
         </div>
       )}
@@ -200,11 +206,24 @@ const BlogPost = () => {
 
       {/* Sign-off: who wrote it, then a way to get help. */}
       <section className="mx-auto max-w-[680px] px-[22px]">
-        <div className="border-t-4 border-navy pt-6">
-          <p className="text-[15px] font-bold text-body">Written by</p>
-          <p className="text-[20px] font-extrabold tracking-[-0.03em] text-navy">{post.author}</p>
-          <p className="mt-1 text-[14px] text-body">Published {date}</p>
+        <div className="relative flex flex-wrap items-end justify-between gap-6 border-t-4 border-navy pt-8">
+          <div>
+            <p className="text-[34px] font-extrabold leading-none tracking-[-0.05em] text-navy sm:text-[40px]">Thanks for reading.</p>
+            <p className="mt-4 text-[15px] font-bold text-body">Written by</p>
+            <p className="text-[20px] font-extrabold tracking-[-0.03em] text-navy">{post.author}</p>
+            <p className="mt-1 text-[14px] text-body">Published {date}</p>
+          </div>
+          <Stamp title="THE END" sub="THE BRIDGE" tone="blue" tilt={-8} />
         </div>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(`${post.title} https://www.medicconnect.co/blog/${post.slug}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 inline-flex min-h-[48px] items-center gap-3 border-2 border-navy bg-white px-5 text-[16px] font-extrabold text-navy shadow-offset-sm hover:bg-tint"
+        >
+          Share on WhatsApp
+          <Chevrons size={13} colors={["hsl(var(--brand))", "hsl(var(--brand))", "hsl(var(--navy))"]} />
+        </a>
         <div className="relative mt-10 overflow-hidden bg-navy p-6 pr-[120px] shadow-offset-blue sm:p-8 sm:pr-[180px]">
           <img src={art.charNurse} alt="" className="pointer-events-none absolute -bottom-2 right-2 h-[150px] object-contain sm:right-6 sm:h-[190px]" />
           <p className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-white sm:text-[28px]">Need care at home?</p>
@@ -237,7 +256,7 @@ const BlogPost = () => {
           <h2 id="related-heading" className="mt-3 text-[30px] leading-none tracking-[-0.05em] sm:text-[40px]">
             More from The Bridge
           </h2>
-          <ul className="mt-8 grid gap-7 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          <ul className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             {relatedPosts.map((rp, i) => (
               <li key={rp.slug}>
                 <PostCard post={rp} index={i} />

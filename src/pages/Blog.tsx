@@ -7,20 +7,42 @@ import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { KitMain } from "@/components/kit/KitLayout";
-import { NotchTag, Watermark } from "@/components/mc/brand";
+import { Chevrons, PillSticker, SpeechBubble, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
-import PostCard, { firstParagraph, postDate, type PostCardData } from "@/components/blog/PostCard";
-import blogPlaceholder from "@/assets/photos/about-moment.webp";
+import PostCard, { firstParagraph, postDate, postImage, type PostCardData } from "@/components/blog/PostCard";
+import Clothesline from "@/components/blog/Clothesline";
 import { cn } from "@/lib/utils";
 
 interface PostRow extends PostCardData {
   id: string;
 }
 
+const TAG_TILTS = [-2, 1.5, -1, 2, -1.5, 1];
+
+/** An open invitation pinned to the board: ask us what to write about next. */
+const Invite = () => (
+  <div className="relative flex h-full rotate-[1.2deg] flex-col items-start gap-4 bg-tint p-5 pt-8 shadow-offset">
+    <span aria-hidden="true" className="absolute left-1/2 -top-2 -ml-2 h-4 w-4 bg-brand shadow-[2px_2px_0_hsl(var(--navy))]" />
+    <SpeechBubble side="left" tone="navy" className="!max-w-none text-[19px] sm:text-[20px]">
+      Is there something you would like us to write about?
+    </SpeechBubble>
+    <a
+      href={`https://wa.me/2348126988237?text=${encodeURIComponent("Hello Medic Connect, I have an idea for The Bridge: ")}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-[48px] items-center gap-3 border-2 border-navy bg-white px-5 text-[16px] font-extrabold text-navy shadow-offset-sm hover:bg-tint"
+    >
+      Tell us on WhatsApp
+      <Chevrons size={13} colors={["hsl(var(--brand))", "hsl(var(--brand))", "hsl(var(--navy))"]} />
+    </a>
+    <img src={art.nurseFilmingExplainer} alt="" className="mt-auto h-[170px] self-end object-contain" />
+  </div>
+);
+
 /**
- * The Bridge: the newest story set large beside its photo, then the rest as
- * cards, with the categories as tags to filter by. Phones get one column and
- * a sideways row of tags.
+ * The Bridge, set out like a scrapbook: the newest stories pegged to a line
+ * across the hero, topics as strips of tape, the latest story stamped, and the
+ * rest as polaroids taped or pinned to the board.
  */
 const Blog = () => {
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -44,15 +66,16 @@ const Blog = () => {
   const filtered = activeCategory ? posts.filter((p) => p.category === activeCategory) : posts;
   const [lead, ...rest] = filtered;
 
-  const chip = (label: string, active: boolean, onClick: () => void) => (
+  const tag = (label: string, active: boolean, onClick: () => void, i: number) => (
     <button
       key={label}
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      style={{ transform: `rotate(${TAG_TILTS[i % TAG_TILTS.length]}deg)` }}
       className={cn(
-        "min-h-[40px] shrink-0 whitespace-nowrap border-2 px-4 text-[14px] font-extrabold transition-colors",
-        active ? "border-navy bg-navy text-white" : "border-navy/20 bg-white text-navy hover:border-navy",
+        "min-h-[40px] shrink-0 whitespace-nowrap px-4 text-[13px] font-extrabold uppercase tracking-[0.12em] transition-colors",
+        active ? "bg-brand text-white shadow-offset-sm" : "bg-tint-deep/70 text-navy hover:bg-tint-deep",
       )}
     >
       {label}
@@ -71,29 +94,30 @@ const Blog = () => {
       <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
         <Watermark glyph="o" size={620} opacity={0.12} className="-right-[200px] -top-[120px] hidden lg:block" />
         <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
-        <div className="relative mx-auto max-w-[1440px] px-[22px] pb-14 sm:px-[50px] lg:pb-20">
-          <div className="max-w-[60%] lg:max-w-[720px]">
+        <div className="relative mx-auto grid max-w-[1440px] items-center gap-10 px-[22px] pb-14 sm:px-[50px] lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:pb-20">
+          <div>
             <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
-            <div className="mt-3 lg:mt-4">
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3 lg:mt-4">
               <KitPillHeading text="The Bridge" accent={[1]} align="left" />
+              {posts.length > 0 && (
+                <PillSticker tone="blue" tilt={-6}>
+                  {posts.length} {posts.length === 1 ? "story" : "stories"} so far
+                </PillSticker>
+              )}
             </div>
-            <p className="mt-5 max-w-[52ch] text-[15px] leading-[1.55] text-body-navy sm:text-[18px] lg:mt-6 lg:text-[19px]">
+            <p className="mt-5 max-w-[46ch] text-[15px] leading-[1.55] text-body-navy sm:text-[18px] lg:mt-6 lg:text-[19px]">
               Stories, insights and field notes from nurses, carers and families, at home and in hospital.
             </p>
           </div>
-          <img
-            src={art.nurseFilmingExplainer}
-            alt=""
-            className="pointer-events-none absolute bottom-0 right-3 h-[190px] max-w-[38%] object-contain object-right-bottom sm:right-[40px] sm:h-[240px] lg:right-[120px] lg:h-[300px]"
-          />
+          <Clothesline posts={posts} loading={loading} className="lg:-mt-6" />
         </div>
       </section>
 
       <KitMain className="pt-10 lg:pt-14">
         {categories.length > 0 && (
-          <div role="group" aria-label="Filter by topic" className="-mx-[22px] flex gap-2 overflow-x-auto px-[22px] pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-            {chip("All stories", !activeCategory, () => setActiveCategory(null))}
-            {categories.map((cat) => chip(cat, activeCategory === cat, () => setActiveCategory(cat)))}
+          <div role="group" aria-label="Filter by topic" className="-mx-[22px] flex gap-3 overflow-x-auto px-[22px] py-2 sm:mx-0 sm:flex-wrap sm:px-0">
+            {tag("All stories", !activeCategory, () => setActiveCategory(null), 0)}
+            {categories.map((cat, i) => tag(cat, activeCategory === cat, () => setActiveCategory(cat), i + 1))}
           </div>
         )}
 
@@ -115,26 +139,28 @@ const Blog = () => {
           </div>
         ) : (
           <>
-            {/* The newest story, set large. */}
-            <Link to={`/blog/${lead.slug}`} className="group mt-10 grid items-center gap-8 lg:mt-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-14">
-              <figure className="relative w-full rotate-[-1.5deg] bg-white p-3 pb-4 shadow-offset">
-                <span aria-hidden="true" className="absolute -top-3 left-1/2 h-6 w-28 -translate-x-1/2 rotate-[3deg] bg-tint-deep/80" />
-                <img src={lead.featured_image_url || blogPlaceholder} alt="" className="aspect-[16/10] w-full object-cover" />
+            {/* The newest story, set large and stamped. */}
+            <Link to={`/blog/${lead.slug}`} className="group mt-12 grid items-center gap-10 lg:mt-16 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-14">
+              <figure className="relative w-full rotate-[-1.5deg] border-2 border-navy bg-white p-3 pb-12 shadow-offset transition-transform group-hover:rotate-0 sm:p-4 sm:pb-14">
+                <Tape width={130} tilt={-3} className="-top-3 left-1/2 z-10 -ml-[65px]" />
+                <img src={postImage(lead.featured_image_url)} alt="" className="aspect-[16/10] w-full object-cover" />
+                <figcaption className="absolute bottom-3 left-4 text-[14px] font-extrabold text-navy sm:bottom-4 sm:left-5 sm:text-[15px]">
+                  {postDate(lead.published_at, "long")}
+                </figcaption>
+                <Stamp title="NEW" sub="ON THE BRIDGE" tone="blue" tilt={10} className="absolute -right-3 -top-5 bg-white sm:-right-6 sm:-top-7" />
               </figure>
               <div>
-                <NotchTag tone="blue" size="sm">
+                <TapeLabel tone="blue" tilt={-2} className="uppercase">
                   {lead.category || "Latest"}
-                </NotchTag>
-                <h2 className="mt-4 text-[30px] leading-[1.05] tracking-[-0.05em] text-navy group-hover:text-brand sm:text-[42px]">{lead.title}</h2>
+                </TapeLabel>
+                <h2 className="mt-5 text-[30px] leading-[1.05] tracking-[-0.05em] text-navy group-hover:text-brand sm:text-[42px]">{lead.title}</h2>
                 {firstParagraph(lead.excerpt) && (
                   <p className="mt-4 line-clamp-4 max-w-[56ch] text-[16.5px] leading-[1.65] text-body sm:text-[18px]">{firstParagraph(lead.excerpt)}</p>
                 )}
-                <p className="mt-5 text-[14px] font-bold text-body">
-                  {lead.author ? `${lead.author}, ` : ""}
-                  {postDate(lead.published_at, "long")}
-                </p>
-                <span className="mt-5 inline-block text-[16px] font-extrabold text-brand group-hover:text-navy">
-                  Read the story <span aria-hidden="true">→</span>
+                {lead.author && <p className="mt-5 text-[14px] font-bold text-body">By {lead.author}</p>}
+                <span className="mt-6 inline-flex min-h-[48px] items-center gap-3 bg-navy px-6 text-[16px] font-extrabold text-white shadow-offset-blue group-hover:bg-brand">
+                  Read the story
+                  <Chevrons size={13} />
                 </span>
               </div>
             </Link>
@@ -143,18 +169,28 @@ const Blog = () => {
               <section aria-labelledby="more-heading" className="mt-20 lg:mt-24">
                 <hr className="mb-6 border-t-4 border-navy" />
                 <h2 id="more-heading" className="text-[30px] leading-none tracking-[-0.05em] sm:text-[40px]">
-                  {activeCategory ?? "More stories"}
+                  {activeCategory ?? "More from the board"}
                 </h2>
-                <ul className="mt-8 grid gap-7 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+                <ul className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
                   {rest.map((post, i) => (
                     <li key={post.id}>
                       <PostCard post={post} index={i} />
                     </li>
                   ))}
+                  <li>
+                    <Invite />
+                  </li>
                 </ul>
               </section>
             )}
           </>
+        )}
+
+        {/* With no grid to sit in, the invitation stands on its own. */}
+        {!loading && rest.length === 0 && (
+          <div className="mx-auto mt-20 max-w-[420px] lg:mt-24">
+            <Invite />
+          </div>
         )}
 
         <div className="hidden lg:block">

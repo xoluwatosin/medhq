@@ -1,4 +1,13 @@
+import { Tape } from "@/components/mc/brand";
 import { splitContentAtH2, renderSection } from "./contentUtils";
+
+/** A photo in the story, taped down as a print. */
+const Print = ({ src, tilt }: { src: string; tilt: number }) => (
+  <figure style={{ transform: `rotate(${tilt}deg)` }} className="relative my-12 border-2 border-navy bg-white p-2.5 pb-3 shadow-offset sm:p-3">
+    <Tape width={110} tilt={-tilt * 2} className="-top-3 left-1/2 z-10 -ml-[55px]" />
+    <img loading="lazy" decoding="async" src={src} alt="" className="w-full object-cover" />
+  </figure>
+);
 
 interface Props {
   content: string;
@@ -16,15 +25,15 @@ const CleanEditorial = ({ content, bodyImages, dropCapEnabled = true }: Props) =
         <div key={i}>
           {renderSection(section, i, i === 0, dropCapEnabled)}
           {i === 0 && bodyImages[0] && (
-            <img loading="lazy" decoding="async" src={bodyImages[0]} alt="" className="my-10 w-full border-2 border-navy object-cover" />
+            <Print src={bodyImages[0]} tilt={-1.5} />
           )}
           {i === Math.floor(sections.length / 2) && bodyImages[1] && (
-            <img loading="lazy" decoding="async" src={bodyImages[1]} alt="" className="my-10 w-full border-2 border-navy object-cover" />
+            <Print src={bodyImages[1]} tilt={1.2} />
           )}
         </div>
       ))}
       {bodyImages[2] && (
-        <img loading="lazy" decoding="async" src={bodyImages[2]} alt="" className="my-10 w-full border-2 border-navy object-cover" />
+        <Print src={bodyImages[2]} tilt={-1} />
       )}
     </article>
   );

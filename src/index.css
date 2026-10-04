@@ -767,11 +767,12 @@ All colors MUST be HSL.
 
   /* Substack-style drop cap — explicit span (not ::first-letter) for reliability */
   .drop-cap-letter {
-    @apply float-left mr-2 font-black;
-    font-size: 3.6rem;
-    line-height: 0.85;
+    @apply float-left mr-3 bg-brand px-3 font-black text-white;
+    font-size: 3.2rem;
+    line-height: 1.15;
     margin-top: 6px;
-    color: hsl(var(--brand));
+    transform: rotate(-3deg);
+    box-shadow: 4px 4px 0 hsl(var(--navy));
     shape-outside: margin-box;
   }
 
