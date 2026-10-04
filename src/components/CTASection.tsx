@@ -20,6 +20,8 @@ interface CTASectionProps {
   serviceLine?: string;
   /** Hide the request form, for pages where it makes no sense. */
   hideRequestCare?: boolean;
+  /** The character standing on the band; defaults to one picked from the path. */
+  person?: string;
 }
 
 const CTASection = ({
@@ -29,6 +31,7 @@ const CTASection = ({
   secondaryButton = { text: "Call +234 812 698 8237", href: "tel:+2348126988237" },
   serviceLine,
   hideRequestCare = false,
+  person,
 }: CTASectionProps) => {
   const { pathname } = useLocation();
   const lineKey = serviceLine ?? ROUTE_LINES[pathname];
@@ -37,7 +40,7 @@ const CTASection = ({
     <section className="relative mt-20 overflow-hidden bg-navy px-6 pb-12 pt-12 shadow-offset-blue sm:mt-28 sm:px-14 sm:pb-16 sm:pt-16">
       <Watermark glyph="o" size={560} opacity={0.12} className="-left-[180px] -top-[260px]" />
       <img
-        src={personFor(pathname)}
+        src={person ?? personFor(pathname)}
         alt=""
         aria-hidden="true"
         loading="lazy"

@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import WelcomeIntake from "@/components/WelcomeIntake";
 import MobileWhatsAppBar from "@/components/mc/MobileWhatsAppBar";
-import { Highlight, Stamp, Watermark } from "@/components/mc/brand";
+import { Highlight, Watermark } from "@/components/mc/brand";
+import Credentials from "@/components/mc/Credentials";
 import { art } from "@/components/mc/art";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
 import { cn } from "@/lib/utils";
@@ -57,14 +58,6 @@ const doors: {
     tone: "tint",
     tilt: -1,
   },
-];
-
-/** Credentials, each a fact Medic Connect already publishes (see llms.txt). */
-const credentials = [
-  { title: "HEFAMAA", sub: "ACCREDITED", text: "Licensed and accredited by HEFAMAA, Lagos State's health facility regulator." },
-  { title: "INSURED", sub: "INDEMNITY COVER", text: "Medic Connect holds professional indemnity insurance." },
-  { title: "HFN", sub: "MEMBER", text: "A member of the Healthcare Federation of Nigeria." },
-  { title: "VETTED", sub: "EVERY PROFESSIONAL", text: "Identity, registration, qualifications and references checked for every professional." },
 ];
 
 const windowTone: Record<Tone, string> = { blue: "bg-brand", navy: "bg-navy", tint: "bg-tint" };
@@ -222,20 +215,7 @@ const Home = () => (
             Checked, licensed and accountable.
           </h2>
         </div>
-        <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 lg:mt-0 lg:grid-cols-4 lg:gap-8">
-          {credentials.map((c, i) => (
-            <li key={c.title} className="flex flex-col gap-4">
-              <Stamp
-                title={c.title}
-                sub={c.sub}
-                tone={i % 2 ? "navy" : "blue"}
-                tilt={i % 2 ? 4 : -5}
-                className="self-start bg-white"
-              />
-              <p className="text-[14px] leading-[1.55] text-body lg:text-[15px]">{c.text}</p>
-            </li>
-          ))}
-        </ul>
+        <Credentials className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 lg:mt-0 lg:grid-cols-4 lg:gap-8" />
       </div>
     </section>
 
