@@ -8,7 +8,6 @@ import { Highlight, Stamp, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
 import { cn } from "@/lib/utils";
-import { HERO_MOCKS } from "./home-hero-mocks";
 
 /**
  * The home page routes each visitor to one of three doors. Phones and desktops
@@ -107,19 +106,12 @@ const Home = () => (
       <Watermark glyph="o" size={720} opacity={0.12} className="-right-[260px] -top-[180px] hidden lg:block" />
       <Watermark glyph="o" size={380} opacity={0.12} className="-bottom-[190px] -right-[150px] lg:hidden" />
       <div className="relative mx-auto max-w-[1440px] px-[22px] pb-10 sm:px-[50px] lg:pb-[196px]">
-        {(() => {
-          const Mock = HERO_MOCKS[new URLSearchParams(window.location.search).get("hero") ?? ""];
-          return Mock ? <Mock /> : (
-            <>
         <h1 className="text-[52px] leading-[0.96] tracking-[-0.06em] !text-white sm:text-[72px] lg:text-[104px]">
           Health, <Highlight>connected</Highlight>.
         </h1>
         <p className="mt-4 text-[19px] leading-[1.45] text-body-navy sm:text-[22px] lg:mt-6 lg:text-[26px]">
           Care when &amp; where you need it.
         </p>
-            </>
-          );
-        })()}
       </div>
     </section>
 
