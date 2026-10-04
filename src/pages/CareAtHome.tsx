@@ -7,7 +7,6 @@ import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
 import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
 import { KitMain, kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
-import { ClipArt, Highlight } from "@/components/mc/brand";
 import { MessageCircle } from "lucide-react";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
@@ -46,7 +45,8 @@ const CareAtHome = () => (
         <p className="eyebrow text-muted-navy">Care at home</p>
         <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" className="mt-5" />
         <p className="mx-auto mt-6 max-w-[54ch] text-[18px] leading-[1.6] text-body-navy sm:text-[21px]">
-          Vetted nurses, nannies and carers placed in your home, usually within 48 hours. So you can stop carrying it all on your own.
+          Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000
+          care needs assessment.
         </p>
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
@@ -70,17 +70,10 @@ const CareAtHome = () => (
 
     <KitMain>
       <section aria-labelledby="services-heading">
-        <div className="relative mb-10 grid items-end gap-6 border-t-4 border-navy pt-8 lg:mb-14 lg:grid-cols-[minmax(0,1fr)_220px] lg:pt-10">
-          <div>
-            <h2 id="services-heading" className="text-[42px] leading-[1.08] tracking-[-0.055em] sm:text-[56px] lg:text-[72px] lg:leading-[0.96]">
-              Care <Highlight>at home</Highlight> services
-            </h2>
-            <p className="mt-5 max-w-[56ch] text-[16px] leading-[1.65] text-body sm:text-[18px]">
-              Services may begin with a care needs assessment.
-            </p>
-          </div>
-          <ClipArt src={art.objHouseHeart} size={200} className="hidden lg:block" />
-        </div>
+        {/* The hero carries the page heading; this one is for screen readers and the outline. */}
+        <h2 id="services-heading" className="sr-only">
+          Care at home services
+        </h2>
         <ServiceCards services={homeServices} />
       </section>
 
