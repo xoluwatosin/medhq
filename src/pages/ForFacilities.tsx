@@ -167,7 +167,7 @@ const ForFacilities = () => {
                 <div className="relative m-2.5 mb-0 mt-6 h-[170px] bg-tint">
                   <img src={s.art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[150px] object-contain" />
                 </div>
-                <NotchTag tone={i % 2 ? "tint" : "blue"} size="sm" tilt={-3} className="absolute -top-3 left-4">
+                <NotchTag tone={i % 2 ? "tint" : "blue"} outlined={i % 2 === 1} size="sm" tilt={-3} className="absolute -top-3 left-4">
                   {s.tag}
                 </NotchTag>
                 <div className="flex flex-1 flex-col gap-1.5 px-5 pb-5 pt-4">

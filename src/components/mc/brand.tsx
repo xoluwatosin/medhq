@@ -34,34 +34,52 @@ export const Highlight = ({ tone = "blue", children }: { tone?: "blue" | "white"
   </span>
 );
 
-/** Flag with a cut in the right end, for categories and service lines. */
+/** A 2px blue outline that follows a clip-path shape (a border would be clipped off the cut edges). */
+const OUTLINE = ["2px 0", "-2px 0", "0 2px", "0 -2px"].map((o) => `drop-shadow(${o} 0 hsl(var(--brand)))`).join(" ");
+
+/**
+ * Flag with a cut in the right end, for categories and service lines.
+ * `outlined` adds a blue edge, for light tags that sit across both a navy
+ * band and a white card and would otherwise blend into one of them.
+ */
 export const NotchTag = ({
   tone = "blue",
   size = "md",
   tilt = 0,
+  outlined = false,
   children,
   className,
 }: {
   tone?: Tone;
   size?: "sm" | "md";
   tilt?: number;
+  outlined?: boolean;
   children: ReactNode;
   className?: string;
-}) => (
-  <span
-    style={rot(tilt)}
-    className={cn(
-      "inline-block self-start whitespace-nowrap font-extrabold uppercase",
-      fill[tone],
-      size === "sm"
-        ? "mc-notch-sm py-[5px] pl-[9px] pr-[14px] text-[10.5px] tracking-[0.16em]"
-        : "mc-notch py-2 pl-[13px] pr-5 text-[12px] tracking-[0.16em]",
-      className,
-    )}
-  >
-    {children}
-  </span>
-);
+}) => {
+  const tag = (extra?: string, style?: CSSProperties) => (
+    <span
+      style={style}
+      className={cn(
+        "inline-block self-start whitespace-nowrap font-extrabold uppercase",
+        fill[tone],
+        size === "sm"
+          ? "mc-notch-sm py-[5px] pl-[9px] pr-[14px] text-[10.5px] tracking-[0.16em]"
+          : "mc-notch py-2 pl-[13px] pr-5 text-[12px] tracking-[0.16em]",
+        extra,
+      )}
+    >
+      {children}
+    </span>
+  );
+  if (!outlined) return tag(className, rot(tilt));
+  // The filter sits on a wrapper so the outline is drawn around the clipped shape.
+  return (
+    <span style={{ ...rot(tilt), filter: OUTLINE }} className={cn("inline-block self-start", className)}>
+      {tag()}
+    </span>
+  );
+};
 
 /** A strip of tape, absolutely positioned over a photo, card or note. */
 export const Tape = ({
