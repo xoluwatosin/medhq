@@ -58,7 +58,7 @@ const CareAtHome = () => (
         <img
           src={art.familyDoorNurse}
           alt=""
-          className="pointer-events-none absolute bottom-[70px] -right-4 h-[170px] max-w-[46%] object-contain object-right-bottom sm:right-[50px] sm:h-[230px]"
+          className="pointer-events-none absolute bottom-[70px] right-2 h-[170px] max-w-[44%] object-contain object-right-bottom sm:right-[50px] sm:h-[230px]"
         />
       </div>
     </section>

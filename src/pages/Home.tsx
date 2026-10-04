@@ -190,7 +190,7 @@ const Home = () => (
                 </span>
               </div>
               {/* The people peek in from the right edge; a group shows three on a phone. */}
-              <div className="pointer-events-none absolute -right-3 bottom-0 flex max-w-[48%] items-end justify-end">
+              <div className="pointer-events-none absolute bottom-0 right-1 flex max-w-[46%] items-end justify-end">
                 {d.people.slice(0, 3).map((src, i) => (
                   <img
                     key={src}

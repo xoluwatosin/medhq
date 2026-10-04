@@ -122,7 +122,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
           <img
             src={c.heroArt[0]}
             alt=""
-            className="pointer-events-none absolute bottom-[96px] -right-2 h-[230px] max-w-[40%] object-contain object-right-bottom sm:right-[40px] sm:h-[280px]"
+            className="pointer-events-none absolute bottom-[96px] right-3 h-[230px] max-w-[38%] object-contain object-right-bottom sm:right-[40px] sm:h-[280px]"
           />
         </div>
       </section>

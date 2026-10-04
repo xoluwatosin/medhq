@@ -122,7 +122,7 @@ const ForFacilities = () => {
           <img
             src={art.hospitalManagerClipboard}
             alt=""
-            className="pointer-events-none absolute bottom-[70px] right-1 h-[210px] max-w-[42%] object-contain object-right-bottom sm:right-[50px] sm:h-[260px]"
+            className="pointer-events-none absolute bottom-[70px] right-3 h-[210px] max-w-[40%] object-contain object-right-bottom sm:right-[50px] sm:h-[260px]"
           />
         </div>
       </section>

@@ -86,7 +86,7 @@ const JoinRoutePicker = () => {
               Sign in
             </Link>
           </p>
-          <div className="pointer-events-none absolute bottom-0 -right-3 flex items-end">
+          <div className="pointer-events-none absolute bottom-0 right-2 flex max-w-[44%] items-end justify-end">
             {[art.proDoctor, art.proPostnatal].map((src, i) => (
               <img key={src} src={src} alt="" className={cn("h-[170px] object-contain sm:h-[220px]", i > 0 && "-ml-8")} />
             ))}
