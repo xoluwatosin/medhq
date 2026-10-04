@@ -74,7 +74,7 @@ const JoinRoutePicker = () => {
 
       {/* Phones and tablets: the professionals peek in beside the copy. */}
       <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px] lg:hidden">
-        <Watermark glyph="o" size={360} opacity={0.12} className="-right-[150px] -top-[90px]" />
+        <Watermark glyph="inf" size={520} opacity={0.12} className="-right-[230px] top-[40px]" />
         <div className="relative mx-auto max-w-[720px] px-[22px] pb-10 sm:px-[50px]">
           <div className="max-w-[70%] sm:max-w-[60%]">
             <KitPillHeading text="Work that fits your skills" accent={[3]} align="left" />
@@ -96,7 +96,7 @@ const JoinRoutePicker = () => {
 
       {/* Desktop: the professionals stand on the line the route cards hang from. */}
       <section className="relative -mt-[114px] hidden overflow-hidden bg-navy pt-[150px] lg:block">
-        <Watermark glyph="o" size={620} opacity={0.12} className="-left-[260px] -top-[200px]" />
+        <Watermark glyph="inf" size={980} opacity={0.12} className="-right-[260px] top-[40px]" />
         <div className="relative mx-auto max-w-[1440px] px-[50px] pb-[260px]">
           <div className="max-w-[640px]">
             <p className="eyebrow !text-brand-soft">Join the network</p>

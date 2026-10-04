@@ -96,8 +96,8 @@ const Home = () => (
     {/* Hero. One headline for both layouts; sizes and spacing differ. The
         negative margin runs the navy under the sticky header (80px / 114px). */}
     <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[112px] sm:-mt-[114px] sm:pt-[164px]">
-      <Watermark glyph="o" size={720} opacity={0.12} className="-right-[260px] -top-[180px] hidden lg:block" />
-      <Watermark glyph="o" size={380} opacity={0.12} className="-bottom-[190px] -right-[150px] lg:hidden" />
+      <Watermark glyph="full" size={620} opacity={0.12} className="-right-[120px] -top-[40px] hidden lg:block" />
+      <Watermark glyph="full" size={340} opacity={0.12} className="-bottom-[120px] -right-[110px] lg:hidden" />
       <div className="relative mx-auto max-w-[1440px] px-[22px] pb-10 sm:px-[50px] lg:pb-[196px]">
         <h1 className="text-[52px] leading-[0.96] tracking-[-0.06em] !text-white sm:text-[72px] lg:text-[104px]">
           Health, <Highlight>connected</Highlight>.

@@ -113,7 +113,7 @@ const ForFacilities = () => {
       {/* Phones and tablets: headline left, the manager beside the paragraph,
           the first row of tiles rising over the band's bottom edge. */}
       <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px] lg:hidden">
-        <Watermark glyph="o" size={360} opacity={0.12} className="-right-[150px] -top-[90px]" />
+        <Watermark glyph="cross" size={250} opacity={0.12} className="-right-[60px] -top-[20px]" />
         <div className="relative mx-auto max-w-[720px] px-[22px] pb-[86px] sm:px-[50px]">
           <div className="max-w-[64%] sm:max-w-[60%]">
             <KitPillHeading text="Cover for every shift" accent={[3]} align="left" />
@@ -129,7 +129,7 @@ const ForFacilities = () => {
 
       {/* Desktop: the manager stands on the line the service cards hang from, across the band's bottom edge. */}
       <section className="relative -mt-[114px] hidden overflow-hidden bg-navy pt-[150px] lg:block">
-        <Watermark glyph="o" size={620} opacity={0.12} className="-left-[260px] -top-[200px]" />
+        <Watermark glyph="cross" size={520} opacity={0.12} className="-right-[40px] -top-[30px]" />
         <div className="relative mx-auto max-w-[1440px] px-[50px] pb-[240px]">
           <div className="max-w-[780px]">
             <p className="eyebrow !text-brand-soft">For facilities</p>

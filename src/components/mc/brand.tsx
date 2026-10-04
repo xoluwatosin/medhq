@@ -3,6 +3,9 @@ import { cn } from "@/lib/utils";
 import { art } from "./art";
 import oSoft from "@/assets/brand/m-o-soft.svg";
 import oTint from "@/assets/brand/m-o-tint.svg";
+import fullSoft from "@/assets/brand/m-full-soft.svg";
+import crossSoft from "@/assets/brand/m-cross-soft.svg";
+import infSoft from "@/assets/brand/m-inf-soft.svg";
 
 /**
  * Medic Connect brand devices, ported from the design system's component
@@ -354,6 +357,8 @@ export const TickerStrip = ({
 };
 
 /** A crop of the mark glyph running off the corner of a panel. */
+const GLYPHS = { o: oSoft, oTint, infTint: art.infTint, full: fullSoft, cross: crossSoft, inf: infSoft };
+
 export const Watermark = ({
   glyph = "o",
   size = 500,
@@ -361,7 +366,8 @@ export const Watermark = ({
   className,
   style,
 }: {
-  glyph?: "o" | "oTint" | "infTint";
+  /** "full" is the whole mark (home page); the parts vary page to page: o, cross, inf. */
+  glyph?: "o" | "oTint" | "infTint" | "full" | "cross" | "inf";
   size?: number;
   opacity?: number;
   className?: string;
@@ -370,7 +376,7 @@ export const Watermark = ({
   <img
     aria-hidden="true"
     alt=""
-    src={glyph === "o" ? oSoft : glyph === "oTint" ? oTint : art.infTint}
+    src={GLYPHS[glyph]}
     className={cn("pointer-events-none absolute select-none", className)}
     style={{ width: size, opacity, ...style }}
   />
