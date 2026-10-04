@@ -271,7 +271,18 @@ const JoinAccount = () => {
         step={0}
         aside={aside}
         mobileLead={mobileLead}
-        className="pb-28 pt-6 md:pb-[34px] md:pt-[34px]"
+        className="pb-32 md:pb-16"
+        heroExtra={
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="cx-pill bg-white/10 px-3 py-1.5 text-[13px] font-extrabold text-white">{track.label}</span>
+            <Link
+              to={claimToken ? `/claim?t=${encodeURIComponent(claimToken)}` : "/join"}
+              className="text-[14px] font-bold text-brand-soft underline-offset-4 hover:text-white hover:underline"
+            >
+              Change route
+            </Link>
+          </div>
+        }
         headerAction={
           <Link
             to="/portal/login"
@@ -281,18 +292,6 @@ const JoinAccount = () => {
           </Link>
         }
       >
-        <div className="flex items-center justify-between gap-3 border-b border-line pb-4 md:flex-wrap md:justify-start md:border-0 md:pb-0">
-          <span className="cx-pill bg-tint px-3 py-1.5 text-[12.5px] font-extrabold text-navy">
-            {track.label}
-          </span>
-          <Link
-            to={claimToken ? `/claim?t=${encodeURIComponent(claimToken)}` : "/join"}
-            className="text-[14px] font-bold text-brand underline-offset-4 hover:underline"
-          >
-            Change route
-          </Link>
-        </div>
-
         <div className="grid gap-6">
           <CxCard kind="quiet" className="cx-flat-sm border-0 bg-transparent p-0 md:border md:bg-white md:p-8">
 

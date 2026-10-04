@@ -398,7 +398,10 @@ All colors MUST be HSL.
   }
   .cx-join input.cx-chip,
   .cx-join select.cx-chip,
-  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); }
+  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 52px; font-size: 16px; background: #fff; }
+  .cx-join label { font-size: 14.5px; font-weight: 800; color: hsl(var(--navy)); }
+  .cx-join button.cx-control[type="submit"] { min-height: 54px; font-size: 16.5px; font-weight: 800; box-shadow: 4px 4px 0 hsl(var(--brand)); }
+  .cx-join button.cx-control[type="submit"]:disabled { box-shadow: none; }
   .cx-join input.cx-chip:focus,
   .cx-join select.cx-chip:focus,
   .cx-join textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
