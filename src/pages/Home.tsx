@@ -1,75 +1,74 @@
 import { Link } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
-import { medicalBusinessSchema } from "@/lib/medical-schema";
-import AudienceHero from "@/components/home/AudienceHero";
-import CTASection from "@/components/CTASection";
 import WelcomeIntake from "@/components/WelcomeIntake";
-import CareRequestDialog from "@/components/CareRequestDialog";
-import { kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
-import {
-  ChevronSteps,
-  ClipArt,
-  EmergencyBox,
-  Fragment,
-  Highlight,
-  NotchTag,
-  PriceTag,
-  SpeechBubble,
-  Stamp,
-  TapeLabel,
-  TickerStrip,
-  Ticket,
-  TiltCard,
-} from "@/components/mc/brand";
+import MobileWhatsAppBar from "@/components/mc/MobileWhatsAppBar";
+import { Highlight, Stamp, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
+import { medicalBusinessSchema } from "@/lib/medical-schema";
+import { cn } from "@/lib/utils";
+import { HERO_MOCKS } from "./home-hero-mocks";
 
-const doors = [
+/**
+ * The home page routes each visitor to one of three doors. Phones and desktops
+ * get separately built layouts rather than one layout that reflows:
+ *  - desktop shows all three doors at once, hanging from one line (the
+ *    "connected" idea), and lets the eye choose;
+ *  - phones get one decision at a time: a short hero, then three full-width
+ *    doors in thumb reach, with a sticky WhatsApp bar.
+ */
+
+type Tone = "blue" | "navy" | "tint";
+
+const doors: {
+  title: string;
+  description: string;
+  cta: string;
+  href: string;
+  /** One person, or a group (the network) shown overlapping like a team photo. */
+  people: string[];
+  tone: Tone;
+  tilt: number;
+}[] = [
   {
-    n: "01",
-    eyebrow: "Families",
     title: "Care at home",
-    description:
-      "Nurses, nannies, eldercare and maternity support placed in your home across Lagos, usually within 48 hours.",
+    description: "Professional care and support for you or someone you care about.",
+    cta: "Explore care",
     href: "/care-at-home",
-    cta: "Find care",
-    art: art.objHouseHeart,
-    tone: "blue" as const,
+    people: [art.familyDoorNurse],
+    tone: "blue",
     tilt: -2,
   },
   {
-    n: "02",
-    eyebrow: "Facilities",
     title: "For facilities",
-    description:
-      "Clinical and support staff for hospitals, clinics and research sites, compliance cleared before they reach your ward.",
+    description: "Vetted healthcare professionals and support for your organisation.",
+    cta: "Explore facility services",
     href: "/for-facilities",
-    cta: "Request staff",
-    art: art.objClipboard,
-    tone: "tint" as const,
+    people: [art.charDoctor],
+    tone: "navy",
     tilt: 1.5,
   },
   {
-    n: "03",
-    eyebrow: "Professionals",
     title: "Join the network",
-    description:
-      "Nurses, carers, doctors and allied health professionals. Get verified once and be matched to work that fits you.",
+    description: "Work, opportunities and professional development for healthcare professionals.",
+    cta: "Join the network",
     href: "/join",
-    cta: "Apply",
-    art: art.objCarePlan,
-    tone: "white" as const,
+    people: [art.proNurseKit, art.proDoctor, art.proPostnatal, art.proNurseCoat],
+    tone: "tint",
     tilt: -1,
   },
 ];
 
-const report = [
-  { time: "06:40", tone: "blue" as const, tilt: -1.5, note: "Slept through. Ate a full breakfast." },
-  { time: "12:15", tone: "tint" as const, tilt: 1, note: "Blood pressure checked. Walk to the gate and back." },
-  { time: "18:30", tone: "navy" as const, tilt: -1, note: "Asked for the radio. Good day all round." },
+/** Credentials, each a fact Medic Connect already publishes (see llms.txt). */
+const credentials = [
+  { title: "HEFAMAA", sub: "ACCREDITED", text: "Licensed and accredited by HEFAMAA, Lagos State's health facility regulator." },
+  { title: "INSURED", sub: "INDEMNITY COVER", text: "Medic Connect holds professional indemnity insurance." },
+  { title: "HFN", sub: "MEMBER", text: "A member of the Healthcare Federation of Nigeria." },
+  { title: "VETTED", sub: "EVERY PROFESSIONAL", text: "Identity, registration, qualifications and references checked for every professional." },
 ];
+
+const windowTone: Record<Tone, string> = { blue: "bg-brand", navy: "bg-navy", tint: "bg-tint" };
 
 const Home = () => (
   <div className="min-h-dvh bg-background animate-fade-in">
@@ -102,171 +101,157 @@ const Home = () => (
     <MedicHeader />
     <WelcomeIntake />
 
-    <AudienceHero variant="split">
-      <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-16">
-        <div className="relative flex flex-col gap-6">
-          <p className="eyebrow !text-muted-navy">For families, near or far</p>
-          <h1 className="text-[48px] leading-[0.96] tracking-[-0.06em] !text-white sm:text-[72px] xl:text-[96px]">
-            The <Highlight>care</Highlight> operating system.
-          </h1>
-          <p className="max-w-[40ch] text-[18px] leading-[1.55] text-body-navy sm:text-[21px]">
-            A vetted caregiver at home, and a short report from them every day. Three ways in. Choose the one that fits you.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a href="https://wa.me/2348126988237" target="_blank" rel="noopener noreferrer" className={kitHeroPrimaryButton}>
-              <MessageCircle className="h-5 w-5" aria-hidden="true" />
-              Chat on WhatsApp
-            </a>
-            <a href="tel:+2348126988237" className={kitHeroSecondaryButton}>
-              Call +234 812 698 8237
-            </a>
-          </div>
-          <p className="text-[14px] text-body-navy">HEFAMAA accredited. Insured. Every professional vetted.</p>
-        </div>
-
-        {/* A visit note, the way families see their day. Grandma stands on its corner. */}
-        <div className="relative mr-10 sm:mr-14 lg:mr-10">
-          <Stamp title="HEFAMAA" sub="ACCREDITED" onNavy tilt={8} className="absolute -left-3 -top-12 z-10 bg-navy sm:-left-8" />
-          <div className="relative flex flex-col gap-5 bg-white px-6 pb-8 pt-7 shadow-offset-blue sm:px-8">
-            <div className="flex justify-between text-[12px] font-extrabold tracking-[0.16em] text-muted-foreground">
-              <span>DAILY REPORT</span>
-              <span className="text-brand">TUESDAY</span>
-            </div>
-            {report.map((r) => (
-              <div key={r.time} className="flex max-w-[280px] flex-col gap-2">
-                <TapeLabel tone={r.tone} tilt={r.tilt}>
-                  {r.time}
-                </TapeLabel>
-                <span className="text-[17px] leading-[1.45] text-ink sm:text-[18px]">{r.note}</span>
-              </div>
-            ))}
-          </div>
-          <img
-            src={art.charGrandma}
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-9 -right-10 h-[190px] sm:-right-12 sm:h-[230px] lg:-right-8"
-          />
-        </div>
+    {/* Hero. One headline for both layouts; sizes and spacing differ. The
+        negative margin runs the navy under the sticky header (80px / 114px). */}
+    <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[112px] sm:-mt-[114px] sm:pt-[164px]">
+      <Watermark glyph="o" size={720} opacity={0.12} className="-right-[260px] -top-[180px] hidden lg:block" />
+      <Watermark glyph="o" size={380} opacity={0.12} className="-bottom-[190px] -right-[150px] lg:hidden" />
+      <div className="relative mx-auto max-w-[1440px] px-[22px] pb-10 sm:px-[50px] lg:pb-[196px]">
+        {(() => {
+          const Mock = HERO_MOCKS[new URLSearchParams(window.location.search).get("hero") ?? ""];
+          return Mock ? <Mock /> : (
+            <>
+        <h1 className="text-[52px] leading-[0.96] tracking-[-0.06em] !text-white sm:text-[72px] lg:text-[104px]">
+          Health, <Highlight>connected</Highlight>.
+        </h1>
+        <p className="mt-4 text-[19px] leading-[1.45] text-body-navy sm:text-[22px] lg:mt-6 lg:text-[26px]">
+          Care when &amp; where you need it.
+        </p>
+            </>
+          );
+        })()}
       </div>
-    </AudienceHero>
+    </section>
 
-    <TickerStrip
-      tone="blue"
-      items={["Nurses", "Caregivers", "Nannies", "Postnatal specialists", "Eldercare", "Facility staffing"]}
-    />
-
-    <main className="mx-auto max-w-[1440px] px-[22px] py-16 sm:px-[50px] sm:py-24">
-      {/* Three doors */}
-      <section aria-labelledby="where-to-start" className="grid gap-12 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-16">
-        <div className="flex flex-col gap-5">
-          <p className="eyebrow">Where to start</p>
-          <h2 id="where-to-start" className="text-[40px] leading-none tracking-[-0.05em] sm:text-[56px]">
-            Three ways <Highlight>in</Highlight>.
-          </h2>
-          <p className="text-[16px] leading-[1.65] text-body">
-            Every care plan starts with a <PriceTag amount="₦35,000" className="text-[14px]" /> home care needs assessment.
-          </p>
-          <ClipArt src={art.objPhoneChat} size={150} className="mt-2 hidden lg:block" />
-        </div>
-
-        <div className="grid gap-8 pt-2 sm:grid-cols-3 sm:gap-6">
+    {/* ---------- Desktop doors: three cards hanging from one line ---------- */}
+    <section aria-labelledby="help-heading-desktop" className="relative -mt-[180px] hidden lg:block">
+      <div className="relative mx-auto max-w-[1440px] px-[50px]">
+        <h2 id="help-heading-desktop" className="mb-9 text-[30px] tracking-[-0.04em] !text-white">
+          How can we help?
+        </h2>
+        {/* The line the doors hang from. */}
+        <div aria-hidden="true" className="absolute left-[50px] right-[50px] top-[81px] h-[3px] bg-brand-soft" />
+        <div className="grid grid-cols-3 gap-10 xl:gap-14">
           {doors.map((d) => (
-            <Link key={d.href} to={d.href} className="group block focus-visible:outline-offset-8">
-              <TiltCard tone={d.tone} tilt={d.tilt} tape={d.tone === "white"} className="h-full gap-3 p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <span
-                    className={`text-[44px] font-black leading-[0.85] tracking-[-0.06em] ${
-                      d.tone === "blue" ? "text-white/45" : "text-brand"
-                    }`}
-                  >
-                    {d.n}
-                  </span>
-                  <NotchTag tone={d.tone === "blue" ? "white" : "blue"} size="sm">
-                    {d.eyebrow}
-                  </NotchTag>
+            <Link
+              key={d.href}
+              to={d.href}
+              style={{ ["--mc-tilt" as string]: `${d.tilt}deg` }}
+              className="mc-tilt group relative block origin-top focus-visible:outline-offset-8"
+            >
+              {/* The clip holding the card to the line. */}
+              <span aria-hidden="true" className="absolute -top-[22px] left-1/2 z-10 -ml-[9px] h-[26px] w-[18px] border-[3px] border-b-0 border-white" />
+              <div
+                className={cn(
+                  "flex h-full flex-col border-2 border-navy bg-white transition-shadow duration-200",
+                  d.tone === "blue" ? "shadow-offset" : "shadow-offset-blue",
+                  "group-hover:shadow-[10px_10px_0_hsl(var(--navy))]",
+                )}
+              >
+                {/* The picture sits in a white print border so it stands off the navy behind. */}
+                <div className={cn("relative m-2.5 mb-0 h-[170px] overflow-hidden", windowTone[d.tone])}>
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-center">
+                    {d.people.map((src, i) => (
+                      <img
+                        key={src}
+                        src={src}
+                        alt=""
+                        className={cn("h-[158px] object-contain", i > 0 && "-ml-7")}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <img src={d.art} alt="" className="mx-auto my-1 h-[120px] w-full object-contain" />
-                <h3 className={`text-[24px] leading-[1.05] ${d.tone === "blue" ? "!text-white" : ""}`}>{d.title}</h3>
-                <p className={`text-[15px] leading-[1.6] ${d.tone === "blue" ? "text-white/90" : "text-body"}`}>{d.description}</p>
-                <span
-                  className={`mt-auto pt-2 text-[15px] font-extrabold ${
-                    d.tone === "blue" ? "text-white" : "text-brand group-hover:text-navy"
-                  } transition-colors duration-200`}
-                >
-                  {d.cta} →
-                </span>
-              </TiltCard>
+                <div className="flex flex-1 flex-col gap-2 px-6 pb-5 pt-4">
+                  <h3 className="text-[28px] leading-[1.05] tracking-[-0.045em]">{d.title}</h3>
+                  <p className="text-[16px] leading-[1.6] text-body">{d.description}</p>
+                  <span className="mt-auto inline-flex items-center gap-2 pt-3 text-[16px] font-extrabold text-brand transition-colors duration-200 group-hover:text-navy">
+                    {d.cta}
+                    <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1.5">
+                      →
+                    </span>
+                  </span>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* The assessment, as an admission ticket */}
-      <section aria-label="The home care needs assessment" className="mt-24 sm:mt-28">
-        <Ticket
-          label="ADMIT ONE NURSE"
-          title="Every care plan starts with an assessment at home."
-          stubLabel="FIXED FEE"
-          stub={<PriceTag amount="₦35,000" variant="tag" />}
-        >
-          <div className="flex flex-col gap-5">
-            <div className="max-w-[520px]">
-              <ChevronSteps steps={["Assessment", "Care plan", "Care starts"]} current={0} />
-            </div>
-            <p className="max-w-[52ch] text-[15.5px] leading-[1.65] text-body-navy">
-              A nurse visits, meets the person and writes the plan with you. A care adviser calls you first, usually the same
-              working day.
-            </p>
-            <CareRequestDialog
-              source="home_ticket"
-              trigger={<button className={`${kitHeroPrimaryButton} self-start`}>Book the assessment</button>}
-            />
-          </div>
-        </Ticket>
-      </section>
+    {/* ---------- Mobile doors: one full-width tap target each ---------- */}
+    <section aria-labelledby="help-heading-mobile" className="px-[22px] pt-8 sm:px-[50px] lg:hidden">
+      <h2 id="help-heading-mobile" className="text-[30px] leading-none tracking-[-0.05em]">
+        How can we help?
+      </h2>
+      <div className="mt-6 flex flex-col gap-4">
+        {doors.map((d) => {
+          const dark = d.tone !== "tint";
+          return (
+            <Link
+              key={d.href}
+              to={d.href}
+              className={cn(
+                "relative flex min-h-[148px] overflow-hidden transition-colors duration-150",
+                windowTone[d.tone],
+                dark ? "active:bg-navy-mid" : "active:bg-tint-deep",
+                d.tone === "navy" ? "shadow-offset-blue" : "shadow-offset-sm",
+              )}
+            >
+              <div className="relative z-10 flex w-[64%] flex-col gap-1.5 py-5 pl-5 pr-2">
+                <h3 className={cn("text-[24px] leading-[1.05] tracking-[-0.045em]", dark && "!text-white")}>{d.title}</h3>
+                <p className={cn("text-[14.5px] leading-[1.5]", dark ? "text-white/90" : "text-body")}>{d.description}</p>
+                <span className={cn("mt-auto pt-2 text-[15px] font-extrabold", dark ? "text-white" : "text-brand")}>
+                  {d.cta} <span aria-hidden="true">→</span>
+                </span>
+              </div>
+              {/* The people peek in from the right edge; a group shows three on a phone. */}
+              <div className="pointer-events-none absolute -right-3 bottom-0 flex max-w-[48%] items-end justify-end">
+                {d.people.slice(0, 3).map((src, i) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    className={cn("object-contain object-bottom", d.people.length > 1 ? "h-[124px]" : "h-[140px]", i > 0 && "-ml-6")}
+                  />
+                ))}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
 
-      {/* Questions, as a chat thread */}
-      <section aria-labelledby="questions" className="mt-24 grid items-start gap-12 sm:mt-28 lg:grid-cols-2 lg:gap-16">
-        <div className="flex flex-col gap-6">
-          <p className="eyebrow">Questions families ask</p>
-          <h2 id="questions" className="text-[36px] leading-none tracking-[-0.05em] sm:text-[44px]">
-            Ask us anything.
+    {/* ---------- Credentials: stamps on desktop, a 2 by 2 grid on phones ---------- */}
+    <section aria-labelledby="trust-heading" className="mx-auto max-w-[1440px] px-[22px] pb-16 pt-14 sm:px-[50px] lg:pb-24 lg:pt-28">
+      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-16">
+        <div>
+          <p className="eyebrow">Why you can trust us</p>
+          <h2 id="trust-heading" className="mt-3 text-[30px] leading-none tracking-[-0.05em] lg:text-[44px]">
+            Checked, licensed and accountable.
           </h2>
-          <div className="flex flex-col gap-3">
-            <SpeechBubble>Do I have to be in Lagos?</SpeechBubble>
-            <SpeechBubble side="right" tone="tint">
-              No. Many families book from abroad and join the assessment on a call.
-            </SpeechBubble>
-            <SpeechBubble>How soon can care start?</SpeechBubble>
-            <SpeechBubble side="right" tone="tint">
-              Usually within 48 hours.
-            </SpeechBubble>
-            <SpeechBubble>Who comes to the house?</SpeechBubble>
-            <SpeechBubble side="right" tone="tint">
-              A vetted professional matched to the plan. Every one is checked before they reach you.
-            </SpeechBubble>
-          </div>
         </div>
-        <div className="relative flex flex-col gap-8 lg:pt-16">
-          <Fragment fragment="Mum is in Surulere and I am in London." answer="Someone you can trust at her door, and word from them every day." />
-          <img
-            src={art.diasporaSon}
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none mx-auto h-[220px] object-contain sm:h-[260px]"
-          />
-          <EmergencyBox />
-        </div>
-      </section>
+        <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 lg:mt-0 lg:grid-cols-4 lg:gap-8">
+          {credentials.map((c, i) => (
+            <li key={c.title} className="flex flex-col gap-4">
+              <Stamp
+                title={c.title}
+                sub={c.sub}
+                tone={i % 2 ? "navy" : "blue"}
+                tilt={i % 2 ? 4 : -5}
+                className="self-start bg-white"
+              />
+              <p className="text-[14px] leading-[1.55] text-body lg:text-[15px]">{c.text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-      <CTASection
-        headline="Not sure which door is yours?"
-        body="Tell us what you need and we will point you to the right team."
-      />
-    </main>
-
-    <Footer />
+    {/* The doors above are this page's content, so the footer skips its own row of them. */}
+    <Footer showDoors={false} />
+    {/* Room for the sticky bar on phones, in the footer's navy so no white strip shows. */}
+    <div aria-hidden="true" className="h-[calc(76px+env(safe-area-inset-bottom))] bg-navy lg:hidden" />
+    <MobileWhatsAppBar />
   </div>
 );
 

@@ -21,8 +21,12 @@ const LiveChatButton = () => {
     pathname.startsWith("/claim")
   ) return null;
 
+  // On phones the home page has a sticky WhatsApp bar; the bubble would repeat it.
+  const barPage = pathname === "/";
+
   return (
     <>
+      <div className={barPage ? "hidden lg:block" : undefined}>
       <DraggableControl storageKey="mc_whatsapp_pos" defaultCorner="bottom-right">
         <button
           type="button"
@@ -41,6 +45,7 @@ const LiveChatButton = () => {
           </svg>
         </button>
       </DraggableControl>
+      </div>
       <WhatsAppQuestionnaire open={open} onOpenChange={setOpen} />
     </>
   );

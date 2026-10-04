@@ -25,11 +25,14 @@ const DraggableControl = ({ children, storageKey, defaultCorner, className }: Pr
     const padding = 16;
     const keyboardTop = window.visualViewport?.offsetTop ?? 0;
     const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+    // A sticky bottom bar (the mobile WhatsApp bar) publishes its height here,
+    // so floating controls stay above it rather than covering it.
+    const reserve = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mc-bottom-reserve")) || 0;
     return {
       minX: padding,
       minY: keyboardTop + padding,
       maxX: window.innerWidth - (containerRef.current?.offsetWidth || 64) - padding,
-      maxY: keyboardTop + visibleHeight - (containerRef.current?.offsetHeight || 64) - padding,
+      maxY: keyboardTop + visibleHeight - (containerRef.current?.offsetHeight || 64) - padding - reserve,
     };
   }, []);
 

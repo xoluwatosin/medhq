@@ -56,12 +56,14 @@ const footerColumns: FooterColumn[] = [
   },
 ];
 
-const Footer = () => {
+/** showDoors: false on pages whose own content is the three doors (the home page). */
+const Footer = ({ showDoors = true }: { showDoors?: boolean }) => {
   return (
     <footer className="relative mt-8 overflow-hidden bg-navy text-body-navy">
       <TickerStrip tone="blue" items={["Care at home", "For facilities", "Join the network", "WhatsApp +234 812 698 8237"]} />
       <div className="relative max-w-[1440px] mx-auto px-[22px] sm:px-[50px] pt-14 pb-12">
         {/* Three doors, matching the homepage entry points */}
+        {showDoors && (
         <div className="grid gap-5 sm:grid-cols-3 mb-12">
           {[
             { label: "Care at home", href: "/care-at-home", note: "Families", tilt: -1.5 },
@@ -82,6 +84,7 @@ const Footer = () => {
             </Link>
           ))}
         </div>
+        )}
 
         {/* Full footer for desktop - reference layout */}
         <div className="hidden md:grid grid-cols-12 gap-8 mb-8">

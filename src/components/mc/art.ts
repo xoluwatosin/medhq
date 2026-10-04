@@ -20,6 +20,10 @@ import familyDoorNurse from "@/assets/mc/family-door-nurse.webp";
 import diasporaSon from "@/assets/mc/diaspora-son.webp";
 import nannyReading from "@/assets/mc/nanny-reading.webp";
 import midwifePregnantBp from "@/assets/mc/midwife-pregnant-bp.webp";
+import proNurseKit from "@/assets/mc/pro-nurse-kit.webp";
+import proDoctor from "@/assets/mc/pro-doctor.webp";
+import proPostnatal from "@/assets/mc/pro-postnatal.webp";
+import proNurseCoat from "@/assets/mc/pro-nurse-coat.webp";
 import markGlyph from "@/assets/mc/medicconnect-mark.svg";
 import infTint from "@/assets/mc/m-inf-tint.svg";
 
@@ -41,6 +45,10 @@ export const art = {
   diasporaSon,
   nannyReading,
   midwifePregnantBp,
+  proNurseKit,
+  proDoctor,
+  proPostnatal,
+  proNurseCoat,
   markGlyph,
   infTint,
 };
