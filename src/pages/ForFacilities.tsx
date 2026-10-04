@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import CTASection from "@/components/CTASection";
+import FacilityEnquiryForm from "@/components/facilities/FacilityEnquiryForm";
 import { KitMain } from "@/components/kit/KitLayout";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { NotchTag, Watermark } from "@/components/mc/brand";
@@ -12,7 +11,6 @@ import Credentials from "@/components/mc/Credentials";
 import { SectionHead } from "@/components/mc/service-sections";
 import { art } from "@/components/mc/art";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 /**
@@ -102,49 +100,6 @@ const ServiceLink = ({
 const TILTS = [-1.2, 0.8, -0.6, 1];
 
 const ForFacilities = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-      toast.error("Please add your name and a valid email address.");
-      return;
-    }
-    setSending(true);
-    const { error } = await supabase.from("contact_submissions").insert({
-      name: name.trim(),
-      email: email.trim(),
-      phone: "",
-      service: "Facility staffing enquiry",
-      message: "Facility staffing enquiry raised from the For Facilities page.",
-    });
-    if (error) {
-      toast.error("Something went wrong. Please try again.");
-      setSending(false);
-      return;
-    }
-    supabase.functions
-      .invoke("send-form-notification", {
-        body: {
-          formType: "contact",
-          data: {
-            name: name.trim(),
-            email: email.trim(),
-            phone: "",
-            service: "Facility staffing enquiry",
-            message: "Facility staffing enquiry raised from the For Facilities page.",
-          },
-        },
-      })
-      .catch(() => undefined);
-    toast.success("Thank you. We will be in touch shortly.");
-    setName("");
-    setEmail("");
-    setSending(false);
-  };
-
   return (
     <div className="min-h-dvh bg-background animate-fade-in">
       <SEO
@@ -267,7 +222,7 @@ const ForFacilities = () => {
         {/* How it works, beside the call-back form. */}
         <section aria-labelledby="how-heading" className="mt-20 lg:mt-28">
           <SectionHead id="how-heading" eyebrow="How it works" title="Tell us the gap. We fill it." />
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_460px] lg:gap-16">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_540px] lg:gap-16">
             <ol className="flex flex-col gap-5">
               {steps.map((st, i) => (
                 <li key={st.title} className="flex gap-5">
@@ -287,41 +242,7 @@ const ForFacilities = () => {
               ))}
             </ol>
 
-            <form onSubmit={submit} className="relative w-full border-2 border-navy bg-white p-6 shadow-offset sm:p-7">
-              <img src={art.objClipboardChecks} alt="" className="absolute -right-4 -top-8 h-[72px] rotate-[6deg]" />
-              <h3 className="pr-12 text-[24px] leading-[1.15] tracking-[-0.04em]">Request a call back</h3>
-              <p className="mt-2 text-[15px] leading-[1.6] text-body">
-                A coordinator will call to confirm scope, shifts and compliance requirements.
-              </p>
-              <label className="label-caps mt-6 block text-label" htmlFor="ff-name">
-                Your name
-              </label>
-              <input
-                id="ff-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-2 w-full rounded-control border-2 border-navy/25 bg-white px-4 py-3 text-[16px] text-ink outline-none focus:border-brand"
-                autoComplete="name"
-              />
-              <label className="label-caps mt-5 block text-label" htmlFor="ff-email">
-                Work email
-              </label>
-              <input
-                id="ff-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-2 w-full rounded-control border-2 border-navy/25 bg-white px-4 py-3 text-[16px] text-ink outline-none focus:border-brand"
-                autoComplete="email"
-              />
-              <button
-                type="submit"
-                disabled={sending}
-                className="mt-6 min-h-[48px] w-full rounded-control bg-brand px-6 text-[16px] font-extrabold text-white shadow-offset-sm transition-colors duration-200 hover:bg-navy disabled:opacity-60"
-              >
-                {sending ? "Sending" : "Request a call back"}
-              </button>
-            </form>
+            <FacilityEnquiryForm />
           </div>
         </section>
 
