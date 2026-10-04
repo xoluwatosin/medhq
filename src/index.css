@@ -767,24 +767,24 @@ All colors MUST be HSL.
 
   /* Substack-style drop cap — explicit span (not ::first-letter) for reliability */
   .drop-cap-letter {
-    @apply font-serif font-bold float-left mr-2;
-    font-size: 3.5rem;
-    line-height: 0.9;
+    @apply float-left mr-2 font-black;
+    font-size: 3.6rem;
+    line-height: 0.85;
     margin-top: 6px;
-    color: hsl(var(--primary));
+    color: hsl(var(--brand));
     shape-outside: margin-box;
   }
 
   /* Edit/preview typography parity — editor matches renderSection() output */
   .rich-text-editor .ProseMirror {
-    @apply font-serif text-[1.0625rem] sm:text-[1.125rem] leading-[1.75] text-foreground/90;
+    @apply text-[17px] sm:text-[18.5px] leading-[1.75] text-ink;
     outline: none;
   }
   .rich-text-editor .ProseMirror h2 {
-    @apply text-[1.75rem] sm:text-3xl font-bold font-serif mt-12 mb-4 leading-tight tracking-tight;
+    @apply text-[26px] sm:text-[32px] font-extrabold text-navy mt-14 mb-4 leading-[1.1] tracking-[-0.04em];
   }
   .rich-text-editor .ProseMirror h3 {
-    @apply text-xl sm:text-2xl font-semibold font-serif mt-8 mb-3 leading-snug;
+    @apply text-[20px] sm:text-[22px] font-extrabold text-navy mt-10 mb-3 leading-snug tracking-[-0.03em];
   }
   .rich-text-editor .ProseMirror h4 {
     @apply text-lg font-semibold mt-6 mb-2;
@@ -793,7 +793,7 @@ All colors MUST be HSL.
     @apply my-5;
   }
   .rich-text-editor .ProseMirror blockquote {
-    @apply border-l-[3px] border-primary pl-5 sm:pl-6 py-2 my-8 text-lg sm:text-xl italic text-muted-foreground font-serif leading-relaxed;
+    @apply my-10 bg-tint px-6 py-6 text-[20px] font-extrabold leading-[1.4] tracking-[-0.02em] text-navy sm:px-8 sm:text-[22px];
   }
   .rich-text-editor .ProseMirror ul {
     @apply list-disc pl-6 space-y-2 my-5;

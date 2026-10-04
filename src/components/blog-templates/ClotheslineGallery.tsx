@@ -13,7 +13,7 @@ const ClotheslineGallery = ({ content, bodyImages, bodyCaptions = [], dropCapEna
   const images = bodyImages.filter(url => url).slice(0, 5);
 
   return (
-    <article className="max-w-[900px] mx-auto px-4 pt-0 pb-12 text-lg leading-relaxed">
+    <article className="max-w-[900px] mx-auto px-[22px] pt-0 pb-12 text-[17px] leading-[1.75] text-ink sm:text-[18.5px]">
       {sections.slice(0, midpoint).map((s, i) => renderSection(s, i, i === 0, dropCapEnabled))}
       {images.length > 0 && (
         <div className="relative my-12">

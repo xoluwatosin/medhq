@@ -14,18 +14,18 @@ const PolaroidFrame: React.FC<PolaroidFrameProps> = ({
   if (!src) return null;
   return (
     <div
-      className={`relative bg-card p-3 pb-12 shadow-lg inline-block ${className}`}
+      className={`relative inline-block bg-white p-3 pb-12 shadow-offset ${className}`}
       style={{ transform: `rotate(${rotation}deg)` }}
     >
       {variant === "tape" && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-yellow-200/70 rotate-[-2deg]" />
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-tint-deep/80 rotate-[-2deg]" />
       )}
       {variant === "pin" && (
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 shadow-md" />
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-brand" />
       )}
       <img loading="lazy" decoding="async" src={src} alt={caption || ""} className="w-full aspect-square object-cover" />
       {caption && (
-        <p className="text-center mt-2 font-handwritten text-lg text-gray-700">{caption}</p>
+        <p className="text-center mt-2 font-handwritten text-lg text-navy">{caption}</p>
       )}
     </div>
   );
