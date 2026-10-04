@@ -27,9 +27,11 @@ const Price = ({ s, size }: { s: ServiceCard; size: "tag" | "tile" }) =>
       <b className={cn("font-extrabold tracking-[-0.03em] text-price", size === "tag" ? "text-[20px]" : "text-[15px]")}>{s.price}</b>
     </span>
   ) : (
-    <span className={cn("block font-extrabold leading-tight text-navy", size === "tag" ? "max-w-[96px] text-[13px]" : "text-[12.5px]")}>
-      Quoted after assessment
-    </span>
+    size === "tag" ? (
+      <span className="block max-w-[96px] text-[13px] font-extrabold leading-tight text-navy">Quoted after assessment</span>
+    ) : (
+      <span className="text-[12px] font-bold text-muted-foreground">Quoted after assessment</span>
+    )
   );
 
 const TILTS = [-1.2, 0.8, -0.6];

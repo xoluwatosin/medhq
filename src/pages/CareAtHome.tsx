@@ -6,7 +6,8 @@ import AudienceHero from "@/components/home/AudienceHero";
 import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
 import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
-import { KitMain, kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
+import { KitMain, kitHeroPrimaryButton, kitHeroSecondaryButton, kitPrimaryButton, kitSecondaryButton } from "@/components/kit/KitLayout";
+import { HERO_MOCKS } from "./care-at-home-hero-mocks";
 import { MessageCircle } from "lucide-react";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
@@ -40,36 +41,60 @@ const CareAtHome = () => (
     />
     <MedicHeader />
 
+    {(() => {
+      const mock = HERO_MOCKS[new URLSearchParams(window.location.search).get("hero") ?? ""];
+      if (!mock) return (
     <AudienceHero variant="centred">
-      <div className="mx-auto max-w-[820px] text-center">
-        <p className="eyebrow text-muted-navy">Care at home</p>
-        <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" className="mt-5" />
-        <p className="mx-auto mt-6 max-w-[54ch] text-[18px] leading-[1.6] text-body-navy sm:text-[21px]">
-          Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000
-          care needs assessment.
-        </p>
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="https://wa.me/2348126988237"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={kitHeroPrimaryButton}
-          >
-            <MessageCircle className="h-5 w-5" aria-hidden="true" />
-            Chat on WhatsApp
-          </a>
-          <a
-            href="tel:+2348126988237"
-            className={kitHeroSecondaryButton}
-          >
-            Call +234 812 698 8237
-          </a>
+        <div className="mx-auto max-w-[820px] text-center">
+          <p className="eyebrow text-muted-navy">Care at home</p>
+          <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" className="mt-5" />
+          <p className="mx-auto mt-6 max-w-[54ch] text-[18px] leading-[1.6] text-body-navy sm:text-[21px]">
+            Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000
+            care needs assessment.
+          </p>
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="https://wa.me/2348126988237"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={kitHeroPrimaryButton}
+            >
+              <MessageCircle className="h-5 w-5" aria-hidden="true" />
+              Chat on WhatsApp
+            </a>
+            <a
+              href="tel:+2348126988237"
+              className={kitHeroSecondaryButton}
+            >
+              Call +234 812 698 8237
+            </a>
+          </div>
         </div>
-      </div>
-    </AudienceHero>
+      </AudienceHero>
+      );
+      const lead = "Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000 care needs assessment.";
+      const wa = (cls: string) => (
+        <a href="https://wa.me/2348126988237" target="_blank" rel="noopener noreferrer" className={cls}>
+          <MessageCircle className="h-5 w-5" aria-hidden="true" />
+          Chat on WhatsApp
+        </a>
+      );
+      const call = (cls: string) => <a href="tel:+2348126988237" className={cls}>Call +234 812 698 8237</a>;
+      return (
+        <mock.Hero
+          lead={lead}
+          actions={<>{wa(kitHeroPrimaryButton)}{call(kitHeroSecondaryButton)}</>}
+          lightActions={<>{wa(kitPrimaryButton)}{call(kitSecondaryButton)}</>}
+        />
+      );
+    })()}
 
-    <KitMain>
-      <section aria-labelledby="services-heading">
+    <KitMain className={HERO_MOCKS[new URLSearchParams(window.location.search).get("hero") ?? ""]?.overlap ? "relative lg:-mt-[150px] lg:pt-0" : undefined}>
+      <section aria-labelledby="services-heading" className="relative">
+        {HERO_MOCKS[new URLSearchParams(window.location.search).get("hero") ?? ""]?.overlap && (
+          // The line the first row of cards hangs from.
+          <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />
+        )}
         {/* The hero carries the page heading; this one is for screen readers and the outline. */}
         <h2 id="services-heading" className="sr-only">
           Care at home services
