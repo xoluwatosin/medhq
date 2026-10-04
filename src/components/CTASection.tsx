@@ -3,11 +3,7 @@ import { useLocation } from "react-router-dom";
 import CareRequestDialog from "@/components/CareRequestDialog";
 import { ROUTE_LINES } from "@/components/request/care-kinds";
 import { Chevrons, PillSticker, Watermark } from "@/components/mc/brand";
-import { art } from "@/components/mc/art";
-
-// Vary the character from page to page; each stands on the bottom edge of the band.
-const PEOPLE = [art.charGrandma, art.charCaregiver, art.charDoctor, art.charNurse];
-const personFor = (path: string) => PEOPLE[[...path].reduce((n, c) => n + c.charCodeAt(0), 0) % PEOPLE.length];
+import { personFor } from "@/components/mc/people";
 
 interface CTASectionProps {
   headline: string;
