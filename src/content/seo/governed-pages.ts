@@ -138,7 +138,7 @@ export const GOVERNED_PAGES: GovernedPage[] = [
     title: "Clinical Home Nursing Care in Nigeria | Medic Connect",
     h1: "Clinical home care",
     metaDescription:
-      "Registered nurses at home for medication, injections, IV therapy, wounds, observations and post-operative care. Visits from ₦20,000.",
+      "Registered nurses at home for medication, injections, IV therapy, wounds, observations and post-operative care. Visits from ₦18,000.",
     promise: "Registered nursing care at home, within the care plan and professional scope.",
     intro: [
       "Clinical home care covers medication and injections, IV therapy, observations, wound care, catheter and stoma care and post-operative support.",
@@ -340,7 +340,7 @@ export const GOVERNED_PAGES: GovernedPage[] = [
     title: "Postnatal Care at Home in Nigeria | Medic Connect",
     h1: "Postnatal care at home",
     metaDescription:
-      "Maternal and newborn observations, C-section wound care and professional breastfeeding support at home. Visits from ₦30,000.",
+      "Maternal and newborn observations, C-section wound care and professional breastfeeding support at home. Visits from ₦20,000.",
     promise: "Clinical support for mother and baby in the weeks after birth.",
     intro: [
       "Postnatal clinical care covers maternal and newborn observations, wound and C-section checks and feeding support.",

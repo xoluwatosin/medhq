@@ -33,7 +33,7 @@ const config: ServicePageConfig = {
   serviceLine: "post_surgical",
   whatsappText: "Hi Medic Connect, I'd like to arrange care after surgery.",
   facts: [
-    { value: "₦25,000", label: "Skilled nursing visits", from: true },
+    { value: "₦20,000", label: "Nursing visits", from: true },
     { value: "₦35,000", label: "One-off home assessment, before care starts" },
     { value: "Before discharge", label: "Ideally we start before you come home" },
   ],
@@ -68,7 +68,7 @@ const config: ServicePageConfig = {
     { worry: "Do you cover nights?", answer: "Yes. Overnight cover is common for the first week or two." },
     { worry: "What if something looks wrong?", answer: "We escalate to a nurse or doctor, and keep you informed." },
   ],
-  feeSkus: ["PUB-NURSING-SKILLED", "PUB-WOUND-SIMPLE", "PUB-DRAIN"],
+  feeSkus: ["PUB-NURSING-BASIC", "PUB-WOUND-SIMPLE", "PUB-DRAIN"],
   steps: [
     { title: "Tell us about the surgery", text: "The procedure, the date and when you expect to come home." },
     { title: "The home assessment", text: "A one-off ₦35,000 visit, before any care starts, to plan recovery and prepare the home." },
@@ -113,10 +113,10 @@ const PostSurgicalCare = () => (
                   "Post-Caesarean recovery care",
                 ],
                 offers: {
-                  lowPrice: 25000,
+                  lowPrice: 20000,
                   highPrice: 70000,
-                  offerCount: 4,
-                  description: "Skilled nursing visit from ₦25,000. Simple wound dressing from ₦25,000. Surgical drain management ₦25,000. Complex wound or VAC care from ₦70,000.",
+                  offerCount: 5,
+                  description: "Basic nursing visit ₦20,000. Skilled nursing visit from ₦25,000. Simple wound dressing from ₦25,000. Surgical drain management ₦25,000. Complex wound or VAC care from ₦70,000.",
                 },
               }),
               faqSchema(faqs),

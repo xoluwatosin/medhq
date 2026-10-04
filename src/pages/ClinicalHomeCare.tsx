@@ -14,7 +14,7 @@ const config: ServicePageConfig = {
   serviceLine: "clinical_home_care",
   whatsappText: "Hi Medic Connect, I'd like to arrange clinical care at home.",
   facts: [
-    { value: "₦20,000", label: "Nursing visits", from: true },
+    { value: "₦18,000", label: "Nursing visits", from: true },
     { value: "₦35,000", label: "One-off home assessment, before care starts" },
     { value: "HEFAMAA", label: "Accredited by Lagos State's health facility regulator" },
   ],
@@ -49,7 +49,7 @@ const config: ServicePageConfig = {
     { worry: "Can you cover nights?", answer: "Yes. Overnight and round-the-clock cover can be arranged." },
     { worry: "What if it is not a good fit?", answer: "Tell us, and we will match a different nurse." },
   ],
-  feeSkus: ["PUB-NURSING-BASIC", "PUB-NURSING-SKILLED", "PUB-IV-CARE"],
+  feeSkus: ["PUB-INJECTION", "PUB-NURSING-BASIC", "PUB-IV-CARE"],
   steps: [
     { title: "Tell us what is needed", text: "On WhatsApp or by phone: the condition, the care and the current situation." },
     { title: "The home assessment", text: "A one-off ₦35,000 visit from a qualified nurse, before any care starts." },
@@ -72,7 +72,7 @@ const config: ServicePageConfig = {
 
 const ClinicalHomeCare = () => (
   <>
-    <SEO title="Clinical Home Care in Lagos from ₦20,000 | Medic Connect" description="Skilled nursing, IV therapy, wound care and chronic illness management at home in Lagos. Nursing visits from ₦20,000. 24-hour nursing quoted after the assessment." path="/clinical-home-care" jsonLd={{"@context":"https://schema.org","@type":"Service","name":"Clinical Home Care","serviceType":"Home health nursing","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Skilled nursing, post-surgical care, and chronic illness management at home in Lagos. Vetted healthcare professionals from Medic Connect.","url":"https://www.medicconnect.co/clinical-home-care","offers":{"@type":"AggregateOffer","priceCurrency":"NGN","lowPrice":"20000","highPrice":"45000","offerCount":"3","priceSpecification":{"@type":"PriceSpecification","priceCurrency":"NGN","description":"Basic nursing visit ₦20,000. Skilled nursing visit from ₦25,000. IV care from ₦45,000. Formal care assessment ₦35,000."}}}} />
+    <SEO title="Clinical Home Care in Lagos from ₦18,000 | Medic Connect" description="Skilled nursing, IV therapy, wound care and chronic illness management at home in Lagos. Nursing visits from ₦18,000. 24-hour nursing quoted after the assessment." path="/clinical-home-care" jsonLd={{"@context":"https://schema.org","@type":"Service","name":"Clinical Home Care","serviceType":"Home health nursing","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Skilled nursing, post-surgical care, and chronic illness management at home in Lagos. Vetted healthcare professionals from Medic Connect.","url":"https://www.medicconnect.co/clinical-home-care","offers":{"@type":"AggregateOffer","priceCurrency":"NGN","lowPrice":"18000","highPrice":"45000","offerCount":"4","priceSpecification":{"@type":"PriceSpecification","priceCurrency":"NGN","description":"Injection visit ₦18,000. Basic nursing visit ₦20,000. Skilled nursing visit from ₦25,000. IV care from ₦45,000. Formal care assessment ₦35,000."}}}} />
     <ServicePage c={config} />
   </>
 );

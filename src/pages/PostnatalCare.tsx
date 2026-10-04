@@ -42,7 +42,7 @@ const config: ServicePageConfig = {
   serviceLine: "postnatal",
   whatsappText: "Hi Medic Connect, I'd like to arrange postnatal care.",
   facts: [
-    { value: "₦30,000", label: "Postnatal mother and baby visits", from: true },
+    { value: "₦20,000", label: "Postnatal visits", from: true },
     { value: "₦35,000", label: "One-off home assessment, before care starts" },
     { value: "Day or night", label: "Daytime and overnight cover" },
   ],
@@ -81,7 +81,7 @@ const config: ServicePageConfig = {
     { worry: "What about postnatal depression?", answer: "We are trained to spot the signs and, with your consent, connect you to a clinician." },
     { worry: "Can I send this as a gift from abroad?", answer: "Yes. We coordinate with family in Lagos and bill you directly." },
   ],
-  feeSkus: ["PUB-POSTNATAL-VISIT", "PUB-BREASTFEEDING", "PUB-CSECTION-WOUND"],
+  feeSkus: ["PUB-CSECTION-WOUND", "PUB-BREASTFEEDING", "PUB-POSTNATAL-VISIT"],
   steps: [
     { title: "Tell us what you need", text: "Your due date or baby's age, and the support that would help most." },
     { title: "The home assessment", text: "A one-off ₦35,000 visit from a care coordinator, before any care starts." },
@@ -106,8 +106,8 @@ const config: ServicePageConfig = {
 const PostnatalCare = () => (
   <>
     <SEO
-            title="Postnatal Care & Omugwo in Lagos, Visits from ₦30,000 | Medic Connect"
-            description="The care your mother would give, by trained professionals. Postnatal visits from ₦30,000, with overnight cover, lactation support, and quiet screening for postnatal depression."
+            title="Postnatal Care & Omugwo in Lagos, Visits from ₦20,000 | Medic Connect"
+            description="The care your mother would give, by trained professionals. Postnatal visits from ₦20,000, with overnight cover, lactation support, and quiet screening for postnatal depression."
             path="/postnatal-care"
             jsonLd={[
               medicalServiceSchema({
