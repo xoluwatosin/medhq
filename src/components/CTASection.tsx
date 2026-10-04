@@ -2,7 +2,7 @@ import { MessageCircle, Phone, HeartHandshake } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import CareRequestDialog from "@/components/CareRequestDialog";
 import { ROUTE_LINES } from "@/components/request/care-kinds";
-import { Chevrons, PillSticker, Watermark } from "@/components/mc/brand";
+import { Chevrons, Watermark } from "@/components/mc/brand";
 import { personFor } from "@/components/mc/people";
 
 interface CTASectionProps {
@@ -47,12 +47,7 @@ const CTASection = ({
         className="pointer-events-none absolute bottom-0 right-6 hidden h-[230px] md:block lg:right-14 lg:h-[270px]"
       />
       <div className="relative max-w-[680px] md:pr-[160px] lg:max-w-[760px] lg:pr-0">
-        <div className="flex items-center gap-4">
-          <Chevrons />
-          <PillSticker tone="blue" tilt={-5} className="text-[13px]">
-            We answer on WhatsApp
-          </PillSticker>
-        </div>
+        <Chevrons />
         <h2 className="mt-6 text-[34px] leading-[1] tracking-[-0.05em] !text-white sm:text-[48px]">{headline}</h2>
         <p className="mt-5 max-w-[52ch] text-[17px] leading-[1.65] text-body-navy sm:text-[19px]">{body}</p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">

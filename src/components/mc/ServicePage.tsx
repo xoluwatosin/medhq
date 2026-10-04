@@ -348,7 +348,10 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
 
         {c.children}
 
-        <CTASection headline={c.cta.headline} body={c.cta.body} person={c.cta.person} serviceLine={c.serviceLine} />
+        {/* Desktop only: on phones the hero's buttons are enough, so the page ends without repeating them. */}
+        <div className="hidden lg:block">
+          <CTASection headline={c.cta.headline} body={c.cta.body} person={c.cta.person} serviceLine={c.serviceLine} />
+        </div>
       </KitMain>
 
       <Footer />
