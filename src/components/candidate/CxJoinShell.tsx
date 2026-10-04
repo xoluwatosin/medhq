@@ -114,8 +114,7 @@ export const CxJoinShell = ({
     <div className="cx cx-join min-h-dvh bg-white">
       <header className="relative overflow-hidden bg-navy">
         <Watermark glyph="inf" size={620} opacity={0.12} className="-right-[200px] -top-[160px] hidden md:block" />
-        <Watermark glyph="inf" size={260} opacity={0.12} className="-right-[80px] -top-[60px] md:hidden" />
-
+        
         <div
           className="relative mx-auto flex max-w-[1180px] items-center gap-2 px-3 py-3.5 md:px-10 md:pt-6"
           style={{ paddingTop: "calc(0.875rem + env(safe-area-inset-top))" }}
@@ -138,10 +137,10 @@ export const CxJoinShell = ({
           <div className="flex flex-1 items-center justify-end gap-2 [&_a]:!text-white [&_button]:!text-white">{headerAction}</div>
         </div>
 
-        <div className="relative mx-auto max-w-[1180px] px-[18px] pb-9 pt-4 md:px-10 md:pb-[130px] md:pt-10">
-          <div className="max-w-[620px] sm:pr-[150px] md:pr-0">
+        <div className="relative mx-auto max-w-[1180px] px-[18px] pb-6 pt-1 md:px-10 md:pb-[130px] md:pt-10">
+          <div className="max-w-[620px]">
             {step !== undefined && (
-              <ol aria-label={`Step ${step + 1} of ${JOIN_STEPS.length}: ${JOIN_STEPS[step]}`} className="flex max-w-[440px] items-stretch">
+              <ol aria-label={`Step ${step + 1} of ${JOIN_STEPS.length}: ${JOIN_STEPS[step]}`} className="hidden max-w-[440px] items-stretch md:flex">
                 {JOIN_STEPS.map((label, i) => (
                   <li
                     key={label}
@@ -157,15 +156,27 @@ export const CxJoinShell = ({
                 ))}
               </ol>
             )}
-            {eyebrow && <p className="eyebrow mt-7 !text-brand-soft md:mt-9">{eyebrow}</p>}
-            <h1 className="mt-3 text-[34px] leading-[1.02] tracking-[-0.05em] !text-white sm:text-[44px] md:text-[56px]">{title}</h1>
-            {intro?.heading && <p className="mt-4 max-w-[38ch] text-[16.5px] leading-[1.5] text-body-navy md:text-[20px]">{intro.heading}</p>}
-            {heroExtra && <div className="mt-5">{heroExtra}</div>}
+            {step !== undefined && (
+              <div aria-hidden="true" className="flex items-center gap-3 md:hidden">
+                <span className="text-[13px] font-extrabold text-brand-soft">
+                  Step {step + 1} of {JOIN_STEPS.length}
+                </span>
+                <span className="flex flex-1 gap-1">
+                  {JOIN_STEPS.map((l, i) => (
+                    <span key={l} className={cn("h-1 flex-1", i <= step ? "bg-brand-soft" : "bg-white/20")} />
+                  ))}
+                </span>
+              </div>
+            )}
+            {eyebrow && <p className="eyebrow mt-9 hidden !text-brand-soft md:block">{eyebrow}</p>}
+            <h1 className="mt-3 text-[28px] leading-[1.02] tracking-[-0.05em] !text-white sm:text-[44px] md:text-[56px]">{title}</h1>
+            {intro?.heading && <p className="mt-4 hidden max-w-[38ch] md:block text-[16.5px] leading-[1.5] text-body-navy md:text-[20px]">{intro.heading}</p>}
+            {heroExtra && <div className="mt-5 hidden md:block">{heroExtra}</div>}
           </div>
           <img
             src={person}
             alt=""
-            className="pointer-events-none absolute bottom-0 right-4 hidden h-[200px] max-w-[34%] object-contain object-right-bottom sm:block md:right-10 md:h-[300px] lg:right-[90px] lg:h-[340px]"
+            className="pointer-events-none absolute bottom-0 right-4 hidden h-[200px] max-w-[34%] object-contain object-right-bottom md:block md:right-10 md:h-[300px] lg:right-[90px] lg:h-[340px]"
           />
         </div>
       </header>
