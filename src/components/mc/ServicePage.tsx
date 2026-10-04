@@ -48,7 +48,11 @@ export interface ServicePageConfig {
   /** Real worries, each with a short plain answer. */
   worries: { worry: string; answer: string }[];
   feeSkus: string[];
+  /** When no fee is published (nanny, paediatric): why the fee is quoted after the assessment. */
+  quoted?: string;
   steps: { title: string; text: string }[];
+  /** Further questions, collapsed; pages whose FAQs go to Google must show them too. */
+  faqs?: { q: string; a: string }[];
   /** An optional linked panel, e.g. care from abroad. */
   crossLink?: { href: string; tag: string; title: string; body: string; art: string };
   cta: { headline: string; body: string; person: string };
@@ -142,7 +146,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
                   i === 0 ? "bg-white shadow-offset" : i === 1 ? "bg-tint shadow-offset" : "bg-white shadow-offset-blue",
                 )}
               >
-                <b className={cn("shrink-0 text-[21px] font-black tracking-[-0.04em] tabular-nums lg:text-[34px]", i === 0 ? "text-price" : "text-navy")}>
+                <b className={cn("shrink-0 text-[21px] font-black tracking-[-0.04em] tabular-nums lg:text-[34px]", /* Price red only for a price, never for a plain fact. */ i === 0 && f.value.startsWith("₦") ? "text-price" : "text-navy")}>
                   {f.from && <span className="mr-1.5 text-[14px] font-bold tracking-normal text-ink lg:text-[16px]">from</span>}
                   {f.value}
                 </b>
@@ -213,22 +217,36 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
             id="prices-heading"
             eyebrow="What it costs"
             title="Indicative fees"
-            intro="A guide to what care typically costs. Your fee is confirmed in the care plan agreed after the assessment."
+            intro={
+              fees.length > 0
+                ? "A guide to what care typically costs. Your fee is confirmed in the care plan agreed after the assessment."
+                : undefined
+            }
           />
           <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-7">
             <div>
-              <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">Care, by way of example</p>
-              <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
-                {fees.map((f) => (
-                  <li key={f.sku} className="flex items-center justify-between gap-3 border-2 border-navy bg-white px-4 py-3 sm:flex-col sm:items-stretch sm:justify-start sm:gap-2 sm:p-5">
-                    {/* Prices read as "from" with no hours or units, so the label drops any duration too. */}
-                    <p className="text-[16px] font-extrabold leading-[1.25] text-navy">{f.label.replace(/,\s*\d+\s*hours?$/i, "")}</p>
-                    <p className="shrink-0 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-price tabular-nums sm:mt-auto sm:pt-2 sm:text-[28px]">
-                      <span className="mr-1.5 text-[15px] font-bold tracking-normal text-ink">from</span>₦{f.amountNaira.toLocaleString("en-NG")}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              {fees.length > 0 ? (
+                <>
+                <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">Care, by way of example</p>
+                <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+                  {fees.map((f) => (
+                    <li key={f.sku} className="flex items-center justify-between gap-3 border-2 border-navy bg-white px-4 py-3 sm:flex-col sm:items-stretch sm:justify-start sm:gap-2 sm:p-5">
+                      {/* Prices read as "from" with no hours or units, so the label drops any duration too. */}
+                      <p className="text-[16px] font-extrabold leading-[1.25] text-navy">{f.label.replace(/,\s*\d+\s*hours?$/i, "")}</p>
+                      <p className="shrink-0 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-price tabular-nums sm:mt-auto sm:pt-2 sm:text-[28px]">
+                        <span className="mr-1.5 text-[15px] font-bold tracking-normal text-ink">from</span>₦{f.amountNaira.toLocaleString("en-NG")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                </>
+              ) : (
+                <div className="flex h-full flex-col justify-center gap-2 border-2 border-navy bg-white p-6">
+                  <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">The care</p>
+                  <p className="text-[26px] font-black leading-[1.1] tracking-[-0.04em] text-navy">Quoted after the assessment</p>
+                  <p className="text-[15.5px] leading-[1.6] text-body">{c.quoted}</p>
+                </div>
+              )}
             </div>
             <div className="relative mt-4 flex flex-col gap-3 bg-navy p-6 pt-8 shadow-offset-blue lg:mt-0">
               <NotchTag tone="tint" outlined size="sm" className="absolute -top-3 left-6">
@@ -237,8 +255,8 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
               <p className="text-[18px] font-extrabold leading-[1.25] text-white">The home assessment</p>
               <p className="text-[34px] font-black tracking-[-0.04em] text-white tabular-nums">₦35,000</p>
               <p className="text-[15px] leading-[1.6] text-body-navy">
-                A care coordinator visits once, before any care begins, to understand their needs and the home and agree the
-                care plan with you. It is separate from the price of the care itself.
+                A care coordinator visits once, before any care begins, to understand the needs and the home and agree the care
+                plan with you. It is separate from the price of the care itself.
               </p>
             </div>
           </div>
@@ -326,6 +344,26 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
           </ul>
           <EmergencyBox className="mt-6 lg:max-w-[640px]" />
         </section>
+
+        {c.faqs && c.faqs.length > 0 && (
+          <section aria-labelledby="faq-heading" className="mt-20 lg:mt-28">
+            <SectionHead id="faq-heading" eyebrow="Questions" title="More questions" />
+            <ul className="max-w-[860px] divide-y-2 divide-navy/10 border-y-2 border-navy/10">
+              {c.faqs.map((f) => (
+                <li key={f.q}>
+                  <details className="group py-1">
+                    <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-[17px] font-extrabold leading-[1.3] text-navy [&::-webkit-details-marker]:hidden">
+                      {f.q}
+                      <span aria-hidden="true" className="text-[22px] font-black text-brand group-open:hidden">+</span>
+                      <span aria-hidden="true" className="hidden text-[22px] font-black text-brand group-open:inline">−</span>
+                    </summary>
+                    <p className="max-w-[70ch] pb-4 text-[16px] leading-[1.65] text-body">{f.a}</p>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {c.crossLink && (
           <Link

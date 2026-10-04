@@ -41,7 +41,7 @@ const config: ServicePageConfig = {
     role: "Eldercare",
     checks: [
       "Identity checked",
-      "Registration checked, where the role needs it",
+      "Credentials checked",
       "Qualifications checked",
       "References taken",
       "Matched to their needs and personality",
@@ -78,8 +78,8 @@ const config: ServicePageConfig = {
 const Eldercare = () => (
   <>
     <SEO
-      title="Eldercare & Companion Care in Lagos from ₦12,000 | Medic Connect"
-      description="Dignified in-home care for seniors from ₦12,000 per visit. 24-hour nursing from ₦55,000 per day. Compassionate, vetted carers across Lagos."
+      title="Eldercare & Companion Care in Lagos from ₦18,000 | Medic Connect"
+      description="Dignified care at home for older relatives across Lagos, from ₦18,000. Every plan starts with a one-off ₦35,000 home assessment. Vetted, compassionate carers."
       path="/eldercare"
       jsonLd={medicalServiceSchema({
         name: "Eldercare & Companion Care",
@@ -96,11 +96,12 @@ const Eldercare = () => (
           "Chronic disease monitoring (hypertension, diabetes)",
           "24-hour live-in nursing",
         ],
+        // From the published price list: companion care, basic nursing visit, appointment escort.
         offers: {
-          lowPrice: 12000,
-          highPrice: 500000,
-          offerCount: 6,
-          description: "From ₦12,000 per visit. 24-hour nursing from ₦55,000 per day. Dementia care package from ₦500,000.",
+          lowPrice: 18000,
+          highPrice: 24000,
+          offerCount: 3,
+          description: "From ₦18,000. Every care plan starts with a one-off ₦35,000 home assessment.",
         },
       })}
     />
