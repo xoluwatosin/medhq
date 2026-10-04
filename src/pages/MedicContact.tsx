@@ -157,7 +157,7 @@ const MedicContact = () => {
             </p>
           </div>
           <img
-            src={art.coordinatorDeskPhone}
+            src={art.coordinatorDeskPhoneCutout}
             alt=""
             className="pointer-events-none absolute bottom-[100px] right-3 h-[150px] max-w-[38%] object-contain object-right-bottom sm:right-[40px] sm:h-[210px] lg:bottom-[110px] lg:right-[100px] lg:h-[300px] lg:max-w-none"
           />

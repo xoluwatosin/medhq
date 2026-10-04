@@ -36,8 +36,8 @@ const LOOK: Record<string, { headline: string; accent: number; art: string; wate
   vgc: { headline: "Care inside VGC's gates.", accent: 3, art: art.schoolRun, watermark: "inf", person: art.charGrandma },
   ajah: { headline: "Care along the Lekki-Epe corridor.", accent: 0, art: art.carerManJacket, watermark: "o", person: art.charNurse },
   ikeja: { headline: "Mainland care, close to home.", accent: 1, art: art.charCaregiver, watermark: "inf", person: art.nurseManKit },
-  "ikeja-gra": { headline: "Care in the heart of GRA.", accent: 4, art: art.elderWalkingFrame, watermark: "inf", person: art.grandparentsVideoCall },
-  "magodo-gra": { headline: "Care across Magodo GRA.", accent: 2, art: art.motherNewbornSuitcase, watermark: "o", person: art.grandfatherWalkingStick },
+  "ikeja-gra": { headline: "Care in the heart of GRA.", accent: 4, art: art.elderWalkingFrame, watermark: "inf", person: art.grandparentsVideoCallCutout },
+  "magodo-gra": { headline: "Care across Magodo GRA.", accent: 2, art: art.motherNewbornSuitcaseCutout, watermark: "o", person: art.grandfatherWalkingStick },
   surulere: { headline: "Care for Surulere's families.", accent: 0, art: art.charGrandma, watermark: "inf", person: art.charCaregiver },
   yaba: { headline: "Care near LUTH and Yaba.", accent: 0, art: art.nurseManKit, watermark: "inf", person: art.charDoctor },
 };

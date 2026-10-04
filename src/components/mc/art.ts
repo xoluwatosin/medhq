@@ -146,6 +146,18 @@ import iconEmail from "@/assets/mc/icons/email.svg";
 import iconPhone from "@/assets/mc/icons/phone.svg";
 import markGlyph from "@/assets/mc/medicconnect-mark.svg";
 import infTint from "@/assets/mc/m-inf-tint.svg";
+import carerElderVideoCall from "@/assets/mc/carer-elder-video-call.webp";
+import tutorBoyDeskCutout from "@/assets/mc/tutor-boy-desk-cutout.webp";
+import eventMedicFirstAidCutout from "@/assets/mc/event-medic-first-aid-cutout.webp";
+import speechTherapyAppleCardCutout from "@/assets/mc/speech-therapy-apple-card-cutout.webp";
+import carerSupportsManCarCutout from "@/assets/mc/carer-supports-man-car-cutout.webp";
+import motherNewbornSuitcaseCutout from "@/assets/mc/mother-newborn-suitcase-cutout.webp";
+import communityBpCheckCutout from "@/assets/mc/community-bp-check-cutout.webp";
+import coordinatorDeskPhoneCutout from "@/assets/mc/coordinator-desk-phone-cutout.webp";
+import grandparentsVideoCallCutout from "@/assets/mc/grandparents-video-call-cutout.webp";
+import nurseFootCheckCutout from "@/assets/mc/nurse-foot-check-cutout.webp";
+import motherDaughterVideoCallCutout from "@/assets/mc/mother-daughter-video-call-cutout.webp";
+import carerElderVideoCallCutout from "@/assets/mc/carer-elder-video-call-cutout.webp";
 
 export const art = {
   charGrandma,
@@ -296,4 +308,16 @@ export const art = {
   iconPhone,
   markGlyph,
   infTint,
+  carerElderVideoCall,
+  tutorBoyDeskCutout,
+  eventMedicFirstAidCutout,
+  speechTherapyAppleCardCutout,
+  carerSupportsManCarCutout,
+  motherNewbornSuitcaseCutout,
+  communityBpCheckCutout,
+  coordinatorDeskPhoneCutout,
+  grandparentsVideoCallCutout,
+  nurseFootCheckCutout,
+  motherDaughterVideoCallCutout,
+  carerElderVideoCallCutout,
 };
