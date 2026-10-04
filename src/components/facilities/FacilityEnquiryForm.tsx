@@ -24,6 +24,7 @@ const SERVICES = [
   { key: "other", label: "Something else", line: "general", lineName: "Something else" },
 ] as const;
 type ServiceKey = (typeof SERVICES)[number]["key"];
+export type FacilityServiceKey = ServiceKey;
 
 const ROLES = ["Registered nurses", "Midwives", "Doctors", "Lab scientists", "Pharmacy", "Care assistants"];
 const RESEARCH_ROLES = ["Research coordinators", "Research nurses", "Data managers", "Lab scientists", "Support staff"];
@@ -93,11 +94,12 @@ const Label = ({
 const inputCls =
   "mt-2 w-full rounded-control border-2 border-navy/25 bg-white px-4 py-3 text-[16px] text-ink outline-none focus:border-brand";
 
-const FacilityEnquiryForm = () => {
+/** initialService preselects the first answer, e.g. on the staffing page. */
+const FacilityEnquiryForm = ({ initialService }: { initialService?: ServiceKey } = {}) => {
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [sending, setSending] = useState(false);
 
-  const [service, setService] = useState<ServiceKey | "">("");
+  const [service, setService] = useState<ServiceKey | "">(initialService ?? "");
   const [roles, setRoles] = useState<string[]>([]);
   const [headcount, setHeadcount] = useState("");
   const [cover, setCover] = useState("");

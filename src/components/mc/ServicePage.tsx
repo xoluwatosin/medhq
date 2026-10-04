@@ -4,6 +4,7 @@ import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import CareRequestDialog from "@/components/CareRequestDialog";
+import FacilityEnquiryForm, { type FacilityServiceKey } from "@/components/facilities/FacilityEnquiryForm";
 import { KitMain } from "@/components/kit/KitLayout";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { CarerID, EmergencyBox, NotchTag, TapeLabel, Watermark } from "@/components/mc/brand";
@@ -37,14 +38,20 @@ export interface ServicePageConfig {
   heroArt: string[];
   watermark: "o" | "cross" | "inf" | "full";
   serviceLine: string;
+  /**
+   * Facility pages (staffing, support, research): the hero and closing band
+   * point to the staffing enquiry form, which replaces the fees and the home
+   * assessment, and there is no emergency box.
+   */
+  facility?: { service: FacilityServiceKey; button: string; formTitle: string; formIntro: string };
   whatsappText: string;
   /** Three short facts that hang from the hero. `from` prints "from" before a price. */
   facts: { value: string; label: string; from?: boolean }[];
   moment: { photo: string; alt: string; title: string; body: string };
   /** An example visit, told as visit notes with the time on tape. */
   visit: { title: string; intro: string; items: { time: string; title: string; text: string }[] };
-  /** Who comes to the door: the carer badge and what is checked. */
-  carer: { art: string; role: string; checks: string[] };
+  /** Who comes to the door: the badge and what is checked. Facility pages set their own eyebrow, title and badge name. */
+  carer: { art: string; role: string; checks: string[]; eyebrow?: string; title?: string; badge?: string };
   /** Real worries, each with a short plain answer. */
   worries: { worry: string; answer: string }[];
   feeSkus: string[];
@@ -69,15 +76,24 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
 
   const buttons = (onPhone: boolean) => (
     <div className={cn("flex gap-3", onPhone ? "mt-6 flex-col sm:flex-row" : "mt-8 flex-row")}>
-      <CareRequestDialog
-        serviceLineKey={c.serviceLine}
-        source={`hero:${c.serviceLine}`}
-        trigger={
-          <button className="inline-flex min-h-[48px] items-center justify-center rounded-control bg-white px-6 text-[16px] font-extrabold text-navy shadow-offset-blue transition-colors hover:bg-tint">
-            Request care
-          </button>
-        }
-      />
+      {c.facility ? (
+        <a
+          href="#enquiry"
+          className="inline-flex min-h-[48px] items-center justify-center rounded-control bg-white px-6 text-[16px] font-extrabold text-navy shadow-offset-blue transition-colors hover:bg-tint"
+        >
+          {c.facility.button}
+        </a>
+      ) : (
+        <CareRequestDialog
+          serviceLineKey={c.serviceLine}
+          source={`hero:${c.serviceLine}`}
+          trigger={
+            <button className="inline-flex min-h-[48px] items-center justify-center rounded-control bg-white px-6 text-[16px] font-extrabold text-navy shadow-offset-blue transition-colors hover:bg-tint">
+              Request care
+            </button>
+          }
+        />
+      )}
       <a
         href={`https://wa.me/2348126988237?text=${encodeURIComponent(c.whatsappText)}`}
         target="_blank"
@@ -190,13 +206,13 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
         {/* Who comes to the door. */}
         <section aria-labelledby="carer-heading" className="mt-20 grid items-center gap-10 lg:mt-28 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-20">
           <div className="flex justify-center pt-6 lg:justify-start">
-            <CarerID name="Your carer" role={c.carer.role} src={c.carer.art} tilt={-3} />
+            <CarerID name={c.carer.badge ?? "Your carer"} role={c.carer.role} src={c.carer.art} tilt={-3} />
           </div>
           <div>
             <hr className="mb-6 border-t-4 border-navy" />
-            <p className="eyebrow">Who comes to the door</p>
+            <p className="eyebrow">{c.carer.eyebrow ?? "Who comes to the door"}</p>
             <h2 id="carer-heading" className="mt-3 text-[30px] leading-none tracking-[-0.05em] sm:text-[44px]">
-              Checked before they meet them.
+              {c.carer.title ?? "Checked before they meet them."}
             </h2>
             <ul className="mt-7 grid gap-x-10 gap-y-4 sm:grid-cols-2">
               {c.carer.checks.map((ch) => (
@@ -211,6 +227,16 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
           </div>
         </section>
 
+        {c.facility ? (
+          /* Facility pages: work is quoted per scope, so the enquiry form takes the place of fees. */
+          <section id="enquiry" aria-labelledby="enquiry-heading" className="mt-20 scroll-mt-28 lg:mt-28">
+            <SectionHead id="enquiry-heading" eyebrow="Quoted per scope" title={c.facility.formTitle} intro={c.facility.formIntro} />
+            <div className="max-w-[640px]">
+              <FacilityEnquiryForm initialService={c.facility.service} />
+            </div>
+          </section>
+        ) : (
+          <>
         {/* Prices: the care price, then the assessment, shown apart so the two are never confused. */}
         <section aria-labelledby="prices-heading" className="mt-20 lg:mt-28">
           <SectionHead
@@ -261,6 +287,8 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
             </div>
           </div>
         </section>
+          </>
+        )}
 
         {/* How it starts. */}
         <section aria-labelledby="how-heading" className="mt-20 lg:mt-28">
@@ -342,7 +370,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
               );
             })}
           </ul>
-          <EmergencyBox className="mt-6 lg:max-w-[640px]" />
+          {!c.facility && <EmergencyBox className="mt-6 lg:max-w-[640px]" />}
         </section>
 
         {c.faqs && c.faqs.length > 0 && (
@@ -388,7 +416,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
 
         {/* Desktop only: on phones the hero's buttons are enough, so the page ends without repeating them. */}
         <div className="hidden lg:block">
-          <CTASection headline={c.cta.headline} body={c.cta.body} person={c.cta.person} serviceLine={c.serviceLine} />
+          <CTASection headline={c.cta.headline} body={c.cta.body} person={c.cta.person} serviceLine={c.serviceLine} hideRequestCare={!!c.facility} />
         </div>
       </KitMain>
 
