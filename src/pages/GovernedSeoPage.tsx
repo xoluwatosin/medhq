@@ -70,7 +70,7 @@ const BENEFITS = [
   },
   {
     title: "Lagos, Abuja, Ogun and Oyo",
-    description: "Care is arranged in the areas Medic Connect currently serves.",
+    description: "Care is arranged in the areas Medic Connect currently serves, and in other states on request.",
   },
 ];
 

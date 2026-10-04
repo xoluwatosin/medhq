@@ -40,7 +40,7 @@ const vettingSteps = [
 
 const faqs = [
   { q: "What is Medic Connect?", a: "Medic Connect is The Care Operating System: a Lagos-based platform that places vetted nurses, carers, nannies and clinical staff in homes and hospitals across Nigeria." },
-  { q: "Where do you operate?", a: "In select parts of Nigeria, with our head office in Lagos. We also work with diaspora families in the UK, US, Canada and EU who are arranging care for loved ones in Lagos." },
+  { q: "Where do you operate?", a: "Lagos, Abuja, Ogun and Oyo, with our head office in Lagos, and other states on request. We also work with diaspora families in the UK, US, Canada and EU who are arranging care for loved ones in Lagos." },
   { q: "How quickly can you place a carer?", a: "Most placements are confirmed within 48 hours of the initial consultation." },
   { q: "How much does care cost?", a: "Care starts with a one-off ₦35,000 home assessment. Visits start from ₦18,000, and each service page shows example fees. Live-in caregivers start from ₦300,000 a month. Overnight and package care, including Omugwo, is quoted after the assessment, based on hours and clinical needs. Contact us for a tailored quote." },
   { q: "Are you accredited?", a: "Yes. Medic Connect is accredited by the Health Facility Monitoring and Accreditation Agency (HEFAMAA) of Lagos State, fully insured, a member of the Healthcare Federation of Nigeria and a partner of Flying Doctors Nigeria." },
@@ -55,7 +55,7 @@ const VALUE_ART = [art.objHandsHeart, art.objShieldCheck, art.objAccreditationCe
 const TILTS = [-1.1, 0.8, -0.6, 1];
 
 const facts = [
-  { value: "Nigeria", label: "In select parts of Nigeria, with our head office in Lagos" },
+  { value: "4 states", label: "Lagos, Abuja, Ogun and Oyo, and others on request" },
   { value: "HEFAMAA", label: "Accredited by Lagos State's health facility regulator" },
   { value: "HFN", label: "Member of the Healthcare Federation of Nigeria" },
 ];

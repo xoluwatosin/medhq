@@ -22,7 +22,7 @@ const faqs = [{
     a: "Yes. Escort to clinics and hospital appointments, with a written report afterwards, is a standard part of the service."
   }, {
     q: "Do you only serve Lagos?",
-    a: "Right now, yes. Most of our diaspora clients have parents or relatives in Lagos. We're expanding carefully."
+    a: "No. We serve Lagos, Abuja, Ogun and Oyo, and can arrange care in other states on request. Most of our diaspora clients have parents or relatives in Lagos."
   }];
 
 /** Care from abroad on the shared service layout. No single fee: each service has its own. */

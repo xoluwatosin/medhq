@@ -98,6 +98,7 @@ export const INDEXABLE_EXPANSION_PATHS: string[] = [
   "/high-risk-pregnancy-support-at-home",
   "/how-medic-connect-home-care-works",
   "/speech-therapist-for-children",
+  "/occupational-therapy-for-children",
   "/healthcare-facility-management-support",
 ];
 
