@@ -155,7 +155,7 @@ const ForFacilities = () => {
           {/* The line the cards hang from. */}
           <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />
 
-          {/* Desktop: four cards in one row. */}
+          {/* Desktop: four cards in one row. Tags alternate blue and tint, both of which read against the navy hero. */}
           <div className="hidden grid-cols-4 gap-7 lg:grid">
             {services.map((s, i) => (
               <ServiceLink
@@ -167,7 +167,7 @@ const ForFacilities = () => {
                 <div className="relative m-2.5 mb-0 mt-6 h-[170px] bg-tint">
                   <img src={s.art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[150px] object-contain" />
                 </div>
-                <NotchTag tone={i % 2 ? "navy" : "blue"} size="sm" tilt={-3} className="absolute -top-3 left-4">
+                <NotchTag tone={i % 2 ? "tint" : "blue"} size="sm" tilt={-3} className="absolute -top-3 left-4">
                   {s.tag}
                 </NotchTag>
                 <div className="flex flex-1 flex-col gap-1.5 px-5 pb-5 pt-4">
