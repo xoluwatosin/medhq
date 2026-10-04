@@ -131,7 +131,7 @@ const NeighbourhoodCare = ({ slug }: NeighbourhoodCareProps) => {
         <div className="relative mx-auto max-w-[1440px] px-[22px] pb-12 sm:px-[50px] lg:pb-16">
           <div className="max-w-[64%] lg:max-w-[760px]">
             <p className="eyebrow !text-brand-soft">
-              Home care in {n.name} · {n.axis === "Island" ? "Lagos Island" : "Lagos Mainland"}
+              Home care in {n.name}, {n.axis === "Island" ? "Lagos Island" : "Lagos Mainland"}
             </p>
             <div className="mt-3 lg:mt-4">
               <KitPillHeading text={look.headline} accent={[look.accent]} align="left" />

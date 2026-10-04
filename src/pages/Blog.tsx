@@ -115,7 +115,7 @@ const Blog = () => {
                         </h2>
                         <p className="text-sm text-muted-foreground line-clamp-2 shrink-0">{truncateWords(post.excerpt || "", 12)}</p>
                         <p className="text-xs text-muted-foreground mt-auto pt-3">
-                          {post.author} · {new Date(post.published_at).toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" })}
+                          {post.author}, {new Date(post.published_at).toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" })}
                         </p>
                       </div>
                     </div>
