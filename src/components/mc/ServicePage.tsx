@@ -6,7 +6,7 @@ import CTASection from "@/components/CTASection";
 import CareRequestDialog from "@/components/CareRequestDialog";
 import { KitMain } from "@/components/kit/KitLayout";
 import KitPillHeading from "@/components/kit/KitPillHeading";
-import { Chevrons, NotchTag, Watermark } from "@/components/mc/brand";
+import { CarerID, EmergencyBox, NotchTag, TapeLabel, Watermark } from "@/components/mc/brand";
 import { SectionHead } from "@/components/mc/service-sections";
 import { GOVERNED_FEES } from "@/content/seo/governed-modules";
 import { cn } from "@/lib/utils";
@@ -16,9 +16,11 @@ import { cn } from "@/lib/utils";
  * rest). Each page passes its own words, art, photo and prices; the layout is
  * built twice, like the door pages:
  *  - desktop: illustrated hero with the people standing on the line three fact
- *    cards hang from, then one taped photo moment, who it is for, what is
- *    included, prices, how it works, and the closing band;
- *  - phones: the same order, one column, tiles two up.
+ *    cards hang from, then one taped photo moment, and sections that each
+ *    answer a question a family asks: what a visit looks like, who comes to
+ *    the door, what it costs (the assessment shown apart from the care
+ *    price), how it starts, and what if something goes wrong;
+ *  - phones: the same order in one column.
  * Illustrations explain; the one photo is there to reassure. No text sits on
  * the photo, and it is never washed blue.
  */
@@ -36,14 +38,15 @@ export interface ServicePageConfig {
   watermark: "o" | "cross" | "inf" | "full";
   serviceLine: string;
   whatsappText: string;
-  /** Three short facts that hang from the hero: a big value and a line. */
-  facts: { value: string; label: string }[];
-  moment: { photo: string; alt: string; title: string; body: string; aside?: { title: string; body: string } };
-  /** Who the service is for, as a ticked list. */
-  audience: string[];
-  /** One person standing beside the list. */
-  audienceArt: string;
-  included: { title: string; text: string; art: string }[];
+  /** Three short facts that hang from the hero. `from` prints "from" before a price. */
+  facts: { value: string; label: string; from?: boolean }[];
+  moment: { photo: string; alt: string; title: string; body: string };
+  /** An example visit, told as visit notes with the time on tape. */
+  visit: { title: string; intro: string; items: { time: string; title: string; text: string }[] };
+  /** Who comes to the door: the carer badge and what is checked. */
+  carer: { art: string; role: string; checks: string[] };
+  /** Real worries, each with a short plain answer. */
+  worries: { worry: string; answer: string }[];
   feeSkus: string[];
   steps: { title: string; text: string }[];
   /** An optional linked panel, e.g. care from abroad. */
@@ -56,7 +59,6 @@ const TILTS = [-1.1, 0.9, -0.7];
 
 const ServicePage = ({ c }: { c: ServicePageConfig }) => {
   const fees = c.feeSkus.map((s) => GOVERNED_FEES[s]).filter((f) => f && f.sku !== "PUB-ASSESSMENT");
-  const words = c.headline.split(" ");
 
   const buttons = (onPhone: boolean) => (
     <div className={cn("flex gap-3", onPhone ? "mt-6 flex-col sm:flex-row" : "mt-8 flex-row")}>
@@ -138,6 +140,7 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
                 )}
               >
                 <b className={cn("shrink-0 text-[21px] font-black tracking-[-0.04em] tabular-nums lg:text-[34px]", i === 0 ? "text-price" : "text-navy")}>
+                  {f.from && <span className="mr-1.5 text-[14px] font-bold tracking-normal text-ink lg:text-[16px]">from</span>}
                   {f.value}
                 </b>
                 <span className="min-w-0 text-[14px] font-bold leading-[1.35] text-body lg:text-[15px]">{f.label}</span>
@@ -155,97 +158,115 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
           <div>
             <h2 className="text-[30px] leading-[1.02] tracking-[-0.05em] sm:text-[44px]">{c.moment.title}</h2>
             <p className="mt-5 max-w-[52ch] text-[17px] leading-[1.7] text-body sm:text-[19px]">{c.moment.body}</p>
-            {c.moment.aside && (
-              <div className="mt-8 flex gap-4 border-l-4 border-brand bg-tint px-5 py-4">
-                <div>
-                  <p className="text-[16px] font-extrabold text-navy">{c.moment.aside.title}</p>
-                  <p className="mt-1 text-[15px] leading-[1.6] text-body">{c.moment.aside.body}</p>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
-        {/* Who it is for: a plain ticked list beside one person, so the objects stay with the services below. */}
-        <section aria-labelledby="who-heading" className="mt-20 lg:mt-28">
-          <SectionHead id="who-heading" eyebrow="Who it is for" title="Is this the right care?" />
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16">
-            <ul className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
-              {c.audience.map((a) => (
-                <li key={a} className="flex items-start gap-3.5">
+        {/* What a visit looks like: the services, shown happening. */}
+        <section aria-labelledby="visit-heading" className="mt-20 lg:mt-28">
+          <SectionHead id="visit-heading" eyebrow="What a visit looks like" title={c.visit.title} intro={c.visit.intro} />
+          <ol className="relative grid gap-6 lg:grid-cols-5 lg:gap-5">
+            <span aria-hidden="true" className="absolute left-0 right-0 top-[17px] hidden h-[3px] bg-navy lg:block" />
+            {c.visit.items.map((v, i) => (
+              <li key={v.time} className="relative flex gap-4 lg:flex-col lg:gap-3">
+                <TapeLabel tone={i === c.visit.items.length - 1 ? "navy" : "blue"} tilt={i % 2 ? 1.5 : -1.5} className="shrink-0 self-start">
+                  {v.time}
+                </TapeLabel>
+                <div>
+                  <h3 className="text-[18px] leading-[1.2] tracking-[-0.03em]">{v.title}</h3>
+                  <p className="mt-1 text-[15px] leading-[1.55] text-body">{v.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Who comes to the door. */}
+        <section aria-labelledby="carer-heading" className="mt-20 grid items-center gap-10 lg:mt-28 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-20">
+          <div className="flex justify-center pt-6 lg:justify-start">
+            <CarerID name="Your carer" role={c.carer.role} src={c.carer.art} tilt={-3} />
+          </div>
+          <div>
+            <hr className="mb-6 border-t-4 border-navy" />
+            <p className="eyebrow">Who comes to the door</p>
+            <h2 id="carer-heading" className="mt-3 text-[30px] leading-none tracking-[-0.05em] sm:text-[44px]">
+              Checked before they meet them.
+            </h2>
+            <ul className="mt-7 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+              {c.carer.checks.map((ch) => (
+                <li key={ch} className="flex items-start gap-3.5">
                   <span aria-hidden="true" className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center bg-navy text-[15px] font-black text-white">
                     ✓
                   </span>
-                  <span className="text-[17px] font-bold leading-[1.4] text-navy">{a}</span>
+                  <span className="text-[17px] font-bold leading-[1.4] text-navy">{ch}</span>
                 </li>
               ))}
             </ul>
-            <div className="relative hidden h-[300px] bg-tint lg:block">
-              <img src={c.audienceArt} alt="" loading="lazy" className="absolute inset-x-0 bottom-0 mx-auto h-[280px] object-contain" />
+          </div>
+        </section>
+
+        {/* Prices: the care price, then the assessment, shown apart so the two are never confused. */}
+        <section aria-labelledby="prices-heading" className="mt-20 lg:mt-28">
+          <SectionHead id="prices-heading" eyebrow="What it costs" title="Prices" />
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-7">
+            <div>
+              <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand">The care</p>
+              <ul className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {fees.map((f) => (
+                  <li key={f.sku} className="flex flex-col gap-2 border-2 border-navy bg-white p-5">
+                    {/* Prices read as "from" with no hours or units, so the label drops any duration too. */}
+                    <p className="text-[16px] font-extrabold leading-[1.25] text-navy">{f.label.replace(/,\s*\d+\s*hours?$/i, "")}</p>
+                    <p className="mt-auto pt-2 text-[28px] font-black tracking-[-0.04em] text-price tabular-nums">
+                      <span className="mr-1.5 text-[15px] font-bold tracking-normal text-ink">from</span>₦{f.amountNaira.toLocaleString("en-NG")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-[15px] leading-[1.6] text-body">Your final price depends on the care plan agreed after the assessment.</p>
+            </div>
+            <div className="relative mt-4 flex flex-col gap-3 bg-navy p-6 pt-8 shadow-offset-blue lg:mt-0">
+              <NotchTag tone="tint" outlined size="sm" className="absolute -top-3 left-6">
+                One-off, before care starts
+              </NotchTag>
+              <p className="text-[18px] font-extrabold leading-[1.25] text-white">The home assessment</p>
+              <p className="text-[34px] font-black tracking-[-0.04em] text-white tabular-nums">₦35,000</p>
+              <p className="text-[15px] leading-[1.6] text-body-navy">
+                A care coordinator visits once, before any care begins, to understand their needs and the home and agree the
+                care plan with you. It is separate from the price of the care itself.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* What is included: everything visible, an object for each. */}
-        <section aria-labelledby="included-heading" className="mt-20 lg:mt-28">
-          <SectionHead id="included-heading" eyebrow="What is included" title="Care that fits the day" />
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
-            {c.included.map((s, i) => (
-              <li key={s.title} className={cn("flex gap-5 border-2 border-navy bg-white p-5 lg:p-6", i % 3 === 1 ? "shadow-offset-blue" : "shadow-offset")}>
-                <div className="grid h-[84px] w-[84px] shrink-0 place-items-center bg-tint">
-                  <img src={s.art} alt="" loading="lazy" className="h-[68px] w-[68px] object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-[19px] leading-[1.15] tracking-[-0.03em]">{s.title}</h3>
-                  <p className="mt-1.5 text-[15px] leading-[1.55] text-body">{s.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Prices from the published price list. */}
-        <section aria-labelledby="prices-heading" className="mt-20 lg:mt-28">
-          <SectionHead
-            id="prices-heading"
-            eyebrow="What it costs"
-            title="Prices"
-            intro="Published prices are fixed or a from price. Ongoing, live-in and package care is quoted after the assessment."
-          />
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {fees.map((f, i) => (
-              <li key={f.sku} className="relative flex flex-col gap-2 border-2 border-navy bg-white p-6 pt-7">
-                <NotchTag tone={i === 0 ? "blue" : "tint"} outlined={i !== 0} size="sm" className="absolute -top-3 left-5">
-                  {f.unit}
-                </NotchTag>
-                <p className="text-[17px] font-extrabold leading-[1.25] text-navy">{f.label}</p>
-                <p className="mt-auto pt-2 text-[32px] font-black tracking-[-0.04em] text-price tabular-nums">
-                  {f.treatment === "from" && <span className="mr-1.5 text-[15px] font-bold text-ink">from</span>}₦
-                  {f.amountNaira.toLocaleString("en-NG")}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 flex flex-wrap items-center gap-4 bg-navy px-6 py-5">
-            <Chevrons />
-            <p className="text-[16px] font-extrabold text-white">Every care plan starts with a ₦35,000 home care needs assessment.</p>
-          </div>
-        </section>
-
-        {/* How it works: visible steps, starting with the assessment. */}
+        {/* How it starts. */}
         <section aria-labelledby="how-heading" className="mt-20 lg:mt-28">
-          <SectionHead id="how-heading" eyebrow="How it works" title="From first message to first visit" />
+          <SectionHead id="how-heading" eyebrow="How it starts" title="From first message to first visit" />
           <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-            {c.steps.map((s, i) => (
-              <li key={s.title} className="relative border-t-4 border-navy pt-5">
+            {c.steps.map((st, i) => (
+              <li key={st.title} className="relative border-t-4 border-navy pt-5">
                 <span className={cn("grid h-11 w-11 place-items-center text-[20px] font-black text-white shadow-offset-sm", i === c.steps.length - 1 ? "bg-navy" : "bg-brand")}>
                   {i + 1}
                 </span>
-                <h3 className="mt-4 text-[20px] leading-[1.15] tracking-[-0.035em]">{s.title}</h3>
-                <p className="mt-1.5 text-[15.5px] leading-[1.6] text-body">{s.text}</p>
+                <h3 className="mt-4 text-[20px] leading-[1.15] tracking-[-0.035em]">{st.title}</h3>
+                <p className="mt-1.5 text-[15.5px] leading-[1.6] text-body">{st.text}</p>
               </li>
             ))}
           </ol>
+        </section>
+
+        {/* Worries, answered: the family's worry in grey, our answer in navy. */}
+        <section aria-labelledby="worries-heading" className="mt-20 lg:mt-28">
+          <SectionHead id="worries-heading" eyebrow="If something changes" title="Your worries, answered" />
+          <ul className="grid gap-4 sm:grid-cols-2 lg:gap-6">
+            {c.worries.map((w) => (
+              <li key={w.worry} className="flex flex-col gap-2 bg-tint px-6 py-6 sm:px-7">
+                <span className="text-[20px] font-medium leading-[1.25] tracking-[-0.03em] text-muted-foreground sm:text-[22px]">
+                  &#8220;{w.worry}&#8221;
+                </span>
+                <span className="text-[19px] font-extrabold leading-[1.25] tracking-[-0.03em] text-navy sm:text-[21px]">{w.answer}</span>
+              </li>
+            ))}
+          </ul>
+          <EmergencyBox className="mt-6 lg:max-w-[640px]" />
         </section>
 
         {c.crossLink && (
