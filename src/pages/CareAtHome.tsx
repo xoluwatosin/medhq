@@ -3,108 +3,32 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
 import AudienceHero from "@/components/home/AudienceHero";
-import KitFlipCard, { KitService } from "@/components/home/KitFlipCard";
+import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
+import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
-import { KitMain, KitSection } from "@/components/kit/KitLayout";
+import { KitMain, kitHeroPrimaryButton, kitHeroSecondaryButton } from "@/components/kit/KitLayout";
+import { ClipArt, Highlight, NotchTag, PillSticker, PriceTag } from "@/components/mc/brand";
 import { MessageCircle } from "lucide-react";
 
-import clinicalImg from "@/assets/services/clinical-home-care.jpg";
-import postOpImg from "@/assets/services/post-operative.jpg";
-import abroadImg from "@/assets/hero/clinical-hero.jpg";
-import antenatalImg from "@/assets/services/antenatal-care.jpg";
-import postnatalImg from "@/assets/services/postnatal-care.jpg";
-import nannyImg from "@/assets/services/nanny-childcare.jpg";
-import eldercareImg from "@/assets/services/eldercare.jpg";
-import pediatricImg from "@/assets/services/pediatric-care.jpg";
-import caregiverImg from "@/assets/services/eldercare-companionship.jpg";
 import KitPillHeading from "@/components/kit/KitPillHeading";
-import { CARD_MOCKS } from "./care-at-home-mocks";
 
-const homeServices: KitService[] = [
-  {
-    eyebrow: "Clinical",
-    title: "Clinical home care",
-    description:
-      "Skilled nursing, chronic illness management and medical support, delivered at home by qualified healthcare professionals.",
-    href: "/clinical-home-care",
-    image: clinicalImg,
-    back: "navy",
-  },
-  {
-    eyebrow: "Recovery",
-    title: "Post-surgical care at home",
-    description:
-      "Recover at home with skilled nurses managing wounds, drains, medication and mobility. Daily reports keep your surgeon and family in the loop.",
-    href: "/post-surgical-care",
-    image: postOpImg,
-    back: "brand",
-  },
-  {
-    eyebrow: "Diaspora",
-    title: "Care from abroad",
-    description:
-      "Coordinating care for a loved one in Nigeria from overseas. Verified visits, photo documented reports and a single point of contact across time zones.",
-    href: "/care-from-abroad",
-    image: abroadImg,
-    back: "tint",
-  },
-  {
-    eyebrow: "Maternity",
-    title: "Antenatal care at home",
-    description:
-      "Pregnancy monitoring at home: vitals checks, self testing support, telehealth appointments and education on nutrition, rest and warning signs.",
-    href: "/antenatal-care",
-    image: antenatalImg,
-    back: "outline",
-  },
-  {
-    eyebrow: "Maternity",
-    title: "Postnatal care and Omugwo",
-    description:
-      "Rest, recover and bond with your baby. Professional postnatal support for new mothers and families, honouring traditional Nigerian care practices.",
-    href: "/postnatal-care",
-    image: postnatalImg,
-    back: "brand",
-  },
-  {
-    eyebrow: "Family",
-    title: "Nanny and childcare",
-    description:
-      "Safe, reliable and personalised care for your children. Trusted nannies matched to your family's needs and values.",
-    href: "/nanny-childcare",
-    image: nannyImg,
-    back: "navy",
-  },
-  {
-    eyebrow: "Eldercare",
-    title: "Eldercare and companion care",
-    description:
-      "Dignified care that helps seniors maintain independence and quality of life. Compassionate companions who treat your loved ones like family.",
-    href: "/eldercare",
-    image: eldercareImg,
-    back: "outline",
-  },
-  {
-    eyebrow: "Specialist",
-    title: "Pediatric and special needs",
-    description:
-      "Specialised support for children with medical conditions and developmental needs. Trained caregivers who understand the challenges families face.",
-    href: "/pediatric-care",
-    image: pediatricImg,
-    back: "tint",
-  },
+/**
+ * The care at home service lines with starting prices from the published price
+ * list (src/content/seo/governed-modules.ts). An empty price means none is
+ * published; the card says it is quoted after assessment.
+ */
+const homeServices: ServiceCard[] = [
+  { title: "Clinical home care", line: "Skilled nursing and medical support at home.", href: "/clinical-home-care", price: "₦20,000", unit: "per visit", art: art.proNurseKit },
+  { title: "Post-surgical care", line: "Wounds, drains, medication and mobility after surgery.", href: "/post-surgical-care", price: "₦25,000", unit: "per visit", art: art.objWalkingFrame },
+  { title: "Antenatal care", line: "Pregnancy checks and support at home.", href: "/antenatal-care", price: "₦30,000", unit: "per visit", art: art.midwifePregnantBp },
+  { title: "Postnatal care and Omugwo", line: "Rest, recover and bond with your baby.", href: "/postnatal-care", price: "₦30,000", unit: "per visit", art: art.proPostnatal },
+  { title: "Nanny and childcare", line: "Trusted nannies matched to your family.", href: "/nanny-childcare", price: "", art: art.nannyReading },
+  { title: "Pediatric and special needs", line: "Support for children with medical or developmental needs.", href: "/pediatric-care", price: "", art: art.charBoy },
+  { title: "Eldercare", line: "Dignified care that keeps older relatives independent.", href: "/eldercare", price: "₦18,000", unit: "per 4 hours", art: art.charGrandma },
   // /caregiver owns the "hire a caregiver" search; this page owns home care in
   // general, so it links down rather than competing for the same query.
-  {
-    eyebrow: "Daily living",
-    title: "Caregivers",
-    description:
-      "Vetted caregivers for personal care, companionship, mobility and appointment escort at home.",
-    price: "Companion care from ₦18,000 per four hours",
-    href: "/caregiver",
-    image: caregiverImg,
-    back: "navy",
-  },
+  { title: "Caregivers", line: "Personal care, company and appointment escort.", href: "/caregiver", price: "₦18,000", unit: "per 4 hours", art: art.charCaregiver },
+  { title: "Care from abroad", line: "One contact in Nigeria for families overseas.", href: "/care-from-abroad", price: "", art: art.diasporaSon },
 ];
 
 const CareAtHome = () => (
@@ -129,14 +53,14 @@ const CareAtHome = () => (
             href="https://wa.me/2348126988237"
             target="_blank"
             rel="noopener noreferrer"
-            className="kit-curve-sm inline-flex items-center gap-2 bg-white px-7 py-3.5 text-[16px] font-semibold text-navy transition-opacity duration-200 hover:opacity-90"
+            className={kitHeroPrimaryButton}
           >
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
             Chat on WhatsApp
           </a>
           <a
             href="tel:+2348126988237"
-            className="kit-curve-sm inline-flex items-center gap-2 border-[1.5px] border-outline-navy px-7 py-3.5 text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-hairline-navy"
+            className={kitHeroSecondaryButton}
           >
             Call +234 812 698 8237
           </a>
@@ -145,18 +69,27 @@ const CareAtHome = () => (
     </AudienceHero>
 
     <KitMain>
-      <KitSection eyebrow="Services" title="Care at home services" intro="Every plan begins with a home care needs assessment, then we match a vetted professional to the household.">
-        {(() => {
-          const Mock = CARD_MOCKS[new URLSearchParams(window.location.search).get("cards") ?? ""];
-          return Mock ? <Mock /> : (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
-          {homeServices.map((service) => (
-            <KitFlipCard key={service.href} {...service} />
-          ))}
+      <section aria-labelledby="services-heading">
+        <div className="relative mb-10 grid items-end gap-6 border-t-4 border-navy pt-8 lg:mb-14 lg:grid-cols-[minmax(0,1fr)_220px] lg:pt-10">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <NotchTag tone="blue" tilt={-2}>{homeServices.length} services</NotchTag>
+              <PillSticker tone="tint" tilt={4} className="!px-4 !py-2 !text-[13px]">
+                from <span className="text-price">₦18,000</span>
+              </PillSticker>
+            </div>
+            <h2 id="services-heading" className="mt-5 text-[42px] leading-[1.08] tracking-[-0.055em] sm:text-[56px] lg:text-[72px] lg:leading-[0.96]">
+              Care <Highlight>at home</Highlight> services
+            </h2>
+            <p className="mt-5 max-w-[56ch] text-[16px] leading-[1.65] text-body sm:text-[18px]">
+              Every plan begins with a <PriceTag amount="₦35,000" className="text-[15px] sm:text-[17px]" /> home care needs
+              assessment, then we match a vetted professional to the household.
+            </p>
+          </div>
+          <ClipArt src={art.objHouseHeart} size={200} className="hidden lg:block" />
         </div>
-          );
-        })()}
-      </KitSection>
+        <ServiceCards services={homeServices} />
+      </section>
 
       <CTASection
         headline="Ready to arrange care at home?"
