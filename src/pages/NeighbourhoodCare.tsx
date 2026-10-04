@@ -112,11 +112,11 @@ const NeighbourhoodCare = ({ slug }: NeighbourhoodCareProps) => {
               "Paediatric home nursing",
             ],
             offers: {
-              lowPrice: 5000,
-              highPrice: 380000,
-              offerCount: 9,
+              lowPrice: 18000,
+              highPrice: 60000,
+              offerCount: 4,
               description:
-                "Nursing visits from ₦12,000. 24-hour nursing from ₦55,000 per day. Live-in caregivers from ₦12,000 per day. Initial home assessment ₦35,000.",
+                "Companion care from ₦18,000. Nursing visits from ₦20,000. 8-hour nursing shift ₦60,000. Live-in and 24-hour care quoted after the assessment. Initial home assessment ₦35,000.",
             },
           }),
           faqSchema(n.faqs),

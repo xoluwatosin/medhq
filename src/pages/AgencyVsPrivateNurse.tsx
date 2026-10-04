@@ -57,7 +57,7 @@ const AgencyVsPrivateNurse = () => {
     },
     {
       q: "How much does a nursing agency cost in Lagos?",
-      a: "Medic Connect packages start from around ₦100,000 for short visits and run up to ₦300,000+ per week for live-in clinical care, depending on intensity, hours and location. Every engagement begins with a ₦35,000 care assessment so we scope and price honestly."
+      a: "Medic Connect nursing visits start from ₦20,000, and an 8-hour nursing shift is ₦60,000. Live-in and 24-hour clinical care is quoted after the assessment, depending on intensity, hours and location. Every engagement begins with a ₦35,000 care assessment so we scope and price honestly."
     },
     {
       q: "What questions should I ask before hiring any nurse in Lagos?",

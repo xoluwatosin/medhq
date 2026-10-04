@@ -106,8 +106,8 @@ const config: ServicePageConfig = {
 const PostnatalCare = () => (
   <>
     <SEO
-            title="Omugwo & Postnatal Care in Lagos from ₦100,000 | Medic Connect"
-            description="The care your mother would give, by trained professionals. Omugwo packages from ₦100,000, with overnight cover, lactation support, and quiet screening for postnatal depression."
+            title="Postnatal Care & Omugwo in Lagos, Visits from ₦30,000 | Medic Connect"
+            description="The care your mother would give, by trained professionals. Postnatal visits from ₦30,000, with overnight cover, lactation support, and quiet screening for postnatal depression."
             path="/postnatal-care"
             jsonLd={[
               medicalServiceSchema({
@@ -126,10 +126,10 @@ const PostnatalCare = () => (
                   "Infant CPR-trained overnight cover",
                 ],
                 offers: {
-                  lowPrice: 100000,
-                  highPrice: 380000,
-                  offerCount: 4,
-                  description: "Omugwo packages from ₦100,000 (Light) to ₦380,000 (Full 24/7). Post-Caesarean Recovery package from ₦250,000.",
+                  lowPrice: 20000,
+                  highPrice: 30000,
+                  offerCount: 3,
+                  description: "Postnatal mother and baby visit ₦30,000. Breastfeeding support ₦28,000. C-section wound care ₦20,000. Omugwo packages are quoted after the home assessment.",
                 },
               }),
               faqSchema(faqs),

@@ -5,7 +5,7 @@ import nannyMoment from "@/assets/photos/nanny-moment.webp";
 
 /** The questions families ask; sent to Google as FAQ data. */
 const nannyFaqs = [
-    { q: "How much does a nanny cost in Lagos?", a: "Vetted, insured nannies start from ₦25,000 per day (day nanny) and ₦120,000 per week (live-in), depending on hours and child age. Every engagement begins with a one-off ₦35,000 Initial Home Assessment that covers the home visit, matching and onboarding." },
+    { q: "How much does a nanny cost in Lagos?", a: "Nanny fees depend on the hours, live-in or live-out, and your children's ages, so we quote after a one-off ₦35,000 home assessment that covers the home visit, matching and onboarding." },
     { q: "Are your nannies trained and background-checked?", a: "Yes. Every nanny is vetted with police clearance, reference checks, infant CPR certification, and a Medic Connect interview before placement. We carry professional indemnity insurance on all placements." },
     { q: "Do you offer live-in or live-out nannies?", a: "Both. We match live-in nannies for families needing overnight cover and live-out nannies for daytime care. Schedules are agreed in writing during your assessment." },
     { q: "How quickly can a nanny start?", a: "Most nanny placements in Lagos are confirmed within 48 hours of your assessment, depending on requirements and availability." },
@@ -82,7 +82,7 @@ const config: ServicePageConfig = {
 
 const NannyChildcare = () => (
   <>
-    <SEO title="Trained Nannies in Lagos from ₦25,000/day | Vetted & Insured | Medic Connect" description="Trained nannies in Lagos, vetted with police clearance, infant CPR and references. Day nannies from ₦25,000, live-in from ₦120,000/week." path="/nanny-childcare" jsonLd={[{"@context":"https://schema.org","@type":"Service","name":"Nanny & Childcare","serviceType":"Childcare","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Trained, vetted and insured nannies matched to your family across Lagos.","url":"https://www.medicconnect.co/nanny-childcare","offers":{"@type":"AggregateOffer","priceCurrency":"NGN","lowPrice":"25000","highPrice":"120000","offerCount":"4","priceSpecification":{"@type":"PriceSpecification","priceCurrency":"NGN","description":"Day nanny from ₦25,000 per day. Live-in nanny from ₦120,000 per week. Night nanny from ₦35,000 per night."}}},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":shownFaqs.map(f=>({"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}}))}]} />
+    <SEO title="Trained Nannies in Lagos | Vetted & Insured | Medic Connect" description="Trained nannies in Lagos, vetted with police clearance, infant CPR and references. Fees are quoted after a one-off ₦35,000 home assessment." path="/nanny-childcare" jsonLd={[{"@context":"https://schema.org","@type":"Service","name":"Nanny & Childcare","serviceType":"Childcare","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Trained, vetted and insured nannies matched to your family across Lagos.","url":"https://www.medicconnect.co/nanny-childcare"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":shownFaqs.map(f=>({"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}}))}]} />
     <ServicePage c={config} />
   </>
 );
