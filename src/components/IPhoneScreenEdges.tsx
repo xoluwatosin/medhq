@@ -22,7 +22,7 @@ export const screenEdgesForPath = (pathname: string): ScreenEdges => {
     "/antenatal-care", "/postnatal-care", "/nanny-childcare", "/eldercare",
     "/pediatric-care", "/hospital-staffing", "/hospital-support",
     "/clinical-research", "/about", "/contact", "/join", "/creator",
-    "/blog", "/hm", "/heard",
+    "/blog", "/hm",
   ]);
   if (publicNavyTop.has(pathname) || pathname.startsWith("/home-care-")) {
     return { top: "navy", bottom: "page" };

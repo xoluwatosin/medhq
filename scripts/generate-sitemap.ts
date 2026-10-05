@@ -51,7 +51,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/home-care-vgc", changefreq: "monthly", priority: "0.8" },
   { path: "/home-care-ikeja-gra", changefreq: "monthly", priority: "0.8" },
   { path: "/home-care-magodo-gra", changefreq: "monthly", priority: "0.8" },
-  { path: "/heard", changefreq: "weekly", priority: "0.8" },
   { path: "/creator", changefreq: "monthly", priority: "0.7" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },

@@ -1,6 +1,6 @@
 import {
   FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, Archive, MailOpen,
-  Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Heart, Orbit, HeartPulse,
+  Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Orbit, HeartPulse,
   Briefcase, ShieldCheck, Inbox, CalendarDays, Copy, ClipboardList, UserCog, IdCard,
   BarChart3, KeyRound, FileSignature, Library, Layers, Search,
 } from "lucide-react";
@@ -105,10 +105,9 @@ export const adminDomains: AdminDomain[] = [
     icon: Layers,
     url: "/admin/programmes",
     items: [
-      { title: "All programmes", url: "/admin/programmes", icon: Layers, exact: true, keywords: "programmes register Creator Heard" },
+      { title: "All programmes", url: "/admin/programmes", icon: Layers, exact: true, keywords: "programmes register Creator" },
 
       { title: "Creator", url: "/admin/creator-applications", icon: Palette, perm: "creator_applications", keywords: "Creator applications content partners" },
-      { title: "Heard", url: "/admin/heard", icon: Heart, perm: "heard", keywords: "Heard applications volunteers waitlist" },
     ],
   },
   {

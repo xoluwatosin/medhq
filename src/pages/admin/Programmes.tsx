@@ -25,14 +25,9 @@ const Programmes = () => {
   useEffect(() => {
     const load = async () => {
       const db = adminDb();
-      const [creator, heard] = await Promise.all([
-        can("creator_applications")
-          ? db.from("creator_applications").select("id", { count: "exact", head: true }).eq("status", "new")
-          : Promise.resolve({ count: 0 }),
-        can("heard")
-          ? db.from("heard_volunteers").select("id", { count: "exact", head: true }).eq("status", "new")
-          : Promise.resolve({ count: 0 }),
-      ]);
+      const creator = can("creator_applications")
+        ? await db.from("creator_applications").select("id", { count: "exact", head: true }).eq("status", "new")
+        : { count: 0 };
       setRows([
         can("creator_applications")
           ? {
@@ -41,15 +36,6 @@ const Programmes = () => {
               detail: "Creator applications and content partners",
               to: "/admin/creator-applications",
               open: creator.count ?? 0,
-            }
-          : null,
-        can("heard")
-          ? {
-              key: "heard",
-              title: "Heard",
-              detail: "Heard applications and the volunteer waitlist",
-              to: "/admin/heard",
-              open: heard.count ?? 0,
             }
           : null,
       ].filter((row): row is ProgrammeRow => Boolean(row)));

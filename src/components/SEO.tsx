@@ -40,8 +40,6 @@ const PATH_LABELS: Record<string, string> = {
   "/home-care-vgc": "Home Care in VGC",
   "/home-care-ikeja-gra": "Home Care in Ikeja GRA",
   "/home-care-magodo-gra": "Home Care in Magodo GRA",
-  "/heard": "Heard - Volunteer",
-  "/heard/thanks": "Heard - Thank you",
 };
 
 interface BreadcrumbCrumb {

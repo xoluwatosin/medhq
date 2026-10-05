@@ -29,22 +29,6 @@ const CARE_GROUP: AccessGroup = {
   ],
 };
 
-/**
- * Heard is a separate product. Care access never carries Heard moderation, so
- * these keys are granted on their own.
- */
-const HEARD_GROUP: AccessGroup = {
-  key: "heard_product",
-  label: "Heard",
-  areas: [
-    { key: "heard_content_review", label: "Heard content review" },
-    { key: "heard_story_swap_manage", label: "Heard Story Swap" },
-    { key: "heard_letters_manage", label: "Heard Letters" },
-    { key: "heard_delivery_manage", label: "Heard letter delivery" },
-    { key: "heard_volunteers_manage", label: "Heard volunteers" },
-  ],
-};
-
 const ACCOUNT_GROUP: AccessGroup = {
   key: "account",
   label: "Account",
@@ -76,7 +60,7 @@ const buildGroups = (): AccessGroup[] => {
     if (areas.length) groups.push({ key: domain.key, label: domain.label, areas });
   }
 
-  groups.push(CARE_GROUP, HEARD_GROUP, ACCOUNT_GROUP);
+  groups.push(CARE_GROUP, ACCOUNT_GROUP);
   return groups;
 };
 
