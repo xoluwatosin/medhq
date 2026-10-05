@@ -404,6 +404,7 @@ later: apps/people/   Capacitor shell with native adapters
 | Email Library unused, system emails read templates with no editor | Staff can't change what is sent | D10 |
 | Raw care tokens in session storage | Token exposure on shared devices | Roadmap "required before scale" |
 | Heard leftovers | Two copies of Heard if this deployment still serves it; stale tables and access keys | Confirm the Heard domain no longer points here, export the 9 Heard rows, then remove the code, functions, tables and keys |
+| Care and family records tangled | One human stored up to four times; relationships shown the wrong way round on the care record; roles in five places | `docs/care-platform/care-family-model.md`, steps 1 to 5 before packages and the family portal |
 | Data protection | Health data under the Nigeria Data Protection Act 2023 | A data map, retention rules and a data protection impact assessment before family portal launch. Take legal advice. |
 
 ---
@@ -465,6 +466,7 @@ runs alongside phases 0 to 2 and does not block them.
 - [ ] Populated acceptance of review, plan and proposal screens
 - [ ] Device acceptance of the offline assessor workspace
 - [ ] Assign `care_coordinator` and `care_clinical` to real people
+- [ ] Untangle care and family records, steps 1 to 5 of `care-family-model.md`
 
 ### Phase 2: agreement
 - [ ] Care package table and the single agreement function
