@@ -70,18 +70,24 @@ Deno.serve(async (req) => {
       if (!person) return json({ error: "No Care access is linked to this account" }, 403);
       const { data: grants } = await db
         .from("care_access_grants")
-        .select("id, client_id, journey_scope, clinical_scope, finance_scope, state, clients(enquiry_number)")
+        .select("id, client_id, journey_scope, clinical_scope, finance_scope, state, clients(enquiry_number, full_name, preferred_name)")
         .eq("person_id", person.id)
         .eq("state", "active")
         .order("granted_at", { ascending: false });
       return json({
         state: "ready",
         person_name: person.full_name,
-        records: (grants ?? []).map((grant) => ({
-          grant_id: grant.id,
-          reference: (grant.clients as { enquiry_number?: string } | null)?.enquiry_number ?? "Care record",
-          scopes: scopes(grant),
-        })),
+        records: (grants ?? []).map((grant) => {
+          const client = grant.clients as { enquiry_number?: string; full_name?: string; preferred_name?: string | null } | null;
+          return {
+            grant_id: grant.id,
+            client_id: grant.client_id,
+            reference: client?.enquiry_number ?? "Care record",
+            // The person this care is for, so the family sees a name, not a number.
+            display_name: client?.preferred_name || client?.full_name || null,
+            scopes: scopes(grant),
+          };
+        }),
       });
     }
 

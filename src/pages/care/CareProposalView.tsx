@@ -6,9 +6,12 @@
 // or agree a price, and a new version carries no agreement forward.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import MedicHeader from "@/components/MedicHeader";
-import Footer from "@/components/Footer";
-import { cxInputClass } from "@/components/candidate/primitives";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import {
+  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilyShell, FamilyText,
+  familyOnNavy, familyPrimary, familySecondary,
+} from "@/components/care/FamilyShell";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
 import { formatDateTime } from "@/lib/format";
@@ -24,12 +27,34 @@ interface MyClient {
   display_name: string;
 }
 
-const primary =
-  "cx-control min-h-11 bg-navy px-4 text-[14px] font-bold text-white hover:bg-navy/90 disabled:opacity-50";
-const ghost =
-  "cx-control min-h-11 border border-line bg-white px-4 text-[14px] font-bold text-ink hover:bg-desk/60 disabled:opacity-50";
+// The care plan's section titles, so each part of the proposal is headed the
+// way the care team wrote it. Families cannot read form definitions.
+const SECTION_TITLES: Record<string, string> = {
+  front_sheet: "About this plan",
+  goals: "What we are trying to achieve",
+  the_day: "The day",
+  the_week: "The week",
+  personal_care: "Personal care",
+  moving_about: "Moving about",
+  skin_food_continence: "Skin, food and continence",
+  medicines: "Medicines",
+  how_to_be: "How to be with this person",
+  risks: "Risks and what we do about them",
+  boundaries: "Boundaries",
+  who_is_coming: "Who is coming",
+  review: "Review",
+  agreement: "Agreement",
+};
+
+const sectionTitle = (key: string) =>
+  SECTION_TITLES[key] ?? (key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+
+const inputClass =
+  "w-full rounded-[10px] border border-[#C9C5BC] bg-card px-4 py-3 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
 
 const CareProposalView = () => {
+  const [params] = useSearchParams();
+  const wanted = params.get("client");
   const [clients, setClients] = useState<MyClient[]>([]);
   const [clientId, setClientId] = useState<string>("");
   const [rows, setRows] = useState<ProposalStatusRow[]>([]);
@@ -69,14 +94,15 @@ const CareProposalView = () => {
       const { data } = await supabase.rpc("care_my_clients");
       const mine = (data ?? []) as unknown as MyClient[];
       setClients(mine);
-      if (mine[0]) {
-        setClientId(mine[0].client_id);
-        await load(mine[0].client_id);
+      const first = mine.find((c) => c.client_id === wanted) ?? mine[0];
+      if (first) {
+        setClientId(first.client_id);
+        await load(first.client_id);
       } else {
         setLoading(false);
       }
     })();
-  }, [load]);
+  }, [load, wanted]);
 
   const respond = async () => {
     if (!current || !choice) return;
@@ -94,145 +120,152 @@ const CareProposalView = () => {
 
   const needsComment = choice === "changes_requested" && comment.trim() === "";
 
+  const person = clients.find((c) => c.client_id === clientId);
+  const earlier = rows.filter((r) => r.proposal_id !== current?.proposal_id);
+  const parts = content
+    ? Object.entries(content)
+        .map(([key, value]) => ({
+          key,
+          note: typeof value === "object" && value !== null
+            ? String((value as Record<string, unknown>).note ?? "")
+            : String(value ?? ""),
+        }))
+        .filter((part) => part.note.trim() !== "")
+    : [];
+
   return (
-    <div className="min-h-dvh bg-desk">
-      <MedicHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">Proposed care and support</h1>
-        <p className="mt-2 text-[15px] text-body">
-          This is what we propose. It is not the final care plan, and nothing starts until we have spoken.
-        </p>
+    <FamilyShell
+      eyebrow="Care proposal"
+      title={person ? `Proposed care for ${person.display_name}` : "Proposed care and support"}
+      lead="This is what we propose after the assessment. It is not the final care plan, and nothing starts until we have spoken with you."
+      path="/care/proposal"
+      action={<Link to="/care" className={familyOnNavy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Your care</Link>}
+    >
+      {clients.length > 1 && (
+        <FamilyCard>
+          <label className="block text-[14.5px] font-semibold text-ink" htmlFor="proposal-person">Who this is about</label>
+          <select
+            id="proposal-person"
+            className={`${inputClass} mt-2 min-h-12`}
+            value={clientId}
+            onChange={(e) => { setClientId(e.target.value); void load(e.target.value); }}
+          >
+            {clients.map((c) => (
+              <option key={c.client_id} value={c.client_id}>{c.display_name}</option>
+            ))}
+          </select>
+        </FamilyCard>
+      )}
 
-        {clients.length > 1 && (
-          <label className="mt-5 block text-[14px] font-bold text-ink">
-            Who this is about
-            <select
-              className={cn(cxInputClass(), "mt-1")}
-              value={clientId}
-              onChange={(e) => { setClientId(e.target.value); void load(e.target.value); }}
-            >
-              {clients.map((c) => (
-                <option key={c.client_id} value={c.client_id}>{c.display_name}</option>
+      {loading ? (
+        <FamilyCard><FamilyLoading label="Loading the care proposal" /></FamilyCard>
+      ) : rows.length === 0 ? (
+        <FamilyCard>
+          <FamilyHeading>No proposal yet</FamilyHeading>
+          <FamilyText className="mt-1">
+            We write the proposal after the home care needs assessment. We will tell you when it is ready to read.
+          </FamilyText>
+        </FamilyCard>
+      ) : !current ? (
+        <FamilyCard>
+          <FamilyHeading>This version has been replaced</FamilyHeading>
+          <FamilyText className="mt-1">The proposal you were sent has been replaced or withdrawn. The care team will send the new one.</FamilyText>
+        </FamilyCard>
+      ) : content === null ? (
+        <FamilyCard>
+          <FamilyHeading>Version {current.version}</FamilyHeading>
+          <FamilyText className="mt-1">
+            A proposal was sent{current.sent_at ? ` on ${formatDateTime(current.sent_at)}` : ""}, but it is not shared
+            with you. Ask the care team if you should be able to read it.
+          </FamilyText>
+        </FamilyCard>
+      ) : (
+        <>
+          <FamilyCard>
+            <span className="label-caps text-[11px] text-label">
+              Version {current.version}{current.sent_at ? `, sent ${formatDateTime(current.sent_at)}` : ""}
+            </span>
+            <div className="mt-3 flex flex-col divide-y divide-hairline-warm">
+              {parts.map((part) => (
+                <div key={part.key} className="py-4 first:pt-1 last:pb-0">
+                  <h2 className="text-[17px] font-semibold text-ink">{sectionTitle(part.key)}</h2>
+                  <p className="mt-1.5 whitespace-pre-wrap text-[15.5px] leading-relaxed text-body">{part.note}</p>
+                </div>
               ))}
-            </select>
-          </label>
-        )}
+            </div>
+          </FamilyCard>
 
-        {loading && <p className="mt-8 text-[15px] text-body">Loading.</p>}
+          <FamilyNote title="About cost">
+            The cost is set out separately in your quotation.
+          </FamilyNote>
 
-        {!loading && rows.length === 0 && (
-          <p className="mt-8 text-[15px] text-body">There is no care proposal to read yet.</p>
-        )}
-
-        {!loading && rows.length > 0 && (
-          <section className="mt-8 border border-line bg-white p-5">
-            <h2 className="text-[18px] font-bold text-ink">
-              {current ? `Version ${current.version}` : "No current version"}
-            </h2>
-            <p className="mt-1 text-[13.5px] text-body">
-              {current
-                ? `${proposalStatusLabel.sent}${current.sent_at ? ` on ${formatDateTime(current.sent_at)}` : ""}`
-                : "The version you were sent has been replaced or withdrawn."}
-            </p>
-
-            {current && content === null && (
-              <p className="mt-4 text-[15px] text-body">
-                You can see that a proposal was sent, but not what it says. Ask the care team for access.
-              </p>
-            )}
-
-            {current && content && (
-              <div className="mt-4 flex flex-col gap-4">
-                {Object.entries(content).map(([key, value]) => {
-                  const note = typeof value === "object" && value !== null
-                    ? String((value as Record<string, unknown>).note ?? "")
-                    : String(value ?? "");
-                  if (!note.trim()) return null;
-                  return (
-                    <div key={key}>
-                      <p className="whitespace-pre-wrap text-[15px] text-ink">{note}</p>
-                    </div>
-                  );
-                })}
-                <p className="text-[13.5px] text-body">
-                  Costs are set out separately in your quotation.
-                </p>
-              </div>
-            )}
-
-            {current && content && (
-              <div className="mt-6 border-t border-line-soft pt-5">
-                <p className="text-[15px] font-bold text-ink">What would you like to do?</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {RESPONSE_CHOICES.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={choice === option.value}
-                      onClick={() => setChoice(option.value)}
-                      className={cn(
-                        "cx-control min-h-11 px-4 text-[14.5px] font-bold transition-colors",
-                        choice === option.value
-                          ? "border-[1.5px] border-navy bg-tint text-navy"
-                          : "border border-line bg-white text-ink hover:bg-desk/60",
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                {choice && (
-                  <textarea
-                    className={cn(cxInputClass(), "mt-3 min-h-24")}
-                    aria-label={choice === "changes_requested" ? "What should change" : "Anything you want to add"}
-                    placeholder={choice === "changes_requested"
-                      ? "Tell us what should change"
-                      : "Anything you want to add, if you like"}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                  />
-                )}
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button" className={primary}
-                    disabled={busy || !choice || needsComment}
-                    onClick={() => void respond()}
-                  >
-                    Send
-                  </button>
-                  {choice && (
-                    <button type="button" className={ghost} onClick={() => { setChoice(""); setComment(""); }}>
-                      Cancel
-                    </button>
+          <FamilyCard>
+            <FamilyHeading>What would you like to do?</FamilyHeading>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3" role="group" aria-label="Your reply">
+              {RESPONSE_CHOICES.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={choice === option.value}
+                  onClick={() => setChoice(option.value)}
+                  className={cn(
+                    "min-h-12 rounded-[10px] px-4 text-[15px] font-semibold transition-colors",
+                    choice === option.value
+                      ? "border-[1.5px] border-brand bg-tint text-navy"
+                      : "border border-hairline-warm bg-card text-ink hover:border-brand/50",
                   )}
-                </div>
-                {needsComment && (
-                  <p className="mt-2 text-[13.5px] text-warn-ink">Tell us what should change.</p>
-                )}
-                <p className="mt-3 text-[13.5px] text-body">
-                  Agreeing applies to this version only. It does not start care or agree a price.
-                </p>
-              </div>
-            )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
-            {rows.length > 1 && (
-              <div className="mt-6 border-t border-line-soft pt-4">
-                <p className="text-[14px] font-bold text-ink">Earlier versions</p>
-                {rows.filter((r) => r.proposal_id !== current?.proposal_id).map((row) => (
-                  <p key={row.proposal_id} className="mt-1 text-[13.5px] text-body">
-                    Version {row.version} · {proposalStatusLabel[row.status] ?? row.status}
-                    {row.responded_at ? ` · you replied on ${formatDateTime(row.responded_at)}` : ""}
-                  </p>
-                ))}
-              </div>
+            {choice && (
+              <label className="mt-4 block">
+                <span className="text-[14.5px] font-semibold text-ink">
+                  {choice === "changes_requested" ? "What should change?" : "Anything you want to add (optional)"}
+                </span>
+                <textarea
+                  className={`${inputClass} mt-2 min-h-28`}
+                  placeholder={choice === "changes_requested" ? "Tell us what should change" : "If you like"}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </label>
             )}
-          </section>
-        )}
-      </main>
-      <Footer />
-    </div>
+            {needsComment && <p className="mt-2 text-[14px] text-warn-ink">Tell us what should change before you send.</p>}
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" className={familyPrimary} disabled={busy || !choice || needsComment} onClick={() => void respond()}>
+                Send my reply
+              </button>
+              {choice && (
+                <button type="button" className={familySecondary} onClick={() => { setChoice(""); setComment(""); }}>
+                  Cancel
+                </button>
+              )}
+            </div>
+            <FamilyText className="mt-4 text-[14px]">
+              Agreeing applies to this version only. It does not start care or agree a price.
+            </FamilyText>
+          </FamilyCard>
+        </>
+      )}
+
+      {!loading && earlier.length > 0 && (
+        <FamilyCard>
+          <FamilyHeading>Earlier versions</FamilyHeading>
+          <ul className="mt-2 flex flex-col gap-1">
+            {earlier.map((row) => (
+              <li key={row.proposal_id} className="text-[14.5px] text-body">
+                Version {row.version}: {(proposalStatusLabel[row.status] ?? row.status).toLowerCase()}
+                {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
+              </li>
+            ))}
+          </ul>
+        </FamilyCard>
+      )}
+    </FamilyShell>
   );
 };
 

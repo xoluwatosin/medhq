@@ -1,12 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/brand/medicconnect-logo.svg";
+import {
+  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilyShell, FamilyText,
+  familyPrimary, familySecondary,
+} from "@/components/care/FamilyShell";
 
 type InvitationState = "loading" | "open" | "accepted" | "used" | "invalid" | "expired" | "withdrawn" | "unavailable" | "error";
 type Scope = { journey: boolean; clinical: boolean; finance: boolean };
@@ -16,7 +15,7 @@ const TEXT: Partial<Record<InvitationState, { title: string; body: string }>> = 
   expired: { title: "Invitation expired", body: "This invitation has expired. Ask Medic Connect to send it again." },
   withdrawn: { title: "Invitation withdrawn", body: "This invitation is no longer available. Contact Medic Connect if you need access." },
   unavailable: { title: "Access unavailable", body: "Access to this care record is not currently open. Contact Medic Connect for support." },
-  used: { title: "Invitation already accepted", body: "Sign in through your original verification email to open your Care account." },
+  used: { title: "You have already accepted this invitation", body: "Open the secure link from your last sign-in email, or ask Medic Connect to send you a new one." },
   error: { title: "Could not open invitation", body: "Please try again. Contact Medic Connect if the problem continues." },
 };
 
@@ -93,81 +92,85 @@ const CareInvitation = () => {
     ? [scopes.journey && "care journey", scopes.clinical && "care plan", scopes.finance && "invoices and payments"].filter(Boolean)
     : [];
 
+  const body = (() => {
+    if (state === "loading") return <FamilyCard><FamilyLoading label="Opening your invitation" /></FamilyCard>;
+    if (state === "open") return (
+      <FamilyCard>
+        <FamilyHeading>Confirm it is you</FamilyHeading>
+        <FamilyText className="mt-1">
+          We sent this invitation to {destinationHint || "your email"}. Type that address and we will email you a
+          secure link. Opening it signs you in, with no password to remember.
+        </FamilyText>
+        {sent ? (
+          <div className="mt-4">
+            <FamilyNote title="Check your email">
+              We have sent a secure link to {email.trim()}. Open it on this device to continue. It can take a minute
+              to arrive; check your spam folder if you cannot see it.
+            </FamilyNote>
+          </div>
+        ) : (
+          <form className="mt-5 flex flex-col gap-3" onSubmit={sendLink}>
+            <label htmlFor="care-invite-email" className="text-[14.5px] font-semibold text-ink">Your email address</label>
+            <input
+              id="care-invite-email"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              required
+              placeholder="name@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="min-h-12 rounded-[10px] border border-[#C9C5BC] bg-card px-4 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+            {error && <p role="alert" className="text-[14px] text-destructive">{error}</p>}
+            <button type="submit" className={familyPrimary} disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              Email me a secure link
+            </button>
+          </form>
+        )}
+      </FamilyCard>
+    );
+    if (state === "accepted") return (
+      <FamilyCard>
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-brand" aria-hidden="true" />
+          <div>
+            <FamilyHeading>{personName ? `You are in, ${personName}` : "You are in"}</FamilyHeading>
+            <FamilyText className="mt-1">
+              {scopeNames.length ? `You can follow the ${scopeNames.join(", ")}.` : "Nothing is shared with you yet."}
+            </FamilyText>
+          </div>
+        </div>
+      </FamilyCard>
+    );
+    return (
+      <FamilyCard>
+        <FamilyHeading>{TEXT[state]?.title}</FamilyHeading>
+        <FamilyText className="mt-1">{TEXT[state]?.body}</FamilyText>
+        <Link to="/contact" className={`${familySecondary} mt-4`}>Contact Medic Connect</Link>
+      </FamilyCard>
+    );
+  })();
+
   return (
-    <main className="min-h-dvh bg-background px-4 py-6 sm:px-6 sm:py-10">
-      <div className="mx-auto w-full max-w-xl">
-        <Link to="/" aria-label="Medic Connect home" className="mb-6 inline-flex">
-          <img src={logo} alt="Medic Connect" className="h-9 w-auto" />
-        </Link>
-        <Card className="overflow-hidden">
-          <div className="h-2 bg-primary" />
-          {state === "loading" ? (
-            <CardContent className="flex min-h-64 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" aria-label="Opening invitation" />
-            </CardContent>
-          ) : state === "open" ? (
-            <>
-              <CardHeader>
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
-                  <LockKeyhole className="h-5 w-5" />
-                </div>
-                <h1 className="text-2xl font-semibold leading-none">Open your care record</h1>
-                <CardDescription>Verify the email address this invitation was sent to: {destinationHint}.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {sent ? (
-                  <div className="rounded-xl border border-border bg-accent p-4">
-                    <p className="font-semibold text-foreground">Verification email sent</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Open the secure link in that email to continue.</p>
-                  </div>
-                ) : (
-                  <form className="space-y-4" onSubmit={sendLink}>
-                    <div className="space-y-2">
-                      <Label htmlFor="care-invite-email">Email</Label>
-                      <Input id="care-invite-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
-                    </div>
-                    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full" disabled={busy}>
-                      {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Send verification email
-                    </Button>
-                  </form>
-                )}
-              </CardContent>
-            </>
-          ) : state === "accepted" ? (
-            <>
-              <CardHeader>
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-                <h1 className="text-2xl font-semibold leading-none">Access confirmed</h1>
-                <CardDescription>{personName ? `${personName}, your` : "Your"} account is securely linked to this care record.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-xl border border-border bg-accent p-4">
-                  <p className="font-semibold text-foreground">Your current access</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {scopeNames.length ? `You can view the ${scopeNames.join(", ")}.` : "No record sections are currently available."}
-                  </p>
-                </div>
-                <p className="text-sm text-muted-foreground">Medic Connect controls access to each section. Contact the care team if you need support.</p>
-              </CardContent>
-            </>
-          ) : (
-            <>
-              <CardHeader>
-                <h1 className="text-2xl font-semibold leading-none">{TEXT[state]?.title}</h1>
-                <CardDescription>{TEXT[state]?.body}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" className="w-full"><Link to="/contact">Contact Medic Connect</Link></Button>
-              </CardContent>
-            </>
-          )}
-        </Card>
-      </div>
-    </main>
+    <FamilyShell
+      eyebrow="Invitation"
+      title="Follow your family's care"
+      lead="Medic Connect has invited you to see how a care request is going. You only see what the care team chooses to share."
+      path={`/care/invitation/${token}`}
+    >
+      {body}
+      <FamilyNote>
+        <span className="flex gap-2">
+          <LockKeyhole className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            <strong className="font-semibold text-ink">Your care record is private.</strong> Only people the care team
+            has invited can open it, and each person sees only what they need.
+          </span>
+        </span>
+      </FamilyNote>
+    </FamilyShell>
   );
 };
 
