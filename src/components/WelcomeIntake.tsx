@@ -7,9 +7,12 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { art } from "@/components/mc/art";
 
-import { Choice, Question, RequestShell } from "@/components/request/RequestShell";
+import {
+  PriceLine, Question, RequestShell, ServiceTile, requestPrimary, requestQuiet, requestSecondary,
+} from "@/components/request/RequestShell";
 import CareRequestDialog from "@/components/CareRequestDialog";
 import { CARE_KINDS, CareKind } from "@/components/request/care-kinds";
 import { rememberInterest, readVisitor, visitorFirstName } from "@/lib/visitor";
@@ -73,36 +76,41 @@ const WelcomeIntake = ({ forceOpen = false, onClose }: WelcomeIntakeProps) => {
         onOpenChange={(next) => { if (!next) close(); }}
         eyebrow="Welcome to Medic Connect"
         title="What kind of care are you looking for?"
-        chip={chosen?.label ?? null}
+        art={art.coordinatorPhone}
       >
         {chosen ? (
           <Question heading={`${chosen.label}.`} help={chosen.blurb} stepKey="picked">
-            <div className="space-y-2.5">
-              <p className="text-[14px] leading-[1.55] text-body">
-                We can start your request now, and it takes under a minute. Or read the page first
-                and come back whenever you are ready.
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  className="flex-1 rounded-xl"
-                  onClick={() => { setOpen(false); setRequestOpen(true); try { localStorage.setItem(STORAGE_SEEN, "1"); } catch { /* ignore */ } }}
-                >
-                  Request care
-                </Button>
-                {LINE_ROUTES[chosen.line] && (
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-xl border-hairline-warm"
-                    onClick={() => { close(); navigate(LINE_ROUTES[chosen.line]); }}
-                  >
-                    Read about it first
-                  </Button>
-                )}
+            <div className="flex items-center gap-4 border-2 border-navy bg-tint p-3 shadow-offset-sm">
+              <span className="relative h-[92px] w-[96px] shrink-0 bg-card">
+                <img src={chosen.art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[86px] object-contain" />
+              </span>
+              <div className="min-w-0">
+                <PriceLine price={chosen.price} />
+                <p className="mt-1.5 text-[14px] leading-[1.5] text-body">
+                  Care starts with a {" "}<b className="text-ink">₦35,000</b> home assessment, so the plan fits the person.
+                </p>
               </div>
-              <Button variant="ghost" className="w-full rounded-xl text-body" onClick={() => setChosen(null)}>
-                Choose something else
-              </Button>
             </div>
+            <p className="mt-4 text-[15px] leading-[1.55] text-body">
+              Start your request now, it takes under a minute. Or read about it first and come back when you are ready.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                className={`${requestPrimary} flex-1`}
+                onClick={() => { setOpen(false); setRequestOpen(true); try { localStorage.setItem(STORAGE_SEEN, "1"); } catch { /* ignore */ } }}
+              >
+                Request care <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+              {LINE_ROUTES[chosen.line] && (
+                <button type="button" className={`${requestSecondary} flex-1`} onClick={() => { close(); navigate(LINE_ROUTES[chosen.line]); }}>
+                  Read about it first
+                </button>
+              )}
+            </div>
+            <button type="button" className={`${requestQuiet} mt-2 w-full`} onClick={() => setChosen(null)}>
+              Choose something else
+            </button>
           </Question>
         ) : (
           <Question
@@ -110,14 +118,14 @@ const WelcomeIntake = ({ forceOpen = false, onClose }: WelcomeIntakeProps) => {
             help="Pick one and we will take you straight to it. No details needed yet."
             stepKey="pick"
           >
-            <div className="grid gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {featured.map((k) => (
-                <Choice key={k.line} label={k.label} blurb={k.blurb} selected={false} onClick={() => choose(k)} />
+                <ServiceTile key={k.line} label={k.label} art={k.art} price={k.price} onClick={() => choose(k)} />
               ))}
-              <Button variant="ghost" className="mt-1 w-full rounded-xl text-body" onClick={close}>
-                I'm just exploring
-              </Button>
             </div>
+            <button type="button" className={`${requestQuiet} mt-3 w-full`} onClick={close}>
+              I'm just exploring
+            </button>
           </Question>
         )}
       </RequestShell>

@@ -153,9 +153,8 @@ All colors MUST be HSL.
     --surface-overlay: 231 48% 12%;
     --shadow-soft: 225 28% 14%;
     --shadow-surface: 6px 6px 0 hsl(var(--navy));
-    /* Pop-ups and sheets: the soft navy-tinted shadow of the Request care
-       reference, which replaced the offset block shadow on application surfaces. */
-    --shadow-dialog: 0 24px 64px hsl(232 48% 28% / 0.26), 0 2px 8px hsl(232 48% 28% / 0.12);
+    /* Pop-ups and sheets: the site's hard offset, in brand blue. */
+    --shadow-dialog: 8px 8px 0 hsl(var(--brand));
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --chart-1: 217 10% 64%;
@@ -490,9 +489,10 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-surface);
   }
 
+  /* Pop-ups are drawn like the site's cards: square, a navy rule, a hard offset. */
   .surface-dialog {
-    border: 1px solid hsl(var(--line));
-    border-radius: 24px;
+    border: 2px solid hsl(var(--navy));
+    border-radius: 0;
     background: hsl(var(--card));
     box-shadow: var(--shadow-dialog);
   }
