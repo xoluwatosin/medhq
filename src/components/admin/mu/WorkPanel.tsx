@@ -39,7 +39,7 @@ import AvailabilityDetail from "@/components/admin/mu/AvailabilityDetail";
 
 
 
-export type WorkSection = "offers" | "engagements" | "leave";
+export type WorkSection = "offers" | "engagements" | "leave" | "availability";
 
 interface Props {
   personId: string;
@@ -463,12 +463,15 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
   return (
     <div className="space-y-6">
-      <MuSection
-        title="Their availability, exactly as given"
-        description="What they have told us, day by day, with the hours they named. A blank day is silence, not a no."
-      >
-        <AvailabilityDetail personId={personId} />
-      </MuSection>
+      {/* The person record shows availability once, in its own section. */}
+      {include?.includes("availability") && (
+        <MuSection
+          title="Their availability, exactly as given"
+          description="What they have told us, day by day, with the hours they named. A blank day is silence, not a no."
+        >
+          <AvailabilityDetail personId={personId} />
+        </MuSection>
+      )}
 
       {shows("offers") && (
 

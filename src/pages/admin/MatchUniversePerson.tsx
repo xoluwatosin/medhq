@@ -53,6 +53,7 @@ import MuHeroWatermark from "@/components/admin/mu/heroWatermark";
 import { trackLabel } from "@/lib/join-tracks";
 import { SEX_OPTIONS } from "@/lib/work-preferences";
 import { emailHistoryFor, type EmailEvent } from "@/lib/email-analytics";
+import AvailabilityDetail from "@/components/admin/mu/AvailabilityDetail";
 
 
 
@@ -850,6 +851,10 @@ const MatchUniversePerson = () => {
             description="Set by the candidate in their portal. Unfilled days count as unconfirmed, not unavailable, and outdated availability is discounted when matching."
           >
             <AvailabilityCalendar personId={person.id} lastUpdate={(person as any).last_availability_update} readOnly />
+            <div className="mt-6 border-t border-line pt-5">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-label">Day by day, with the hours they named</p>
+              <AvailabilityDetail personId={person.id} />
+            </div>
           </MuSection>
         </TabsContent>
 
