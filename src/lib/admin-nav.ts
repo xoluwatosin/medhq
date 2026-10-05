@@ -1,5 +1,5 @@
 import {
-  FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, Archive, MailOpen,
+  FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, MailOpen,
   Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Orbit, HeartPulse,
   Briefcase, ShieldCheck, Inbox, CalendarDays, Copy, ClipboardList, UserCog, IdCard,
   BarChart3, KeyRound, FileSignature, Library, Layers, Search,
@@ -117,7 +117,7 @@ export const adminDomains: AdminDomain[] = [
     icon: Mail,
     url: "/admin/enquiries",
     items: [
-      { title: "Enquiries", url: "/admin/enquiries", icon: Mail, perm: "enquiries", exact: true, keywords: "messages contact form leads" },
+      { title: "Enquiries", url: "/admin/enquiries", icon: Mail, perm: "enquiries", exact: true, keywords: "messages contact form leads archived archive restore" },
     ],
     aside: [
       { title: "Enquiry setup", url: "/admin/enquiries/setup", icon: HelpCircle, perm: "enquiries", keywords: "service lines brochures reply questions" },
@@ -174,7 +174,6 @@ export const adminDomains: AdminDomain[] = [
       { title: "Alert keys", url: "/admin/alert-keys", icon: KeyRound, perm: "settings", keywords: "secrets run key rotate admin alert test audit job keys" },
     ],
     aside: [
-      { title: "Archive", url: "/admin/archives", icon: Archive, perm: "archives", keywords: "archives archived deleted" },
       { title: "Approvals", url: "/admin/approvals", icon: CheckCircle, superAdmin: true, keywords: "pending review publish" },
     ],
   },

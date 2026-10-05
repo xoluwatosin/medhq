@@ -86,7 +86,6 @@ import Audience from "./pages/admin/Audience";
 import Enquiries from "./pages/admin/Enquiries";
 import EnquirySetup from "./pages/admin/EnquirySetup";
 import Applications from "./pages/admin/Applications";
-import Archives from "./pages/admin/Archives";
 import EmailTemplates from "./pages/admin/EmailTemplates";
 import CreatorApplications from "./pages/admin/CreatorApplications";
 import AdminSettings from "./pages/admin/Settings";
@@ -276,7 +275,8 @@ const App = () => (
               <Route path="enquiries" element={<Enquiries />} />
               <Route path="enquiries/setup" element={<EnquirySetup />} />
               <Route path="applications" element={<Applications />} />
-              <Route path="archives" element={<Archives />} />
+              {/* Each list has its own Archived view now. */}
+              <Route path="archives" element={<Navigate to="/admin/enquiries?view=archived" replace />} />
               <Route path="email-templates" element={<EmailTemplates />} />
               <Route path="creator-applications" element={<CreatorApplications />} />
               <Route path="settings" element={<AdminSettings />} />
