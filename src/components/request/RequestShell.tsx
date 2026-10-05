@@ -8,7 +8,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { DIAL_CODES } from "./care-kinds";
 
 interface ShellProps {
@@ -141,8 +141,9 @@ export const Choice = ({
   </button>
 );
 
-/** Square tiles for a short list of services, two across: the Care at home
- *  phone tiles, inside the pop-up. */
+/** A service to pick: a row on phones (illustration left, name and price
+ *  right, so the whole list fits on one screen), a tile two or three across
+ *  from small tablets up, like the Care at home cards. */
 export const ServiceTile = ({
   label, art, price, onClick, selected = false,
 }: { label: string; art: string; price: string; onClick: () => void; selected?: boolean }) => (
@@ -150,17 +151,18 @@ export const ServiceTile = ({
     type="button"
     onClick={onClick}
     aria-pressed={selected}
-    className={`flex flex-col border-2 border-navy bg-card text-left transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+    className={`flex items-center gap-3 border-2 border-navy bg-card p-1.5 text-left transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none sm:flex-col sm:items-stretch sm:gap-0 ${
       selected ? "bg-tint shadow-offset-blue" : "shadow-offset-sm hover:bg-tint/60"
     }`}
   >
-    <span className="relative m-1.5 mb-0 block h-[84px] bg-tint sm:h-[96px]">
-      <img src={art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[78px] object-contain sm:h-[90px]" />
+    <span className="relative block h-[56px] w-[60px] shrink-0 bg-tint sm:h-[96px] sm:w-auto">
+      <img src={art} alt="" className="absolute inset-x-0 bottom-0 mx-auto h-[52px] object-contain sm:h-[90px]" />
     </span>
-    <span className="flex flex-1 flex-col gap-1 p-3">
-      <b className="text-[14.5px] font-extrabold leading-[1.15] tracking-[-0.02em] text-navy">{label}</b>
-      <span className="mt-auto pt-1"><PriceLine price={price} /></span>
+    <span className="flex min-w-0 flex-1 flex-col gap-0.5 pr-2 sm:gap-1 sm:p-3 sm:pr-3">
+      <b className="text-[15px] font-extrabold leading-[1.15] tracking-[-0.02em] text-navy sm:text-[14.5px]">{label}</b>
+      <span className="sm:mt-auto sm:pt-1"><PriceLine price={price} /></span>
     </span>
+    <ArrowRight className="mr-1 h-4 w-4 shrink-0 text-brand sm:hidden" aria-hidden="true" />
   </button>
 );
 

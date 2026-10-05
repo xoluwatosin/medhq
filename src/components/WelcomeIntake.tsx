@@ -118,7 +118,7 @@ const WelcomeIntake = ({ forceOpen = false, onClose }: WelcomeIntakeProps) => {
             help="Pick one and we will take you straight to it. No details needed yet."
             stepKey="pick"
           >
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
               {featured.map((k) => (
                 <ServiceTile key={k.line} label={k.label} art={k.art} price={k.price} onClick={() => choose(k)} />
               ))}

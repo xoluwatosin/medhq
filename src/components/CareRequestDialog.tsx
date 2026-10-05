@@ -88,6 +88,7 @@ const CareRequestDialog = ({
   const [index, setIndex] = useState(0);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [showSent, setShowSent] = useState(false);
   const [editContact, setEditContact] = useState(false);
 
   const initialName = splitName(prefill?.name ?? visitor.name);
@@ -151,7 +152,7 @@ const CareRequestDialog = ({
 
   const reset = () => {
     const v = readVisitor();
-    setIndex(0); setDone(false); setEditContact(false);
+    setIndex(0); setDone(false); setEditContact(false); setShowSent(false);
     const n = splitName(prefill?.name ?? v.name);
     setFirstName(v.firstName || n.first);
     setLastName(v.lastName || n.last);
@@ -344,26 +345,48 @@ const CareRequestDialog = ({
             <div>
               <h2 className="text-[26px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">Your request is in.</h2>
               <p className="mt-2 text-[15px] leading-[1.55] text-body">
-                A care coordinator will reach you on WhatsApp at <b className="text-ink">{fullPhone}</b>, usually the same
-                working day{email.trim() ? `, and a guide is on its way to ${email.trim()}` : ""}.
+                A care coordinator will message you on WhatsApp at <b className="text-ink">{fullPhone}</b>
+                {email.trim() ? `, and a guide is on its way to ${email.trim()}` : ""}.
               </p>
             </div>
-            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { t: "Tell us about them", done: true },
-                { t: "The home assessment", note: "₦35,000, before care starts" },
-                { t: "A plan and a match" },
-                { t: "Care begins" },
-              ].map((s, i) => (
-                <li key={s.t} className={`border-t-[3px] pt-2 ${s.done ? "border-brand" : "border-navy/20"}`}>
-                  <span className={`flex h-7 w-7 items-center justify-center text-[13px] font-extrabold ${s.done ? "bg-brand text-white" : "bg-tint text-navy"}`}>
-                    {s.done ? <Check className="h-4 w-4" aria-hidden="true" /> : i + 1}
-                  </span>
-                  <p className="mt-1.5 text-[13.5px] font-extrabold leading-tight text-navy">{s.t}</p>
-                  {s.note && <p className="mt-0.5 text-[12px] leading-snug text-body">{s.note}</p>}
-                </li>
-              ))}
-            </ol>
+            <div>
+              {/* Where they are: the request, folded to a tick unless tapped,
+                  then the one thing that happens next. */}
+              <div className="flex items-stretch">
+                <button
+                  type="button"
+                  onClick={() => setShowSent((v) => !v)}
+                  aria-expanded={showSent}
+                  aria-label={showSent ? "Request sent" : "Request sent, show"}
+                  className="mc-step-first flex min-h-[52px] shrink-0 items-center gap-2 bg-navy pl-3.5 pr-6 text-[13.5px] font-extrabold text-white"
+                >
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                  {showSent && <span className="whitespace-nowrap">Request sent</span>}
+                </button>
+                <div className="mc-step -ml-1.5 flex min-h-[52px] min-w-0 flex-1 items-center bg-brand py-2 pl-6 pr-6 text-white">
+                  <span className="text-[14.5px] font-extrabold leading-tight">We'll be in touch, usually the same working day</span>
+                </div>
+              </div>
+
+              <p className="label-caps mt-5 text-[11px]">What to expect</p>
+              <ol className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:gap-0">
+                {[
+                  { t: "A home assessment", d: "If it is needed, ₦35,000, before any care starts" },
+                  { t: "A match", d: "A carer chosen for the plan and the person" },
+                  { t: "Care begins", d: "On the days you agree" },
+                ].map((step, i) => (
+                  <li
+                    key={step.t}
+                    className={`flex min-h-[56px] flex-col justify-center bg-tint py-2 pr-6 text-navy sm:flex-1 ${
+                      i === 0 ? "mc-step-first pl-4" : "mc-step pl-4 sm:-ml-1.5 sm:pl-6"
+                    }`}
+                  >
+                    <span className="text-[14px] font-extrabold leading-tight">{step.t}</span>
+                    <span className="mt-0.5 text-[12.5px] leading-snug text-body">{step.d}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
             <p className="text-[15px] leading-[1.55] text-body">
               Send your answers on WhatsApp now and the coordinator can start straight away, without asking again.
             </p>
