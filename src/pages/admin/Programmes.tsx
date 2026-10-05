@@ -3,7 +3,7 @@
 // Navigation composition only. Each row opens the existing Admin workspace for
 // that programme; nothing about how those workspaces behave changes here.
 import { useEffect, useState } from "react";
-import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
+import { MuEmpty, MuPage, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import { Status } from "@/components/field";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,25 +45,31 @@ const Programmes = () => {
   }, [isSuperAdmin, permissions]);
 
   return (
-    <section className="mx-auto w-full max-w-[960px]" aria-labelledby="programmes-heading">
-      <ConsolePageHeader id="programmes-heading" title="Programmes" description="Medic Connect programmes and the applications waiting on each one." />
-      <ConsoleMobileList
-        className="block"
-        emptyLabel="No programmes"
-        rows={rows.map((row) => ({
-          key: row.key,
-          title: row.title,
-          state: row.detail,
-          status: (
-            <Status
-              label={row.open === 1 ? "One new application" : `${row.open} new applications`}
-              tone={row.open > 0 ? "info" : "neutral"}
-            />
-          ),
-          to: row.to,
-        }))}
-      />
-    </section>
+    <MuPage>
+      <MuPageHeader title="Programmes" description="Medic Connect programmes and the applications waiting on each one." />
+      {rows.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty title="No programmes" description="Programmes you have access to will be listed here." />
+        </MuSection>
+      ) : (
+        <ConsoleMobileList
+          className="block border-line"
+          emptyLabel="No programmes"
+          rows={rows.map((row) => ({
+            key: row.key,
+            title: row.title,
+            state: row.detail,
+            status: (
+              <Status
+                label={row.open === 1 ? "One new application" : `${row.open} new applications`}
+                tone={row.open > 0 ? "info" : "neutral"}
+              />
+            ),
+            to: row.to,
+          }))}
+        />
+      )}
+    </MuPage>
   );
 };
 

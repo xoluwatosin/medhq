@@ -9,9 +9,10 @@ import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import { Megaphone } from "lucide-react";
+import { art } from "@/components/mc/art";
 
 interface Campaign {
   id: string; title: string; subject: string; content: string; status: string; audience_type: string;
@@ -21,7 +22,7 @@ interface Campaign {
   sent_at: string | null; created_at: string;
 }
 
-const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : "—");
+const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : "None");
 
 const statusTone: Record<string, "neutral" | "info" | "good"> = { draft: "neutral", scheduled: "info", sent: "good" };
 
@@ -72,29 +73,39 @@ const Campaigns = () => {
   const resendFailed = async (c: Campaign) => {
     const failed = (c.total_recipients || 0) - (c.total_delivered || 0);
     if (failed <= 0) { toast({ title: "Nothing to retry", description: "All recipients were delivered." }); return; }
-    toast({ title: `Retrying ${failed} failed recipients…` });
+    toast({ title: `Retrying ${failed} failed recipients` });
     const { data, error } = await supabase.functions.invoke("send-campaign", { body: { campaignId: c.id, resendFailedOnly: true } });
     if (error) toast({ title: "Retry failed", description: error.message, variant: "destructive" });
-    else { toast({ title: `Retry complete`, description: `Sent: ${data?.totalSent ?? 0} · Still failed: ${data?.totalFailed ?? 0}` }); fetchCampaigns(); }
+    else { toast({ title: `Retry complete`, description: `Sent: ${data?.totalSent ?? 0}. Still failed: ${data?.totalFailed ?? 0}.` }); fetchCampaigns(); }
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Campaigns</h1>
-        <Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New Campaign</Button>
-      </div>
-      <div className="hidden md:block overflow-x-auto rounded-lg border bg-card">
+    <div className="space-y-6">
+      <MuPageHeader
+        title="Campaigns"
+        description="Email campaigns to patients, carers and staff, with delivery and open rates."
+        actions={<Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New campaign</Button>}
+      />
+      {campaigns.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            art={art.objEnvelope}
+            title="No campaigns yet"
+            description="Start a campaign to write, preview and send an email."
+            action={<Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New campaign</Button>}
+          />
+        </MuSection>
+      ) : (
+      <>
+      <div className="hidden overflow-x-auto border border-line bg-card md:block">
         <Table>
           <TableHeader>
-            <TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Recipients</TableHead><TableHead>Delivered</TableHead><TableHead>Opened</TableHead><TableHead>Clicked</TableHead><TableHead>Date</TableHead><TableHead className="w-24" /></TableRow>
+            <TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Recipients</TableHead><TableHead>Delivered</TableHead><TableHead>Opened</TableHead><TableHead>Clicked</TableHead><TableHead>Date</TableHead><TableHead className="w-24"><span className="sr-only">Actions</span></TableHead></TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow>
-            ) : campaigns.map((c) => (
+            {campaigns.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">
                   <div>{c.title || "Untitled"}</div>
@@ -131,8 +142,8 @@ const Campaigns = () => {
                 <TableCell className="text-muted-foreground text-sm">{c.sent_at ? format(new Date(c.sent_at), "dd MMM yyyy") : format(new Date(c.created_at), "dd MMM yyyy")}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" asChild><Link to={`/admin/campaigns/${c.id}`}><Pencil className="h-4 w-4" /></Link></Button>
-                    <Button variant="ghost" size="icon" onClick={() => duplicate(c)}><Copy className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" asChild><Link to={`/admin/campaigns/${c.id}`} aria-label="Edit"><Pencil className="h-4 w-4" /></Link></Button>
+                    <Button variant="ghost" size="icon" onClick={() => duplicate(c)} title="Duplicate" aria-label="Duplicate"><Copy className="h-4 w-4" /></Button>
                     {c.status === "sent" && (c.total_recipients - c.total_delivered) > 0 && (
                       <ConfirmAction
                         title="Retry the failed recipients?"
@@ -143,7 +154,7 @@ const Campaigns = () => {
                       />
                     )}
                     <AlertDialog>
-                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Delete" aria-label="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>Delete campaign?</AlertDialogTitle><AlertDialogDescription>This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteCampaign(c.id)}>Delete</AlertDialogAction></AlertDialogFooter>
@@ -162,11 +173,13 @@ const Campaigns = () => {
         rows={campaigns.map((c) => ({
           key: c.id,
           title: c.title || "Untitled",
-          state: `${c.total_recipients} recipients · ${c.sent_at ? format(new Date(c.sent_at), "dd MMM yyyy") : format(new Date(c.created_at), "dd MMM yyyy")}`,
+          state: `${c.total_recipients} recipients, ${c.sent_at ? format(new Date(c.sent_at), "dd MMM yyyy") : format(new Date(c.created_at), "dd MMM yyyy")}`,
           status: <MuStatus label={c.status} tone={statusTone[c.status] ?? "neutral"} />,
           to: `/admin/campaigns/${c.id}`,
         }))}
       />
+      </>
+      )}
     </div>
   );
 };

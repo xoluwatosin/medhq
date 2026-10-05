@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, ArrowRight, ClipboardList, Inbox, Loader2, ShieldCheck, UserPlus } from "lucide-react";
-import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
+import { MuEmpty, MuPage, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminDb } from "@/lib/admin-utils";
@@ -68,29 +68,35 @@ const Dashboard = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>;
 
   return (
-    <section className="mx-auto w-full max-w-[960px]" aria-labelledby="overview-heading">
-      <ConsolePageHeader id="overview-heading" title="Overview" description="Work that needs attention across Medic Connect." />
-      <div className="border border-line-soft bg-card">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] border-b border-line-soft bg-grey-pill px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-copy">
-          <span>Work</span><span>Open</span>
-        </div>
-        <div className="divide-y divide-line-soft">
-          {work.map((item) => (
-            <div key={item.title} className="flex min-h-[68px] items-center gap-3 px-4 py-3">
-              <item.icon className="h-5 w-5 shrink-0 text-muted-copy" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-navy">{item.title}</p>
-                <p className="text-xs text-muted-copy">{item.detail}</p>
-              </div>
-              <span className="min-w-8 text-right text-lg font-semibold tabular-nums text-ink">{item.count}</span>
-              <Button asChild variant="ghost" size="icon" aria-label={`Open ${item.title}`}>
-                <Link to={item.to}><ArrowRight className="h-4 w-4" /></Link>
-              </Button>
+    <MuPage>
+      <MuPageHeader title="Overview" description="Work that needs attention across Medic Connect." />
+      <MuSection padded={false}>
+        {work.length === 0 ? (
+          <MuEmpty title="Nothing to show" description="Your access does not include any work queues yet." />
+        ) : (
+          <>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] border-b border-line-soft px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-label">
+              <span>Work</span><span className="pr-12">Open</span>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
+            <div className="divide-y divide-line-soft">
+              {work.map((item) => (
+                <div key={item.title} className="flex min-h-[68px] items-center gap-3 px-5 py-3">
+                  <item.icon className="h-5 w-5 shrink-0 text-muted-copy" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-navy">{item.title}</p>
+                    <p className="text-xs text-muted-copy">{item.detail}</p>
+                  </div>
+                  <span className="min-w-8 text-right text-lg font-semibold tabular-nums text-ink">{item.count}</span>
+                  <Button asChild variant="ghost" size="icon" aria-label={`Open ${item.title}`}>
+                    <Link to={item.to}><ArrowRight className="h-4 w-4" /></Link>
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </MuSection>
+    </MuPage>
   );
 };
 

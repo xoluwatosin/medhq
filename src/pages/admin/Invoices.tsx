@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvoiceList } from "@/components/admin/invoice/InvoiceList";
 import { InvoiceBuilder } from "@/components/admin/invoice/InvoiceBuilder";
 import { CatalogueTab } from "@/components/admin/invoice/CatalogueTab";
+import { MuPageHeader } from "@/components/admin/mu/MuShell";
 import { BookOpen, FileText, Plus } from "lucide-react";
 
 const Invoices = () => {
@@ -11,8 +12,8 @@ const Invoices = () => {
   const [tab, setTab] = useState("invoices");
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Invoices</h1>
+    <div className="space-y-6">
+      <MuPageHeader title="Invoices" description="Raise invoices, send payment links and keep the service catalogue current." />
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>

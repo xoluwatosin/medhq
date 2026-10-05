@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { adminDb } from "@/lib/admin-utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Loader2, Archive, ArchiveRestore } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface Post {
   id: string;
@@ -68,33 +69,45 @@ const PostsList = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold font-serif">Blog posts</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
-            <Label htmlFor="show-archived" className="text-sm text-muted-foreground">Archived</Label>
-          </div>
-          <Button asChild><Link to="/admin/posts/new"><Plus className="mr-2 h-4 w-4" />New post</Link></Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <MuPageHeader
+        title="Blog posts"
+        description="Articles for the public site. Drafts stay private until they are published."
+        actions={
+          <>
+            <div className="flex items-center gap-2 pr-2">
+              <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+              <Label htmlFor="show-archived" className="text-sm text-muted-foreground">Show archived</Label>
+            </div>
+            <Button asChild><Link to="/admin/posts/new"><Plus className="mr-2 h-4 w-4" />New post</Link></Button>
+          </>
+        }
+      />
       {filteredPosts.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12">
-          {showArchived ? "No archived posts." : "No posts yet. Create your first one!"}
-        </p>
+        <MuSection padded={false}>
+          {showArchived ? (
+            <MuEmpty art={art.objFolderDocuments} title="No archived posts" description="Posts you archive appear here and can be restored." />
+          ) : (
+            <MuEmpty
+              art={art.objFolderDocuments}
+              title="No posts yet"
+              description="Write the first article for the public site."
+              action={<Button asChild><Link to="/admin/posts/new"><Plus className="mr-2 h-4 w-4" />New post</Link></Button>}
+            />
+          )}
+        </MuSection>
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y divide-line-soft border border-line bg-card">
           {filteredPosts.map((post) => (
-            <div key={post.id} className="flex items-center justify-between gap-3 p-4 border rounded-lg bg-card">
+            <div key={post.id} className="flex items-center justify-between gap-3 px-5 py-4">
               <div className="min-w-0">
-                <h3 className="font-medium">{post.title}</h3>
+                <h3 className="font-semibold text-navy">{post.title}</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <Badge variant={post.status === "published" ? "default" : "secondary"}>{post.status}</Badge>
-                  {post.category && <Badge variant="outline">{post.category}</Badge>}
-                  {post.archived && <Badge variant="secondary" className="text-xs">Archived</Badge>}
-                  {post.approval_status === "pending" && <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">Pending Approval</Badge>}
-                  {post.approval_status === "rejected" && <Badge variant="outline" className="text-xs border-destructive text-destructive">Rejected</Badge>}
+                  <MuStatus label={post.status} tone={post.status === "published" ? "good" : "neutral"} />
+                  {post.category && <MuStatus label={post.category} tone="info" />}
+                  {post.archived && <MuStatus label="Archived" />}
+                  {post.approval_status === "pending" && <MuStatus label="Pending approval" tone="warning" />}
+                  {post.approval_status === "rejected" && <MuStatus label="Rejected" tone="bad" />}
                   {post.author && (
                     <span className="text-xs text-foreground/80">
                       Byline: <span className="font-medium">{post.author}</span>
@@ -107,7 +120,7 @@ const PostsList = () => {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Button variant="ghost" size="icon" asChild className="h-11 w-11">
-                  <Link to={`/admin/posts/${post.id}`}><Pencil className="h-4 w-4" /></Link>
+                  <Link to={`/admin/posts/${post.id}`} aria-label="Edit"><Pencil className="h-4 w-4" /></Link>
                 </Button>
                 <div className="hidden md:flex items-center gap-2">
                   <Button
@@ -120,7 +133,7 @@ const PostsList = () => {
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" title="Delete" aria-label="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
