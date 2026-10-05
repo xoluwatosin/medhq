@@ -29,7 +29,7 @@ const KitPageHero = ({
   <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
     <Watermark glyph={glyph} size={460} opacity={0.12} className="-right-[150px] -top-[40px]" />
     <div className="relative mx-auto flex max-w-[1440px] items-end gap-8 px-[22px] sm:px-[50px]">
-      <div className={cn("min-w-0 max-w-[820px] flex-1 pb-14 sm:pb-20", art && "pb-[150px] md:pb-20")}>
+      <div className={cn("min-w-0 max-w-[820px] flex-1 pb-14 sm:pb-20", art && !children && "pb-[150px] md:pb-20")}>
         <p className="eyebrow text-brand-soft">{eyebrow}</p>
         <div className="mt-3 lg:mt-4">
           <KitPillHeading text={title} accent={accent} align="left" size={title.split(" ").length > 4 ? "md" : "lg"} />
@@ -45,7 +45,10 @@ const KitPageHero = ({
           alt=""
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute bottom-0 right-[22px] h-[140px] w-auto object-contain object-bottom md:static md:ml-auto md:h-[250px] md:shrink-0 lg:mr-[4%] lg:h-[300px]",
+            // On a phone the art stands beside the buttons when there are any,
+            // and below the text otherwise, so the band stays short.
+            children ? "h-[120px]" : "h-[140px]",
+            "pointer-events-none absolute bottom-0 right-[22px] w-auto object-contain object-bottom md:static md:ml-auto md:h-[250px] md:shrink-0 lg:mr-[4%] lg:h-[300px]",
             artClassName,
           )}
         />
