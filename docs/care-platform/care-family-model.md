@@ -258,10 +258,10 @@ can be checked row by row.
 | Step | Change | Data work |
 |---|---|---|
 | 1 | Clear the test records | Done in `supabase/migrations/20261005150000_remove_test_care_records.sql`: 10 marked on 5 October, runs at cutover |
-| 2 | Every care record gets a person | Create the missing person rows from the care record; add `clients.person_id`, then make it required |
-| 3 | One relationship convention | Every form asks the contact's relationship to the service user; flip the intake answers saved the other way round (re-checked by staff); one vocabulary; the household tab reads the contact rows |
-| 4 | Roles per care record | Contact rows stop storing copies of name and phone and read the person; add payer and emergency contact flags; backfill the enquirer on the 6 requests missing it |
-| 5 | Authority in one place | Retire the old contact authority fields (unused) |
+| 2 | Every care record gets a person | Done in `supabase/migrations/20261005160000_care_family_steps_2_to_5.sql`, runs at cutover. `clients.person_id` is required; self-enquirers share one person with their contact row (now labelled Self); new records take the person the intake names, and a record added by hand gets its own |
+| 3 | One relationship convention | Done, same file. Forms ask "You are Bukayo's…" and "This contact is the client's…"; the household sync records contact to service user with the inverse; Belewu corrected to Mother; any other old answer is listed at cutover for staff, never guessed. Also fixes the public form refusing "for myself" requests (the Self term was missing) |
+| 4 | Roles per care record | Partly done, same file: the enquirer is backfilled on every request; contacts gain next of kin and emergency contact flags (no screen yet). Still to do: contact rows stop storing copies of name and phone and read the person; the payer flag moves to step 10 |
+| 5 | Authority in one place | Done, same file: the three unused contact authority columns are dropped, guarded by a check that they are empty |
 | 6 | One home address | Household address is the home; move differing care-record addresses into a care address only where they really differ (2 records to check) |
 | 7 | Membership without roles | One member row per person per household |
 | 8 | Matching at intake | Offer existing people and households for staff to confirm; a merge function for care-side duplicates like the talent one |

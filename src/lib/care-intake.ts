@@ -82,7 +82,7 @@ export interface IntakePerson {
 export interface IntakeRecipient extends IntakePerson {
   /** Stable within one request, so answers never move between people. */
   id: string;
-  /** Relationship to the person asking. Absent when they are the same person. */
+  /** What the person asking is to this recipient, e.g. "Mother". Absent when they are the same person. */
   relationship?: string;
   relationshipOther?: string;
   /** True when the person asking is also receiving care. */

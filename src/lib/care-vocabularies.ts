@@ -55,7 +55,9 @@ const labelFrom = (terms: Term[], code: string | null | undefined, fallback = "N
 
 export const sexLabel = (code?: string | null) => labelFrom(SEX_TERMS, code);
 export const relationshipLabel = (code?: string | null, other?: string | null) =>
-  code === "other" ? (other?.trim() || "Other") : labelFrom(RELATIONSHIP_TERMS, code, "Relationship not recorded");
+  code === "other" ? (other?.trim() || "Other")
+    : code === "self" ? "Self"
+    : labelFrom(RELATIONSHIP_TERMS, code, "Relationship not recorded");
 export const languageLabel = (code?: string | null) => labelFrom(LANGUAGE_TERMS, code);
 export const stateLabel = (code?: string | null) => labelFrom(STATE_TERMS, code);
 export const lgaLabel = (stateCode?: string | null, code?: string | null) =>

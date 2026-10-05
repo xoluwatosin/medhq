@@ -403,7 +403,7 @@ const Clients = () => {
                   </div>
                   <div className="grid gap-2">
                     <SearchableSelect
-                      label="Relationship to the client"
+                      label="The contact is the client's"
                       value={form.contact_relationship}
                       onChange={set("contact_relationship")}
                       options={RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label }))}

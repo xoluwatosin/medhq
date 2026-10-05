@@ -1144,10 +1144,13 @@ const ClientRecord = () => {
               </CareFormRow>
             ))}
             <SearchableSelect
-              label="Relationship"
+              label="This contact is the client's"
               value={editingContact.relationship_code ?? ""}
               onChange={(v) => setEditingContact({ ...editingContact, relationship_code: v })}
-              options={RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label }))}
+              options={[
+                ...(editingContact.relationship_code === "self" ? [{ value: "self", label: "Self" }] : []),
+                ...RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label })),
+              ]}
             />
             {editingContact.relationship_code === "other" && (
               <CareFormRow label="Relationship, in their words">

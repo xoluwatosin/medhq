@@ -228,7 +228,7 @@ export const CareIntakeFlow = ({
         </Field>
 
         {!r.isEnquirer && (
-          <Field label="Relationship to you" error={problem(`${r.id}.relationship`)}>
+          <Field label={`You are ${r.firstName.trim() ? `${r.firstName.trim()}'s` : "their"}`} error={problem(`${r.id}.relationship`)}>
             <Select
               value={r.relationship ?? ""}
               onValueChange={(value) => setRecipient(r.id, { relationship: value })}

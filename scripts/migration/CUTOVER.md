@@ -28,8 +28,9 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
     - `supabase/migrations/20261005090500_approval_notes.sql` (send-back reasons on Approvals)
     - `supabase/migrations/20261005120000_remove_heard.sql` (Heard has moved; the export brings its tables back)
     - `supabase/migrations/20261005150000_remove_test_care_records.sql` (the 10 test care records staff marked on 5 October; keyed on enquiry number; aborts if any of the 4 kept records would go)
+    - `supabase/migrations/20261005160000_care_family_steps_2_to_5.sql` (every care record gets a person; relationships the clinical way round; drops the unused contact authority columns). Read its NOTICE lines: any listed record needs staff to check the relationship
     - any later file in `supabase/migrations/` dated after 20261003231023
-    Check with: `select proname from pg_proc where proname = 'mu_merge_people';` (one row) and `select count(*) from information_schema.tables where table_name ilike 'heard%';` (0).
+    Check with: `select proname from pg_proc where proname = 'mu_merge_people';` (one row), `select count(*) from information_schema.tables where table_name ilike 'heard%';` (0) and `select count(*) from clients where person_id is null;` (0).
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.
 8. Copy storage files from the old buckets (`applications`, `care-uploads`, `blog-images`, `creator-uploads`). Delete the `database_export_*` bucket.
 9. Point DNS for medicconnect.co at the new host.
