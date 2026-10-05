@@ -264,7 +264,7 @@ export default function Intelligence() {
     <MuPage>
       <MuPageHeader
         title="Insights"
-        description={`Intake health, campaign funnels and candidate flow. Refreshed ${lastRefreshed ? new Date(lastRefreshed).toLocaleString("en-GB") : "never"}.`}
+        description={`Intake health, campaign funnels and candidate flow. ${lastRefreshed && !Number.isNaN(new Date(lastRefreshed).getTime()) ? `Refreshed ${new Date(lastRefreshed).toLocaleString("en-GB")}.` : "Not refreshed yet."}`}
         actions={
           <Button size="sm" variant="outline" onClick={doRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-1 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />

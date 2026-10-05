@@ -75,7 +75,7 @@ export const adminDomains: AdminDomain[] = [
     icon: Orbit,
     url: "/admin/match-universe",
     items: [
-      { title: "Talent Pool", url: "/admin/match-universe", icon: Orbit, perm: "match_universe", exact: true, keywords: "Candidates candidate pool Match Universe register nurses talent" },
+      { title: "Talent pool", url: "/admin/match-universe", icon: Orbit, perm: "match_universe", exact: true, keywords: "Candidates candidate pool Match Universe register nurses talent" },
       { title: "Intake", url: "/admin/match-universe/intake", icon: Inbox, perm: "match_universe", keywords: "Candidate intake front of funnel parsing new arrivals applications" },
       { title: "Opportunities", url: "/admin/match-universe/opportunities", icon: Briefcase, perm: "match_universe", keywords: "Match Universe jobs roles vacancies recruitment" },
       { title: "Staffing requests", url: "/admin/match-universe/requests", icon: ClipboardList, perm: "match_universe", keywords: "Client requests staffing brief client need matching" },
@@ -131,7 +131,7 @@ export const adminDomains: AdminDomain[] = [
     items: [
       { title: "Campaigns", url: "/admin/campaigns", icon: Megaphone, perm: "campaigns", keywords: "email send broadcast" },
       { title: "Audience", url: "/admin/audience", icon: Users, perm: "audience", keywords: "subscribers groups lists" },
-      { title: "Email Library", url: "/admin/email-templates", icon: MailOpen, perm: "email_templates", keywords: "email templates kit recipes transactional" },
+      { title: "Email library", url: "/admin/email-templates", icon: MailOpen, perm: "email_templates", keywords: "email templates kit recipes transactional" },
     ],
   },
   {
