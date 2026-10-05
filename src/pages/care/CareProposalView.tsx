@@ -7,11 +7,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, MessageSquareText, PhoneCall, Send } from "lucide-react";
 import {
-  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilyShell, FamilyText,
-  familyOnNavy, familyPrimary, familySecondary,
+  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilySection, FamilyShell, FamilyText,
+  familyInput, familyOnNavy, familyPrimary, familySecondary,
 } from "@/components/care/FamilyShell";
+import { art } from "@/components/mc/art";
+import { ClipArt, NotchTag } from "@/components/mc/brand";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
 import { formatDateTime } from "@/lib/format";
@@ -49,8 +51,13 @@ const SECTION_TITLES: Record<string, string> = {
 const sectionTitle = (key: string) =>
   SECTION_TITLES[key] ?? (key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
 
-const inputClass =
-  "w-full rounded-[10px] border border-[#C9C5BC] bg-card px-4 py-3 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
+const inputClass = `${familyInput} py-3`;
+
+const CHOICE_ICONS: Record<ProposalResponseKind, typeof Check> = {
+  agreed: Check,
+  changes_requested: MessageSquareText,
+  call_requested: PhoneCall,
+};
 
 const CareProposalView = () => {
   const [params] = useSearchParams();
@@ -137,13 +144,15 @@ const CareProposalView = () => {
     <FamilyShell
       eyebrow="Care proposal"
       title={person ? `Proposed care for ${person.display_name}` : "Proposed care and support"}
+      accent={[1]}
+      art={art.charDoctor}
       lead="This is what we propose after the assessment. It is not the final care plan, and nothing starts until we have spoken with you."
       path="/care/proposal"
       action={<Link to="/care" className={familyOnNavy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Your care</Link>}
     >
       {clients.length > 1 && (
         <FamilyCard>
-          <label className="block text-[14.5px] font-semibold text-ink" htmlFor="proposal-person">Who this is about</label>
+          <label className="label-caps block text-[12px] text-label" htmlFor="proposal-person">Who this is about</label>
           <select
             id="proposal-person"
             className={`${inputClass} mt-2 min-h-12`}
@@ -161,20 +170,25 @@ const CareProposalView = () => {
         <FamilyCard><FamilyLoading label="Loading the care proposal" /></FamilyCard>
       ) : rows.length === 0 ? (
         <FamilyCard>
-          <FamilyHeading>No proposal yet</FamilyHeading>
-          <FamilyText className="mt-1">
-            We write the proposal after the home care needs assessment. We will tell you when it is ready to read.
-          </FamilyText>
+          <div className="flex items-center gap-5">
+            <div className="min-w-0 flex-1">
+              <FamilyHeading>No proposal yet</FamilyHeading>
+              <FamilyText className="mt-2">
+                We write the proposal after the care needs assessment. We will tell you when it is ready to read.
+              </FamilyText>
+            </div>
+            <ClipArt src={art.objCarePlan} size={104} className="hidden sm:block" />
+          </div>
         </FamilyCard>
       ) : !current ? (
         <FamilyCard>
           <FamilyHeading>This version has been replaced</FamilyHeading>
-          <FamilyText className="mt-1">The proposal you were sent has been replaced or withdrawn. The care team will send the new one.</FamilyText>
+          <FamilyText className="mt-2">The proposal you were sent has been replaced or withdrawn. The care team will send the new one.</FamilyText>
         </FamilyCard>
       ) : content === null ? (
         <FamilyCard>
           <FamilyHeading>Version {current.version}</FamilyHeading>
-          <FamilyText className="mt-1">
+          <FamilyText className="mt-2">
             A proposal was sent{current.sent_at ? ` on ${formatDateTime(current.sent_at)}` : ""}, but it is not shared
             with you. Ask the care team if you should be able to read it.
           </FamilyText>
@@ -182,47 +196,63 @@ const CareProposalView = () => {
       ) : (
         <>
           <FamilyCard>
-            <span className="label-caps text-[11px] text-label">
-              Version {current.version}{current.sent_at ? `, sent ${formatDateTime(current.sent_at)}` : ""}
-            </span>
-            <div className="mt-3 flex flex-col divide-y divide-hairline-warm">
-              {parts.map((part) => (
-                <div key={part.key} className="py-4 first:pt-1 last:pb-0">
-                  <h2 className="text-[17px] font-semibold text-ink">{sectionTitle(part.key)}</h2>
-                  <p className="mt-1.5 whitespace-pre-wrap text-[15.5px] leading-relaxed text-body">{part.note}</p>
-                </div>
-              ))}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="inline-flex"><NotchTag tone="navy" size="sm">Version {current.version}</NotchTag></span>
+              {current.sent_at && <span className="text-[13.5px] text-body">Sent {formatDateTime(current.sent_at)}</span>}
             </div>
+            <ol className="mt-5 flex flex-col">
+              {parts.map((part, i) => (
+                <li key={part.key} className="flex gap-4 border-t-2 border-tint py-5 first:border-t-0 first:pt-1 last:pb-0">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center bg-navy text-[13px] font-extrabold tabular-nums text-white"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-[18px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{sectionTitle(part.key)}</h2>
+                    <p className="mt-2 whitespace-pre-wrap text-[15.5px] leading-[1.65] text-body">{part.note}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </FamilyCard>
 
-          <FamilyNote title="About cost">
+          <FamilyNote title="About cost" art={art.objPriceTagNaira}>
             The cost is set out separately in your quotation.
           </FamilyNote>
 
-          <FamilyCard>
+          <FamilyCard className="shadow-offset-blue">
             <FamilyHeading>What would you like to do?</FamilyHeading>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3" role="group" aria-label="Your reply">
-              {RESPONSE_CHOICES.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={choice === option.value}
-                  onClick={() => setChoice(option.value)}
-                  className={cn(
-                    "min-h-12 rounded-[10px] px-4 text-[15px] font-semibold transition-colors",
-                    choice === option.value
-                      ? "border-[1.5px] border-brand bg-tint text-navy"
-                      : "border border-hairline-warm bg-card text-ink hover:border-brand/50",
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="mt-5 grid gap-3 sm:grid-cols-3" role="group" aria-label="Your reply">
+              {RESPONSE_CHOICES.map((option) => {
+                const Icon = CHOICE_ICONS[option.value];
+                const on = choice === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setChoice(option.value)}
+                    className={cn(
+                      "flex min-h-14 items-center gap-3 border-2 border-navy px-4 text-left text-[15px] font-extrabold transition-all duration-150",
+                      on
+                        ? "translate-x-[2px] translate-y-[2px] bg-brand text-white"
+                        : "bg-card text-navy shadow-offset-sm hover:bg-tint",
+                    )}
+                  >
+                    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center", on ? "bg-white text-brand" : "bg-tint text-navy")}>
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
 
             {choice && (
-              <label className="mt-4 block">
-                <span className="text-[14.5px] font-semibold text-ink">
+              <label className="mt-5 block">
+                <span className="label-caps block text-[12px] text-label">
                   {choice === "changes_requested" ? "What should change?" : "Anything you want to add (optional)"}
                 </span>
                 <textarea
@@ -235,9 +265,9 @@ const CareProposalView = () => {
             )}
             {needsComment && <p className="mt-2 text-[14px] text-warn-ink">Tell us what should change before you send.</p>}
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-3">
               <button type="button" className={familyPrimary} disabled={busy || !choice || needsComment} onClick={() => void respond()}>
-                Send my reply
+                <Send className="h-4 w-4" aria-hidden="true" /> Send my reply
               </button>
               {choice && (
                 <button type="button" className={familySecondary} onClick={() => { setChoice(""); setComment(""); }}>
@@ -253,17 +283,19 @@ const CareProposalView = () => {
       )}
 
       {!loading && earlier.length > 0 && (
-        <FamilyCard>
-          <FamilyHeading>Earlier versions</FamilyHeading>
-          <ul className="mt-2 flex flex-col gap-1">
+        <FamilySection label="Earlier versions">
+          <ul className="flex flex-col gap-2">
             {earlier.map((row) => (
-              <li key={row.proposal_id} className="text-[14.5px] text-body">
-                Version {row.version}: {(proposalStatusLabel[row.status] ?? row.status).toLowerCase()}
-                {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
+              <li key={row.proposal_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-2 border-tint-deep bg-card px-4 py-3">
+                <b className="text-[14.5px] font-extrabold text-navy">Version {row.version}</b>
+                <span className="text-[14.5px] text-body">
+                  {proposalStatusLabel[row.status] ?? row.status}
+                  {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
+                </span>
               </li>
             ))}
           </ul>
-        </FamilyCard>
+        </FamilySection>
       )}
     </FamilyShell>
   );

@@ -1,75 +1,103 @@
 // The frame every family-facing care page sits in once the request is made:
-// the invitation, the family's home and the proposal. It is the same navy cap
-// and single reading column as the request and pre-assessment forms, so a
-// family meets one look from the first question to their care record.
+// the invitation, the family's home and the proposal. It is the site's own
+// look, so a family meets one brand from the first question to their care
+// record: a navy band with the tilted-word heading and a character standing
+// on its bottom edge, then square white cards with hard offset shadows.
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
+import KitPillHeading from "@/components/kit/KitPillHeading";
+import { NotchTag, Watermark } from "@/components/mc/brand";
 import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 
 interface FamilyShellProps {
-  /** Small caps label under the logo. */
+  /** The notch tag over the heading. */
   eyebrow: string;
-  /** The page heading. */
+  /** The page heading, set as tilted word blocks. */
   title: string;
+  /** Zero based indices of the heading words filled in brand blue. */
+  accent?: number[];
   /** One or two sentences under the heading. */
   lead?: React.ReactNode;
-  /** Shown at the right of the navy cap, normally Sign out. */
+  /** Shown at the right of the navy band, normally Sign out. */
   action?: React.ReactNode;
+  /** A character that stands on the bottom edge of the band. */
+  art?: string;
   /** Path for the page's SEO entry; family pages are never indexed. */
   path: string;
   children: React.ReactNode;
 }
 
-export const FamilyShell = ({ eyebrow, title, lead, action, path, children }: FamilyShellProps) => (
+export const FamilyShell = ({ eyebrow, title, accent = [], lead, action, art, path, children }: FamilyShellProps) => (
   <div className="flex min-h-dvh w-full flex-col bg-desk">
     <SEO title={`${title} | Medic Connect`} description={title} path={path} noindex />
-    <header className="relative overflow-hidden bg-navy px-4 pb-6 pt-[max(16px,env(safe-area-inset-top))] sm:px-8 sm:pb-8 sm:pt-6">
-      <div
-        className="absolute right-[-30px] top-[-60px] h-44 w-44 rounded-full border-[26px] border-primary-foreground/10"
-        aria-hidden="true"
-      />
-      <div className="relative mx-auto flex w-full max-w-2xl items-center justify-between gap-4">
+    <header className="relative overflow-hidden bg-navy px-4 pt-[max(16px,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
+      <Watermark glyph="o" size={380} opacity={0.12} className="-right-[130px] -top-[70px]" />
+      <div className="relative mx-auto flex w-full max-w-3xl items-center justify-between gap-4">
         <Link to="/" aria-label="Medic Connect home" className="inline-flex min-h-11 items-center">
           <img src={logoWhite} alt="Medic Connect" className="h-8 w-auto" />
         </Link>
         {action}
       </div>
-      <div className="relative mx-auto mt-6 w-full max-w-2xl">
-        <span className="label-caps text-[11px] text-muted-navy">{eyebrow}</span>
-        <h1 className="mt-2 text-[28px] font-medium leading-[1.15] tracking-[-0.025em] text-primary-foreground sm:text-[34px]">
-          {title}
-        </h1>
-        {lead && <p className="mt-2 max-w-xl text-[15.5px] leading-relaxed text-[#C6CBF0]">{lead}</p>}
+      <div className="relative mx-auto flex w-full max-w-3xl items-end gap-4">
+        <div className={cn("min-w-0 flex-1 pb-9 pt-7 sm:pb-12 sm:pt-9", art && "pr-[92px] sm:pr-0")}>
+          <span className="inline-flex"><NotchTag tone="white" size="sm">{eyebrow}</NotchTag></span>
+          <div className="mt-4">
+            <KitPillHeading text={title} accent={accent} align="left" size="md" />
+          </div>
+          {lead && <p className="mt-4 max-w-[54ch] text-[15.5px] leading-[1.6] text-body-navy sm:text-[17px]">{lead}</p>}
+        </div>
+        {art && (
+          <img
+            src={art}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 right-0 h-[118px] w-auto object-contain object-bottom sm:static sm:h-[210px] sm:shrink-0"
+          />
+        )}
       </div>
     </header>
-    <main className="flex-1 px-4 pb-[max(112px,calc(env(safe-area-inset-bottom)+96px))] pt-5 sm:px-8 sm:pt-8">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">{children}</div>
+    <main className="flex-1 px-4 pb-[max(112px,calc(env(safe-area-inset-bottom)+96px))] pt-7 sm:px-8 sm:pt-10">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">{children}</div>
     </main>
   </div>
 );
 
-/** A white panel in the reading column. */
+/** A square white card with a hard offset shadow. */
 export const FamilyCard = ({ className, children }: { className?: string; children: React.ReactNode }) => (
-  <section className={cn("rounded-2xl border border-hairline-warm bg-card p-5 sm:p-6", className)}>{children}</section>
+  <section className={cn("border-2 border-navy bg-card p-5 shadow-offset sm:p-7", className)}>{children}</section>
 );
 
 /** A heading inside a card. */
-export const FamilyHeading = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-[19px] font-semibold leading-snug tracking-[-0.01em] text-ink">{children}</h2>
+export const FamilyHeading = ({ className, children }: { className?: string; children: React.ReactNode }) => (
+  <h2 className={cn("text-[22px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[26px]", className)}>
+    {children}
+  </h2>
+);
+
+/** A section opener between cards: a heavy navy rule and a caps label. */
+export const FamilySection = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <section>
+    <hr className="border-t-4 border-navy" />
+    <p className="eyebrow mt-4">{label}</p>
+    <div className="mt-4">{children}</div>
+  </section>
 );
 
 /** Quiet text under a heading or between parts. */
 export const FamilyText = ({ className, children }: { className?: string; children: React.ReactNode }) => (
-  <p className={cn("text-[15px] leading-relaxed text-body", className)}>{children}</p>
+  <p className={cn("text-[15.5px] leading-[1.6] text-body", className)}>{children}</p>
 );
 
-/** Something to know, on tint. */
-export const FamilyNote = ({ title, children }: { title?: string; children: React.ReactNode }) => (
-  <div className="rounded-xl bg-tint px-4 py-3">
-    {title && <p className="text-[14.5px] font-semibold text-ink">{title}</p>}
-    <div className={cn("text-[14.5px] leading-relaxed text-body", title && "mt-0.5")}>{children}</div>
+/** Something to know, on tint with a brand edge. */
+export const FamilyNote = ({ title, art, children }: { title?: string; art?: string; children: React.ReactNode }) => (
+  <div className="flex items-center gap-4 border-l-4 border-brand bg-tint px-4 py-4 sm:px-5">
+    <div className="min-w-0 flex-1">
+      {title && <p className="text-[15.5px] font-extrabold tracking-[-0.02em] text-navy">{title}</p>}
+      <div className={cn("text-[14.5px] leading-[1.6] text-body", title && "mt-1")}>{children}</div>
+    </div>
+    {art && <img src={art} alt="" aria-hidden="true" className="h-[76px] w-auto shrink-0 object-contain sm:h-[92px]" />}
   </div>
 );
 
@@ -82,12 +110,16 @@ export const FamilyLoading = ({ label }: { label: string }) => (
 
 /** The one thing to do next. */
 export const familyPrimary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] bg-brand px-5 text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-brand/90 disabled:opacity-50";
+  "inline-flex min-h-12 items-center justify-center gap-2 border-2 border-navy bg-brand px-5 text-[15px] font-extrabold text-white shadow-offset-sm transition-all duration-150 hover:bg-navy active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-45";
 
 /** Anything quieter. */
 export const familySecondary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] border-[1.5px] border-hairline-warm bg-card px-5 text-[15px] font-semibold text-ink transition-colors hover:border-brand/50 disabled:opacity-50";
+  "inline-flex min-h-12 items-center justify-center gap-2 border-2 border-navy bg-card px-5 text-[15px] font-extrabold text-navy shadow-offset-sm transition-all duration-150 hover:bg-tint active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-45";
 
-/** Sign out, on the navy cap. */
+/** Sign out and back links, on the navy band. */
 export const familyOnNavy =
-  "inline-flex min-h-11 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-primary-foreground/90 hover:bg-primary-foreground/10";
+  "inline-flex min-h-11 items-center gap-2 border-2 border-outline-navy px-3 text-[14px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy";
+
+/** Square text inputs. */
+export const familyInput =
+  "w-full border-2 border-navy bg-card px-4 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25";

@@ -1,10 +1,12 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
+import { Check, Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { art } from "@/components/mc/art";
+import { ChevronSteps, ClipArt } from "@/components/mc/brand";
 import {
   FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilyShell, FamilyText,
-  familyPrimary, familySecondary,
+  familyInput, familyPrimary, familySecondary,
 } from "@/components/care/FamilyShell";
 
 type InvitationState = "loading" | "open" | "accepted" | "used" | "invalid" | "expired" | "withdrawn" | "unavailable" | "error";
@@ -96,21 +98,22 @@ const CareInvitation = () => {
     if (state === "loading") return <FamilyCard><FamilyLoading label="Opening your invitation" /></FamilyCard>;
     if (state === "open") return (
       <FamilyCard>
+        <div className="mb-6"><ChevronSteps steps={["Your email", "Open the link", "Your care"]} current={sent ? 1 : 0} /></div>
         <FamilyHeading>Confirm it is you</FamilyHeading>
-        <FamilyText className="mt-1">
+        <FamilyText className="mt-2">
           We sent this invitation to {destinationHint || "your email"}. Type that address and we will email you a
           secure link. Opening it signs you in, with no password to remember.
         </FamilyText>
         {sent ? (
-          <div className="mt-4">
-            <FamilyNote title="Check your email">
+          <div className="mt-5">
+            <FamilyNote title="Check your email" art={art.objEnvelope}>
               We have sent a secure link to {email.trim()}. Open it on this device to continue. It can take a minute
               to arrive; check your spam folder if you cannot see it.
             </FamilyNote>
           </div>
         ) : (
           <form className="mt-5 flex flex-col gap-3" onSubmit={sendLink}>
-            <label htmlFor="care-invite-email" className="text-[14.5px] font-semibold text-ink">Your email address</label>
+            <label htmlFor="care-invite-email" className="label-caps block text-[12px] text-label">Your email address</label>
             <input
               id="care-invite-email"
               type="email"
@@ -120,11 +123,11 @@ const CareInvitation = () => {
               placeholder="name@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="min-h-12 rounded-[10px] border border-[#C9C5BC] bg-card px-4 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              className={`${familyInput} min-h-12`}
             />
             {error && <p role="alert" className="text-[14px] text-destructive">{error}</p>}
-            <button type="submit" className={familyPrimary} disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            <button type="submit" className={`${familyPrimary} sm:self-start`} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Mail className="h-4 w-4" aria-hidden="true" />}
               Email me a secure link
             </button>
           </form>
@@ -134,10 +137,10 @@ const CareInvitation = () => {
     if (state === "accepted") return (
       <FamilyCard>
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-brand" aria-hidden="true" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-brand text-white"><Check className="h-5 w-5" aria-hidden="true" /></span>
           <div>
             <FamilyHeading>{personName ? `You are in, ${personName}` : "You are in"}</FamilyHeading>
-            <FamilyText className="mt-1">
+            <FamilyText className="mt-2">
               {scopeNames.length ? `You can follow the ${scopeNames.join(", ")}.` : "Nothing is shared with you yet."}
             </FamilyText>
           </div>
@@ -146,9 +149,14 @@ const CareInvitation = () => {
     );
     return (
       <FamilyCard>
-        <FamilyHeading>{TEXT[state]?.title}</FamilyHeading>
-        <FamilyText className="mt-1">{TEXT[state]?.body}</FamilyText>
-        <Link to="/contact" className={`${familySecondary} mt-4`}>Contact Medic Connect</Link>
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <FamilyHeading>{TEXT[state]?.title}</FamilyHeading>
+            <FamilyText className="mt-2">{TEXT[state]?.body}</FamilyText>
+            <Link to="/contact" className={`${familySecondary} mt-5`}>Contact Medic Connect</Link>
+          </div>
+          <ClipArt src={art.objEnvelopeHeart} size={96} className="hidden sm:block" />
+        </div>
       </FamilyCard>
     );
   })();
@@ -157,18 +165,14 @@ const CareInvitation = () => {
     <FamilyShell
       eyebrow="Invitation"
       title="Follow your family's care"
+      accent={[2]}
+      art={art.charNurse}
       lead="Medic Connect has invited you to see how a care request is going. You only see what the care team chooses to share."
       path={`/care/invitation/${token}`}
     >
       {body}
-      <FamilyNote>
-        <span className="flex gap-2">
-          <LockKeyhole className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>
-            <strong className="font-semibold text-ink">Your care record is private.</strong> Only people the care team
-            has invited can open it, and each person sees only what they need.
-          </span>
-        </span>
+      <FamilyNote title="Your care record is private" art={art.objPadlock}>
+        Only people the care team has invited can open it, and each person sees only what they need.
       </FamilyNote>
     </FamilyShell>
   );
