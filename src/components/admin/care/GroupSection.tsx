@@ -99,7 +99,7 @@ const GroupSection = ({
       setReadiness(selected ? await requestReadiness(selected.id) : null);
       setCoverage(selected ? await requestCoverage(selected.id) : null);
     } catch (error) {
-      toast.error(careErrorMessage(error, "Could not load the family and care group"));
+      toast.error(careErrorMessage(error, "Could not load the family"));
     } finally {
       setLoading(false);
     }
@@ -263,11 +263,11 @@ const GroupSection = ({
     }
   };
 
-  if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading the family and care group</p>;
+  if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading the family</p>;
   if (!overview) {
     return (
-      <MuSection title="Family and care group">
-        <MuEmpty icon={Users} title="No family and care group" />
+      <MuSection title="Family">
+        <MuEmpty icon={Users} title="No family recorded" />
       </MuSection>
     );
   }
@@ -280,7 +280,7 @@ const GroupSection = ({
     <div className="flex flex-col gap-4">
       <MuSection
         title="Request"
-        description="The enquiry this family and care group came from."
+        description="The enquiry this family came from."
         actions={
           canEdit && request?.status === "draft" ? (
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={markOpen}>
@@ -291,16 +291,15 @@ const GroupSection = ({
       >
         <MuTable
           rows={[
-            { label: "Family and care group", value: overview.group.display_name },
+            { label: "Family", value: overview.group.display_name },
             { label: "Status", value: request ? request.status.replace(/_/g, " ") : null },
             { label: "Source", value: request?.source ?? null },
             { label: "Enquirer", value: personName(request?.enquirer_person_id ?? null) },
-            { label: "Address", value: overview.group.address_line },
           ]}
         />
       </MuSection>
 
-      <MuSection title="People" description="Everyone recorded on this family and care group.">
+      <MuSection title="People" description="Everyone recorded in this family.">
         {overview.members.length === 0 ? (
           <MuEmpty icon={Users} title="No people recorded" />
         ) : (
@@ -309,7 +308,7 @@ const GroupSection = ({
               <MuRow
                 key={m.id}
                 title={m.full_name}
-                state={[m.email, m.phone].filter(Boolean).join(" · ") || undefined}
+                state={[m.email, m.phone].filter(Boolean).join(", ") || undefined}
                 status={<Status label={ROLE_LABELS[m.role] ?? m.role} tone="neutral" />}
               />
             ))}

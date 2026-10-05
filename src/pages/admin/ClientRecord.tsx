@@ -43,6 +43,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import WorkSection from "@/components/admin/care/WorkSection";
 import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
+import HomeSection from "@/components/admin/care/HomeSection";
+import { homeOverview, type HomeOverview } from "@/lib/care-records";
 import RecordLifecycle from "@/components/admin/care/RecordLifecycle";
 
 import LanguageCodes from "@/components/admin/care/LanguageCodes";
@@ -148,6 +150,7 @@ const ClientRecord = () => {
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [flags, setFlags] = useState<FlagRow[]>([]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [home, setHome] = useState<HomeOverview | null>(null);
   const [amendments, setAmendments] = useState<AmendmentRow[]>([]);
   const [revisionEvents, setRevisionEvents] = useState<RevisionEventRow[]>([]);
   const [commercial, setCommercial] = useState<Record<string, unknown> | null>(null);
@@ -227,6 +230,7 @@ const ClientRecord = () => {
     setTokens((tokenRes.data ?? []) as unknown as TokenRow[]);
     setFlags((flagRes.data ?? []) as unknown as FlagRow[]);
     setActivity((actRes.data ?? []) as unknown as ActivityRow[]);
+    setHome(await homeOverview(String(id)).catch(() => null));
 
     if (document) {
       const [amendmentResult, revisionResult] = await Promise.all([
@@ -609,7 +613,7 @@ const ClientRecord = () => {
 
   const navGroups = [
     { label: "Record", items: [
-      { value: "overview", label: "Overview" }, { value: "group", label: "Household" }, { value: "work", label: "Tasks" },
+      { value: "overview", label: "Overview" }, { value: "group", label: "Family" }, { value: "work", label: "Tasks" },
     ] },
     { label: "Care journey", items: [
       { value: "responses", label: "Pre-assessment", count: outstanding.length || null },
@@ -716,6 +720,15 @@ const ClientRecord = () => {
           </MuSection>
         )}
 
+        {tab === "overview" && (
+          <HomeSection
+            clientId={String(id)}
+            clientName={String(client.full_name ?? "")}
+            home={home}
+            canEdit={isCoordinator}
+            onChanged={() => { void load(); }}
+          />
+        )}
         {tab === "overview" && <LinkedPeople clientId={String(id)} />}
 
         {tab === "group" && (
@@ -1057,6 +1070,13 @@ const ClientRecord = () => {
         description="What we hold about the person receiving care."
         onSave={saveClient}
       >
+        {home && home.housemates.length > 0 && (
+          <p className="text-[13.5px] text-body">
+            {home.housemates.map((m) => m.full_name).join(", ")} {home.housemates.length === 1 ? "lives" : "live"} here
+            too. A new address is saved for them as well. If {String(client?.full_name ?? "this client")} has moved,
+            use Lives somewhere else on the overview first.
+          </p>
+        )}
         {[
           { key: "first_name", label: "First name" },
           { key: "last_name", label: "Last name" },

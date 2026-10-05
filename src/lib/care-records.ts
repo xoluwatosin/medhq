@@ -140,3 +140,35 @@ export const convertEnquiry = async (input: {
   if (error) throw error;
   return data as unknown as EnquiryConversion;
 };
+
+// A home is an address. Care records under one roof share one, so the
+// address is entered once and every record in it follows a change.
+export interface HomeMate {
+  client_id: string;
+  full_name: string;
+  enquiry_number: string | null;
+}
+
+export interface HomeOverview {
+  home_id: string | null;
+  /** Other care records in this home. */
+  housemates: HomeMate[];
+  /** Care records in the same family living elsewhere. */
+  family: (HomeMate & { address_line: string | null; has_address: boolean })[];
+}
+
+export const homeOverview = async (clientId: string): Promise<HomeOverview> => {
+  const { data, error } = await adminDb().rpc("care_home_overview", { _client_id: clientId });
+  if (error) throw error;
+  return data as HomeOverview;
+};
+
+export const shareHome = async (clientId: string, withClientId: string) => {
+  const { error } = await adminDb().rpc("care_home_share", { _client_id: clientId, _with_client_id: withClientId });
+  if (error) throw error;
+};
+
+export const separateHome = async (clientId: string) => {
+  const { error } = await adminDb().rpc("care_home_separate", { _client_id: clientId });
+  if (error) throw error;
+};
