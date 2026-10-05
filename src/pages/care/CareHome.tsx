@@ -168,6 +168,23 @@ const CareHome = () => {
 
   const first = firstName(name);
 
+  const help = !loading && !error ? (
+    <FamilySection label="Need something?">
+      <FamilyNote title="Your coordinator is a message away" art={art.coordinatorPhone}>
+        Message us on WhatsApp or call, and we will answer as soon as we can.
+        <span className="mt-4 flex flex-col gap-2.5 sm:flex-row lg:flex-col">
+          <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className={familyPrimary}>
+            Message on WhatsApp
+          </a>
+          <a href={`tel:+${WHATSAPP_NUMBER}`} className={familySecondary}>
+            <Phone className="h-4 w-4" aria-hidden="true" /> Call us
+          </a>
+        </span>
+      </FamilyNote>
+      <EmergencyBox className="mt-5" />
+    </FamilySection>
+  ) : undefined;
+
   return (
     <FamilyShell
       eyebrow="Your care"
@@ -176,6 +193,7 @@ const CareHome = () => {
       lead="Where the care has got to, and what comes next. The care team will tell you when something new is ready."
       art={art.charCaregiver}
       path="/care"
+      aside={help}
       action={
         <button type="button" className={familyOnNavy} onClick={() => void supabase.auth.signOut()}>
           <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
@@ -229,22 +247,6 @@ const CareHome = () => {
             </div>
           </FamilyCard>
         ))
-      )}
-      {!loading && !error && (
-        <FamilySection label="Need something?">
-          <FamilyNote title="Your coordinator is a message away" art={art.coordinatorPhone}>
-            Message us on WhatsApp or call, and we will answer as soon as we can.
-            <span className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className={familyPrimary}>
-                Message on WhatsApp
-              </a>
-              <a href={`tel:+${WHATSAPP_NUMBER}`} className={familySecondary}>
-                <Phone className="h-4 w-4" aria-hidden="true" /> Call us
-              </a>
-            </span>
-          </FamilyNote>
-          <EmergencyBox className="mt-5" />
-        </FamilySection>
       )}
     </FamilyShell>
   );

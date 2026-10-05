@@ -169,11 +169,13 @@ const CareInvitation = () => {
       art={art.charNurse}
       lead="Medic Connect has invited you to see how a care request is going. You only see what the care team chooses to share."
       path={`/care/invitation/${token}`}
+      aside={
+        <FamilyNote title="Your care record is private" art={art.objPadlock}>
+          Only people the care team has invited can open it, and each person sees only what they need.
+        </FamilyNote>
+      }
     >
       {body}
-      <FamilyNote title="Your care record is private" art={art.objPadlock}>
-        Only people the care team has invited can open it, and each person sees only what they need.
-      </FamilyNote>
     </FamilyShell>
   );
 };

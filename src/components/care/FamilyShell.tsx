@@ -6,6 +6,7 @@
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
+import Footer from "@/components/Footer";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { NotchTag, Watermark } from "@/components/mc/brand";
 import { cn } from "@/lib/utils";
@@ -26,22 +27,27 @@ interface FamilyShellProps {
   art?: string;
   /** Path for the page's SEO entry; family pages are never indexed. */
   path: string;
+  /** A side column on wide screens (help, notes); it follows the page on a phone. */
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export const FamilyShell = ({ eyebrow, title, accent = [], lead, action, art, path, children }: FamilyShellProps) => (
-  <div className="flex min-h-dvh w-full flex-col bg-desk">
+// The public site's container: 1440 wide with 22 and 50px gutters.
+const CONTAINER = "mx-auto w-full max-w-[1440px] px-[22px] sm:px-[50px]";
+
+export const FamilyShell = ({ eyebrow, title, accent = [], lead, action, art, path, aside, children }: FamilyShellProps) => (
+  <div className="flex min-h-dvh w-full flex-col bg-background">
     <SEO title={`${title} | Medic Connect`} description={title} path={path} noindex />
-    <header className="relative overflow-hidden bg-navy px-4 pt-[max(16px,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
-      <Watermark glyph="o" size={380} opacity={0.12} className="-right-[130px] -top-[70px]" />
-      <div className="relative mx-auto flex w-full max-w-3xl items-center justify-between gap-4">
+    <header className="relative overflow-hidden bg-navy pt-[max(16px,env(safe-area-inset-top))] sm:pt-6">
+      <Watermark glyph="o" size={460} opacity={0.12} className="-right-[150px] -top-[40px]" />
+      <div className={cn(CONTAINER, "relative flex items-center justify-between gap-4")}>
         <Link to="/" aria-label="Medic Connect home" className="inline-flex min-h-11 items-center">
           <img src={logoWhite} alt="Medic Connect" className="h-8 w-auto" />
         </Link>
         {action}
       </div>
-      <div className="relative mx-auto flex w-full max-w-3xl items-end gap-4">
-        <div className={cn("min-w-0 flex-1 pb-9 pt-7 sm:pb-12 sm:pt-9", art && "pr-[92px] sm:pr-0")}>
+      <div className={cn(CONTAINER, "relative flex items-end gap-4")}>
+        <div className={cn("min-w-0 max-w-[820px] flex-1 pb-10 pt-7 sm:pb-16 sm:pt-12", art && "pr-[92px] sm:pr-0")}>
           <span className="inline-flex"><NotchTag tone="white" size="sm">{eyebrow}</NotchTag></span>
           <div className="mt-4">
             <KitPillHeading text={title} accent={accent} align="left" size="md" />
@@ -53,14 +59,18 @@ export const FamilyShell = ({ eyebrow, title, accent = [], lead, action, art, pa
             src={art}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 right-0 h-[118px] w-auto object-contain object-bottom sm:static sm:h-[210px] sm:shrink-0"
+            className="pointer-events-none absolute bottom-0 right-[22px] h-[118px] w-auto object-contain object-bottom sm:static sm:ml-auto sm:h-[230px] sm:shrink-0 lg:mr-[6%] lg:h-[260px]"
           />
         )}
       </div>
     </header>
-    <main className="flex-1 px-4 pb-[max(112px,calc(env(safe-area-inset-bottom)+96px))] pt-7 sm:px-8 sm:pt-10">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">{children}</div>
+    <main className={cn(CONTAINER, "flex-1 py-10 sm:py-16")}>
+      <div className={cn("grid gap-10", aside && "lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-14")}>
+        <div className="flex min-w-0 flex-col gap-8">{children}</div>
+        {aside && <aside className="flex min-w-0 flex-col gap-6">{aside}</aside>}
+      </div>
     </main>
+    <Footer />
   </div>
 );
 

@@ -140,6 +140,34 @@ const CareProposalView = () => {
         .filter((part) => part.note.trim() !== "")
     : [];
 
+  const aside = loading ? undefined : (
+    <>
+      {current && content !== null && (
+        <FamilyNote title="About cost" art={art.objPriceTagNaira}>
+          The cost is set out separately in your quotation.
+        </FamilyNote>
+      )}
+      {earlier.length > 0 && (
+        <FamilySection label="Earlier versions">
+          <ul className="flex flex-col gap-2">
+            {earlier.map((row) => (
+              <li key={row.proposal_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-2 border-tint-deep bg-card px-4 py-3">
+                <b className="text-[14.5px] font-extrabold text-navy">Version {row.version}</b>
+                <span className="text-[14.5px] text-body">
+                  {proposalStatusLabel[row.status] ?? row.status}
+                  {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </FamilySection>
+      )}
+      <FamilyNote title="Questions about the plan?" art={art.coordinatorPhone}>
+        Choose Need a call and your coordinator will ring you to talk it through.
+      </FamilyNote>
+    </>
+  );
+
   return (
     <FamilyShell
       eyebrow="Care proposal"
@@ -148,6 +176,7 @@ const CareProposalView = () => {
       art={art.charDoctor}
       lead="This is what we propose after the assessment. It is not the final care plan, and nothing starts until we have spoken with you."
       path="/care/proposal"
+      aside={aside}
       action={<Link to="/care" className={familyOnNavy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Your care</Link>}
     >
       {clients.length > 1 && (
@@ -218,10 +247,6 @@ const CareProposalView = () => {
             </ol>
           </FamilyCard>
 
-          <FamilyNote title="About cost" art={art.objPriceTagNaira}>
-            The cost is set out separately in your quotation.
-          </FamilyNote>
-
           <FamilyCard className="shadow-offset-blue">
             <FamilyHeading>What would you like to do?</FamilyHeading>
             <div className="mt-5 grid gap-3 sm:grid-cols-3" role="group" aria-label="Your reply">
@@ -282,21 +307,6 @@ const CareProposalView = () => {
         </>
       )}
 
-      {!loading && earlier.length > 0 && (
-        <FamilySection label="Earlier versions">
-          <ul className="flex flex-col gap-2">
-            {earlier.map((row) => (
-              <li key={row.proposal_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-2 border-tint-deep bg-card px-4 py-3">
-                <b className="text-[14.5px] font-extrabold text-navy">Version {row.version}</b>
-                <span className="text-[14.5px] text-body">
-                  {proposalStatusLabel[row.status] ?? row.status}
-                  {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </FamilySection>
-      )}
     </FamilyShell>
   );
 };
