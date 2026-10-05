@@ -31,3 +31,22 @@ screen that uses the shared parts is already right.
    No em dashes, no dot separators. Short.
 8. **Logic is untouched.** The sweep changes how a screen looks and reads,
    never which data it loads or what an action does.
+
+## The sweep rules (loose text and loose groups)
+
+9. **No instruction sentences in the middle of a layout.** A sentence that
+   explains how to use a control becomes the control's placeholder, its label,
+   a disabled state with the reason as placeholder or title, or goes. Section
+   descriptions are one short line or nothing; never repeat what the heading
+   or the tab already says.
+10. **Every group has a container.** Controls that work together (filters,
+    a search with its selects, a set of toggles) sit in one `MuToolbar` or a
+    `border-2 border-navy bg-tint/40 p-3` panel with a small caps label.
+    Content blocks sit in `MuSection` (a card) or open with `MuSectionOpener`
+    (the heavy navy rule) when they hold their own boxes. Never a box inside a
+    box inside a box.
+11. **Say each fact once per screen.** If a count, status or sentence appears
+    in the band, a tile and a section, keep the one where it is acted on.
+12. **Candidate status words:** "Verified" (all required documents accepted)
+    and "Documents complete" (everything required is on file). "Ready" and
+    "Ready for placement" are retired.
