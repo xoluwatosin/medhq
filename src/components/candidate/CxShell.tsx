@@ -83,6 +83,7 @@ export const CxShell = ({
   headerAction,
   footer,
   nav = cxNav,
+  profile,
   children,
 }: {
   title: string;
@@ -93,6 +94,8 @@ export const CxShell = ({
   /** The one primary action. Sticky at the foot on mobile. */
   footer?: ReactNode;
   nav?: CxNavItem[];
+  /** Who is signed in, shown as an ID card at the top of the sidebar. */
+  profile?: { name: string; role?: string; art?: string; verified?: boolean };
   children: ReactNode;
 }) => {
   const { pathname } = useLocation();
@@ -108,9 +111,38 @@ export const CxShell = ({
       <aside className="relative hidden w-[260px] shrink-0 flex-col overflow-hidden bg-navy px-4 py-7 md:flex">
         <Watermark glyph="inf" size={420} opacity={0.12} className="-bottom-[120px] -left-[150px]" />
         <div className="relative z-10 flex h-full flex-col">
-          <Link to="/" className="mb-10 ml-2 block">
+          <Link to="/" className="mb-7 ml-2 block">
             <img src={logoWhite} alt="Medic Connect" className="w-[132px]" />
           </Link>
+          {profile && (
+            <Link
+              to="/portal/details"
+              aria-label="Your details"
+              className="mb-7 block bg-white shadow-[5px_5px_0_hsl(var(--brand))] transition-transform hover:-translate-y-0.5"
+            >
+              <span className="flex items-center justify-between bg-brand px-3 py-1.5">
+                <span className="text-[10px] font-extrabold tracking-[0.16em] text-white">MEDIC CONNECT</span>
+                <span className="text-[10px] font-bold tracking-[0.1em] text-white/80">CANDIDATE</span>
+              </span>
+              <span className="flex items-end gap-3 p-3">
+                <span className="flex h-[68px] w-[56px] shrink-0 items-end justify-center overflow-hidden bg-tint">
+                  <img src={profile.art ?? clipArt.charNurse} alt="" className="h-full w-full object-cover object-top" />
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-[16px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{profile.name}</span>
+                  {profile.role && <span className="truncate text-[12.5px] text-body">{profile.role}</span>}
+                  {profile.verified ? (
+                    <span className="mt-1 flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-[0.1em] text-brand">
+                      <img src={clipArt.objShieldCheck} alt="" className="h-4 w-4 object-contain" />
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="mt-1 text-[11px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground">Profile in progress</span>
+                  )}
+                </span>
+              </span>
+            </Link>
+          )}
           <nav className="flex flex-col gap-1">
             {nav.map((item) => {
               const active = isActive(pathname, item.url);

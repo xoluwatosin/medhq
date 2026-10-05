@@ -7,6 +7,7 @@ import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { CxShell, type CxNavItem } from "@/components/candidate/CxShell";
 import { CxButton } from "@/components/candidate/primitives";
+import { TRACK_ART_BY_ID } from "@/components/candidate/track-art";
 import logo from "@/assets/logo.png";
 
 export const CxPortalPage = ({
@@ -62,7 +63,20 @@ export const CxPortalPage = ({
   return (
     <>
       <SEO title={`${title} | Medic Connect`} description="Your Medic Connect candidate profile." path="/portal" noindex />
-      <CxShell title={title} eyebrow={eyebrow} back={back} nav={nav} headerAction={headerAction} footer={footer}>
+      <CxShell
+        title={title}
+        eyebrow={eyebrow}
+        back={back}
+        nav={nav}
+        headerAction={headerAction}
+        footer={footer}
+        profile={{
+          name: person.full_name || "Your profile",
+          role: person.profession || undefined,
+          art: TRACK_ART_BY_ID[person.track],
+          verified: person.verification_state === "verified",
+        }}
+      >
         {intro && (
           <p className="hidden cx-measure text-[17px] leading-[1.6] text-body md:-mt-2 md:block">{intro}</p>
         )}
