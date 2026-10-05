@@ -6,16 +6,16 @@ import { art } from "@/components/mc/art";
  * sign-in account (user metadata, key "avatar"), so no record changes.
  */
 export const AVATARS: { key: string; label: string; src: string }[] = [
-  { key: "charNurse", label: "Kira John", src: art.charNurse },
-  { key: "nurseWomanCoat", label: "Ngozi Okafor", src: art.nurseWomanCoat },
-  { key: "nurseMan2", label: "Tunde Williams", src: art.nurseMan2 },
-  { key: "charDoctor", label: "Emeka Davies", src: art.charDoctor },
-  { key: "doctorWoman", label: "Amaka Brown", src: art.doctorWoman },
-  { key: "pharmacistMedicineCarton", label: "Grace Adeyemi", src: art.pharmacistMedicineCarton },
-  { key: "scientistSampleRack", label: "Chidi Thompson", src: art.scientistSampleRack },
-  { key: "charCaregiver", label: "Bisi Clarke", src: art.charCaregiver },
-  { key: "carerManJacket", label: "Femi Harrison", src: art.carerManJacket },
-  { key: "nursingStudentTextbooks", label: "Zara Okonkwo", src: art.nursingStudentTextbooks },
+  { key: "charNurse", label: "Kira", src: art.charNurse },
+  { key: "nurseWomanCoat", label: "Ngozi", src: art.nurseWomanCoat },
+  { key: "laundryAttendantLinens", label: "Tolu", src: art.laundryAttendantLinens },
+  { key: "nurseMan2", label: "Tunde", src: art.nurseMan2 },
+  { key: "charDoctor", label: "Emeka", src: art.charDoctor },
+  { key: "doctorWoman", label: "Amaka", src: art.doctorWoman },
+  { key: "laundryAttendantLinens", label: "Tolu", src: art.laundryAttendantLinens },
+  { key: "scientistSampleRack", label: "Chidi", src: art.scientistSampleRack },
+  { key: "charCaregiver", label: "Bisi", src: art.charCaregiver },
+  { key: "nursingStudentTextbooks", label: "Zara", src: art.nursingStudentTextbooks },
 ];
 
 export const avatarFor = (key?: string | null) => AVATARS.find((a) => a.key === key)?.src;
