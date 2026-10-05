@@ -189,9 +189,7 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
                   <TabsTrigger value="single">Add one</TabsTrigger>
                 </TabsList>
                 <TabsContent value="paste" className="space-y-2 pt-3">
-                  <Label className="text-xs text-muted-foreground">
-                    One per line. Accepts <code>email</code>, <code>email, name</code>, or <code>Name &lt;email&gt;</code>.
-                  </Label>
+                  <Label className="text-xs text-muted-foreground">One per line</Label>
                   <Textarea
                     rows={7}
                     value={pasted}

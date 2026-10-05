@@ -227,7 +227,9 @@ const Audience = () => {
         }
       />
       {groups.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="border-2 border-navy bg-tint/40 p-3">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Groups</p>
+          <div className="flex flex-wrap gap-2">
           {groups.map((g) => {
             const count = members.filter((m) => m.group_id === g.id).length;
             return (
@@ -244,6 +246,7 @@ const Audience = () => {
               </DropdownMenu>
             );
           })}
+          </div>
         </div>
       )}
 
@@ -269,17 +272,21 @@ const Audience = () => {
       )}
 
       <div>
-        <div className="relative mb-3 max-w-sm md:hidden">
+        <div className="md:hidden">
+        <MuToolbar>
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search email or name" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
         </div>
-        <details className="mb-3 border border-line-soft bg-card md:hidden">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-medium text-navy">Filter</summary>
-          <div className="space-y-3 px-4 pb-4">
+        <details>
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-navy">Filter</summary>
+          <div className="space-y-3 pb-1">
             <SelectField label="Group" hideLabel value={groupFilter} onChange={onGroupFilter} options={groupFilterOptions} placeholder="All groups" />
             <SelectField label="Engagement" hideLabel value={engagement} onChange={onEngagement} options={engagementOptions} placeholder="Any engagement" />
           </div>
         </details>
+        </MuToolbar>
+        </div>
         <div className="hidden md:block">
           <MuToolbar>
             <div className="relative flex-1 lg:max-w-sm">

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea"; // still used for excerpt
 import { SelectField } from "@/components/field";
-import { MuPageHeader } from "@/components/admin/mu/MuShell";
+import { MuNote, MuPageHeader, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Eye, Pencil, CalendarIcon, Plus, Bell } from "lucide-react";
 import { TEMPLATE_META, TEMPLATE_MAP, PolaroidFrame } from "@/components/blog-templates";
@@ -314,11 +314,12 @@ const PostEditor = () => {
   if (showPreview) {
     return (
       <div>
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="mb-4">
+        <MuToolbar>
           <Button variant="outline" size="sm" onClick={() => setShowPreview(false)}>
             <Pencil className="h-4 w-4 mr-2" />Edit form
           </Button>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 lg:ml-auto">
             <Switch id="preview-dropcap" checked={dropCapEnabled} onCheckedChange={setDropCapEnabled} />
             <Label htmlFor="preview-dropcap" className="text-xs">Drop cap</Label>
           </div>
@@ -332,6 +333,7 @@ const PostEditor = () => {
               {approvalStatus === "pending" ? "Waiting for approval, autosave is off" : "Live story, changes go out when you press Update"}
             </span>
           )}
+        </MuToolbar>
         </div>
 
         <div className="overflow-hidden border border-line bg-background">
@@ -413,7 +415,8 @@ const PostEditor = () => {
 
 
         {/* Schedule + Actions */}
-        <div className="mt-4 space-y-3 border-t border-border pt-4">
+        <div className="mt-4 space-y-3 border-2 border-navy bg-tint/40 p-3">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Publishing</p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Schedule</Label>
@@ -512,16 +515,17 @@ const PostEditor = () => {
 
       <div className="space-y-6">
         {approvalStatus === "rejected" && (
-          <div className="border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
-            <p className="font-semibold text-destructive">Sent back by the approver</p>
-            <p className="mt-1 text-muted-foreground">{approvalNote || "No reason was given."} Make the changes and submit again.</p>
-          </div>
+          <MuNote title="Sent back by the approver" tone="warning">
+            {approvalNote || "No reason was given."}
+          </MuNote>
         )}
         {approvalStatus === "pending" && (
-          <div className="border border-dashed border-line bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-            Waiting for approval. Saving again replaces the version the approver sees.
-          </div>
+          <MuNote title="Waiting for approval">
+            Saving again replaces the version the approver sees.
+          </MuNote>
         )}
+        <MuSection title="Details">
+        <div className="space-y-4">
         {/* Title & Slug */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -602,6 +606,11 @@ const PostEditor = () => {
           <Label>Excerpt</Label>
           <Textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={2} />
         </div>
+        </div>
+        </MuSection>
+
+        <MuSection title="Images and layout">
+        <div className="space-y-4">
 
         {/* Featured Image */}
         <div className="space-y-2">
@@ -689,11 +698,16 @@ const PostEditor = () => {
           </div>
         )}
 
-        {/* Content Editor */}
-        <div className="space-y-2">
-          <Label>Content</Label>
-          <RichTextEditor value={content} onChange={setContent} />
         </div>
+        </MuSection>
+
+        {/* Content Editor */}
+        <MuSection title="Content">
+          <RichTextEditor value={content} onChange={setContent} />
+        </MuSection>
+
+        <MuSection title="Publishing">
+        <div className="space-y-4">
 
         {/* Schedule */}
         <div className="space-y-2">
@@ -729,7 +743,6 @@ const PostEditor = () => {
               </Button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Leave empty to publish immediately, or pick a future date and time to schedule.</p>
         </div>
 
         {/* Actions */}
@@ -776,6 +789,8 @@ const PostEditor = () => {
             </Button>
           )}
         </div>
+        </div>
+        </MuSection>
       </div>
     </div>
   );

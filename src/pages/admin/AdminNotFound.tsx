@@ -8,7 +8,7 @@ const AdminNotFound = () => {
   const { pathname } = useLocation();
   return (
     <MuPage>
-      <MuPageHeader title="Page not found" description="There is no admin page at this address." />
+      <MuPageHeader title="Page not found" />
       <MuSection padded={false}>
         <MuEmpty
           art={art.objMagnifier}

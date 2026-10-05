@@ -140,7 +140,7 @@ export default function AlertKeys() {
     <MuPage>
       <MuPageHeader
         title="Alert keys"
-        description="Generate, rotate and verify the internal run keys that let scheduled jobs raise alerts. Key values are never shown, here or anywhere else."
+        description="The run keys scheduled jobs use to raise alerts. Values are never shown."
         actions={
           <Button size="sm" variant="outline" onClick={() => load()} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
@@ -150,16 +150,13 @@ export default function AlertKeys() {
 
       <MuSection
         title="Test the alert path"
-        description="This checks that the alert key is valid and that a sign-up failure digest reaches hello@medicconnect.co. A test alert is raised, sent, and closed straight away."
+        description="Raises, sends and closes a test alert to hello@medicconnect.co."
       >
         <div className="space-y-3">
-          <Button onClick={runTest} disabled={testing || !alertKey?.present}>
+          <Button onClick={runTest} disabled={testing || !alertKey?.present} title={!alertKey?.present ? "Generate the alert key in the register below first" : undefined}>
             {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Send a test alert
           </Button>
-          {!alertKey?.present && (
-            <p className="text-sm text-warn-ink">No alert key is stored yet. Rotate the alert key first.</p>
-          )}
           {lastTest && (
             <div
               className={`border p-3 text-sm ${

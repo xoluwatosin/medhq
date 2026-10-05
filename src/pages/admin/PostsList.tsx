@@ -72,7 +72,7 @@ const PostsList = () => {
     <div className="space-y-6">
       <MuPageHeader
         title="Blog posts"
-        description="Articles for the public site. Drafts stay private until they are published."
+        description="Articles for the public site."
         actions={
           <>
             <div className="flex items-center gap-2 pr-2">

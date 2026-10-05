@@ -264,7 +264,7 @@ export default function Intelligence() {
     <MuPage>
       <MuPageHeader
         title="Insights"
-        description={`Intake health, campaign funnels and candidate flow. ${lastRefreshed && !Number.isNaN(new Date(lastRefreshed).getTime()) ? `Refreshed ${new Date(lastRefreshed).toLocaleString("en-GB")}.` : "Not refreshed yet."}`}
+        description={lastRefreshed && !Number.isNaN(new Date(lastRefreshed).getTime()) ? `Refreshed ${new Date(lastRefreshed).toLocaleString("en-GB")}.` : "Not refreshed yet."}
         actions={
           <Button size="sm" variant="outline" onClick={doRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-1 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
@@ -486,17 +486,15 @@ export default function Intelligence() {
         </TabsContent>
 
         <TabsContent value="queue" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {queuePendingCount} pending nudge{queuePendingCount === 1 ? "" : "s"} queued.
-            </p>
-            <div className="flex gap-2">
+          <MuSection
+            title="Follow-up nudges"
+            padded={false}
+            actions={
               <Button size="sm" onClick={() => sendNudges()} disabled={!queuePendingCount}>
                 <Send className="h-4 w-4 mr-1" /> Send all pending
               </Button>
-            </div>
-          </div>
-          <MuSection padded={false}>
+            }
+          >
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -571,15 +569,15 @@ export default function Intelligence() {
         </TabsContent>
 
         <TabsContent value="report" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {invitedReport.length} invited addresses and their current state.
-            </p>
-            <Button size="sm" variant="outline" onClick={downloadReport}>
-              <Download className="h-4 w-4 mr-1" /> Download CSV
-            </Button>
-          </div>
-          <MuSection padded={false}>
+          <MuSection
+            title="Invited addresses"
+            padded={false}
+            actions={
+              <Button size="sm" variant="outline" onClick={downloadReport}>
+                <Download className="h-4 w-4 mr-1" /> Download CSV
+              </Button>
+            }
+          >
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -624,7 +622,7 @@ export default function Intelligence() {
         <TabsContent value="audit" className="space-y-4">
           <MuSection
             title="Figure audit"
-            description="Every dashboard figure is recounted straight from the underlying records. Anything that disagrees is flagged here and raises an alert. Runs automatically each morning at 08:45."
+            description="Recounts every dashboard figure from the records, each morning at 08:45."
             padded={false}
             actions={
               <>

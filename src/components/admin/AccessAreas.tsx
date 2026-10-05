@@ -24,7 +24,7 @@ const AccessAreas = ({ value, onChange, lockedKeys = [], disabled }: Props) => {
         return (
           <div key={group.key} className="border border-line p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">{group.label}</p>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">{group.label}</p>
               {keys.length > 1 && (
                 <Button
                   type="button"
@@ -45,6 +45,7 @@ const AccessAreas = ({ value, onChange, lockedKeys = [], disabled }: Props) => {
                 return (
                   <label
                     key={area.key}
+                    title={locked ? "You cannot grant this area" : undefined}
                     className={`flex items-start gap-2 text-sm ${locked ? "opacity-50" : ""}`}
                   >
                     <Checkbox

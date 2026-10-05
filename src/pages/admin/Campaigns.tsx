@@ -11,7 +11,7 @@ import { selectAll } from "@/lib/select-all";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import { Megaphone } from "lucide-react";
 import { art } from "@/components/mc/art";
@@ -137,9 +137,7 @@ const Campaigns = () => {
       {showingArchived && archived === null ? (
         <div className="flex justify-center border border-line bg-card py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : showingArchived && archivedFailed ? (
-        <div className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-foreground">
-          Archived campaigns could not be loaded. Refresh to try again.
-        </div>
+        <MuLoadError what="the archived campaigns" />
       ) : showingArchived && rows.length === 0 ? (
         <MuSection padded={false}>
           <MuEmpty art={art.objFolderDocuments} title="No archived campaigns" description="Archived campaigns appear here and can be restored." />

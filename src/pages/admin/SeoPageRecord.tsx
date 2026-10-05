@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MuEmpty, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import ConsoleRecordCard from "@/components/admin/console/ConsoleRecordCard";
 import { SelectField, Status } from "@/components/field";
@@ -14,7 +14,7 @@ import { adminDb } from "@/lib/admin-utils";
 import { formatDate } from "@/lib/format";
 import {
   EVIDENCE_STATES, INDEX_STATES, PAGE_TYPE_LABELS, PUBLICATION_STATES,
-  PRICING_EVIDENCE_MISSING, claimEffectiveState, claimTone, evidenceTone, indexTone, label,
+  PRICING_EVIDENCE_MISSING, claimEffectiveState, claimTone, evidenceTone, label,
   publicationTone, reviewTone, marketTone,
 } from "@/lib/seo-registry";
 
@@ -161,17 +161,13 @@ const SeoPageRecord = () => {
     return (
       <section className="w-full space-y-6">
         <MuPageHeader title="SEO page" backTo="/admin/seo/pages" backLabel="SEO pages" />
-        <MuSection padded={false}>
-          {loadError ? (
-            <MuEmpty
-              title="Could not load the page record"
-              description="The record did not load. Try again in a moment."
-              action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
-            />
-          ) : (
-            <MuEmpty art={art.objDocumentMagnifier} title="Page not found" description="This SEO page may have been removed. Go back to the register to find another." />
-          )}
-        </MuSection>
+        {loadError ? (
+          <MuLoadError what="the page record" onRetry={() => void load()} />
+        ) : (
+          <MuSection padded={false}>
+            <MuEmpty art={art.objDocumentMagnifier} title="Page not found" description="This SEO page may have been removed." />
+          </MuSection>
+        )}
       </section>
     );
   }
@@ -189,11 +185,6 @@ const SeoPageRecord = () => {
           </Button>
         }
       />
-      <div className="flex flex-wrap gap-2">
-        <Status label={label(page.publication_state)} tone={publicationTone(page.publication_state)} />
-        <Status label={label(page.index_state)} tone={indexTone(page.index_state)} />
-        <Status label={`${label(page.evidence_state)} evidence`} tone={evidenceTone(page.evidence_state)} />
-      </div>
 
       {blockers.length > 0 && (
         <div className="border border-line-soft bg-warn-bg p-4">
@@ -260,17 +251,14 @@ const SeoPageRecord = () => {
             label: "Index state",
             fullWidth: true,
             value: (
-              <div className="flex flex-wrap items-center gap-2">
-                <SelectField
-                  label="Index state"
-                  hideLabel
-                  value={page.index_state}
-                  onChange={(value) => { if (value) void setIndexState(value); }}
-                  options={INDEX_STATES.map((value) => ({ value, label: label(value) }))}
-                  className="w-full sm:w-56"
-                />
-                <span className="text-xs text-muted-copy">Validated by the database before a page becomes indexable.</span>
-              </div>
+              <SelectField
+                label="Index state"
+                hideLabel
+                value={page.index_state}
+                onChange={(value) => { if (value) void setIndexState(value); }}
+                options={INDEX_STATES.map((value) => ({ value, label: label(value) }))}
+                className="w-full sm:w-56"
+              />
             ),
           },
         ]}

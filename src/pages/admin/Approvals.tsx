@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MuEmpty, MuGroupHead, MuLedger, MuLedgerBody, MuLedgerRow, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuGroupHead, MuLedger, MuLedgerBody, MuLedgerRow, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Check, X, FileText, Megaphone } from "lucide-react";
@@ -97,22 +97,16 @@ const Approvals = () => {
     <div className="space-y-6">
       <MuPageHeader
         title="Approvals"
-        description="Approving a story publishes it. Approving a campaign sends it. Neither can be taken back."
+        description="Approving publishes a story or sends a campaign, with no undo."
       />
       {loadError ? (
-        <MuSection padded={false}>
-          <MuEmpty
-            title="Could not load the queue"
-            description={loadError}
-            action={<Button variant="outline" onClick={() => { setLoading(true); fetchPending(); }}>Try again</Button>}
-          />
-        </MuSection>
+        <MuLoadError what="the queue" onRetry={() => { setLoading(true); fetchPending(); }} />
       ) : items.length === 0 ? (
         <MuSection padded={false}>
           <MuEmpty
             art={art.objClipboardChecks}
             title="Nothing to approve"
-            description="Stories and campaigns other admins submit will wait here for you."
+            description="Stories and campaigns other admins submit wait here."
           />
         </MuSection>
       ) : (

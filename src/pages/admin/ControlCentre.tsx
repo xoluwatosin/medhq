@@ -276,9 +276,6 @@ const ControlCentre = () => {
                     placeholder="name@medicconnect.co"
                     type="email"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    If this person already signs in, that same account gains admin areas.
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Full name</Label>
@@ -434,6 +431,8 @@ const ControlCentre = () => {
                 </div>
 
                 {!isSuper && (
+                  <div className="border-2 border-navy bg-tint/40 p-3">
+                  <p className={`mb-2 ${CAPS}`}>Approvals</p>
                   <div className="flex flex-wrap gap-6">
                     <div className="flex items-center gap-2">
                       <Switch
@@ -451,6 +450,7 @@ const ControlCentre = () => {
                       />
                       <span className="text-sm">Campaigns need approval</span>
                     </div>
+                  </div>
                   </div>
                 )}
 

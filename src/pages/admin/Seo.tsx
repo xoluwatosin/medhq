@@ -24,7 +24,7 @@ const Seo = () => {
     <section className="w-full space-y-6" aria-label="SEO">
       <MuPageHeader
         title="SEO"
-        description="Governed pages, canonical modules, public claims and markets. Operational truth stays in services, fees and the Bridge."
+        description="What search engines read about us."
       />
       <ConsoleTabs
         tabs={SECTIONS}

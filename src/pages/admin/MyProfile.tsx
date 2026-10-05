@@ -178,7 +178,7 @@ const MyProfile = () => {
     <MuPage>
       <MuPageHeader
         title="My profile"
-        description="Your employment details, the paperwork we need from you, and your contract."
+        description="Your record with Medic Connect."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <MuStatus label={STAFF_STATUS_LABELS[person.staff_status] || person.staff_status} tone="info" />
@@ -198,7 +198,7 @@ const MyProfile = () => {
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
-          <MuSection title="Your details" description="If anything here is wrong, tell your manager and we will correct it.">
+          <MuSection title="Your details" description="Tell your manager if anything is wrong.">
             <MuFieldGrid columns={3}>
               <MuField label="Name" value={person.full_name} />
               <MuField label="Job title" icon={Briefcase} value={person.job_title} />
@@ -227,7 +227,7 @@ const MyProfile = () => {
         <TabsContent value="documents" className="mt-4">
           <MuSection
             title="Your documents"
-            description="What we are required to hold on file. Upload a clear copy; a member of the team checks each one."
+            description="Upload a clear copy of each. The team checks every one."
             padded={false}
           >
             <div className="divide-y divide-line-soft">
@@ -329,8 +329,7 @@ const MyProfile = () => {
           <DialogHeader>
             <DialogTitle>Your contract</DialogTitle>
             <DialogDescription>
-              Read it in full. Sign by typing your name or drawing your signature. We record the name, the time
-              and the device used.
+              Type your name or draw your signature. We record the name, time and device.
             </DialogDescription>
           </DialogHeader>
 

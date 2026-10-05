@@ -13,7 +13,6 @@ import {
   Plus,
   Trash2,
   Upload,
-  Eye,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -252,9 +251,7 @@ export const BlockCanvas = ({
         onDrop={acceptsDrop ? handleDrop : undefined}
       >
         {blocks.length === 0 && (
-          <p className="px-1 py-4 text-sm text-muted-foreground">
-            Add a masthead, your copy and a footer from the left.
-          </p>
+          <p className="px-1 py-4 text-sm text-muted-foreground">No blocks yet</p>
         )}
         {blocks.map((b, i) => (
           <div key={b.id}>
@@ -267,6 +264,7 @@ export const BlockCanvas = ({
                 e.dataTransfer.effectAllowed = "move";
               }}
               onDragEnd={() => setDropGap(null)}
+              title={onReorder ? "Drag to reorder" : undefined}
               onDragOver={acceptsDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropGap(gapFromEvent(e, i)); } : undefined}
               className={`flex cursor-pointer items-center gap-2 border px-3 py-2 text-sm ${
                 selected === b.id ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted"
@@ -295,11 +293,6 @@ export const BlockCanvas = ({
         ))}
         {acceptsDrop && dropGap === blocks.length && blocks.length > 0 && (
           <div className="mx-1 h-0.5 bg-primary" />
-        )}
-        {acceptsDrop && blocks.length > 0 && (
-          <p className="px-1 pt-1 text-xs text-muted-foreground">
-            Drag a block to reorder it, or drag one in from the palette.
-          </p>
         )}
       </div>
     </div>
@@ -387,16 +380,11 @@ export const DirectEmailCanvas = ({
           </div>
         </div>
       )}
-      {!preview && !selected && (
-        <div className="flex items-center gap-2 border bg-card px-3 py-2 text-sm text-muted-foreground">
-          <Eye className="h-4 w-4" /> Select anything in the email to edit it.
-        </div>
-      )}
       {!preview && selected && editor}
       <div className="flex justify-center overflow-hidden bg-muted/30 p-3">
         <iframe
           ref={frameRef}
-          title={preview ? "Campaign preview" : "Editable campaign"}
+          title={preview ? "Campaign preview" : "Editable campaign, select any part to edit it"}
           srcDoc={html}
           onLoad={wireFrame}
           className="h-[74vh] w-full bg-background"
@@ -424,11 +412,6 @@ export const BlockInspector = ({
     </p>
     <ScrollArea style={{ height }}>
       <div className="space-y-4 p-4">
-        {!current && (
-          <p className="text-sm text-muted-foreground">
-            Pick a block in the middle column to write its copy.
-          </p>
-        )}
         {current && BLOCK_BY_ID[current.blockId]?.notes && (
           <p className="bg-muted px-3 py-2 text-xs text-muted-foreground">
             {BLOCK_BY_ID[current.blockId]?.notes}
@@ -526,12 +509,10 @@ export const KitDesignPanel = ({
     label,
     group,
     options,
-    hint,
   }: {
     label: string;
     group: string;
     options: { id: string; label: string }[];
-    hint?: string;
   }) => (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
@@ -544,7 +525,6 @@ export const KitDesignPanel = ({
           {options.map((o) => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 
@@ -553,12 +533,7 @@ export const KitDesignPanel = ({
       <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Design</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Row label="Masthead" group="masthead" options={MASTHEADS} />
-        <Row
-          label="Footer"
-          group="footer"
-          options={FOOTERS}
-          hint="Marketing sends must carry the unsubscribe footer."
-        />
+        <Row label="Footer" group="footer" options={FOOTERS} />
         <Row label="Button" group="button" options={BUTTONS} />
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Preview width</Label>
@@ -571,10 +546,6 @@ export const KitDesignPanel = ({
           </Select>
         </div>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Colour, type and spacing come from the Medic Connect kit and are not editable here, so
-        every send looks like us.
-      </p>
     </div>
   );
 };
@@ -612,7 +583,7 @@ export const FieldInput = ({
       <div className="space-y-1.5">
         <Label className="text-xs">
           {field.label}
-          {field.width ? ` · ${field.width} by ${field.height} pixels` : ""}
+          {field.width ? ` (${field.width} by ${field.height} pixels)` : ""}
         </Label>
         {ref?.url && <img loading="lazy" decoding="async" src={ref.url} alt={ref.alt ?? ""} className="h-24 w-full object-cover" />}
         <div className="flex gap-2">

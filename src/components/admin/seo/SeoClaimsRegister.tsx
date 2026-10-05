@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
@@ -176,7 +176,8 @@ const SeoClaimsRegister = () => {
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+      <div className="mb-3">
+      <MuToolbar>
         <Button
           type="button"
           variant="outline"
@@ -198,16 +199,11 @@ const SeoClaimsRegister = () => {
         <Button type="button" className="h-10" onClick={() => { setDraft(emptyDraft); setCreating(true); }}>
           <Plus className="mr-1.5 h-4 w-4" /> New claim
         </Button>
+      </MuToolbar>
       </div>
 
       {loadError ? (
-        <MuSection padded={false}>
-          <MuEmpty
-            title="Could not load claims"
-            description="The register did not load. Try again in a moment."
-            action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
-          />
-        </MuSection>
+        <MuLoadError what="the claims" onRetry={() => void load()} />
       ) : rows.length === 0 ? (
         <MuSection padded={false}>
           <MuEmpty art={art.objClipboardChecks} title="No claims yet" description="Add a public claim with its evidence so pages can cite it." />

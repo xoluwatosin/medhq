@@ -61,7 +61,6 @@ const Settings = () => {
       <MuPageHeader title="Notifications" description="Which form submissions email the admin inbox." />
       <MuSection
         title="Email notifications"
-        description="Control which form submissions trigger an email notification to the admin inbox."
         padded={false}
         className="max-w-2xl"
       >

@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuPageHeader, MuSection, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
 import { SelectField } from "@/components/field";
 import { art } from "@/components/mc/art";
 import { Separator } from "@/components/ui/separator";
@@ -33,7 +33,6 @@ import {
   type EmailKind,
   type EmailTemplateDoc,
 } from "@/lib/email-kit";
-import { CATALOGUE } from "@/lib/email-kit/catalogue.generated";
 import {
   addBlockTo,
   BlockCanvas,
@@ -211,7 +210,7 @@ const EmailTemplates = () => {
       <div className="space-y-6">
         <MuPageHeader
           title="Email library"
-          description="Every email we send is built from the Medic Connect kit, so the brand stays put and nobody writes HTML."
+          description="Every email we send, built from the Medic Connect kit."
           actions={
             <Button onClick={() => setStartOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />New email
@@ -220,13 +219,7 @@ const EmailTemplates = () => {
         />
 
         {loadError ? (
-          <MuSection padded={false}>
-            <MuEmpty
-              title="Could not load the email library"
-              description={loadError}
-              action={<Button variant="outline" onClick={() => load()}>Try again</Button>}
-            />
-          </MuSection>
+          <MuLoadError what="the email library" onRetry={() => load()} />
         ) : list.length === 0 ? (
           <MuSection padded={false}>
             <MuEmpty
@@ -269,9 +262,9 @@ const EmailTemplates = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="-ml-3" onClick={() => { setDoc(null); setOpenId(null); load(); }}>
+      <MuToolbar>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => { setDoc(null); setOpenId(null); load(); }}>
             <ArrowLeft className="mr-2 h-4 w-4" />All emails
           </Button>
           <Input
@@ -292,7 +285,7 @@ const EmailTemplates = () => {
             className="w-44"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
           <Input
             aria-label="Send a test to"
             value={testEmail}
@@ -309,7 +302,7 @@ const EmailTemplates = () => {
             Save
           </Button>
         </div>
-      </header>
+      </MuToolbar>
 
       <div className="grid gap-4 xl:grid-cols-[240px_1fr_340px]">
         <BlockPalette onAdd={addBlock} />
@@ -381,10 +374,7 @@ const StartDialog = ({
     <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Start a new email</DialogTitle>
-        <DialogDescription>
-          A recipe gives you the right blocks in the right order for that job. You can still change
-          anything afterwards.
-        </DialogDescription>
+        <DialogDescription>A recipe sets the blocks in order. You can change anything after.</DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
         {RECIPES.map((r) => (
@@ -413,9 +403,6 @@ const StartDialog = ({
           Blank marketing
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Contact details in footers come from the kit: {CATALOGUE.meta.contact.email}, {CATALOGUE.meta.contact.whatsapp}.
-      </p>
     </DialogContent>
   </Dialog>
 );

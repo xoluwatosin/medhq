@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { MuEmpty, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuLoadError, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
@@ -155,21 +155,15 @@ const SeoPagesRegister = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <MuToolbar>
+        <div className="flex flex-1 flex-wrap gap-2">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search pages"
           aria-label="Search pages"
-          className="h-10 sm:max-w-xs"
+          className="h-10 min-w-[12rem] flex-[2]"
         />
-        <Button type="button" onClick={() => setCreating(true)} className="h-10 sm:ml-auto">
-          <Plus className="mr-1.5 h-4 w-4" /> New page
-        </Button>
-      </div>
-
-      <MuToolbar>
-        <div className="flex flex-1 flex-wrap gap-2">
         {filter("filter-index", "Index", indexState, setIndexState, INDEX_STATES.map((value) => ({ value, label: label(value) })))}
         {filter("filter-publication", "Publication", publication, setPublication, PUBLICATION_STATES.map((value) => ({ value, label: label(value) })))}
         {filter("filter-estate", "Estate", estate, setEstate, estates.map((value) => ({ value, label: label(value) })))}
@@ -182,18 +176,15 @@ const SeoPagesRegister = () => {
           { value: "undecided", label: "Not classified" },
         ])}
         </div>
+        <Button type="button" onClick={() => setCreating(true)} className="h-10 shrink-0">
+          <Plus className="mr-1.5 h-4 w-4" /> New page
+        </Button>
       </MuToolbar>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : loadError ? (
-        <MuSection padded={false}>
-          <MuEmpty
-            title="Could not load SEO pages"
-            description="The register did not load. Try again in a moment."
-            action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
-          />
-        </MuSection>
+        <MuLoadError what="the SEO pages" onRetry={() => void load()} />
       ) : visible.length === 0 ? (
         <MuSection padded={false}>
           {rows.length === 0 ? (

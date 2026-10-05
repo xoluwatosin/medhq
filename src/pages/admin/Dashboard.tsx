@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { MuEmpty, MuPage, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuSectionOpener } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { ClipArt } from "@/components/mc/brand";
 import { cn } from "@/lib/utils";
@@ -95,7 +95,7 @@ const Dashboard = () => {
             ? "Your access does not include any work queues yet."
             : waiting === 0
               ? "Nothing is waiting on you right now."
-              : `${waiting} ${waiting === 1 ? "queue needs" : "queues need"} you today. The busiest is first.`
+              : `${waiting} ${waiting === 1 ? "queue needs" : "queues need"} you today.`
         }
       />
 
@@ -138,8 +138,7 @@ const Dashboard = () => {
 
       {quick.length > 0 && (
         <section aria-label="Start something">
-          <hr className="border-t-4 border-navy" />
-          <p className="eyebrow mt-4">Start something</p>
+          <MuSectionOpener label="Start something" />
           <div className="mt-4 flex flex-wrap gap-3">
             {quick.map((q) => (
               <Link

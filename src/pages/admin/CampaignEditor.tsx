@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MuEmpty, MuPageHeader, MuStats, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuNote, MuPageHeader, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
 import { SelectField } from "@/components/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -465,6 +465,7 @@ const CampaignEditor = () => {
 
   const isSent = status === "sent";
   const isEditable = !isSent;
+  const showJourney = isSent && !!funnel && stats.tracking_enabled && funnel.sent > 0;
 
   const recipientCount = audienceType === "all"
     ? "all contacts"
@@ -492,14 +493,12 @@ const CampaignEditor = () => {
       />
 
       {converted && isEditable && (
-        <p className="border border-dashed border-line bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          This campaign was written before the kit. Its copy has been laid out as blocks, ready to
-          edit. Save the draft to keep the conversion.
-        </p>
+        <MuNote title="Converted to kit blocks">Save the draft to keep the conversion.</MuNote>
       )}
 
-      {/* Sent stats */}
-      {isSent && (
+      {/* Sent stats. The journey below repeats these numbers with rates, so
+          the tiles stand in only when there is no tracked journey to show. */}
+      {isSent && !showJourney && (
         <MuStats
           columns={4}
           stats={[
@@ -509,12 +508,12 @@ const CampaignEditor = () => {
             { label: "Clicked", value: stats.total_clicked, tracked: stats.tracking_enabled },
           ].map((s) => s.tracked
             ? { label: s.label, value: s.value }
-            : { label: s.label, value: "Not tracked", hint: "This campaign went out before open and click tracking was switched on." })}
+            : { label: s.label, value: "Not tracked", hint: s.label === "Opened" ? "Sent before tracking was switched on." : undefined })}
         />
       )}
 
       {/* Funnel: how far each email actually travelled */}
-      {isSent && funnel && (
+      {showJourney && funnel && (
         <div className="border border-line bg-card p-4">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Journey</p>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
@@ -559,6 +558,7 @@ const CampaignEditor = () => {
 
       {/* Set-up */}
       <div className="border border-line bg-card p-4">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Sender</p>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Campaign title, internal</Label>
@@ -586,10 +586,7 @@ const CampaignEditor = () => {
             <BlockPalette onAdd={addBlock} height="40vh" />
             <div className="border border-line bg-card">
               <div className="flex items-center justify-between border-b border-line-soft px-4 py-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">PDF assets</p>
-                  <p className="text-xs text-muted-foreground">Files stay here after insertion.</p>
-                </div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">PDF assets</p>
                 <label className="cursor-pointer">
                   <Button asChild variant="outline" size="icon" className="h-8 w-8" title="Upload PDF" aria-label="Upload PDF">
                     <span>{uploadingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}</span>
@@ -689,7 +686,7 @@ const CampaignEditor = () => {
 
           <div className="border border-line bg-card">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-4 py-3">
-              <div><p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Email canvas</p><p className="text-xs text-muted-foreground">In Edit email, click any part to change, move or delete it.</p></div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Email canvas</p>
               <Tabs value={isEditable ? canvasMode : "preview"} onValueChange={(value) => setCanvasMode(value as "edit" | "preview")}>
                 <TabsList>
                   {isEditable && <TabsTrigger value="edit" className="gap-1.5"><Pencil className="h-3.5 w-3.5" /> Edit email</TabsTrigger>}
@@ -795,7 +792,7 @@ const CampaignEditor = () => {
 
       {/* Actions */}
       {isEditable && (
-        <div className="flex flex-wrap items-center gap-3 border-t border-line pt-4">
+        <MuToolbar>
           <Button onClick={saveDraft} disabled={saving || sending} variant="outline" className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save draft
@@ -833,7 +830,7 @@ const CampaignEditor = () => {
               </AlertDialogContent>
             </AlertDialog>
           )}
-        </div>
+        </MuToolbar>
       )}
     </div>
   );
