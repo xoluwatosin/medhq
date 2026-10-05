@@ -29,6 +29,8 @@ interface ConsoleMobileListProps {
   rows: readonly ConsoleMobileRow[];
   emptyLabel: string;
   emptyIcon?: LucideIcon;
+  /** Clip art for the empty state, as on MuEmpty. */
+  emptyArt?: string;
   className?: string;
 }
 
@@ -46,16 +48,21 @@ const RowBody = ({ row }: { row: ConsoleMobileRow }) => (
   </>
 );
 
-const ConsoleMobileList = ({ rows, emptyLabel, emptyIcon: EmptyIcon, className }: ConsoleMobileListProps) => (
+const ConsoleMobileList = ({ rows, emptyLabel, emptyIcon: EmptyIcon, emptyArt, className }: ConsoleMobileListProps) => (
   <div className={cn("border border-line-soft bg-card md:hidden", className)}>
     {rows.length === 0 ? (
       <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-        {EmptyIcon && (
+        {emptyArt ? (
+          <span className="relative mb-2 block h-[72px] w-[72px]">
+            <span aria-hidden="true" className="absolute bottom-0 right-0 h-[76%] w-[76%] bg-tint" />
+            <img src={emptyArt} alt="" className="absolute inset-0 h-full w-full object-contain" />
+          </span>
+        ) : EmptyIcon && (
           <span className="mb-1 flex h-10 w-10 items-center justify-center bg-tint text-navy">
             <EmptyIcon className="h-4 w-4" />
           </span>
         )}
-        <p className="text-sm font-medium text-navy">{emptyLabel}</p>
+        <p className="text-[15px] font-extrabold text-navy">{emptyLabel}</p>
       </div>
     ) : (
       <ul className="divide-y divide-line-soft">
