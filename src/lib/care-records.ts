@@ -226,3 +226,17 @@ export const mergePeople = async (keep: string, drop: string, combineFamilies: b
   if (error) throw error;
   return data as { kept: string; rows_moved: number; families_combined: number };
 };
+
+/** What a link opens, worked out from the link itself. */
+export interface LinkScope {
+  kind: "form" | "top_up" | "document";
+  sent_to: { full_name: string; relationship: string | null } | null;
+  covers: string[];
+  gives_portal_access: boolean;
+}
+
+export const linkScope = async (tokenId: string): Promise<LinkScope> => {
+  const { data, error } = await adminDb().rpc("care_link_scope", { _token_id: tokenId });
+  if (error) throw error;
+  return data as LinkScope;
+};

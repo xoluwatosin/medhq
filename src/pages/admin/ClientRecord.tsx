@@ -45,7 +45,7 @@ import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
 import HomeSection from "@/components/admin/care/HomeSection";
 import PossibleDuplicates from "@/components/admin/care/PossibleDuplicates";
-import { homeOverview, type HomeOverview } from "@/lib/care-records";
+import { homeOverview, linkScope, type HomeOverview, type LinkScope } from "@/lib/care-records";
 import RecordLifecycle from "@/components/admin/care/RecordLifecycle";
 
 import LanguageCodes from "@/components/admin/care/LanguageCodes";
@@ -292,6 +292,15 @@ const ClientRecord = () => {
   const outstanding = doc?.outstanding_required ?? [];
   const openFlags = flags.filter((f) => !f.cleared_at);
   const liveToken = tokens.find((t) => !t.revoked_at && !t.submitted_at && new Date(t.expires_at) > new Date());
+  const [liveScope, setLiveScope] = useState<LinkScope | null>(null);
+  const liveTokenId = liveToken?.id;
+  useEffect(() => {
+    setLiveScope(null);
+    if (!liveTokenId) return;
+    let live = true;
+    linkScope(liveTokenId).then((s) => { if (live) setLiveScope(s); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [liveTokenId]);
 
   // Answers are held per care recipient (r1__question), exactly as the family
   // gave them, plus the request-wide answers under their plain identifiers.
@@ -943,9 +952,13 @@ const ClientRecord = () => {
             {liveToken ? (
               <div className="flex flex-col gap-3">
                 <p className="text-[14.5px] text-foreground">
-                  A link is live for {primary?.full_name ?? "the main contact"}.
-                  It expires {dateOf(liveToken.expires_at)}.
+                  {liveScope?.sent_to
+                    ? `A ${liveScope.kind === "top_up" ? "follow-up" : "pre-assessment"} link is live for ${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}.`
+                    : `A link is live for ${primary?.full_name ?? "the main contact"}.`}
+                  {liveScope && liveScope.covers.length > 0 && ` It covers ${liveScope.covers.join(", ")}.`}
+                  {" "}It expires {dateOf(liveToken.expires_at)}.
                   {liveToken.first_opened_at ? " It has been opened." : " It has not been opened yet."}
+                  {liveScope?.gives_portal_access && " Once they send it back, they can follow the request in their portal."}
                 </p>
                 {link && (
                   <div className="flex flex-col gap-2 sm:flex-row">
