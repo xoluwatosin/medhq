@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import {
   AlertTriangle, Check, Clock, ExternalLink, FileText, Loader2, Mail, ShieldCheck,
-  Upload, X,
+  Upload, X, CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ import {
 } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { MuDetailFacts, MuDetailSheet } from "@/components/admin/mu/MuDetailSheet";
+import { AcceptForNowDialog, ReturnDocumentDialog, decideDocument, type DocumentOutcome } from "@/components/admin/mu/DocumentDecision";
 
 /** One colour vocabulary for document state, shared with the review queue. */
 const docTone = (s: string): MuTone =>
@@ -87,14 +88,13 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
 
   const [selected, setSelected] = useState<Selection | null>(null);
   const [returning, setReturning] = useState(false);
+  const [condOpen, setCondOpen] = useState(false);
 
   // Correcting a document that was filed under the wrong kind, most often
   // "Other" when it is in fact an identity document or a licence.
   const [reclassing, setReclassing] = useState(false);
   const [newType, setNewType] = useState<string>("Other");
   const [reclassNote, setReclassNote] = useState("");
-  const [reason, setReason] = useState("");
-  const [notify, setNotify] = useState(true);
 
   // Upload on behalf of the candidate
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -172,38 +172,26 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
     onChanged?.();
   };
 
-  const review = async (doc: HeldDoc, outcome: "accepted" | "rejected", why = "", tellThem = true) => {
+  const review = async (doc: HeldDoc, outcome: DocumentOutcome, why = "", tellThem = true, until: string | null = null) => {
     setBusy(doc.id);
-    const { error } = await (adminDb() as any).rpc("mu_review_document", {
-      _document_id: doc.id,
-      _outcome: outcome,
-      _reason: why || null,
-      _expires_at: doc.expires_at || null,
+    // The same decision, reasons and email rule as the Document review queue.
+    const result = await decideDocument({
+      documentId: doc.id, outcome, reason: why, until, expiresAt: doc.expires_at, notify: tellThem,
     });
-    if (error) {
+    if (result.error) {
       setBusy(null);
-      toast({ title: "Could not record the review", description: error.message, variant: "destructive" });
+      toast({ title: "Could not record the review", description: result.error, variant: "destructive" });
       return;
     }
-    // A candidate is written to only when something is needed of them. An
-    // acceptance asks nothing, so it sends no email.
-    const emailed = outcome === "rejected" && tellThem;
-    if (emailed) {
-      const { error: mailErr } = await supabase.functions.invoke("notify-candidate-document", {
-        body: { document_id: doc.id },
-      });
-      if (mailErr) {
-        toast({ title: "Reviewed, but the email did not send", description: mailErr.message, variant: "destructive" });
-      }
-    }
+    if (result.mailError) toast({ title: "Reviewed, but the email did not send", description: result.mailError, variant: "destructive" });
     setBusy(null);
     toast({
-      title: outcome === "accepted" ? "Document accepted" : "Document returned",
-      description: emailed ? `${personName} has been emailed.` : "No email was sent.",
+      title: outcome === "accepted" ? "Document accepted" : outcome === "conditional" ? "Document accepted for now" : "Document returned",
+      description: result.emailed ? `${personName} has been emailed.` : "No email was sent.",
     });
+    setCondOpen(false);
     setSelected(null);
     setReturning(false);
-    setReason("");
     load();
     onChanged?.();
   };
@@ -402,7 +390,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                 sentence={`${docTypeLabel(d.doc_type)}. ${sourceLine(d)}.`}
                 meta={`Received ${day(d.created_at)}`}
                 status={<MuStatus label="Awaiting review" tone="info" />}
-                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); setReason(""); setNotify(true); }}
+                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); }}
               />
             ))}
           </MuLedgerBody>
@@ -486,7 +474,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                     label={d.review_outcome === "accepted" ? "Accepted" : "Returned"}
                   />
                 }
-                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); setReason(""); setNotify(true); }}
+                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); }}
               />
             ))}
           </MuLedgerBody>
@@ -514,7 +502,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                 sentence={`${docTypeLabel(d.doc_type)}. ${sourceLine(d)}.`}
                 meta={`Superseded ${day(d.superseded_at) ?? "on an unrecorded date"}`}
                 status={<MuStatus label="Superseded" tone="neutral" />}
-                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); setReason(""); setNotify(true); }}
+                onOpen={() => { setSelected({ kind: "document", doc: d, requirement: reqFor(d) }); setReturning(false); }}
               />
             ))}
           </MuLedgerBody>
@@ -526,7 +514,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
       {/* The working panel: one document, read in full, decided in one place. */}
       <MuDetailSheet
         open={!!selectedDoc}
-        onOpenChange={(o) => { if (!o) { setSelected(null); setReturning(false); setReason(""); } }}
+        onOpenChange={(o) => { if (!o) { setSelected(null); setReturning(false); setCondOpen(false); } }}
         eyebrow="Document"
         title={selectedDoc?.label ?? ""}
         subtitle={selectedDoc ? sourceLine(selectedDoc) : undefined}
@@ -562,17 +550,6 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                   Save the kind
                 </Button>
               </>
-            ) : returning ? (
-              <>
-                <Button variant="ghost" onClick={() => setReturning(false)}>Cancel</Button>
-                <Button
-                  variant="destructive"
-                  disabled={!reason.trim() || busy === selectedDoc.id}
-                  onClick={() => review(selectedDoc, "rejected", reason.trim(), notify)}
-                >
-                  Return and record
-                </Button>
-              </>
             ) : (
               <>
                 <Button variant="ghost" className="mr-auto" onClick={() => open(selectedDoc.url)}>
@@ -601,9 +578,16 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                     <Button
                       variant="outline"
                       disabled={busy === selectedDoc.id}
-                      onClick={() => { setReturning(true); setReason(""); setNotify(true); }}
+                      onClick={() => setReturning(true)}
                     >
                       <X className="mr-1.5 h-4 w-4" />Return with a reason
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={busy === selectedDoc.id}
+                      onClick={() => setCondOpen(true)}
+                    >
+                      <CalendarDays className="mr-1.5 h-4 w-4" />Accept for now
                     </Button>
                     <Button
                       disabled={busy === selectedDoc.id || selectedDoc.review_outcome === "accepted"}
@@ -645,25 +629,6 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
               </div>
             )}
 
-            {returning && (
-              <div className="border-b border-line bg-warn-wash px-5 py-4">
-                <Label className="text-[13px] font-semibold">Why is this being returned?</Label>
-                <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
-                  The reason appears in the candidate's account so they know what to send instead.
-                </p>
-                <Textarea
-                  className="mt-2"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={4}
-                  placeholder="The photograph cuts off the expiry date. Please send the full page."
-                />
-                <label className="mt-2 flex items-center gap-2 text-[13px] text-muted-foreground">
-                  <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
-                  <Mail className="h-4 w-4" />Email the reason to {personName}
-                </label>
-              </div>
-            )}
 
             <MuDetailFacts
               rows={[
@@ -880,6 +845,21 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ReturnDocumentDialog
+        open={returning && !!selectedDoc}
+        name={personName}
+        busy={!!selectedDoc && busy === selectedDoc.id}
+        onCancel={() => setReturning(false)}
+        onConfirm={(why, tell) => selectedDoc && review(selectedDoc, "rejected", why, tell)}
+      />
+      <AcceptForNowDialog
+        open={condOpen && !!selectedDoc}
+        name={personName}
+        expired={!!selectedDoc?.expires_at && new Date(selectedDoc.expires_at) < new Date()}
+        busy={!!selectedDoc && busy === selectedDoc.id}
+        onCancel={() => setCondOpen(false)}
+        onConfirm={(why, until, tell) => selectedDoc && review(selectedDoc, "conditional", why, tell, until)}
+      />
     </div>
   );
 };

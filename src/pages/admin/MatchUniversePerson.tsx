@@ -44,7 +44,7 @@ import {
   initialsOf, logActivity, sourceOf,
 } from "@/lib/match-universe";
 import {
-  MuEmpty, MuField, MuFieldGrid, MuHero, MuHeroStrip, MuPage, MuRow, MuSection,
+  MuEmpty, MuField, MuFieldGrid, MuHero, MuPage, MuRow, MuSection, MuSectionOpener,
   MuStatus, MuTable, MuTabRail,
 } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
@@ -467,8 +467,6 @@ const MatchUniversePerson = () => {
     );
 
   const whatsapp = person.phone ? `https://wa.me/${person.phone.replace(/[^0-9]/g, "")}` : null;
-  const verifiedDocs = docs.filter((d) => d.verified).length;
-  const awaitingDocs = docs.filter((d) => !d.verified).length;
   const profession = person.current_position?.trim() || ownRoleFallback;
   const isStaff = !!(person as any).is_staff;
   // Home address is three separate lines on the record; read as one sentence.
@@ -487,9 +485,6 @@ const MatchUniversePerson = () => {
 
   return (
     <MuPage className="max-w-6xl">
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Talent pool</Link>
-      </Button>
 
       {/* One navy surface. The name is the identity, the facts we hold sit
           under it as a labelled grid, and a single action moves the record on.
@@ -636,30 +631,6 @@ const MatchUniversePerson = () => {
             />
           </>
         }
-        strip={
-          <MuHeroStrip
-            items={[
-              {
-                label: "Verification",
-                sentence:
-                  person.verification_state === "verified" && nyscOutstanding(docReqs)
-                    ? "Verified, NYSC certificate outstanding"
-                    : VERIFICATION_LABELS[person.verification_state] ?? person.verification_state,
-              },
-              {
-                label: "Documents",
-                sentence: docs.length === 0
-                  ? "Nothing on file yet"
-                  : verifiedDocs === docs.length
-                    ? `All ${docs.length} accepted`
-                    : verifiedDocs === 0
-                      ? `${docs.length} on file, none accepted yet`
-                      : `${verifiedDocs} accepted of ${docs.length} on file`,
-              },
-              { label: "Readiness", sentence: readiness.sentence },
-            ]}
-          />
-        }
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -667,7 +638,7 @@ const MatchUniversePerson = () => {
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: "verification", label: "Verification", count: readiness.office.length },
+            { value: "verification", label: "Checks", count: readiness.office.length },
             { value: "profile", label: "Profile" },
             { value: "matching", label: "Matching" },
             { value: "hiring", label: "Offers and contracts" },
@@ -689,35 +660,19 @@ const MatchUniversePerson = () => {
             loading={readiness.loading}
             sentence={readiness.sentence}
           />
-          {/* The document ledger and the credential worklist carry their own
-              headings, so they stand as sections rather than sitting inside a
-              second frame. */}
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-[16px] font-bold tracking-[-0.02em]">Documents</h2>
-              <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-                Required documents for this profession, what is on file, and the state of each. Every decision is
-                logged and sent to the candidate.
-              </p>
-            </div>
-            <DocumentsPanel personId={person.id} personName={person.full_name} onChanged={load} />
-          </section>
+          {/* One place to decide: the documents. Accepting one settles the
+              credential it proves, so the proofs below are read only. */}
+          {/* The documents carry their own ledgers, so they open with the site's
+              section rule rather than a second box around boxes. */}
+          <MuSectionOpener label="Documents" title="What is on file, and a decision on each" />
+          <DocumentsPanel personId={person.id} personName={person.full_name} onChanged={load} />
 
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-[16px] font-bold tracking-[-0.02em]">Credentials</h2>
-              <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-                What each document proves. Passing an attached document is the only way a credential becomes verified.
-              </p>
-            </div>
+          <MuSection title="What their documents prove" padded={false}>
             <CredentialsPanel personId={person.id} documents={docs} actor={actor} onChanged={load} />
-          </section>
+          </MuSection>
 
 
-          <MuSection
-            title="References"
-            description="Referees provided by the candidate. Contact details only, taken up at shortlist stage."
-          >
+          <MuSection title="References" description="Taken up at shortlist stage.">
             <ReferencesTable personId={person.id} />
           </MuSection>
 

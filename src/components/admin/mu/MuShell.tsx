@@ -139,6 +139,15 @@ export const MuSection = ({
   </section>
 );
 
+/** The site's section opener: a heavy navy rule, a blue caps label, a heading. */
+export const MuSectionOpener = ({ label, title }: { label: string; title?: string }) => (
+  <div className="pt-2">
+    <hr className="border-t-4 border-navy" />
+    <p className="mt-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-brand">{label}</p>
+    {title && <h2 className="mt-1.5 text-[20px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{title}</h2>}
+  </div>
+);
+
 /** The one place clip art appears in admin: an empty list or record. */
 export const MuEmpty = ({
   icon: Icon,
