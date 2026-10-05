@@ -148,7 +148,7 @@ person may see. Nothing above grants anything.
    holds a care address only when care is delivered somewhere else, and
    then that one wins for carers.
 4. **Relationships are asked as a sentence with both names.**
-   "Tobi is Bukayo's ___ ." The answer is stored from the first person to
+   "Bukayo is Tobi's ___ ." The answer is stored from the first person to
    the second, the inverse is stored with it, and every screen reads the
    same table. One vocabulary.
 5. **Roles are per care record.** One row per person per care record, with
@@ -168,9 +168,9 @@ person may see. Nothing above grants anything.
 |---|---|
 | Caring for yourself | One person; care record points at them; they hold every role; access by `self_identity` |
 | A parent arranging care for a child | Two people in one household; relationship "Ada is Tolu's mother"; mother holds the roles; access by `guardian_authority` |
-| A son arranging care for his mother | Two people; "Tobi is Bukayo's son"; son holds enquirer and primary contact; access by the mother's consent |
+| A son arranging care for his mother | Two people; "Kunle is Ronke's son"; the son holds enquirer and primary contact; access by the mother's consent |
 | A sponsor abroad who only pays | A person outside the household; payer role on the care record; finance-only grant |
-| Twins, or two parents both receiving care | One household, two care records, each pointing at its own person; one request can cover both |
+| Two people in one household both receiving care, such as a mother and her son | One household, two care records, each pointing at its own person; the relationship between them is stored once; one request can cover both; each sees only their own record unless the other consents |
 | The same family enquires again a year later | Staff confirm the existing household and person; a new request on the existing care record |
 | A relative who is also a Medic Connect carer | Separate care-side and professional records, one sign-in (account-model.md 2.2) |
 
