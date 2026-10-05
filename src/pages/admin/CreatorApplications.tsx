@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Loader2, Archive, Search, ExternalLink } from "lucide-react";
+import { Loader2, Archive, ArchiveRestore, Search, ExternalLink } from "lucide-react";
 import { PAGE_SIZE, adminDb } from "@/lib/admin-utils";
+import { selectAll } from "@/lib/select-all";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format } from "date-fns";
 
@@ -50,19 +51,62 @@ const CreatorApplications = () => {
   const [page, setPage] = useState(0);
   const { toast } = useToast();
 
+  const fetchData = async () => {
+    const { data, error } = await adminDb()
+      .from("creator_applications")
+      .select("*")
+      .eq("archived", false)
+      .order("created_at", { ascending: false });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else setItems(data || []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await adminDb()
-        .from("creator_applications")
-        .select("*")
-        .eq("archived", false)
-        .order("created_at", { ascending: false });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else setItems(data || []);
-      setLoading(false);
-    };
     fetchData();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
+
+  // Archived applications are a status-style view, read only when it is chosen.
+  const showingArchived = statusFilter === "archived";
+  const [archived, setArchived] = useState<CreatorApplication[] | null>(null);
+  const [archivedFailed, setArchivedFailed] = useState(false);
+
+  useEffect(() => {
+    if (!showingArchived || archived !== null) return;
+    (async () => {
+      setArchivedFailed(false);
+      try {
+        const rows = await selectAll<CreatorApplication>((from, to) =>
+          adminDb()
+            .from("creator_applications")
+            .select("*")
+            .eq("archived", true)
+            .order("created_at", { ascending: false })
+            .order("id")
+            .range(from, to),
+        );
+        setArchived(rows);
+      } catch (err) {
+        setArchivedFailed(true);
+        setArchived([]);
+        toast({ title: "Could not load archived applications", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+      }
+    })();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [showingArchived, archived]);
+
+  const restoreItem = async (id: string) => {
+    const { error } = await adminDb().from("creator_applications").update({ archived: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not restore", description: error.message, variant: "destructive" });
+      return;
+    }
+    setArchived((prev) => (prev ? prev.filter((i) => i.id !== id) : prev));
+    setSelected(null);
+    toast({ title: "Application restored" });
+    void fetchData();
+  };
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await adminDb().from("creator_applications").update({ status }).eq("id", id);
@@ -71,6 +115,7 @@ const CreatorApplications = () => {
       return;
     }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+    setArchived((prev) => (prev ? prev.map((i) => (i.id === id ? { ...i, status } : i)) : prev));
     if (selected?.id === id) setSelected({ ...selected, status });
   };
 
@@ -81,17 +126,19 @@ const CreatorApplications = () => {
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== id));
+    // The archived view reads again next time it is chosen.
+    setArchived(null);
     setSelected(null);
     toast({ title: "Application archived" });
   };
 
-  const filtered = items.filter((i) => {
+  const filtered = (showingArchived ? archived ?? [] : items).filter((i) => {
     const matchesSearch =
       !search ||
       [i.name, i.email, i.country].some((f) =>
         f.toLowerCase().includes(search.toLowerCase())
       );
-    const matchesStatus = statusFilter === "all" || i.status === statusFilter;
+    const matchesStatus = showingArchived || statusFilter === "all" || i.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -141,6 +188,7 @@ const CreatorApplications = () => {
             <SelectItem value="reviewed">Reviewed</SelectItem>
             <SelectItem value="accepted">Accepted</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -157,14 +205,34 @@ const CreatorApplications = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.length === 0 ? (
+            {showingArchived && archived === null ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center">
+                  <Loader2 className="inline h-6 w-6 animate-spin text-primary" />
+                </TableCell>
+              </TableRow>
+            ) : showingArchived && archivedFailed ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                  Archived creator applications could not be loaded. Refresh to try again.
+                </TableCell>
+              </TableRow>
+            ) : paged.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="p-0">
-                  <MuEmpty
-                    art={art.objMagnifier}
-                    title="No creator applications found"
-                    description="Try a different search or status."
-                  />
+                  {showingArchived && !search ? (
+                    <MuEmpty
+                      art={art.objFolderDocuments}
+                      title="No archived creator applications"
+                      description="Applications you archive appear here and can be restored."
+                    />
+                  ) : (
+                    <MuEmpty
+                      art={art.objMagnifier}
+                      title="No creator applications found"
+                      description="Try a different search or status."
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
@@ -184,16 +252,31 @@ const CreatorApplications = () => {
                     {format(new Date(item.created_at), "dd MMM yyyy")}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        archiveItem(item.id);
-                      }}
-                    >
-                      <Archive className="h-4 w-4" />
-                    </Button>
+                    {showingArchived ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void restoreItem(item.id);
+                        }}
+                      >
+                        <ArchiveRestore className="h-4 w-4 mr-2" />
+                        Restore
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Archive application"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          archiveItem(item.id);
+                        }}
+                      >
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -203,7 +286,16 @@ const CreatorApplications = () => {
       </div>
 
       <ConsoleMobileList
-        emptyLabel="No creator applications found."
+        emptyLabel={
+          showingArchived && archived === null
+            ? "Loading archived applications"
+            : showingArchived && archivedFailed
+              ? "Archived creator applications could not be loaded."
+              : showingArchived && !search
+                ? "No archived creator applications."
+                : "No creator applications found."
+        }
+        emptyArt={showingArchived && archived !== null && !archivedFailed && !search ? art.objFolderDocuments : undefined}
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
@@ -315,6 +407,14 @@ const CreatorApplications = () => {
                   {selected.message}
                 </p>
               </div>
+              {selected.archived && (
+                <div className="flex justify-end pt-2">
+                  <Button variant="outline" onClick={() => void restoreItem(selected.id)}>
+                    <ArchiveRestore className="h-4 w-4 mr-2" />
+                    Restore
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

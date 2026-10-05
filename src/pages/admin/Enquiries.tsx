@@ -19,12 +19,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Loader2, Archive, Search, Send, Settings2, Clock, Mail, HeartPulse } from "lucide-react";
+import { Loader2, Archive, ArchiveRestore, Search, Send, Settings2, Clock, Mail, HeartPulse } from "lucide-react";
 
 const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
 import { useNavigate } from "react-router-dom";
 
 import { adminDb } from "@/lib/admin-utils";
+import { selectAll } from "@/lib/select-all";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { PromoteEnquiries } from "@/components/admin/care/PromoteEnquiries";
@@ -87,26 +88,81 @@ const Enquiries = () => {
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
+  // Archived enquiries are kept apart and only read when the Archived tab is opened.
+  const [archived, setArchived] = useState<Enquiry[] | null>(null);
+  const [archivedFailed, setArchivedFailed] = useState(false);
+  const showingArchived = view === "archived";
+
+  const loadArchived = async () => {
+    setArchivedFailed(false);
+    try {
+      const rows = await selectAll<Enquiry>((from, to) =>
+        adminDb()
+          .from("contact_submissions")
+          .select("*")
+          .eq("archived", true)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(from, to),
+      );
+      setArchived(rows.map((r) => ({
+        ...r,
+        answers: r.answers && typeof r.answers === "object" ? r.answers : {},
+      })));
+    } catch (err) {
+      setArchivedFailed(true);
+      setArchived([]);
+      toast({
+        title: "Could not load archived enquiries",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (showingArchived && archived === null) void loadArchived();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [showingArchived, archived]);
+
+  // A change made in the dialog lands on whichever list holds the row.
+  const patchRow = (id: string, patch: Partial<Enquiry>) => {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+    setArchived((prev) => (prev ? prev.map((i) => (i.id === id ? { ...i, ...patch } : i)) : prev));
+  };
+
+  const restoreItem = async (id: string) => {
+    const { error } = await adminDb().from("contact_submissions").update({ archived: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not restore", description: error.message, variant: "destructive" });
+      return;
+    }
+    setArchived((prev) => (prev ? prev.filter((i) => i.id !== id) : prev));
+    setSelected(null);
+    toast({ title: "Enquiry restored" });
+    void load();
+  };
+
   const openEnquiry = async (item: Enquiry) => {
     setSelected(item);
     setSends([]);
     if (item.status === "new") {
       const { error } = await adminDb().from("contact_submissions").update({ status: "read" }).eq("id", item.id);
       if (error) toast({ title: "Could not mark it read", description: error.message, variant: "destructive" });
-      else setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: "read" } : i)));
+      else patchRow(item.id, { status: "read" });
     }
     try { setSends(await loadSends(item.id)); } catch { /* the history is not the point */ }
   };
 
   const changeStage = async (id: string, stage: string) => {
     await setEnquiryStage(id, stage);
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, stage } : i)));
+    patchRow(id, { stage });
     setSelected((s) => (s && s.id === id ? { ...s, stage } : s));
   };
 
   const changeOwner = async (id: string, owner: string) => {
     await setEnquiryOwner(id, owner || null);
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, owner } : i)));
+    patchRow(id, { owner });
   };
 
   // Archiving is one click, so it comes with an undo rather than a dialog.
@@ -118,6 +174,8 @@ const Enquiries = () => {
     }
     const removed = items.find((i) => i.id === id);
     setItems((prev) => prev.filter((i) => i.id !== id));
+    // The archived list reads again next time it is opened.
+    setArchived(null);
     setSelected(null);
     toast({
       title: "Enquiry archived",
@@ -127,7 +185,10 @@ const Enquiries = () => {
           onClick={async () => {
             const { error: undoError } = await adminDb().from("contact_submissions").update({ archived: false }).eq("id", id);
             if (undoError) toast({ title: "Could not undo", description: undoError.message, variant: "destructive" });
-            else if (removed) setItems((prev) => [removed, ...prev].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+            else {
+              setArchived(null);
+              if (removed) setItems((prev) => [removed, ...prev].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+            }
           }}
         >
           Undo
@@ -166,15 +227,17 @@ const Enquiries = () => {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return items.filter((i) => {
+    const source = showingArchived ? archived ?? [] : items;
+    return source.filter((i) => {
       if (term && ![i.name, i.email, i.service, i.city].some((f) => (f ?? "").toLowerCase().includes(term))) return false;
       if (lineFilter !== "all" && i.service_line !== lineFilter) return false;
+      if (view === "archived") return true;
       if (view === "owed") return owed(i);
       if (view === "open") return !["won", "closed"].includes(i.stage);
       if (view === "won") return i.stage === "won";
       return true;
     });
-  }, [items, search, lineFilter, view]);
+  }, [items, archived, showingArchived, search, lineFilter, view]);
 
   const paged = filtered.slice(page * PAGE, (page + 1) * PAGE);
   const totalPages = Math.ceil(filtered.length / PAGE);
@@ -215,6 +278,7 @@ const Enquiries = () => {
           <TabsTrigger value="open">Open ({counts.open})</TabsTrigger>
           <TabsTrigger value="won">Care started</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -250,17 +314,27 @@ const Enquiries = () => {
         />
       </div>
 
-      {loadFailed ? (
+      {showingArchived && archived === null ? (
+        <div className="flex justify-center border border-line bg-card py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : (showingArchived ? archivedFailed : loadFailed) ? (
         <div className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-foreground">
-          Enquiries could not be loaded. Refresh to try again.
+          {showingArchived ? "Archived enquiries" : "Enquiries"} could not be loaded. Refresh to try again.
         </div>
       ) : paged.length === 0 ? (
         <div className="border border-line bg-card">
+          {showingArchived && !search && lineFilter === "all" ? (
+            <MuEmpty
+              art={art.objFolderDocuments}
+              title="No archived enquiries"
+              description="Enquiries you archive appear here and can be restored."
+            />
+          ) : (
           <MuEmpty
             art={search || lineFilter !== "all" ? art.objMagnifier : art.objEnvelope}
             title={search || lineFilter !== "all" ? "No matching enquiries" : "No enquiries here"}
             description={search || lineFilter !== "all" ? "Try a different search or service line." : "Enquiries in this view appear here as they arrive."}
           />
+          )}
         </div>
       ) : (
       <>
@@ -294,9 +368,15 @@ const Enquiries = () => {
                   {formatDistanceToNowStrict(new Date(item.created_at))}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" aria-label="Archive enquiry" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
-                    <Archive className="h-4 w-4" />
-                  </Button>
+                  {showingArchived ? (
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); void restoreItem(item.id); }}>
+                      <ArchiveRestore className="h-4 w-4 mr-2" />Restore
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" aria-label="Archive enquiry" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -429,9 +509,15 @@ const Enquiries = () => {
                 <Button variant="outline" asChild>
                   <a href={`mailto:${selected.email}`}>Reply by email</a>
                 </Button>
-                <Button variant="outline" onClick={() => archiveItem(selected.id)}>
-                  <Archive className="h-4 w-4 mr-2" />Archive
-                </Button>
+                {selected.archived ? (
+                  <Button variant="outline" onClick={() => void restoreItem(selected.id)}>
+                    <ArchiveRestore className="h-4 w-4 mr-2" />Restore
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={() => archiveItem(selected.id)}>
+                    <Archive className="h-4 w-4 mr-2" />Archive
+                  </Button>
+                )}
               </div>
             </div>
           )}
