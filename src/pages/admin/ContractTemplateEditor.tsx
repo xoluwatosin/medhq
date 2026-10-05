@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuNote, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ContractDocument from "@/components/contracts/ContractDocument";
 import { CONTRACT_FIELDS, ContractAnnex, ContractClause } from "@/lib/contracts";
 import { issueAndSendContract } from "@/lib/contract-issue";
@@ -92,6 +92,22 @@ const ContractTemplateEditor = () => {
   }, [id, toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Issuing and drafting read the saved template, so unsaved edits must be saved first.
+  const dirty = useMemo(() => {
+    if (!template) return false;
+    const saved = {
+      fields: template.fields || {}, rules: template.field_rules || {}, clauses: template.clauses || [], annexes: template.annexes || [],
+      meta: { name: template.name, description: template.description || "", contract_type: template.contract_type, job_title: template.job_title || "", department: template.department || "", is_clinical: template.is_clinical, active: template.active },
+    };
+    return JSON.stringify(saved) !== JSON.stringify({ fields, rules, clauses, annexes, meta });
+  }, [template, fields, rules, clauses, annexes, meta]);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const asked = useMemo(
     () => Object.entries(rules).filter(([, r]) => r === "ask").map(([k]) => k),
@@ -476,6 +492,12 @@ const ContractTemplateEditor = () => {
 
         {/* ------------------------------------------------------------ issue */}
         <TabsContent value="issue" className="mt-4 space-y-5">
+          {dirty && (
+            <MuNote tone="warning" title="Save the template first">
+              Contracts are drafted and issued from the saved template. Your latest changes are not saved yet.
+              <div className="mt-2"><Button size="sm" onClick={save} disabled={saving}>Save template</Button></div>
+            </MuNote>
+          )}
           <MuSection title="Who is getting this contract" description="People who accepted an offer come first. Anybody else can be searched for.">
             <div className="space-y-4">
               <div className="relative">
@@ -511,12 +533,12 @@ const ContractTemplateEditor = () => {
             padded={false}
             actions={
               <>
-                <Button size="sm" variant="outline" disabled={running || rows.length === 0} onClick={() => run(false)}>
+                <Button size="sm" variant="outline" disabled={dirty || running || rows.length === 0} onClick={() => run(false)}>
                   {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Create drafts
                 </Button>
                 <Button
                   size="sm"
-                  disabled={running || rows.length === 0 || rows.some(rowIncomplete)}
+                  disabled={dirty || running || rows.length === 0 || rows.some(rowIncomplete)}
                   onClick={() => run(true)}
                 >
                   {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}

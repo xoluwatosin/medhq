@@ -27,7 +27,8 @@ const Dashboard = () => {
       const [care, enquiries, applications, alerts, posts, campaigns] = await Promise.all([
         can("dashboard") ? nextActions().catch(() => []) : Promise.resolve([]),
         can("enquiries")
-          ? db.from("contact_submissions").select("id", { count: "exact", head: true }).eq("archived", false).eq("status", "new")
+          // The same rule as the Enquiries desk's Unanswered view.
+          ? db.from("contact_submissions").select("id", { count: "exact", head: true }).eq("archived", false).eq("stage", "new").is("last_sent_at", null)
           : Promise.resolve({ count: 0 }),
         // The Intake tile links to Intake, so it counts what Intake counts:
         // people who arrived in the pool this week.
@@ -57,8 +58,8 @@ const Dashboard = () => {
   }, [isSuperAdmin, permissions]);
 
   const work = useMemo(() => [
-    can("dashboard") ? { title: "Care requests", detail: "Care work needing attention", count: counts.care, to: "/admin/care/requests", icon: ClipboardList } : null,
-    can("enquiries") ? { title: "Enquiries", detail: "New enquiries to review", count: counts.enquiries, to: "/admin/enquiries", icon: Inbox } : null,
+    can("dashboard") ? { title: "Care clients", detail: "Clients whose next step is due", count: counts.care, to: "/admin/clients?view=attention", icon: ClipboardList } : null,
+    can("enquiries") ? { title: "Enquiries", detail: "Not yet answered", count: counts.enquiries, to: "/admin/enquiries?view=owed", icon: Inbox } : null,
     can("match_universe") ? { title: "Intake", detail: "Joined the pool this week", count: counts.applications, to: "/admin/match-universe/intake", icon: UserPlus } : null,
     can("dashboard") ? { title: "Operational alerts", detail: "Unresolved alerts", count: counts.alerts, to: "/admin/intelligence", icon: AlertCircle } : null,
     isSuperAdmin ? { title: "Approvals", detail: "Content awaiting approval", count: counts.approvals, to: "/admin/approvals", icon: ShieldCheck } : null,

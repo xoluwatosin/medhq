@@ -86,7 +86,8 @@ export default function MatchUniverseOpportunity() {
           </TabsList>
         </div>
 
-        <TabsContent value="details" className="mt-4">
+        {/* Kept mounted so edits survive a look at Applications or Matches. */}
+        <TabsContent value="details" forceMount className="mt-4 data-[state=inactive]:hidden">
           <MatchmakerEditor embedded />
         </TabsContent>
         <TabsContent value="applications" className="mt-4">
@@ -97,8 +98,6 @@ export default function MatchUniverseOpportunity() {
         </TabsContent>
       </Tabs>
 
-      {/* Keep the URL without a sub-path on the default tab; redirect if the user lands on the bare opportunity id route */}
-      {path === `/admin/match-universe/opportunities/${id}` && activeTab === "details" ? null : null}
     </div>
   );
 }

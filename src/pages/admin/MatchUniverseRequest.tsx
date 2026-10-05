@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import {
   Loader2, Save, CheckCircle2, CircleAlert, Stethoscope, MapPin, HeartPulse, CalendarDays,
 } from "lucide-react";
@@ -42,6 +43,19 @@ export default function MatchUniverseRequest() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [matchesKey, setMatchesKey] = useState(0);
+  const navigate = useNavigate();
+
+  // Binning hides the request from every list; the row stays for history.
+  const binRequest = async () => {
+    if (!id) return;
+    const { error } = await adminDb().from("matchmaker_opportunities").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not remove the request", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Request removed" });
+    navigate("/admin/match-universe/requests");
+  };
   const { toast } = useToast();
 
   const load = useCallback(async () => {
@@ -155,9 +169,19 @@ export default function MatchUniverseRequest() {
         title={rec.title}
         description="Save the brief here. Set the requirements below, then rank the candidate pool against them."
         actions={
+          <div className="flex flex-wrap gap-2">
+            <ConfirmAction
+              title="Remove this request?"
+              description={<p>"{rec.title}" leaves the requests list. Shortlists and history made from it are kept.</p>}
+              confirmLabel="Remove request"
+              destructive
+              onConfirm={binRequest}
+              trigger={<Button variant="outline">Remove</Button>}
+            />
           <Button onClick={save} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
           </Button>
+          </div>
         }
       />
 

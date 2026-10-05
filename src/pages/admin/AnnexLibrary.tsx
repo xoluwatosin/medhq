@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { useToast } from "@/hooks/use-toast";
 import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ContractRichTextEditor from "@/components/contracts/ContractRichTextEditor";
@@ -73,6 +74,21 @@ const AnnexLibrary = () => {
   useEffect(() => { setDraft(selected ? { ...selected } : null); setPreview(false); }, [selected]);
 
   const set = (patch: Partial<AnnexLibraryItem>) => setDraft((d) => (d ? { ...d, ...patch } : d));
+
+  // Unsaved edits are never thrown away silently.
+  const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const choose = (next: string) => {
+    if (next === selectedId) return;
+    if (dirty) setPendingId(next);
+    else setSelectedId(next);
+  };
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const save = async () => {
     if (!draft) return;
@@ -150,6 +166,15 @@ const AnnexLibrary = () => {
 
   return (
     <MuPage>
+      <ConfirmAction
+        open={pendingId !== null}
+        onOpenChange={(o) => !o && setPendingId(null)}
+        title="Leave this annex without saving?"
+        description={<p>Your changes to {draft?.code || "this annex"} have not been saved. Leaving now discards them.</p>}
+        confirmLabel="Discard changes"
+        destructive
+        onConfirm={() => { if (pendingId) setSelectedId(pendingId); setPendingId(null); }}
+      />
       <MuPageHeader
         title="Annex library"
         description="The documents a contract refers to. Written once here, carried by every contract that includes them."
@@ -180,7 +205,7 @@ const AnnexLibrary = () => {
                 <li key={i.id}>
                   <button
                     type="button"
-                    onClick={() => setSelectedId(i.id)}
+                    onClick={() => choose(i.id)}
                     className={`w-full px-4 py-3 text-left transition-colors ${
                       i.id === selectedId ? "bg-muted" : "hover:bg-muted/50"
                     }`}

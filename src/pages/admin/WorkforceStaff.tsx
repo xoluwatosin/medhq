@@ -42,6 +42,8 @@ import {
 } from "@/lib/staff";
 
 import AccessAreas from "@/components/admin/AccessAreas";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
+import { returnToTalent } from "@/lib/lifecycle";
 import { ACCESS_DELEGATE_PERMISSION, namedAreas } from "@/lib/admin-access";
 
 const contractTone = (s: string): MuTone =>
@@ -322,6 +324,27 @@ const WorkforceStaff = () => {
             {person.auth_user_id
               ? <MuStatus icon={KeyRound} label="Has sign-in" tone="info" />
               : <MuStatus icon={KeyRound} label="No sign-in" tone="neutral" />}
+            <ConfirmAction
+              title={`Return ${person.full_name} to Talent?`}
+              description={
+                <>
+                  <p>Their employment closes and they go back to the Talent Pool. Their sign-in, documents and history stay as they are.</p>
+                  <p>Live assignments or contracts block this until they are resolved.</p>
+                </>
+              }
+              confirmLabel="Return to Talent"
+              destructive
+              onConfirm={async () => {
+                try {
+                  await returnToTalent(person.id);
+                  toast({ title: "Returned to Talent", description: "Employment closed. Their full history is unchanged." });
+                  navigate(`/admin/match-universe/${person.id}`);
+                } catch (err: any) {
+                  toast({ title: "Could not return them to Talent", description: err.message, variant: "destructive" });
+                }
+              }}
+              trigger={<Button size="sm" variant="outline">Return to Talent</Button>}
+            />
           </div>
         }
       />
@@ -407,7 +430,7 @@ const WorkforceStaff = () => {
                 <Select value={person.staff_status || "pending"} onValueChange={(v) => patchPerson({ staff_status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {["pending", "active", "on_notice", "exited"].map((k) => (
+                    {["pending", "active", "on_notice", ...(person.staff_status === "exited" ? ["exited"] : [])].map((k) => (
                       <SelectItem key={k} value={k}>{STAFF_STATUS_LABELS[k]}</SelectItem>
                     ))}
                   </SelectContent>

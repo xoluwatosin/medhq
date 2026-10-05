@@ -190,6 +190,11 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
         return;
       }
       setMatches((data || []) as MatchRow[]);
+      // Record when this was last ranked, so the requests list can say so.
+      void adminDb()
+        .from("matchmaker_opportunities")
+        .update({ last_matched_at: new Date().toISOString(), last_match_count: (data || []).length })
+        .eq("id", id);
 
       const tally = new Map<string, number>();
       let people = 0;
