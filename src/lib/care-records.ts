@@ -175,3 +175,54 @@ export const separateHome = async (clientId: string) => {
   const { error } = await adminDb().rpc("care_home_separate", { _client_id: clientId });
   if (error) throw error;
 };
+
+// The same human entered twice. Matches are offered, never merged on their
+// own: families share emails and phones, so staff decide.
+export interface MatchCard {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  created_at: string;
+  source: string;
+  has_sign_in: boolean;
+  care_records: { client_id: string; full_name: string; enquiry_number: string | null; date_of_birth: string | null }[];
+  contact_for: { client_id: string; full_name: string; enquiry_number: string | null }[];
+  families: { id: string; display_name: string }[];
+}
+
+export interface PersonMatch {
+  person_a: MatchCard;
+  person_b: MatchCard;
+  matched_on: ("email" | "phone" | "name_and_birth")[];
+}
+
+export const MATCH_REASONS: Record<string, string> = {
+  email: "email",
+  phone: "phone",
+  name_and_birth: "name and date of birth",
+};
+
+export const matchReason = (m: PersonMatch) =>
+  `Same ${m.matched_on.map((k) => MATCH_REASONS[k] ?? k).join(" and ")}`;
+
+/** Every open match, or only those touching one care record. */
+export const personMatches = async (clientId?: string): Promise<PersonMatch[]> => {
+  const { data, error } = await adminDb().rpc("care_person_matches", { _client_id: clientId ?? null });
+  if (error) throw error;
+  return (data ?? []) as PersonMatch[];
+};
+
+export const dismissMatch = async (personA: string, personB: string) => {
+  const { error } = await adminDb().rpc("care_person_match_dismiss", { _person_a: personA, _person_b: personB });
+  if (error) throw error;
+};
+
+export const mergePeople = async (keep: string, drop: string, combineFamilies: boolean) => {
+  const { data, error } = await adminDb().rpc("care_people_merge", {
+    _keep: keep, _drop: drop, _combine_families: combineFamilies,
+  });
+  if (error) throw error;
+  return data as { kept: string; rows_moved: number; families_combined: number };
+};

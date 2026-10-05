@@ -44,6 +44,7 @@ import WorkSection from "@/components/admin/care/WorkSection";
 import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
 import HomeSection from "@/components/admin/care/HomeSection";
+import PossibleDuplicates from "@/components/admin/care/PossibleDuplicates";
 import { homeOverview, type HomeOverview } from "@/lib/care-records";
 import RecordLifecycle from "@/components/admin/care/RecordLifecycle";
 
@@ -720,6 +721,7 @@ const ClientRecord = () => {
           </MuSection>
         )}
 
+        {tab === "overview" && <PossibleDuplicates clientId={String(id)} />}
         {tab === "overview" && (
           <HomeSection
             clientId={String(id)}

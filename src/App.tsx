@@ -102,6 +102,7 @@ import AnnexLibrary from "./pages/admin/AnnexLibrary";
 import Clients from "./pages/admin/Clients";
 import ClientRecord from "./pages/admin/ClientRecord";
 import CareRequests from "./pages/admin/CareRequests";
+import CareDuplicates from "./pages/admin/CareDuplicates";
 import Programmes from "./pages/admin/Programmes";
 
 import PortalLogin from "./pages/portal/PortalLogin";
@@ -259,6 +260,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="care/requests" element={<CareRequests />} />
+              <Route path="care/duplicates" element={<CareDuplicates />} />
               <Route path="clients" element={<Clients />} />
               <Route path="clients/:id" element={<ClientRecord />} />
               <Route path="intelligence" element={<Intelligence />} />
