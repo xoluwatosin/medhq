@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import logoMark from "@/assets/brand/m-full-soft.svg";
+import { BandSlotContext } from "@/components/admin/mu/AdminBand";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarGroup,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger,
@@ -81,6 +82,8 @@ const AdminLayout = () => {
   // The domain's own navigation. It only earns a row when the domain holds more
   // than one destination; specialist pages stay out of it.
   const localNav = here.domain && here.domain.items.length > 1 ? here.domain.items : [];
+
+  const [bandSlot, setBandSlot] = useState<HTMLElement | null>(null);
 
   // Dialogs, sheets and menus render outside this layout, at the end of the
   // page. Marking the page root lets the admin look reach them too.
@@ -233,8 +236,9 @@ const AdminLayout = () => {
   }
 
   return (
+    <BandSlotContext.Provider value={bandSlot}>
     <SidebarProvider style={{ "--sidebar-width": "15rem", "--sidebar-width-icon": "4rem" } as React.CSSProperties}>
-      <div className="admin-kit flex min-h-dvh w-full bg-muted">
+      <div className="admin-kit flex min-h-dvh w-full bg-background">
         {/* Desktop command rail: the business domains, nothing else. */}
         <Sidebar collapsible="icon" className="hidden border-r border-navy/20 md:flex">
           <SidebarContent className="flex flex-col gap-0">
@@ -268,7 +272,7 @@ const AdminLayout = () => {
         </Sidebar>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-hairline bg-background/95 px-3 backdrop-blur sm:px-6">
+          <header className="admin-top sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-white/10 bg-navy px-3 text-white sm:px-6">
             <div className="hidden md:block"><SidebarTrigger /></div>
 
             {/* Phone: contextual back to the parent page when on a detail route,
@@ -285,13 +289,13 @@ const AdminLayout = () => {
 
             {/* Where you are: domain, then destination, then a leaf for details. */}
             <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
-              <span className="hidden text-muted-foreground sm:inline">{here.domain?.label ?? "Admin"}</span>
-              <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground/60 sm:inline" />
-              <span className="truncate font-semibold text-navy">{here.item?.title ?? here.domain?.label ?? "Admin Centre"}</span>
+              <span className="hidden text-white/60 sm:inline">{here.domain?.label ?? "Admin"}</span>
+              <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-white/40 sm:inline" />
+              <span className="truncate font-bold text-white">{here.item?.title ?? here.domain?.label ?? "Admin Centre"}</span>
               {here.deeper && (
                 <>
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                  <span className="truncate text-muted-foreground">Details</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/40" />
+                  <span className="truncate text-white/60">Details</span>
                 </>
               )}
             </nav>
@@ -301,11 +305,11 @@ const AdminLayout = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setSearchOpen(true)}
-                className="hidden h-9 gap-2 border-hairline pl-2.5 pr-2 text-muted-foreground sm:flex"
+                className="hidden h-9 gap-2 border-white/30 bg-transparent pl-2.5 pr-2 text-white/80 hover:bg-white/10 hover:text-white sm:flex"
               >
                 <Search className="h-4 w-4" />
                 <span className="text-sm">Jump to…</span>
-                <kbd className="ml-4 rounded bg-muted px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground">⌘K</kbd>
+                <kbd className="ml-4 bg-white/15 px-1.5 py-0.5 font-sans text-[10px] font-medium text-white/80">⌘K</kbd>
               </Button>
               <Button variant="ghost" size="icon" className="sm:hidden" aria-label="Search admin" onClick={() => setSearchOpen(true)}>
                 <Search className="h-5 w-5" />
@@ -313,7 +317,7 @@ const AdminLayout = () => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-navy text-[12px] font-semibold text-white hover:bg-navy/90 hover:text-white" aria-label="Account menu">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 bg-white text-[12px] font-extrabold text-navy hover:bg-tint hover:text-navy" aria-label="Account menu">
                     {initials || "A"}
                   </Button>
                 </DropdownMenuTrigger>
@@ -344,7 +348,7 @@ const AdminLayout = () => {
 
           {/* The domain's own navigation, directly above its workspace. */}
           {localNav.length > 0 && (
-            <div className="sticky top-14 z-10 border-b border-hairline bg-background/95 backdrop-blur">
+            <div className="sticky top-14 z-10 bg-navy">
               <nav
                 aria-label={`${here.domain?.label} sections`}
                 className="mx-auto flex w-full max-w-[1400px] gap-1 overflow-x-auto px-3 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden"
@@ -356,10 +360,10 @@ const AdminLayout = () => {
                       key={item.url}
                       to={item.url}
                       aria-current={active ? "page" : undefined}
-                      className={`flex min-h-9 shrink-0 items-center gap-1.5 px-3 text-[13.5px] font-medium transition-colors ${
+                      className={`flex min-h-10 shrink-0 items-center gap-1.5 px-3.5 text-[13.5px] font-bold transition-colors ${
                         active
-                          ? "border-b-2 border-navy text-navy"
-                          : "border-b-2 border-transparent text-muted-foreground hover:text-navy"
+                          ? "bg-white text-navy"
+                          : "text-white/75 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
@@ -372,7 +376,9 @@ const AdminLayout = () => {
           )}
 
           <main className="flex-1">
-            <div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:px-8 lg:py-7">
+            {/* Each page's navy band lands here, full width, under the tab rail. */}
+            <div ref={setBandSlot} />
+            <div className="mx-auto w-full max-w-[1400px] p-4 pt-8 sm:p-6 sm:pt-10 lg:px-8 lg:pb-10 lg:pt-10">
               {canOpenRoute(location.pathname, { isSuperAdmin, permissions }) ? (
                 <Outlet />
               ) : (
@@ -411,6 +417,7 @@ const AdminLayout = () => {
         </CommandList>
       </CommandDialog>
     </SidebarProvider>
+    </BandSlotContext.Provider>
   );
 };
 

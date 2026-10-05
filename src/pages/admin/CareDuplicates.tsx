@@ -131,7 +131,7 @@ const CareDuplicates = () => {
   };
 
   return (
-    <section className="mx-auto w-full max-w-[1120px]" aria-labelledby="care-duplicates-heading">
+    <section className="w-full" aria-labelledby="care-duplicates-heading">
       <ConsolePageHeader
         id="care-duplicates-heading"
         title="Possible duplicates"

@@ -159,7 +159,7 @@ const SeoPageRecord = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   if (!page) {
     return (
-      <section className="mx-auto w-full max-w-[1120px] space-y-6">
+      <section className="w-full space-y-6">
         <MuPageHeader title="SEO page" backTo="/admin/seo/pages" backLabel="SEO pages" />
         <MuSection padded={false}>
           {loadError ? (
@@ -177,7 +177,7 @@ const SeoPageRecord = () => {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1120px] space-y-4" aria-label={page.title ?? page.page_key}>
+    <section className="w-full space-y-4" aria-label={page.title ?? page.page_key}>
       <MuPageHeader
         title={page.title ?? page.page_key}
         description={page.path}

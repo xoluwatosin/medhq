@@ -15,17 +15,17 @@ interface ConsoleTableProps<T> {
 }
 
 const ConsoleTable = <T,>({ columns, rows, rowKey, renderRow, className }: ConsoleTableProps<T>) => (
-  <div className={className ?? "hidden overflow-hidden border border-line-soft bg-card md:block"}>
+  <div className={className ?? "hidden overflow-hidden border-2 border-navy bg-card shadow-offset md:block"}>
     <table className="w-full table-fixed border-collapse text-left text-sm text-body">
       <colgroup>
         {columns.map((column) => (
           <col key={column.key} style={{ width: column.width }} />
         ))}
       </colgroup>
-      <thead className="bg-tint/40 text-[11px] font-bold uppercase tracking-[0.12em] text-label">
-        <tr className="h-8 border-b border-line-soft">
+      <thead className="bg-navy text-[11px] font-extrabold uppercase tracking-[0.14em] text-white">
+        <tr className="h-10">
           {columns.map((column) => (
-            <th key={column.key} scope="col" className="border-r border-line-soft px-3 py-2 last:border-r-0">
+            <th key={column.key} scope="col" className="border-r border-white/15 px-3 py-2 !text-white last:border-r-0">
               {column.label}
             </th>
           ))}

@@ -21,7 +21,7 @@ const Seo = () => {
   const active = (SECTIONS.find((item) => item.id === section)?.id ?? "pages") as SectionId;
 
   return (
-    <section className="mx-auto w-full max-w-[1120px] space-y-6" aria-label="SEO">
+    <section className="w-full space-y-6" aria-label="SEO">
       <MuPageHeader
         title="SEO"
         description="Governed pages, canonical modules, public claims and markets. Operational truth stays in services, fees and the Bridge."

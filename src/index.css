@@ -984,24 +984,23 @@ All colors MUST be HSL.
     background: transparent;
     height: auto;
     padding: 0;
-    gap: 1.25rem;
-    border-bottom: 1px solid hsl(var(--line));
+    gap: 0.25rem;
+    border-bottom: 2px solid hsl(var(--navy));
     justify-content: flex-start;
     flex-wrap: wrap;
   }
   .admin-kit div[role="tablist"][data-orientation] > [role="tab"] {
     min-height: 44px;
-    padding: 0 0.125rem;
-    margin-bottom: -1px;
-    border-bottom: 2px solid transparent;
+    padding: 0 0.875rem;
     background: transparent;
     box-shadow: none;
-    font-weight: 600;
-    color: hsl(var(--muted-foreground));
+    font-weight: 700;
+    color: hsl(var(--navy) / 0.7);
   }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"]:hover { background: hsl(var(--tint)); color: hsl(var(--navy)); }
   .admin-kit div[role="tablist"][data-orientation] > [role="tab"][data-state="active"] {
-    border-bottom-color: hsl(var(--brand));
-    color: hsl(var(--navy));
+    background: hsl(var(--navy));
+    color: #fff;
     font-weight: 800;
   }
 
@@ -1027,14 +1026,57 @@ All colors MUST be HSL.
     border-radius: 0;
   }
 
-  /* Table heads: small bold caps, the same on every list. */
+  /* Table heads: a navy bar with small white caps, the same on every list. */
+  .admin-kit thead {
+    background: hsl(var(--navy));
+  }
   .admin-kit thead th {
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-weight: 800;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: hsl(var(--label));
+    color: #fff;
   }
+  .admin-kit thead tr { border-bottom: 0; }
+  .admin-kit thead tr:hover { background: transparent; }
+
+  /* Tables sit on a card with the site's navy edge and hard offset. */
+  .admin-kit main div:has(> table):not(:has(> table thead.bg-navy)) {
+    border: 2px solid hsl(var(--navy));
+    box-shadow: 6px 6px 0 hsl(var(--navy));
+    background: hsl(var(--card));
+  }
+
+  /* Buttons are the site's: square, heavy, a navy edge and a hard offset. */
+  .admin-kit main :is(button, a).bg-primary {
+    border: 2px solid hsl(var(--navy));
+    box-shadow: 3px 3px 0 hsl(var(--navy));
+    font-weight: 800;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+  }
+  .admin-kit main :is(button, a).bg-primary:active { transform: translate(2px, 2px); box-shadow: none; }
+  .admin-kit main :is(button, a).border-input {
+    border: 2px solid hsl(var(--navy));
+    color: hsl(var(--navy));
+    font-weight: 700;
+  }
+
+  /* On the navy band: blue buttons with a white offset, outlines in white. */
+  .admin-kit .admin-band :is(button, a).bg-primary {
+    border-color: #fff;
+    box-shadow: 4px 4px 0 #fff;
+  }
+  .admin-kit .admin-band :is(button, a).border-input {
+    background: transparent;
+    border-color: hsl(0 0% 100% / 0.7);
+    color: #fff;
+  }
+  .admin-kit .admin-band :is(button, a).border-input:hover { background: hsl(0 0% 100% / 0.12); color: #fff; }
+  .admin-kit .admin-band :is(button, a):is(.hover\:bg-accent, [class*="variant-ghost"]):not(.bg-primary):not(.border-input) { color: #fff; }
+
+  /* The navy top bar. */
+  .admin-kit .admin-top [data-sidebar="trigger"] { color: #fff; }
+  .admin-kit .admin-top [data-sidebar="trigger"]:hover { background: hsl(0 0% 100% / 0.12); }
 
   /* Navy command rail: the admin sidebar is a navy surface, not a grey card. */
   .admin-kit {

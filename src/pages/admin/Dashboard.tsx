@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, ArrowRight, ClipboardList, Inbox, Loader2, ShieldCheck, UserPlus } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { MuEmpty, MuPage, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
-import { Button } from "@/components/ui/button";
+import { art } from "@/components/mc/art";
+import { ClipArt } from "@/components/mc/brand";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminDb } from "@/lib/admin-utils";
 import { nextActions } from "@/lib/care-work";
@@ -16,7 +18,7 @@ interface OverviewCounts {
 }
 
 const Dashboard = () => {
-  const { isSuperAdmin, permissions } = useAuth();
+  const { isSuperAdmin, permissions, adminDisplayName } = useAuth();
   const [counts, setCounts] = useState<OverviewCounts>({ care: 0, enquiries: 0, applications: 0, alerts: 0, approvals: 0 });
   const [loading, setLoading] = useState(true);
   const can = (permission: string) => isSuperAdmin || permissions.includes(permission);
@@ -58,44 +60,99 @@ const Dashboard = () => {
   }, [isSuperAdmin, permissions]);
 
   const work = useMemo(() => [
-    can("dashboard") ? { title: "Care clients", detail: "Clients whose next step is due", count: counts.care, to: "/admin/clients?view=attention", icon: ClipboardList } : null,
-    can("enquiries") ? { title: "Enquiries", detail: "Not yet answered", count: counts.enquiries, to: "/admin/enquiries?view=owed", icon: Inbox } : null,
-    can("match_universe") ? { title: "Intake", detail: "Joined the pool this week", count: counts.applications, to: "/admin/match-universe/intake", icon: UserPlus } : null,
-    can("dashboard") ? { title: "Operational alerts", detail: "Unresolved alerts", count: counts.alerts, to: "/admin/intelligence", icon: AlertCircle } : null,
-    isSuperAdmin ? { title: "Approvals", detail: "Content awaiting approval", count: counts.approvals, to: "/admin/approvals", icon: ShieldCheck } : null,
+    can("dashboard") ? { title: "Care", detail: "Clients whose next step is due", count: counts.care, to: "/admin/clients?view=attention", art: art.objCarePlan, clear: "No care step is due" } : null,
+    can("enquiries") ? { title: "Enquiries", detail: "Waiting for a first reply", count: counts.enquiries, to: "/admin/enquiries?view=owed", art: art.objEnvelope, clear: "Every enquiry has a reply" } : null,
+    can("match_universe") ? { title: "Intake", detail: "Joined the talent pool this week", count: counts.applications, to: "/admin/match-universe/intake", art: art.objPaperUpload, clear: "Nobody new this week" } : null,
+    can("dashboard") ? { title: "Alerts", detail: "Operational alerts not yet resolved", count: counts.alerts, to: "/admin/intelligence", art: art.objAlarmBeacon, clear: "No open alerts" } : null,
+    isSuperAdmin ? { title: "Approvals", detail: "Posts and campaigns waiting for you", count: counts.approvals, to: "/admin/approvals", art: art.objClipboardChecks, clear: "Nothing to approve" } : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item)), [counts, isSuperAdmin, permissions]);
+
+  // Busy queues first, so the first card is the first job.
+  const ordered = useMemo(() => [...work].sort((a, b) => Number(b.count > 0) - Number(a.count > 0)), [work]);
+  const waiting = work.reduce((n, w) => n + (w.count > 0 ? 1 : 0), 0);
+
+  const quick = [
+    can("dashboard") ? { label: "Add a client", to: "/admin/clients" } : null,
+    can("campaigns") ? { label: "New campaign", to: "/admin/campaigns" } : null,
+    can("invoices") ? { label: "New invoice", to: "/admin/invoices" } : null,
+    can("match_universe") ? { label: "Talent pool", to: "/admin/match-universe" } : null,
+    can("blog") ? { label: "Write a post", to: "/admin/posts" } : null,
+  ].filter((q): q is { label: string; to: string } => Boolean(q));
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const first = (adminDisplayName || "").trim().split(/\s+/)[0];
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>;
 
   return (
     <MuPage>
-      <MuPageHeader title="Overview" description="Work that needs attention across Medic Connect." />
-      <MuSection padded={false}>
-        {work.length === 0 ? (
-          <MuEmpty title="Nothing to show" description="Your access does not include any work queues yet." />
-        ) : (
-          <>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] border-b border-line-soft px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-label">
-              <span>Work</span><span className="pr-12">Open</span>
-            </div>
-            <div className="divide-y divide-line-soft">
-              {work.map((item) => (
-                <div key={item.title} className="flex min-h-[68px] items-center gap-3 px-5 py-3">
-                  <item.icon className="h-5 w-5 shrink-0 text-muted-copy" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-navy">{item.title}</p>
-                    <p className="text-xs text-muted-copy">{item.detail}</p>
+      <MuPageHeader
+        eyebrow="Overview"
+        title={first ? `${greeting}, ${first}` : greeting}
+        description={
+          work.length === 0
+            ? "Your access does not include any work queues yet."
+            : waiting === 0
+              ? "Nothing is waiting on you right now."
+              : `${waiting} ${waiting === 1 ? "queue needs" : "queues need"} you today. The busiest is first.`
+        }
+      />
+
+      {work.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="Nothing to show" description="Ask the super admin if you need a queue." />
+        </MuSection>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {ordered.map((item, i) => {
+            const busy = item.count > 0;
+            return (
+              <Link
+                key={item.title}
+                to={item.to}
+                style={{ ["--mc-tilt" as string]: `${[-1.1, 0.8, -0.5, 1, -0.8][i % 5]}deg` }}
+                className={cn(
+                  "mc-tilt group relative flex min-h-[176px] flex-col border-2 border-navy p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4",
+                  busy ? "bg-card shadow-offset-blue" : "bg-tint/50 shadow-offset-sm",
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-label">{item.title}</p>
+                    <p className={cn("mt-2 text-[52px] font-extrabold leading-none tracking-[-0.05em] tabular-nums", busy ? "text-brand" : "text-navy/30")}>
+                      {item.count}
+                    </p>
                   </div>
-                  <span className="min-w-8 text-right text-lg font-semibold tabular-nums text-ink">{item.count}</span>
-                  <Button asChild variant="ghost" size="icon" aria-label={`Open ${item.title}`}>
-                    <Link to={item.to}><ArrowRight className="h-4 w-4" /></Link>
-                  </Button>
+                  <ClipArt src={item.art} size={88} />
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-      </MuSection>
+                <p className="mt-3 text-[15px] font-bold leading-snug text-navy">{busy ? item.detail : item.clear}</p>
+                <span className={cn("mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] font-extrabold", busy ? "text-brand" : "text-navy/60")}>
+                  {busy ? "Open" : "Look anyway"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {quick.length > 0 && (
+        <section aria-label="Start something">
+          <hr className="border-t-4 border-navy" />
+          <p className="eyebrow mt-4">Start something</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {quick.map((q) => (
+              <Link
+                key={q.label}
+                to={q.to}
+                className="inline-flex min-h-11 items-center gap-2 border-2 border-navy bg-card px-4 text-[14.5px] font-extrabold text-navy shadow-offset-sm transition-all hover:bg-tint active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              >
+                {q.label} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </MuPage>
   );
 };

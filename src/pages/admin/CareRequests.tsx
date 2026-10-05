@@ -145,7 +145,7 @@ const CareRequests = ({ embedded = false }: { embedded?: boolean }) => {
   );
 
   return (
-    <section className={embedded ? "" : "mx-auto w-full max-w-[1120px]"} aria-labelledby={embedded ? undefined : "care-requests-heading"} aria-label={embedded ? "Care requests" : undefined}>
+    <section className={embedded ? "" : "w-full"} aria-labelledby={embedded ? undefined : "care-requests-heading"} aria-label={embedded ? "Care requests" : undefined}>
       {!embedded && (
         <ConsolePageHeader
           id="care-requests-heading"

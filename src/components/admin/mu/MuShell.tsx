@@ -5,6 +5,9 @@
 // it is what stops each page inventing its own arrangement of loose text.
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import AdminBand, { BAND_INNER, InBandSlot } from "./AdminBand";
+import KitPillHeading from "@/components/kit/KitPillHeading";
+import { NotchTag } from "@/components/mc/brand";
 import { ArrowLeft, ChevronDown, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +16,7 @@ export const MuPage = ({ children, className }: { children: ReactNode; className
   <div className={cn("space-y-8 pb-10", className)}>{children}</div>
 );
 
+/** Every admin page opens with the navy band (see AdminBand). */
 export const MuPageHeader = ({
   title,
   description,
@@ -21,6 +25,8 @@ export const MuPageHeader = ({
   backTo,
   backLabel = "Back",
   id,
+  eyebrow,
+  art,
 }: {
   /** For aria-labelledby on the page's main region. */
   id?: string;
@@ -30,22 +36,21 @@ export const MuPageHeader = ({
   breadcrumb?: ReactNode;
   backTo?: string;
   backLabel?: string;
+  eyebrow?: string;
+  /** A character for this page; null for none. Defaults to the area's. */
+  art?: string | null;
 }) => (
-  <header className="space-y-3">
-    {breadcrumb}
-    {backTo && (
-      <Button variant="ghost" size="sm" asChild className="-ml-3">
-        <Link to={backTo}><ArrowLeft className="mr-2 h-4 w-4" />{backLabel}</Link>
-      </Button>
-    )}
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="max-w-2xl space-y-1.5">
-        <h1 id={id} className="text-[26px] font-extrabold leading-[1.1] tracking-[-0.03em] text-navy sm:text-[30px]">{title}</h1>
-        {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
-    </div>
-  </header>
+  <AdminBand
+    id={id}
+    title={title}
+    description={description}
+    actions={actions}
+    breadcrumb={breadcrumb}
+    backTo={backTo}
+    backLabel={backLabel}
+    eyebrow={eyebrow}
+    art={art}
+  />
 );
 
 export interface MuStat {
@@ -58,45 +63,45 @@ export interface MuStat {
   to?: string;
 }
 
+const TILE_TILTS = [-1.2, 0.9, -0.6, 1.1];
+
+/** Number tiles: cards dropped on the table, the attention ones in blue. */
 export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 | 3 | 4 }) => (
   <div
     className={cn(
-      "grid gap-3",
+      "grid gap-4 sm:gap-5",
       columns === 2 && "sm:grid-cols-2",
       columns === 3 && "sm:grid-cols-3",
       columns === 4 && "sm:grid-cols-2 lg:grid-cols-4",
     )}
   >
-    {stats.map((s) => {
+    {stats.map((s, i) => {
       const Tile = s.to ? Link : "div";
+      const hot = s.tone === "attention";
       return (
-      <Tile
-        key={s.label}
-        to={s.to as string}
-        className={cn(
-          "block border border-line bg-card p-4",
-          s.tone === "attention" && "border-l-4 border-l-brand",
-          s.to && "transition-colors hover:border-brand hover:bg-tint/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-        )}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">{s.label}</p>
-            <p className="mt-1.5 text-[26px] font-extrabold leading-none tracking-[-0.03em] text-navy tabular-nums">{s.value}</p>
-            {s.hint && <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{s.hint}</p>}
-          </div>
-          {s.icon && (
-            <span
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center bg-tint text-navy",
-                s.tone === "attention" && "bg-brand text-white",
-              )}
-            >
-              <s.icon className="h-4 w-4" />
-            </span>
+        <Tile
+          key={s.label}
+          to={s.to as string}
+          style={{ ["--mc-tilt" as string]: `${TILE_TILTS[i % TILE_TILTS.length]}deg` }}
+          className={cn(
+            "mc-tilt block border-2 border-navy p-4 sm:p-5",
+            hot ? "bg-brand text-white shadow-offset" : "bg-card shadow-offset-blue",
+            s.to && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
           )}
-        </div>
-      </Tile>
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className={cn("text-[11px] font-extrabold uppercase tracking-[0.14em]", hot ? "text-white/80" : "text-label")}>{s.label}</p>
+              <p className={cn("mt-2 text-[34px] font-extrabold leading-none tracking-[-0.04em] tabular-nums", hot ? "text-white" : "text-navy")}>{s.value}</p>
+              {s.hint && <p className={cn("mt-2 text-[12.5px] leading-snug", hot ? "text-white/85" : "text-muted-foreground")}>{s.hint}</p>}
+            </div>
+            {s.icon && (
+              <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center", hot ? "bg-white text-brand" : "bg-tint text-navy")}>
+                <s.icon className="h-[18px] w-[18px]" />
+              </span>
+            )}
+          </div>
+        </Tile>
       );
     })}
   </div>
@@ -119,9 +124,9 @@ export const MuSection = ({
   className?: string;
   id?: string;
 }) => (
-  <section id={id} className={cn("rounded-none border border-line bg-card", className)}>
+  <section id={id} className={cn("border-2 border-navy bg-card shadow-offset", className)}>
     {(title || actions) && (
-      <div className="flex flex-col gap-3 border-b border-line-soft px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b-2 border-navy px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           {title && <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">{title}</h2>}
           {description && <p className="max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">{description}</p>}
@@ -454,18 +459,18 @@ export const MuHero = ({
   /** A figure drawn behind the plate. Callers vary it per record. */
   watermark?: ReactNode;
 }) => (
-  <div className="border border-line">
-    <div className="relative overflow-hidden bg-navy px-5 py-7 sm:px-8 sm:py-8">
+  <InBandSlot>
+  <div>
+    <div className="admin-band relative overflow-hidden bg-navy pb-7 pt-6 sm:pb-8 sm:pt-8">
       {watermark}
+      <div className={BAND_INNER}>
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
-          {eyebrow && (
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted-navy">{eyebrow}</p>
-          )}
-          <h1 className="mt-2 text-[26px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[30px]">
-            {title}
-          </h1>
+          {eyebrow && <span className="inline-flex"><NotchTag tone="white" size="sm">{eyebrow}</NotchTag></span>}
+          <div className="mt-3.5">
+            <KitPillHeading text={title} accent={[title.split(" ").filter(Boolean).length - 1]} align="left" size="md" />
+          </div>
           {subtitle && (
             <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-body-navy">{subtitle}</p>
           )}
@@ -507,9 +512,11 @@ export const MuHero = ({
           ))}
         </dl>
       )}
+      </div>
     </div>
     {strip}
   </div>
+  </InBandSlot>
 );
 
 /** Three plain sentences under the hero, divided by hairlines. */
@@ -518,14 +525,16 @@ export const MuHeroStrip = ({
 }: {
   items: { label: string; sentence: ReactNode }[];
 }) => (
-  <dl className="grid divide-y divide-line-soft border-t border-line bg-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-    {items.map((s) => (
-      <div key={s.label} className="px-5 py-4">
-        <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{s.label}</dt>
-        <dd className="mt-1.5 text-[14.5px] leading-snug text-foreground">{s.sentence}</dd>
-      </div>
-    ))}
-  </dl>
+  <div className="border-b-2 border-navy bg-tint/60">
+    <dl className="mx-auto grid w-full max-w-[1400px] divide-y-2 divide-navy sm:grid-cols-3 sm:divide-x-2 sm:divide-y-0">
+      {items.map((s) => (
+        <div key={s.label} className="px-5 py-4 lg:px-8">
+          <dt className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">{s.label}</dt>
+          <dd className="mt-1.5 text-[14.5px] font-semibold leading-snug text-navy">{s.sentence}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
 );
 
 /**
@@ -572,7 +581,7 @@ export const MuTabRail = ({
       {/* Wider screens: the hairline rail. */}
       <div
         className={cn(
-          "sticky top-0 z-10 -mx-1 hidden overflow-x-auto border-b border-line bg-background/95 px-1 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:block",
+          "-mx-1 hidden overflow-x-auto border-b-2 border-navy bg-background px-1 sm:block",
         )}
         role="tablist"
       >
@@ -588,7 +597,7 @@ export const MuTabRail = ({
                 onClick={() => onChange(t.value)}
                 className={cn(
                   "relative flex min-h-[44px] items-center gap-2 px-3.5 text-[14.5px] tracking-[-0.01em] transition-colors",
-                  isActive ? "font-bold text-foreground" : "font-medium text-muted-foreground hover:text-foreground",
+                  isActive ? "bg-navy font-extrabold text-white" : "font-bold text-navy/70 hover:bg-tint hover:text-navy",
                 )}
               >
                 {t.label}

@@ -8,6 +8,8 @@ interface KitPillHeadingProps {
   className?: string;
   /** "md" for long headings, so a six- or eight-word title stays a few lines. */
   size?: "md" | "lg" | "xl";
+  /** For aria-labelledby on the region the heading names. */
+  id?: string;
 }
 
 /**
@@ -18,7 +20,7 @@ interface KitPillHeadingProps {
  */
 const TILTS = [-1.5, 1.2, -0.8, 1.6, -1.2, 0.8];
 
-const KitPillHeading = ({ text, accent = [], align = "centre", className = "", size = "lg" }: KitPillHeadingProps) => {
+const KitPillHeading = ({ text, accent = [], align = "centre", className = "", size = "lg", id }: KitPillHeadingProps) => {
   const words = text.split(" ").filter(Boolean);
   const type =
     size === "md"
@@ -28,7 +30,7 @@ const KitPillHeading = ({ text, accent = [], align = "centre", className = "", s
         : "px-3 py-1.5 text-[30px] sm:px-6 sm:py-3 sm:text-[54px]";
 
   return (
-    <h1 className={`block ${className}`}>
+    <h1 id={id} className={`block ${className}`}>
       <span className="sr-only">{text}</span>
       <span
         aria-hidden="true"
