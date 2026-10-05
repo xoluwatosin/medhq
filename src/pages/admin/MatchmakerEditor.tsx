@@ -446,7 +446,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                {/* Archiving has its own action; the status only shows it. */}
+                {op.status === "archived" && <SelectItem value="archived">Archived</SelectItem>}
               </SelectContent>
             </Select>
           </div>
