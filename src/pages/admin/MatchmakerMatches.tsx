@@ -105,7 +105,7 @@ const COVERAGE_LABEL: Record<string, string> = {
 };
 
 
-export default function MatchmakerMatches({ embedded }: { embedded?: boolean }) {
+export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: boolean; onSaved?: () => void }) {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
 
@@ -337,6 +337,7 @@ export default function MatchmakerMatches({ embedded }: { embedded?: boolean }) 
       return;
     }
     toast({ title: "Requirements saved" });
+    onSaved?.();
     runMatch();
   };
 

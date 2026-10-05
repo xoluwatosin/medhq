@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { LocationField } from "@/components/LocationSelect";
-import RequirementChoices from "@/components/admin/mu/RequirementChoices";
 
 import { MuPageHeader, MuSection, MuNote } from "@/components/admin/mu/MuShell";
 import MatchmakerMatches from "./MatchmakerMatches";
@@ -42,6 +41,7 @@ export default function MatchUniverseRequest() {
   const [rec, setRec] = useState<RequestRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [matchesKey, setMatchesKey] = useState(0);
   const { toast } = useToast();
 
   const load = useCallback(async () => {
@@ -75,16 +75,10 @@ export default function MatchUniverseRequest() {
         client_notes: rec.client_notes,
         location: rec.location,
         // The picked place is also the matching criterion, so it is stored on the
-        // structured columns the shortlist actually filters on.
+        // structured columns the shortlist filters on. Every other requirement
+        // belongs to the requirements editor below, which saves its own columns.
         match_states: rec.match_states ?? [],
         match_lgas: rec.match_lgas ?? [],
-        // Requirements picked from the controlled lists, which is what the
-        // shortlist filters and scores on.
-        match_professions: rec.match_professions ?? [],
-        match_care_types: rec.match_care_types ?? [],
-        match_shift_patterns: rec.match_shift_patterns ?? [],
-        match_live_in: rec.match_live_in ?? "any",
-        match_min_years: rec.match_min_years,
 
         request_status: rec.request_status,
         start_date: rec.start_asap ? null : rec.start_date,
@@ -97,7 +91,21 @@ export default function MatchUniverseRequest() {
       return;
     }
     toast({ title: "Request saved" });
+    // The requirements editor reloads, so it never saves a stale location.
+    setMatchesKey((k) => k + 1);
   };
+
+  // After the requirements editor saves, pull its columns into the checklist
+  // without touching unsaved edits to the brief.
+  const refreshRequirements = useCallback(async () => {
+    if (!id) return;
+    const { data } = await adminDb()
+      .from("matchmaker_opportunities")
+      .select("match_professions, match_states, match_lgas, match_care_types, match_shift_patterns, match_live_in, match_min_years, requirements_parsed_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (data) setRec((prev) => (prev ? { ...prev, ...(data as Partial<RequestRecord>) } : prev));
+  }, [id]);
 
   // The checklist is the honest answer to "can this be matched yet". Each line
   // maps to a hard filter or a scoring input in mu_match_candidates, so a
@@ -145,7 +153,7 @@ export default function MatchUniverseRequest() {
         backTo="/admin/match-universe/requests"
         backLabel="Requests"
         title={rec.title}
-        description="Write the brief, set the requirements, then rank the candidate pool against them."
+        description="Save the brief here. Set the requirements below, then rank the candidate pool against them."
         actions={
           <Button onClick={save} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
@@ -225,16 +233,6 @@ export default function MatchUniverseRequest() {
         </div>
       </MuSection>
 
-      <MuSection
-        title="Requirements"
-        description="Pick what the client will not compromise on. These choices are the filters the shortlist runs on."
-      >
-        <RequirementChoices
-          value={rec}
-          onChange={(next) => setRec({ ...rec, ...next })}
-        />
-      </MuSection>
-
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Ready to match</CardTitle>
@@ -257,8 +255,8 @@ export default function MatchUniverseRequest() {
           </div>
           {!ready && (
             <MuNote tone="warning" title="The shortlist will be rough until this is filled in">
-              Save the brief, run “Extract requirements” below, then correct anything that was read incorrectly. Ranking uses
-              the selected criteria.
+              Save the brief, run “Extract requirements” below, correct anything that was read incorrectly, then save the
+              requirements. Ranking uses the saved criteria.
             </MuNote>
           )}
         </CardContent>
@@ -266,9 +264,9 @@ export default function MatchUniverseRequest() {
 
       <MuSection
         title="Requirements and recommendations"
-        description="Extract the requirements from the brief, correct them, then run the match."
+        description="The one place requirements are set. Extract them from the brief, correct them, save, then run the match."
       >
-        <MatchmakerMatches embedded />
+        <MatchmakerMatches key={matchesKey} embedded onSaved={refreshRequirements} />
       </MuSection>
     </div>
   );
