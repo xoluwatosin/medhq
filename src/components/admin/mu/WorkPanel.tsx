@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { humaniseTerm } from "@/lib/readable";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,10 +17,11 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { LocationField } from "@/components/LocationSelect";
 import {
-  Banknote, BriefcaseBusiness, CalendarDays, CalendarOff, Clock, FileSignature, Loader2, Mail, MapPin, Plus,
+  Banknote, BriefcaseBusiness, CalendarDays, Clock, FileSignature, Loader2, Mail, MapPin, Plus,
   RotateCcw, Send,
   StickyNote, Trash2, UserCheck, X,
 } from "lucide-react";
@@ -406,9 +406,10 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={o.status === "accepted" ? "default" : o.status === "declined" ? "outline" : "secondary"}>
-              {OFFER_STATUS_ADMIN_LABEL[o.status]}
-            </Badge>
+            <MuStatus
+              tone={o.status === "accepted" ? "good" : o.status === "declined" ? "neutral" : "info"}
+              label={OFFER_STATUS_ADMIN_LABEL[o.status]}
+            />
             {["sent", "viewed"].includes(o.status) && (
               <Button size="sm" variant="ghost" disabled={busy === o.id} onClick={() => notify(o.id)}>
                 <Mail className="mr-1 h-3.5 w-3.5" />Remind
@@ -440,7 +441,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
         {!!o.shifts?.length && (
           <ul className="flex flex-wrap gap-1.5">
             {o.shifts.map((sh, i) => (
-              <li key={i} className="rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px]">
+              <li key={i} className="border border-line bg-muted/40 px-2 py-0.5 text-[11px]">
                 {shiftLabel(sh)}
               </li>
             ))}
@@ -484,12 +485,12 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       >
         {engagementOffers.length === 0 ? (
           <MuEmpty
-            icon={BriefcaseBusiness}
+            art={art.objSignedContract}
             title="No engagement yet"
             description="Nothing has been proposed to this candidate. Work can only be offered once an engagement is running."
           />
         ) : (
-          <ul className="divide-y divide-border/60">{engagementOffers.map(offerRow)}</ul>
+          <ul className="divide-y divide-line-soft">{engagementOffers.map(offerRow)}</ul>
         )}
       </MuSection>
 
@@ -510,14 +511,14 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       >
         {liveEngagements.length === 0 ? (
           <MuEmpty
-            icon={CalendarDays}
+            art={art.objCalendar}
             title="Nothing to offer work under"
             description="They hold no running engagement, so there is nothing for a shift to sit under yet."
           />
         ) : workOffers.length === 0 ? (
-          <MuEmpty icon={CalendarDays} title="No work offered yet" description="Their engagement is running and shifts can be offered against it." />
+          <MuEmpty art={art.objCalendar} title="No work offered yet" description="Their engagement is running and shifts can be offered against it." />
         ) : (
-          <ul className="divide-y divide-border/60">{workOffers.map(offerRow)}</ul>
+          <ul className="divide-y divide-line-soft">{workOffers.map(offerRow)}</ul>
         )}
       </MuSection>
 
@@ -552,9 +553,9 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
 
         {engagements.length === 0 ? (
-          <MuEmpty icon={BriefcaseBusiness} title="Not placed" description="No ongoing role accepted." />
+          <MuEmpty art={art.objHandshake} title="Not placed" description="They have not accepted an ongoing role." />
         ) : (
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-line-soft">
             {engagements.map((e) => (
               <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
                 <div className="min-w-0">
@@ -579,9 +580,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={e.status === "active" ? "default" : "outline"}>
-                    {e.status === "active" ? "Running" : "Ended"}
-                  </Badge>
+                  <MuStatus tone={e.status === "active" ? "good" : "neutral"} label={e.status === "active" ? "Running" : "Ended"} />
                   {e.status === "active" && (
                     <Button size="sm" variant="outline" disabled={busy === e.id} onClick={() => endEngagement(e.id)}>
                       End
@@ -600,13 +599,13 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
         title="Leave"
         description="Approved leave blocks the calendar so those days are excluded from matching."
-        actions={pendingLeave.length > 0 ? <Badge variant="secondary">{pendingLeave.length} waiting</Badge> : undefined}
+        actions={pendingLeave.length > 0 ? <MuStatus tone="warning" label={`${pendingLeave.length} waiting`} /> : undefined}
         padded={false}
       >
         {leave.length === 0 ? (
-          <MuEmpty icon={CalendarOff} title="No leave requested" />
+          <MuEmpty art={art.objCalendar} title="No leave requested" description="Leave they ask for appears here for a decision." />
         ) : (
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-line-soft">
             {leave.map((l) => (
               <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
                 <div className="min-w-0">
@@ -625,9 +624,10 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={l.status === "approved" ? "default" : l.status === "requested" ? "secondary" : "outline"}>
-                    {LEAVE_STATUS_LABEL[l.status]}
-                  </Badge>
+                  <MuStatus
+                    tone={l.status === "approved" ? "good" : l.status === "requested" ? "warning" : "neutral"}
+                    label={LEAVE_STATUS_LABEL[l.status]}
+                  />
                   {l.status === "requested" && (
                     <>
                       <Button size="sm" disabled={busy === l.id} onClick={() => decideLeave(l.id, "approve")}>Approve</Button>
@@ -654,7 +654,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
           </DialogHeader>
           <div className="space-y-5">
             {prefillHints.length > 0 && (
-              <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
+              <div className="border border-line bg-muted/40 p-3">
                 <p className="text-xs font-medium">Carried in from their record</p>
                 <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground">
                   {prefillHints.map((h, i) => <li key={i}>{h}</li>)}
@@ -664,7 +664,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
             {/* 1. What the work is */}
             <section className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">The work</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">The work</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">What kind</Label>
@@ -692,7 +692,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                       <SelectContent>
                         {liveEngagements.map((e) => (
                           <SelectItem key={e.id} value={e.id}>
-                            {e.title} · {offerTypeSpec(offerType(e)).label}
+                            {e.title}, {offerTypeSpec(offerType(e)).label.toLowerCase()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -758,7 +758,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
             {/* 2. What it pays */}
             <section className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What it pays</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">What it pays</p>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Currency</Label>
@@ -815,7 +815,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
             {/* 3. When */}
             <section className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">When</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">When</p>
               {kind === "role" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -844,7 +844,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2 rounded-xl border border-border/70 p-3">
+                <div className="space-y-2 border border-line p-3">
                   <Label className="text-xs">Shifts</Label>
                   <div className="flex flex-wrap items-end gap-2">
                     <Input
@@ -866,7 +866,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                   {shifts.length > 0 && (
                     <ul className="flex flex-wrap gap-1.5">
                       {shifts.map((s, i) => (
-                        <li key={i} className="flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px]">
+                        <li key={i} className="flex items-center gap-1 border border-line bg-muted/40 px-2 py-0.5 text-[11px]">
                           {shiftLabel(s)}
                           <button type="button" onClick={() => setShifts((p) => p.filter((_, x) => x !== i))}>
                             <Trash2 className="h-3 w-3 text-muted-foreground" />
@@ -903,7 +903,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
             {/* 4. In their own words */}
             <section className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What we are asking of them</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">What we are asking of them</p>
               <div className="space-y-1.5">
                 <Label className="text-xs">What the work involves</Label>
                 <Textarea
@@ -939,7 +939,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
             {/* 5. Read it back before it goes */}
             <section className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                 How it will read to them
               </p>
               <OfferTermsView

@@ -30,7 +30,7 @@ export const MuDetailSheet = ({
   <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent
       side="right"
-      className="flex w-full flex-col gap-0 rounded-none border-l border-line p-0 sm:max-w-[34rem]"
+      className="flex w-full flex-col gap-0 border-l border-line p-0 sm:max-w-[34rem]"
     >
       <header className="bg-navy px-5 py-6 pr-12">
         {eyebrow && (

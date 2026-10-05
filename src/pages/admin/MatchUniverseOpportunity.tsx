@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useLocation, Navigate } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminDb } from "@/lib/admin-utils";
+import { MuEmpty, MuPageHeader } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import MatchmakerEditor from "./MatchmakerEditor";
 import MatchmakerApplications from "./MatchmakerApplications";
 import MatchmakerMatches from "./MatchmakerMatches";
@@ -38,11 +40,17 @@ export default function MatchUniverseOpportunity() {
 
   if (!op) {
     return (
-      <div className="text-center py-16 space-y-3">
-        <p className="text-muted-foreground">Opportunity not found.</p>
-        <Button variant="outline" asChild>
-          <Link to="/admin/match-universe/opportunities">Back to opportunities</Link>
-        </Button>
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Opportunity not found"
+          description="It may have been deleted, or it could not be loaded."
+          action={
+            <Button variant="outline" asChild>
+              <Link to="/admin/match-universe/opportunities">Back to opportunities</Link>
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -56,20 +64,12 @@ export default function MatchUniverseOpportunity() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild className="-ml-2">
-            <Link to="/admin/match-universe/opportunities">
-              <ArrowLeft className="mr-2 h-4 w-4" />Opportunities
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-serif font-bold">{op.title}</h1>
-        <p className="text-sm text-muted-foreground">/hm/{op.slug}</p>
-      </div>
+      <MuPageHeader
+        title={op.title}
+        description={`/hm/${op.slug}`}
+        backTo="/admin/match-universe/opportunities"
+        backLabel="Opportunities"
+      />
 
       <Tabs value={activeTab}>
         <div className="overflow-x-auto">

@@ -159,7 +159,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
   // (state hooks moved above early-return)
 
   const openCreateGroup = () => {
-    setGroupDraftName(`Matchmakers — ${op.title || "Untitled"}`.slice(0, 80));
+    setGroupDraftName(`Matchmakers: ${op.title || "Untitled"}`.slice(0, 80));
     setGroupDraftDesc(`Audience for: ${op.title || "Untitled opportunity"}`);
     setGroupDialogOpen(true);
   };
@@ -253,12 +253,17 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
         )}
         <div className={`flex gap-2 flex-wrap ${embedded ? "ml-auto" : ""}`}>
           <Button variant="outline" onClick={handlePreview}><Eye className="mr-2 h-4 w-4" />Preview</Button>
-          <Button variant="outline" asChild>
-            <Link to={`/admin/match-universe/opportunities/${op.id}/applications`}>Applications</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to={`/admin/match-universe/opportunities/${op.id}/matches`}>Matches</Link>
-          </Button>
+          {/* Embedded under the opportunity's own tabs, which already link here. */}
+          {!embedded && (
+            <>
+              <Button variant="outline" asChild>
+                <Link to={`/admin/match-universe/opportunities/${op.id}/applications`}>Applications</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to={`/admin/match-universe/opportunities/${op.id}/matches`}>Matches</Link>
+              </Button>
+            </>
+          )}
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save
           </Button>
@@ -266,7 +271,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
       </div>
 
 
-      <div className="border border-border rounded-2xl bg-background p-6 space-y-5">
+      <div className="border border-line bg-card p-6 space-y-5">
         <div>
           <Label htmlFor="title">Title</Label>
           <Input id="title" value={op.title} onChange={(e) => update({ title: e.target.value })} className="mt-1" />
@@ -315,7 +320,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
             {(["phone", "current_position", "years_experience", "cover_note"] as StandardFieldKey[]).map((k) => {
               const state = op.standard_fields[k];
               return (
-                <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3">
+                <div key={k} className="flex items-center justify-between gap-3 border border-line bg-card px-4 py-3">
                   <span className="text-sm">{STANDARD_FIELD_LABELS[k]}</span>
                   <Select
                     value={state}
@@ -385,7 +390,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
               <Plus className="mr-1 h-3.5 w-3.5" />Add field
             </Button>
           </div>
-          {op.document_fields.length === 0 && <p className="text-sm text-muted-foreground">No documents required.</p>}
+          {op.document_fields.length === 0 && <p className="text-sm text-muted-foreground">No document uploads asked for yet.</p>}
           <div className="space-y-2">
             {op.document_fields.map((d, i) => (
               <div key={d.key} className="flex items-center gap-2">
@@ -458,7 +463,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
             >
               <SelectTrigger className="flex-1 min-w-[200px]"><SelectValue placeholder="Pick a group" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none">— None —</SelectItem>
+                <SelectItem value="__none">None</SelectItem>
                 {groups.map((g) => (
                   <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                 ))}
@@ -473,9 +478,9 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           </div>
         </div>
 
-        <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-3">
+        <div className="bg-tint/40 border border-line p-4 space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Share link</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Share link</p>
             <div className="flex items-center gap-2">
               <code className="text-sm flex-1 truncate">{shareUrl}</code>
               <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(shareUrl); toast({ title: "Copied" }); }}>
@@ -487,7 +492,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
             </div>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Preview link (drafts visible only to admins)</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Preview link (drafts visible only to admins)</p>
             <div className="flex items-center gap-2">
               <code className="text-sm flex-1 truncate">{previewUrl}</code>
               <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(previewUrl); toast({ title: "Copied" }); }}>
@@ -521,7 +526,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           <div className="space-y-3">
             <div>
               <Label>Template name *</Label>
-              <Input value={saveTplName} onChange={(e) => setSaveTplName(e.target.value)} className="mt-1" placeholder="e.g. ICU Nurse — standard questions" />
+              <Input value={saveTplName} onChange={(e) => setSaveTplName(e.target.value)} className="mt-1" placeholder="For example, ICU nurse standard questions" />
             </div>
             <p className="text-xs text-muted-foreground">Snapshots the current questions. Editing this template later won't change opportunities already using them.</p>
           </div>

@@ -122,8 +122,8 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                 ? offered.length === 1
                   ? "One interview time is with the candidate to accept."
                   : `${offered.length} interview times are with the candidate to accept.`
-                : [row.location, `Applied ${format(new Date(row.applied_at), "d MMM yyyy")}`]
-                    .filter(Boolean).join(" · ");
+                : [row.location ? `${row.location}.` : null, `Applied ${format(new Date(row.applied_at), "d MMM yyyy")}.`]
+                    .filter(Boolean).join(" ");
 
             return (
               <MuRow
@@ -144,7 +144,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                       disabled={busy === row.id}
                       onValueChange={(v) => setStage(row, v)}
                     >
-                      <SelectTrigger className="h-8 w-[176px] rounded-none text-[13px]">
+                      <SelectTrigger className="h-8 w-[176px] text-[13px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -157,7 +157,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 rounded-none"
+                        className="h-8"
                         onClick={() => { setOffering(row); setDrafts([emptySlot()]); }}
                       >
                         <CalendarPlus className="mr-1.5 h-3.5 w-3.5" />
@@ -165,7 +165,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                       </Button>
                     )}
                     {row.opportunity_id && (
-                      <Button size="sm" variant="ghost" className="h-8 rounded-none" asChild>
+                      <Button size="sm" variant="ghost" className="h-8" asChild>
                         <Link to={`/admin/match-universe/opportunities/${row.opportunity_id}/applications`}>
                           Open role<ExternalLink className="ml-1.5 h-3 w-3" />
                         </Link>
@@ -180,7 +180,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
       </MuSection>
 
       <Dialog open={!!offering} onOpenChange={(o) => !o && setOffering(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-none sm:max-w-xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Offer interview times</DialogTitle>
             <DialogDescription>
@@ -194,21 +194,21 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                   <div className="space-y-1.5">
                     <Label className="text-[13px]">Date</Label>
                     <Input
-                      type="date" value={d.date} className="rounded-none"
+                      type="date" value={d.date}
                       onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, date: e.target.value } : x))}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[13px]">Start time</Label>
                     <Input
-                      type="time" value={d.time} className="rounded-none"
+                      type="time" value={d.time}
                       onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, time: e.target.value } : x))}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[13px]">Minutes</Label>
                     <Input
-                      type="number" min={10} step={5} value={d.duration} className="rounded-none"
+                      type="number" min={10} step={5} value={d.duration}
                       onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))}
                     />
                   </div>
@@ -218,7 +218,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                       value={d.mode}
                       onValueChange={(v) => setDrafts(drafts.map((x, j) => j === i ? { ...x, mode: v } : x))}
                     >
-                      <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                      <SelectTrigger ><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="video">Video call</SelectItem>
                         <SelectItem value="phone">Telephone</SelectItem>
@@ -232,14 +232,14 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                     {d.mode === "in_person" ? "Address" : "Joining link"}
                   </Label>
                   <Input
-                    value={d.location} className="rounded-none"
+                    value={d.location}
                     placeholder={d.mode === "in_person" ? "Where to attend" : "Link the candidate should use"}
                     onChange={(e) => setDrafts(drafts.map((x, j) => j === i ? { ...x, location: e.target.value } : x))}
                   />
                 </div>
                 {drafts.length > 1 && (
                   <Button
-                    size="sm" variant="ghost" className="h-8 rounded-none"
+                    size="sm" variant="ghost" className="h-8"
                     onClick={() => setDrafts(drafts.filter((_, j) => j !== i))}
                   >
                     <Trash2 className="mr-1.5 h-3.5 w-3.5" />Remove this time
@@ -248,15 +248,15 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
               </div>
             ))}
             <Button
-              size="sm" variant="outline" className="h-8 rounded-none"
+              size="sm" variant="outline" className="h-8"
               onClick={() => setDrafts([...drafts, emptySlot()])}
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />Add another time
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="ghost" className="rounded-none" onClick={() => setOffering(null)}>Cancel</Button>
-            <Button className="rounded-none" onClick={submitSlots} disabled={saving}>
+            <Button variant="ghost" onClick={() => setOffering(null)}>Cancel</Button>
+            <Button  onClick={submitSlots} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Offer these times
             </Button>
           </DialogFooter>

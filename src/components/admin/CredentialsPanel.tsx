@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import {
   Check, ChevronDown, FileText, Loader2, ShieldCheck, ShieldQuestion, X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,7 +18,7 @@ import { adminDb } from "@/lib/admin-utils";
 import { PersonDocument } from "@/lib/match-universe";
 import {
   CREDENTIAL_LABELS, CREDENTIAL_TYPES, CredentialRow, CredentialState,
-  STATE_LABELS, STATE_MEANING, provenanceLabel, stateTone,
+  STATE_LABELS, STATE_MEANING, provenanceLabel,
 } from "@/lib/credentials";
 import {
   MuGroupHead, MuLedger, MuLedgerBody, MuLedgerRow, MuStatus, MuTone,
@@ -40,15 +39,12 @@ const credTone = (state: string): MuTone =>
 
 /** A credential is never rendered without the tier that earned it. */
 export const CredentialBadge = ({ state }: { state: string }) => {
-  const tone = stateTone(state);
   return (
-    <Badge
-      variant={tone === "verified" ? "default" : tone === "bad" ? "destructive" : "outline"}
-      className="gap-1"
-    >
-      {tone === "verified" && <ShieldCheck className="h-3 w-3" />}
-      {STATE_LABELS[state as CredentialState] ?? state}
-    </Badge>
+    <MuStatus
+      tone={credTone(state)}
+      icon={state === "verified" ? ShieldCheck : undefined}
+      label={STATE_LABELS[state as CredentialState] ?? state}
+    />
   );
 };
 
@@ -245,14 +241,12 @@ const CredentialsPanel = ({ personId, documents, onChanged }: Props) => {
               <>
                 <Button
                   variant="outline"
-                  className="rounded-none"
                   disabled={busy === current.credential_type}
                   onClick={() => review(current.credential_type, "fail")}
                 >
                   <X className="mr-1.5 h-4 w-4" />Fail review
                 </Button>
                 <Button
-                  className="rounded-none"
                   disabled={busy === current.credential_type}
                   onClick={() => review(current.credential_type, "pass")}
                 >
@@ -265,7 +259,7 @@ const CredentialsPanel = ({ personId, documents, onChanged }: Props) => {
                 onValueChange={(v) => attach(current.credential_type, v)}
                 disabled={busy === current.credential_type}
               >
-                <SelectTrigger className="h-10 w-[16rem] rounded-none text-sm">
+                <SelectTrigger className="h-10 w-[16rem] text-sm">
                   <SelectValue placeholder="Attach a document as evidence" />
                 </SelectTrigger>
                 <SelectContent>

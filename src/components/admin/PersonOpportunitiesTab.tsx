@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Star, AlertTriangle, RefreshCw, MessageSquareText, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -135,29 +136,40 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
             <Label htmlFor="blocked-person" className="text-sm">Show blocked</Label>
           </div>
           <Button variant="outline" size="sm" onClick={() => run()} disabled={running}>
-            {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Re-run
+            {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Run again
           </Button>
         </div>
       </div>
 
       {matches.length === 0 && !running && (
-        <p className="text-sm text-muted-foreground">No open opportunities match this person yet.</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objMagnifier}
+            title="No matching opportunities"
+            description="No open opportunity fits this person yet. Run the ranking again after new roles open."
+          />
+        </div>
       )}
 
       <div className="space-y-3">
         {matches.map((m) => (
-          <div key={m.opportunity_id} className="border border-border rounded-xl p-4 space-y-3">
+          <div key={m.opportunity_id} className="border border-line bg-card p-4 space-y-3">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <Link to={`/admin/match-universe/opportunities/${m.opportunity_id}`} className="font-medium hover:underline">
                   {m.title}
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  {[m.location, m.breakdown?.person_state, m.breakdown?.person_lga].filter(Boolean).join(" | ") || "No location set"}
-                </p>
+                {(() => {
+                  const parts = [m.location, m.breakdown?.person_state, m.breakdown?.person_lga].filter(Boolean);
+                  return (
+                    <p className="flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+                      {parts.length ? parts.map((part, i) => <span key={i}>{part}</span>) : "No location set"}
+                    </p>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="tabular-nums">{Number(m.score).toFixed(0)}</Badge>
+                <MuStatus className="tabular-nums" label={Number(m.score).toFixed(0)} />
                 <Button
                   variant={shortlisted.has(m.opportunity_id) ? "default" : "outline"}
                   size="sm"
@@ -175,15 +187,13 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
 
             <div className="flex flex-wrap gap-1.5">
               {m.matched_required.map((c) => (
-                <Badge key={`r-${c}`} className="text-xs">{facetLabel(c)}</Badge>
+                <MuStatus key={`r-${c}`} tone="good" label={facetLabel(c)} />
               ))}
               {m.matched_desirable.map((c) => (
-                <Badge key={`d-${c}`} variant="secondary" className="text-xs">{facetLabel(c)}</Badge>
+                <MuStatus key={`d-${c}`} tone="info" label={facetLabel(c)} />
               ))}
               {m.missing_required.map((c) => (
-                <Badge key={`m-${c}`} variant="outline" className="text-xs text-muted-foreground">
-                  Missing: {facetLabel(c)}
-                </Badge>
+                <MuStatus key={`m-${c}`} tone="neutral" label={`Missing: ${facetLabel(c)}`} />
               ))}
             </div>
 
@@ -195,7 +205,7 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
             )}
 
             {rationales[m.opportunity_id] && (
-              <p className="text-sm bg-muted/50 rounded-lg p-3 whitespace-pre-line">{rationales[m.opportunity_id]}</p>
+              <p className="text-sm bg-muted/50 p-3 whitespace-pre-line">{rationales[m.opportunity_id]}</p>
             )}
           </div>
         ))}

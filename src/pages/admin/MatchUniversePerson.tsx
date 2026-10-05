@@ -7,7 +7,6 @@ import {
   Compass, ShieldCheck, ShieldAlert, Check, X, MessageCircle, Save, Send, MoreHorizontal, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +47,7 @@ import {
   MuEmpty, MuField, MuFieldGrid, MuHero, MuHeroStrip, MuPage, MuRow, MuSection,
   MuStatus, MuTable, MuTabRail,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import MuHeroWatermark from "@/components/admin/mu/heroWatermark";
 
 import { trackLabel } from "@/lib/join-tracks";
@@ -330,8 +330,8 @@ const MatchUniversePerson = () => {
     });
   }, [id]);
 
-  // Live sync. Anything the candidate changes in their portal — profile fields,
-  // uploads, answers to questions, references, preferences, availability —
+  // Live sync. Anything the candidate changes in their portal (profile fields,
+  // uploads, answers to questions, references, preferences, availability)
   // lands on this page within a second, without a refresh.
   useEffect(() => {
     if (!id) return;
@@ -455,9 +455,13 @@ const MatchUniversePerson = () => {
 
   if (!person)
     return (
-      <div className="text-center py-16 space-y-3">
-        <p className="text-muted-foreground">This profile no longer exists.</p>
-        <Button variant="outline" asChild><Link to="/admin/match-universe">Back to Match Universe</Link></Button>
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Profile not found"
+          description="This profile no longer exists. It may have been merged into another."
+          action={<Button variant="outline" asChild><Link to="/admin/match-universe">Back to talent pool</Link></Button>}
+        />
       </div>
     );
 
@@ -483,7 +487,7 @@ const MatchUniversePerson = () => {
   return (
     <MuPage className="max-w-6xl">
       <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Match Universe</Link>
+        <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Talent pool</Link>
       </Button>
 
       {/* One navy surface. The name is the identity, the facts we hold sit
@@ -533,7 +537,7 @@ const MatchUniversePerson = () => {
         }
         primary={
           isStaff ? (
-            <Button size="sm" asChild className="rounded-none bg-white font-semibold text-navy hover:bg-white/90">
+            <Button size="sm" asChild className="bg-white font-semibold text-navy hover:bg-white/90">
               <Link to={`/admin/workforce/${person.id}`}>
                 <IdCard className="mr-2 h-4 w-4" />Open staff record
               </Link>
@@ -543,7 +547,7 @@ const MatchUniversePerson = () => {
               size="sm"
               onClick={invitePortal}
               disabled={inviting}
-              className="rounded-none bg-white font-semibold text-navy hover:bg-white/90"
+              className="bg-white font-semibold text-navy hover:bg-white/90"
             >
               {inviting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {person.invited_at ? "Send the invite again" : "Invite to their profile"}
@@ -558,7 +562,7 @@ const MatchUniversePerson = () => {
                 size="icon"
                 asChild
                 aria-label="Message on WhatsApp"
-                className="rounded-none border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <a href={whatsapp} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" /></a>
               </Button>
@@ -569,7 +573,7 @@ const MatchUniversePerson = () => {
                   variant="outline"
                   size="icon"
                   aria-label="More actions"
-                  className="rounded-none border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -872,7 +876,7 @@ const MatchUniversePerson = () => {
             padded={false}
           >
             {subs.length === 0 && (
-              <MuEmpty title="No applications recorded" description="This profile was created through another route." />
+              <MuEmpty art={art.objClipboard} title="No applications recorded" description="This profile was created through another route." />
             )}
             {/* One line per application, everything else folded away. The
                 header carries what you scan for; the detail is there when you
@@ -920,7 +924,7 @@ const MatchUniversePerson = () => {
                           the stage list above; this section is the paperwork. */}
 
                       {hasDetail && (
-                        <AccordionTrigger className="h-8 shrink-0 rounded-none px-2 py-0 text-[13px] font-semibold hover:no-underline">
+                        <AccordionTrigger className="h-8 shrink-0 px-2 py-0 text-[13px] font-semibold hover:no-underline">
                           Detail
                         </AccordionTrigger>
                       )}
@@ -928,11 +932,11 @@ const MatchUniversePerson = () => {
                     </div>
                     <AccordionContent className="space-y-4 px-5 pb-4">
                       {s.cover_note && (
-                        <p className="whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm">{s.cover_note}</p>
+                        <p className="whitespace-pre-wrap bg-muted/40 p-3 text-sm">{s.cover_note}</p>
                       )}
                       {answers.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                             Application answers
                           </p>
                           <MuTable rows={answers} />
@@ -940,7 +944,7 @@ const MatchUniversePerson = () => {
                       )}
                       {attribution.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                             How they found us
                           </p>
                           <MuTable rows={attribution.map(([label, value]) => ({ label, value }))} />
@@ -975,7 +979,7 @@ const MatchUniversePerson = () => {
             description="Every email sent and every change made, in order."
             padded={false}
           >
-            {timeline.length === 0 && <MuEmpty title="Nothing recorded yet" />}
+            {timeline.length === 0 && <MuEmpty art={art.objEnvelope} title="Nothing recorded yet" description="Emails sent and changes made to this profile appear here." />}
             <div className="divide-y divide-line-soft">
             {timeline.map((t) => (
               <MuRow

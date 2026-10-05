@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPage, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -31,14 +32,14 @@ interface Application {
   cv_url?: string | null; declaration_accepted?: boolean | null;
 }
 
-const statusColors: Record<string, string> = { new: "default", reviewed: "secondary", accepted: "outline", rejected: "destructive" };
+const statusTone: Record<string, MuTone> = { new: "info", reviewed: "neutral", accepted: "good", rejected: "warning" };
 // Stored keys stay as they are; these are the labels the screen shows.
 const STATUS_LABELS: Record<string, string> = { new: "Submitted", reviewed: "Under review", accepted: "Accepted", rejected: "Rejected" };
-const yn = (v: boolean | null | undefined) => v === true ? "Yes" : v === false ? "No" : "—";
+const yn = (v: boolean | null | undefined) => v === true ? "Yes" : v === false ? "No" : "Not answered";
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="pt-3 mt-3 border-t first:border-t-0 first:pt-0 first:mt-0">
-    <h4 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">{title}</h4>
+    <h4 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-label">{title}</h4>
     <div className="space-y-1.5">{children}</div>
   </div>
 );
@@ -126,12 +127,13 @@ const Applications = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-serif font-bold">Candidate applications</h1>
-        <ExportDropdown data={filtered} filename="applications" />
-      </div>
-      <div className="flex gap-3 mb-4">
+    <MuPage>
+      <MuPageHeader
+        title="Candidate applications"
+        description="Applications sent through the old join form, kept for the record."
+        actions={<ExportDropdown data={filtered} filename="applications" />}
+      />
+      <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search name, email, role…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
@@ -147,21 +149,21 @@ const Applications = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="hidden md:block overflow-x-auto border rounded-lg">
+      <div className="hidden md:block overflow-x-auto border border-line bg-card">
         <Table>
           <TableHeader>
             <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Experience</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow>
           </TableHeader>
           <TableBody>
             {paged.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No applications found.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="p-0"><MuEmpty art={art.objMagnifier} title="No applications found" description="Try a different search or status." /></TableCell></TableRow>
             ) : paged.map((item) => (
               <TableRow key={item.id} className="cursor-pointer" onClick={() => { setCvPreviewUrl(null); setSelected(item); }}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.email}</TableCell>
                 <TableCell>{item.role}</TableCell>
-                <TableCell>{item.experience || (item.years_experience != null ? `${item.years_experience} yrs` : "—")}</TableCell>
-                <TableCell><Badge variant={statusColors[item.status] as any}>{STATUS_LABELS[item.status] ?? item.status}</Badge></TableCell>
+                <TableCell>{item.experience || (item.years_experience != null ? `${item.years_experience} yrs` : "Not stated")}</TableCell>
+                <TableCell><MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} /></TableCell>
                 <TableCell className="text-muted-foreground text-sm">{format(new Date(item.created_at), "dd MMM yyyy")}</TableCell>
                 <TableCell><Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}><Archive className="h-4 w-4" /></Button></TableCell>
               </TableRow>
@@ -175,13 +177,18 @@ const Applications = () => {
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
-          state: `${item.role_other || item.role} · ${format(new Date(item.created_at), "dd MMM yyyy")}`,
-          status: <Badge variant={statusColors[item.status] as any}>{STATUS_LABELS[item.status] ?? item.status}</Badge>,
+          state: (
+            <span className="flex flex-wrap gap-x-3">
+              <span>{item.role_other || item.role}</span>
+              <span>{format(new Date(item.created_at), "dd MMM yyyy")}</span>
+            </span>
+          ),
+          status: <MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} />,
           onOpen: () => { setCvPreviewUrl(null); setSelected(item); },
         }))}
       />
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
           <span className="text-sm text-muted-foreground self-center">Page {page + 1} of {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</Button>
@@ -240,7 +247,7 @@ const Applications = () => {
                 <Row label="Has transport" value={yn(selected.has_transport)} />
                 <Row label="Languages" value={Array.isArray(selected.languages) && selected.languages.length ? selected.languages.map((l: any) => `${l.language} (${l.fluency})`).join(", ") : null} />
                 <Row label="Availability" value={selected.availability?.length ? selected.availability.join(", ") : null} />
-                <Row label="Start" value={selected.start_window === "future" && selected.start_date ? `Future — ${format(new Date(selected.start_date), "dd MMM yyyy")}` : selected.start_window} />
+                <Row label="Start" value={selected.start_window === "future" && selected.start_date ? `Future, ${format(new Date(selected.start_date), "dd MMM yyyy")}` : selected.start_window} />
               </Section>
 
               <Section title="Documents and declaration">
@@ -256,7 +263,7 @@ const Applications = () => {
                       </Button>
                     </div>
                     {cvPreviewUrl && (
-                      <div className="rounded-lg border bg-muted/30 overflow-hidden">
+                      <div className="border border-line bg-muted/30 overflow-hidden">
                         {["jpg", "jpeg", "png", "webp", "gif"].includes(getCvExt(selected.cv_url)) ? (
                           <img loading="lazy" decoding="async" src={cvPreviewUrl} alt="CV preview" className="w-full h-auto max-h-[600px] object-contain bg-background" />
                         ) : (
@@ -265,7 +272,7 @@ const Applications = () => {
                       </div>
                     )}
                   </div>
-                ) : <p className="text-sm text-muted-foreground">No CV uploaded (legacy submission)</p>}
+                ) : <p className="text-sm text-muted-foreground">No CV uploaded. This is a legacy submission.</p>}
                 <Row label="Declaration accepted" value={yn(selected.declaration_accepted)} />
                 {selected.message && (
                   <div className="pt-2">
@@ -278,7 +285,7 @@ const Applications = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </MuPage>
   );
 };
 

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Loader2, ArrowLeft, ExternalLink, FileText, Search, ArrowUpDown, Mail, MailX, CheckCircle2 } from "lucide-react";
+import { Loader2, ExternalLink, FileText, Search, ArrowUpDown, Mail, MailX, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -60,8 +61,8 @@ interface App {
   landing_path: string | null;
 }
 
-const statusVariant: Record<string, any> = {
-  new: "default", reviewing: "secondary", shortlisted: "outline", rejected: "destructive", hired: "default",
+const statusTone: Record<string, MuTone> = {
+  new: "info", reviewing: "neutral", shortlisted: "good", rejected: "warning", hired: "good",
 };
 
 interface MatchmakerApplicationsProps {
@@ -239,22 +240,25 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
   return (
     <div>
       {!embedded && (
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3">
-              <Link to={`/admin/match-universe/opportunities/${id}`}><ArrowLeft className="mr-2 h-4 w-4" />Back to opportunity</Link>
-            </Button>
-            <h1 className="text-2xl font-serif font-bold">Applications</h1>
-            <p className="text-sm text-muted-foreground mt-1">{opp?.title}</p>
-          </div>
-          <ExportDropdown data={filtered} filename={`matchmaker-${opp?.slug || "applications"}`} />
+        <div className="mb-6">
+          <MuPageHeader
+            title="Applications"
+            description={opp?.title}
+            backTo={`/admin/match-universe/opportunities/${id}`}
+            backLabel="Back to opportunity"
+            actions={<ExportDropdown data={filtered} filename={`matchmaker-${opp?.slug || "applications"}`} />}
+          />
         </div>
       )}
 
 
       {apps.length === 0 ? (
-        <div className="border border-dashed border-border rounded-2xl p-12 text-center">
-          <p className="text-muted-foreground">No applications yet.</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objEnvelope}
+            title="No applications yet"
+            description="Applications arrive here once people apply through the share link."
+          />
         </div>
       ) : (
         <>
@@ -282,7 +286,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
               <SelectContent>
                 <SelectItem value="created_desc">Newest first</SelectItem>
                 <SelectItem value="created_asc">Oldest first</SelectItem>
-                <SelectItem value="name_asc">Name A–Z</SelectItem>
+                <SelectItem value="name_asc">Name A to Z</SelectItem>
                 <SelectItem value="exp_desc">Most experience</SelectItem>
                 <SelectItem value="exp_asc">Least experience</SelectItem>
               </SelectContent>
@@ -318,7 +322,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
             )}
           </div>
 
-          <div className="hidden md:block border border-border rounded-2xl overflow-hidden bg-background">
+          <div className="hidden md:block border border-line overflow-hidden bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -339,7 +343,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No applications match these filters.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="p-0"><MuEmpty art={art.objMagnifier} title="No applications match" description="Try fewer filters or a different search." /></TableCell></TableRow>
                 ) : filtered.map((a) => {
                   const src = sourceOf(a);
                   const mail = sentMap.get(a.id);
@@ -355,9 +359,9 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                         })}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{a.full_name}<p className="text-xs text-muted-foreground">{a.current_position || "—"}</p></TableCell>
-                    <TableCell className="text-sm">{a.email}<p className="text-xs text-muted-foreground">{a.phone || "—"}</p></TableCell>
-                    <TableCell className="text-sm">{a.years_experience != null ? `${a.years_experience} yrs` : "—"}</TableCell>
+                    <TableCell className="font-medium">{a.full_name}<p className="text-xs text-muted-foreground">{a.current_position || "No role stated"}</p></TableCell>
+                    <TableCell className="text-sm">{a.email}<p className="text-xs text-muted-foreground">{a.phone || "No phone"}</p></TableCell>
+                    <TableCell className="text-sm">{a.years_experience != null ? `${a.years_experience} yrs` : "Not stated"}</TableCell>
                     <TableCell className="text-sm">
                       <span className="capitalize">{src}</span>
                       {a.utm_campaign && <p className="text-xs text-muted-foreground">{a.utm_campaign}</p>}
@@ -366,9 +370,9 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                     <TableCell className="text-xs">
                       {mail?.invite && <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" />Invited</span>}
                       {mail?.reject && <span className="inline-flex items-center gap-1 text-muted-foreground">{mail?.invite && <br />}<MailX className="h-3.5 w-3.5" />Rejected</span>}
-                      {!mail && <span className="text-muted-foreground">—</span>}
+                      {!mail && <span className="text-muted-foreground">Not yet</span>}
                     </TableCell>
-                    <TableCell><Badge variant={statusVariant[a.status]}>{APP_STATUS_LABELS[a.status]}</Badge></TableCell>
+                    <TableCell><MuStatus tone={statusTone[a.status] ?? "neutral"} label={APP_STATUS_LABELS[a.status] ?? a.status} /></TableCell>
 
                   </TableRow>
                   );
@@ -385,10 +389,14 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
               return {
                 key: a.id,
                 title: a.full_name,
-                state: [a.current_position || "No role stated", `Applied ${format(new Date(a.created_at), "d MMM yyyy")}`, `via ${src}`, mail?.invite ? "Invited" : mail?.reject ? "Rejected" : null]
-                  .filter(Boolean)
-                  .join(" · "),
-                status: <Badge variant={statusVariant[a.status]}>{APP_STATUS_LABELS[a.status]}</Badge>,
+                state: (
+                  <span className="flex flex-wrap gap-x-3">
+                    {[a.current_position || "No role stated", `Applied ${format(new Date(a.created_at), "d MMM yyyy")}`, `Via ${src}`, mail?.invite ? "Invited" : mail?.reject ? "Rejected" : null]
+                      .filter(Boolean)
+                      .map((part, i) => <span key={i}>{part}</span>)}
+                  </span>
+                ),
+                status: <MuStatus tone={statusTone[a.status] ?? "neutral"} label={APP_STATUS_LABELS[a.status] ?? a.status} />,
                 onOpen: () => setSelected(a),
               };
             })}
@@ -401,17 +409,17 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-serif">{selected.full_name}</DialogTitle>
+                <DialogTitle>{selected.full_name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 text-sm">
                 <div className="grid grid-cols-2 gap-4">
                   <div><p className="text-muted-foreground text-xs">Email</p><p>{selected.email}</p></div>
-                  <div><p className="text-muted-foreground text-xs">Phone</p><p>{selected.phone || "—"}</p></div>
-                  <div><p className="text-muted-foreground text-xs">Current role</p><p>{selected.current_position || "—"}</p></div>
-                  <div><p className="text-muted-foreground text-xs">Experience</p><p>{selected.years_experience != null ? `${selected.years_experience} years` : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Phone</p><p>{selected.phone || "Not provided"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Current role</p><p>{selected.current_position || "Not provided"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Experience</p><p>{selected.years_experience != null ? `${selected.years_experience} years` : "Not provided"}</p></div>
                 </div>
                 {(selected.utm_source || selected.utm_campaign || selected.referrer) && (
-                  <div className="border border-border rounded-lg p-3 bg-muted/30">
+                  <div className="border border-line p-3 bg-muted/30">
                     <p className="text-muted-foreground text-xs mb-2 font-medium">Attribution</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       {selected.utm_source && <div><span className="text-muted-foreground">Source:</span> {selected.utm_source}</div>}
@@ -427,7 +435,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                 {selected.cover_note && (
                   <div>
                     <p className="text-muted-foreground text-xs mb-1">Cover note</p>
-                    <p className="whitespace-pre-wrap bg-muted/40 p-3 rounded-lg">{selected.cover_note}</p>
+                    <p className="whitespace-pre-wrap bg-muted/40 p-3">{selected.cover_note}</p>
                   </div>
                 )}
                 {(Object.keys(selected.question_answers || {}).length > 0 || Object.keys(selected.requirement_answers || {}).length > 0) && (
@@ -439,7 +447,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                         const path = isFile ? (v as any).path : null;
                         const display = Array.isArray(v) ? v.join(", ") : isFile ? null : String(v);
                         return (
-                          <div key={k} className="bg-muted/40 p-3 rounded-lg">
+                          <div key={k} className="bg-muted/40 p-3">
                             <p className="text-xs font-medium">{k}</p>
                             {isFile ? (
                               <button onClick={() => signedDocUrl(path)} className="text-sm underline inline-flex items-center gap-1 mt-1">
@@ -500,7 +508,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
       <Dialog open={!!composeType} onOpenChange={(o) => !o && setComposeType(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif">
+            <DialogTitle>
               {composeType === "interview_invite" ? "Invite to interview" : "Send rejection"}
             </DialogTitle>
             <DialogDescription>

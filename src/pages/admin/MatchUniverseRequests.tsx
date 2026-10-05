@@ -4,15 +4,14 @@ import { Loader2, Plus, ClipboardList, MapPin, CalendarDays, Users } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
-import { MuPageHeader, MuRecord, MuFieldGrid, MuField, MuEmpty } from "@/components/admin/mu/MuShell";
-import { Card } from "@/components/ui/card";
+import { MuPage, MuPageHeader, MuRecord, MuFieldGrid, MuField, MuEmpty, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import RequirementChoices, { type RequirementChoiceValue } from "@/components/admin/mu/RequirementChoices";
 
 interface RequestRow {
@@ -36,11 +35,11 @@ export const REQUEST_STATUS: { value: string; label: string; help: string }[] = 
   { value: "closed", label: "Closed", help: "The client no longer needs cover." },
 ];
 
-const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
-  draft: "outline",
-  ready: "default",
-  matched: "secondary",
-  closed: "secondary",
+const statusTone: Record<string, MuTone> = {
+  draft: "neutral",
+  ready: "info",
+  matched: "good",
+  closed: "neutral",
 };
 
 export default function MatchUniverseRequests() {
@@ -130,9 +129,9 @@ export default function MatchUniverseRequests() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
+    <MuPage className="max-w-5xl mx-auto">
       <MuPageHeader
-        title="Client requests"
+        title="Staffing requests"
         description="Pick the client\u2019s requirements from the controlled lists. Matching uses the selected criteria to rank the candidate pool."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
@@ -149,7 +148,7 @@ export default function MatchUniverseRequests() {
               </DialogHeader>
               <div className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reference</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Reference</label>
                   <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Live-in nurse, Lekki family" />
                 </div>
                 <RequirementChoices
@@ -158,7 +157,7 @@ export default function MatchUniverseRequests() {
                   onChange={(next) => setCriteria({ ...criteria, ...next })}
                 />
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Anything else the client said (optional)</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Anything else the client said (optional)</label>
                   <Textarea
                     rows={4}
                     value={brief}
@@ -178,41 +177,45 @@ export default function MatchUniverseRequests() {
         }
       />
 
-      <Tabs value={view} onValueChange={(v) => setView(v as any)}>
-        <TabsList>
-          <TabsTrigger value="open">Open</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <ConsoleTabs
+        label="Request view"
+        active={view}
+        onChange={(id) => setView(id as typeof view)}
+        tabs={[
+          { id: "open", label: "Open" },
+          { id: "closed", label: "Closed" },
+        ]}
+      />
 
       {visible.length === 0 ? (
-        <Card>
+        <div className="border border-line bg-card">
           <MuEmpty
-            icon={ClipboardList}
-            title="No client requests"
-            description={view === "open" ? "Create a request and write down what the client told you." : "No closed requests."}
+            art={art.objClipboard}
+            title={view === "open" ? "No open requests" : "No closed requests"}
+            description={view === "open" ? "Create a request and write down what the client told you." : "Closed requests appear here once a request is finished."}
           />
-        </Card>
+        </div>
       ) : (
         <div className="space-y-3">
           {visible.map((r) => (
-            <Card
+            <div
               key={r.id}
-              className="cursor-pointer transition-colors hover:bg-muted/40"
+              className="cursor-pointer border border-line bg-card transition-colors hover:bg-muted/40"
               onClick={() => navigate(`/admin/match-universe/requests/${r.id}`)}
             >
               <MuRecord
                 lead={
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-tint text-navy">
                     <ClipboardList className="h-4 w-4" />
                   </span>
                 }
                 title={r.title}
-                subtitle={r.brief ? `${r.brief.slice(0, 200)}${r.brief.length > 200 ? "\u2026" : ""}` : "No brief."}
+                subtitle={r.brief ? `${r.brief.slice(0, 200)}${r.brief.length > 200 ? "\u2026" : ""}` : "No brief given"}
                 status={
-                  <Badge variant={statusVariant[r.request_status] ?? "outline"}>
-                    {REQUEST_STATUS.find((s) => s.value === r.request_status)?.label ?? r.request_status}
-                  </Badge>
+                  <MuStatus
+                    tone={statusTone[r.request_status] ?? "neutral"}
+                    label={REQUEST_STATUS.find((s) => s.value === r.request_status)?.label ?? r.request_status}
+                  />
                 }
                 fields={
                   <MuFieldGrid columns={3}>
@@ -234,10 +237,10 @@ export default function MatchUniverseRequests() {
                   </MuFieldGrid>
                 }
               />
-            </Card>
+            </div>
           ))}
         </div>
       )}
-    </div>
+    </MuPage>
   );
 }

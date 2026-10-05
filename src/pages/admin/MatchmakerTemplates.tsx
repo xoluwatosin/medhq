@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Loader2, ArrowLeft, Plus, Save, Trash2, Copy, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { Question } from "@/lib/matchmaker";
 import QuestionBuilder from "@/components/admin/QuestionBuilder";
+import { MuEmpty, MuPage, MuPageHeader } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface Template {
   id: string;
@@ -82,23 +83,29 @@ const MatchmakerTemplates = () => {
 
   if (editing) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />All templates
-          </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save template
-          </Button>
-        </div>
-        <div className="border border-border rounded-2xl bg-background p-6 space-y-5">
+      <MuPage className="max-w-3xl mx-auto">
+        <MuPageHeader
+          title={editing.name || "New template"}
+          description="A reusable question set for opportunities."
+          breadcrumb={
+            <Button variant="ghost" size="sm" onClick={() => setEditing(null)} className="-ml-3">
+              <ArrowLeft className="mr-2 h-4 w-4" />All templates
+            </Button>
+          }
+          actions={
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save template
+            </Button>
+          }
+        />
+        <div className="border border-line bg-card p-6 space-y-5">
           <div>
             <Label htmlFor="tn">Template name</Label>
-            <Input id="tn" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="mt-1" placeholder="e.g. Clinical Research Nurse — standard set" />
+            <Input id="tn" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="mt-1" placeholder="For example, clinical research nurse standard set" />
           </div>
           <div>
             <Label htmlFor="td">Description</Label>
-            <Textarea id="td" rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="mt-1" placeholder="Optional — what this template is for." />
+            <Textarea id="td" rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="mt-1" placeholder="Optional. What this template is for." />
           </div>
           <div>
             <Label>Questions</Label>
@@ -106,33 +113,36 @@ const MatchmakerTemplates = () => {
             <QuestionBuilder value={editing.questions} onChange={(q) => setEditing({ ...editing, questions: q })} />
           </div>
         </div>
-      </div>
+      </MuPage>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3">
-            <Link to="/admin/match-universe/opportunities"><ArrowLeft className="mr-2 h-4 w-4" />Matchmakers</Link>
+    <MuPage className="max-w-4xl mx-auto">
+      <MuPageHeader
+        title="Question templates"
+        description="Reusable question sets you can drop into any opportunity."
+        backTo="/admin/match-universe/opportunities"
+        backLabel="Opportunities"
+        actions={
+          <Button onClick={() => setEditing(emptyTemplate())}>
+            <Plus className="mr-2 h-4 w-4" />New template
           </Button>
-          <h1 className="text-2xl font-serif font-bold">Question templates</h1>
-          <p className="text-sm text-muted-foreground mt-1">Reusable question sets you can drop into any opportunity.</p>
-        </div>
-        <Button onClick={() => setEditing(emptyTemplate())}>
-          <Plus className="mr-2 h-4 w-4" />New template
-        </Button>
-      </div>
+        }
+      />
 
       {templates.length === 0 ? (
-        <div className="border border-dashed border-border rounded-2xl p-12 text-center">
-          <p className="text-muted-foreground">No templates yet. Create one to reuse question sets across opportunities.</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objClipboard}
+            title="No templates yet"
+            description="Create one to reuse question sets across opportunities."
+          />
         </div>
       ) : (
         <div className="space-y-2">
           {templates.map((t) => (
-            <div key={t.id} className="border border-border rounded-2xl bg-background p-4 sm:p-5 flex items-start justify-between gap-3 flex-wrap">
+            <div key={t.id} className="border border-line bg-card p-4 sm:p-5 flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium">{t.name}</h3>
                 {t.description && <p className="text-sm text-muted-foreground mt-0.5">{t.description}</p>}
@@ -147,7 +157,7 @@ const MatchmakerTemplates = () => {
           ))}
         </div>
       )}
-    </div>
+    </MuPage>
   );
 };
 

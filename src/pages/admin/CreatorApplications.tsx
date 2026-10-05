@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPage, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,11 +28,17 @@ interface CreatorApplication {
   created_at: string;
 }
 
-const statusColors: Record<string, string> = {
-  new: "default",
-  reviewed: "secondary",
-  accepted: "outline",
-  rejected: "destructive",
+const statusTone: Record<string, MuTone> = {
+  new: "info",
+  reviewed: "neutral",
+  accepted: "good",
+  rejected: "warning",
+};
+const STATUS_LABELS: Record<string, string> = {
+  new: "New",
+  reviewed: "Reviewed",
+  accepted: "Accepted",
+  rejected: "Rejected",
 };
 
 const CreatorApplications = () => {
@@ -99,12 +106,13 @@ const CreatorApplications = () => {
     );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-serif font-bold">Creator applications</h1>
-        <ExportDropdown data={filtered} filename="creator-applications" />
-      </div>
-      <div className="flex gap-3 mb-4">
+    <MuPage>
+      <MuPageHeader
+        title="Creator applications"
+        description="People who asked to make content with Medic Connect."
+        actions={<ExportDropdown data={filtered} filename="creator-applications" />}
+      />
+      <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -136,7 +144,7 @@ const CreatorApplications = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="hidden md:block overflow-x-auto border rounded-lg">
+      <div className="hidden md:block overflow-x-auto border border-line bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -151,11 +159,12 @@ const CreatorApplications = () => {
           <TableBody>
             {paged.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No creator applications found.
+                <TableCell colSpan={6} className="p-0">
+                  <MuEmpty
+                    art={art.objMagnifier}
+                    title="No creator applications found"
+                    description="Try a different search or status."
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -169,9 +178,7 @@ const CreatorApplications = () => {
                   <TableCell>{item.email}</TableCell>
                   <TableCell>{item.country}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[item.status] as any}>
-                      {item.status}
-                    </Badge>
+                    <MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {format(new Date(item.created_at), "dd MMM yyyy")}
@@ -200,13 +207,18 @@ const CreatorApplications = () => {
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
-          state: `${item.country} · ${format(new Date(item.created_at), "dd MMM yyyy")}`,
-          status: <Badge variant={statusColors[item.status] as any}>{item.status}</Badge>,
+          state: (
+            <span className="flex flex-wrap gap-x-3">
+              <span>{item.country}</span>
+              <span>{format(new Date(item.created_at), "dd MMM yyyy")}</span>
+            </span>
+          ),
+          status: <MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} />,
           onOpen: () => setSelected(item),
         }))}
       />
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -231,7 +243,7 @@ const CreatorApplications = () => {
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Creator Application: {selected?.name}</DialogTitle>
+            <DialogTitle>Creator application from {selected?.name}</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-3 text-sm overflow-hidden break-words">
@@ -266,7 +278,7 @@ const CreatorApplications = () => {
                 </Select>
               </div>
               <div className="pt-2 border-t">
-                <span className="font-medium">Social Links:</span>
+                <span className="font-medium">Social links:</span>
                 <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
                   {selected.social_links}
                 </p>
@@ -286,7 +298,7 @@ const CreatorApplications = () => {
               )}
               {selected.rate_card_url && (
                 <div>
-                  <span className="font-medium">Rate Card:</span>{" "}
+                  <span className="font-medium">Rate card:</span>{" "}
                   <a
                     href={selected.rate_card_url}
                     target="_blank"
@@ -307,7 +319,7 @@ const CreatorApplications = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </MuPage>
   );
 };
 

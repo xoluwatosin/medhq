@@ -33,6 +33,7 @@ import {
   MuEmpty, MuField, MuFieldGrid, MuNote, MuPage, MuPageHeader, MuRecord, MuSection, MuStats,
   MuStatus, MuToolbar,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface QueueRow {
   document_id: string;
@@ -272,14 +273,9 @@ const MatchUniverseVerification = () => {
     <MuPage>
       <MuPageHeader
         backTo="/admin/match-universe"
-        backLabel="Match Universe"
+        backLabel="Talent pool"
         title="Document review"
         description="Documents awaiting a decision, most urgent first. Uploads from the portal, applications and admin all arrive here."
-        actions={
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/match-universe/intake"><ShieldCheck className="mr-2 h-4 w-4" />Intake</Link>
-          </Button>
-        }
       />
 
       <MuStats
@@ -365,14 +361,14 @@ const MatchUniverseVerification = () => {
 
         {!loading && filtered.length === 0 && (
           <MuEmpty
-            icon={Inbox}
+            art={art.objDocumentMagnifier}
             title="Nothing to review"
             description="All documents have been accepted or returned. New uploads appear here immediately."
           />
         )}
 
         {!loading && filtered.length > 0 && (
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-line-soft">
             {filtered.map((r) => (
               <li key={r.document_id}>
                 <MuRecord
@@ -384,7 +380,7 @@ const MatchUniverseVerification = () => {
                         onCheckedChange={() => toggle(r.document_id)}
                         aria-label={`Select ${r.label}`}
                       />
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-tint text-sm font-bold text-navy">
                         {initialsOf(r.full_name)}
                       </span>
                     </div>

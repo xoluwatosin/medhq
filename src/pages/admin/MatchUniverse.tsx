@@ -4,17 +4,18 @@ import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/
 import { FilterChips, type ActiveFilter } from "@/components/admin/FilterChips";
 import { humaniseTerm } from "@/lib/readable";
 
-import { Loader2, Search, Users, GitMerge, ShieldCheck, FileText, Briefcase, BriefcaseBusiness, CalendarCheck, Inbox, Activity, Send, Sparkles, UserRound, ClipboardList, Moon, UserX, Mailbox } from "lucide-react";
+import { Loader2, Search, Users, GitMerge, MoreHorizontal, ShieldCheck, FileText, BriefcaseBusiness, Inbox, Send, Sparkles, UserRound, ClipboardList, Moon, UserX } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ExportDropdown from "@/components/admin/ExportDropdown";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import {
@@ -31,7 +32,7 @@ import { resolveProfession, PROFESSIONS } from "@/lib/professions";
 import { TRACK_TAGS, trackRules, trackKnown } from "@/lib/tracks";
 import { facetLabel } from "@/lib/match-taxonomy";
 import { CARE_TYPES, CARE_TYPE_LABEL, LOOKING_OPTIONS } from "@/lib/work-preferences";
-import { MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
 import ConsoleMobileList, { ConsoleMobileRow } from "@/components/admin/console/ConsoleMobileList";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import { LgaSelect } from "@/components/LocationSelect";
@@ -42,7 +43,7 @@ import { selectAll } from "@/lib/select-all";
 // Governed rule: a record with no meaningful activity in this many days is
 // dormant. Falls back to when the record was created if it has never had any
 // activity recorded at all. This threshold is the single source of truth for
-// "dormant" anywhere on this page — do not invent a separate engagement score.
+// "dormant" anywhere on this page. Do not invent a separate engagement score.
 const DORMANT_DAYS = 90;
 
 // looking_status only ever holds one of these four codes (see
@@ -125,7 +126,7 @@ const MatchUniverse = () => {
   // stand down).
   const [rawView, setView] = useListParam<"active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all">("view", "active");
   const view = rawView === "dormant" ? "all" : rawView;
-  // Placement readiness, read from mu_readiness_summary — never recomputed here.
+  // Placement readiness, read from mu_readiness_summary, never recomputed here.
   const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number }>>(new Map());
   const [readinessFilter, setReadinessFilter] = useListParam<"all" | "ready" | "office" | "candidate" | "any">("readiness", "all");
   const [professionFilter, setProfessionFilter] = useListParam<string>("profession", "all");
@@ -159,7 +160,7 @@ const MatchUniverse = () => {
       all(() => adminDb().from("mu_profile_facets").select("id, person_id, facet_type, code").eq("facet_type", "specialty")),
       all(() => adminDb().from("mu_work_preferences").select("person_id, care_types, live_in"), "person_id"),
       all(() => adminDb().from("mu_references").select("id, person_id")),
-      // Placement readiness is decided entirely by the database rule set — this
+      // Placement readiness is decided entirely by the database rule set: this
       // page only reads the totals and never re-implements the logic.
       (adminDb() as any).rpc("mu_readiness_summary"),
     ]);
@@ -579,54 +580,45 @@ const MatchUniverse = () => {
   return (
     <MuPage>
       <MuPageHeader
-        title="Talent Pool"
+        title="Talent pool"
         description="The talent register. One profile per person."
         actions={
           <>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/intake">
-                <Activity className="mr-2 h-4 w-4" />Intake
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/availability">
-                <CalendarCheck className="mr-2 h-4 w-4" />Availability
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/opportunities">
-                <Briefcase className="mr-2 h-4 w-4" />Opportunities
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/requests">
-                <Mailbox className="mr-2 h-4 w-4" />Staffing requests
-              </Link>
-            </Button>
             <Button variant={pendingReviews > 0 ? "default" : "outline"} size="sm" asChild>
               <Link to="/admin/match-universe/verification">
                 <ShieldCheck className="mr-2 h-4 w-4" />Document review
                 {pendingReviews > 0 && (
-                  <Badge variant="secondary" className="ml-2">{pendingReviews}</Badge>
+                  <span className="ml-2 bg-white/20 px-1.5 text-[12px] font-bold tabular-nums">{pendingReviews}</span>
                 )}
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/merges">
-                <GitMerge className="mr-2 h-4 w-4" />Duplicates
-                {pendingMerges > 0 && <Badge variant="secondary" className="ml-2">{pendingMerges}</Badge>}
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/workforce">
-                <BriefcaseBusiness className="mr-2 h-4 w-4" />Workforce
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={tidyDocuments} disabled={tidying}>
-              {tidying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Tidy documents
-            </Button>
             <ExportDropdown data={exportRows} filename="talent-pool" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="More actions">
+                  <MoreHorizontal className="mr-2 h-4 w-4" />More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/match-universe/merges">
+                    <GitMerge className="mr-2 h-4 w-4" />Duplicates
+                    {pendingMerges > 0 && (
+                      <span className="ml-auto pl-3 text-[12px] font-bold tabular-nums text-muted-foreground">{pendingMerges}</span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/match-universe/workforce">
+                    <BriefcaseBusiness className="mr-2 h-4 w-4" />Workforce
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { void tidyDocuments(); }} disabled={tidying}>
+                  {tidying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  Tidy documents
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
@@ -648,7 +640,7 @@ const MatchUniverse = () => {
       />
 
       <ConsoleTabs
-        label="Talent Pool view"
+        label="Talent pool view"
         active={view}
         onChange={(id) => setView(id as typeof view)}
         tabs={[
@@ -670,19 +662,19 @@ const MatchUniverse = () => {
               placeholder="Search name, email, phone or profession"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 rounded-none bg-background"
+              className="pl-9 bg-background"
             />
           </div>
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             <Select value={professionFilter} onValueChange={setProfessionFilter}>
-              <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="all">Any profession</SelectItem>
                 {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
-              <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="all">Any state</SelectItem>
                 {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
@@ -693,10 +685,10 @@ const MatchUniverse = () => {
               value={lgaFilter}
               onChange={setLgaFilter}
               allowClear
-              className="rounded-none w-full sm:w-[170px]"
+              className="w-full sm:w-[170px]"
             />
             <Select value={trackFilter} onValueChange={setTrackFilter}>
-              <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any route</SelectItem>
                 {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
@@ -704,7 +696,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-              <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Most recent activity</SelectItem>
                 <SelectItem value="docs_desc">Most documents</SelectItem>
@@ -725,7 +717,7 @@ const MatchUniverse = () => {
           </summary>
           <div className="grid grid-cols-1 gap-2 border-t border-line-soft p-3 sm:grid-cols-2 lg:grid-cols-4">
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="all">Any specialty</SelectItem>
                 {allSpecialties.map((c) => (
@@ -734,7 +726,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={careFilter} onValueChange={setCareFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 <SelectItem value="all">Any type of care</SelectItem>
                 {CARE_TYPES.map((c) => (
@@ -743,7 +735,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={liveInFilter} onValueChange={setLiveInFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Live-in or live-out</SelectItem>
                 <SelectItem value="live_in">Will live in</SelectItem>
@@ -757,17 +749,17 @@ const MatchUniverse = () => {
               placeholder="Min. years experience"
               value={minExpFilter}
               onChange={(e) => setMinExpFilter(e.target.value)}
-              className="rounded-none w-full"
+              className="w-full"
             />
             <Select value={lookingFilter} onValueChange={setLookingFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any looking status</SelectItem>
                 {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any placement readiness</SelectItem>
                 <SelectItem value="ready">Ready</SelectItem>
@@ -777,7 +769,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any engagement</SelectItem>
                 <SelectItem value="recent">Active in the last 90 days</SelectItem>
@@ -785,7 +777,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any availability freshness</SelectItem>
                 <SelectItem value="current">Availability current</SelectItem>
@@ -794,7 +786,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={docFilter} onValueChange={setDocFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any documents</SelectItem>
                 <SelectItem value="any">Has documents</SelectItem>
@@ -807,7 +799,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={refFilter} onValueChange={setRefFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any referees</SelectItem>
                 <SelectItem value="any">Referees given</SelectItem>
@@ -816,7 +808,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={verifyFilter} onValueChange={setVerifyFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any verification</SelectItem>
                 {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
@@ -825,7 +817,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={accountFilter} onValueChange={setAccountFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any account state</SelectItem>
                 <SelectItem value="claimed">Has signed in</SelectItem>
@@ -834,7 +826,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="talent">Talent</SelectItem>
                 <SelectItem value="workforce">On the Workforce</SelectItem>
@@ -842,7 +834,7 @@ const MatchUniverse = () => {
               </SelectContent>
             </Select>
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All channels</SelectItem>
                 {allSources.map((s) => (
@@ -986,8 +978,12 @@ const MatchUniverse = () => {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                  No people match these filters.
+                <TableCell colSpan={9} className="p-0">
+                  <MuEmpty
+                    art={art.objMagnifier}
+                    title="No people match"
+                    description="Try fewer filters or a different search."
+                  />
                 </TableCell>
               </TableRow>
             )}
@@ -1009,14 +1005,18 @@ const MatchUniverse = () => {
           return {
             key: r.person.id,
             title: r.person.full_name || "Unnamed",
-            state: [
-              r.profession,
-              [r.person.lga, r.person.state].filter(Boolean).join(", ") || "Not stated",
-              LOOKING_OPTIONS.find((o) => o.code === (r.person as any).looking_status)?.label ?? "Not said",
-              readinessLabel,
-            ]
-              .filter(Boolean)
-              .join(" · "),
+            state: (
+              <span className="flex flex-wrap gap-x-3">
+                {[
+                  r.profession,
+                  [r.person.lga, r.person.state].filter(Boolean).join(", ") || "Not stated",
+                  LOOKING_OPTIONS.find((o) => o.code === (r.person as any).looking_status)?.label ?? "Not said",
+                  readinessLabel,
+                ]
+                  .filter(Boolean)
+                  .map((part, i) => <span key={i}>{part}</span>)}
+              </span>
+            ),
             status: (
               <MuStatus
                 tone={r.person.verification_state === "verified" ? "good" : "neutral"}

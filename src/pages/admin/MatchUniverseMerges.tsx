@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Loader2, ArrowLeft, GitMerge, X } from "lucide-react";
+import { Loader2, GitMerge, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,9 +18,9 @@ interface Pair {
 }
 
 const Side = ({ p, onKeep, keeping }: { p: Person; onKeep: () => void; keeping: boolean }) => (
-  <div className={`rounded-lg border p-4 space-y-2 ${keeping ? "border-primary bg-primary/5" : "border-border"}`}>
+  <div className={`border p-4 space-y-2 ${keeping ? "border-navy bg-tint/50" : "border-line"}`}>
     <div className="flex items-center gap-3">
-      <span className="h-9 w-9 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+      <span className="h-9 w-9 bg-tint text-navy text-xs font-bold flex items-center justify-center">
         {initialsOf(p.full_name)}
       </span>
       <div className="min-w-0">
@@ -41,7 +41,7 @@ const Side = ({ p, onKeep, keeping }: { p: Person; onKeep: () => void; keeping: 
       ].map(([k, v]) => (
         <div key={k as string} className="flex justify-between gap-3">
           <dt className="text-muted-foreground">{k}</dt>
-          <dd className="truncate text-right">{v === null || v === undefined || v === "" ? "—" : String(v)}</dd>
+          <dd className="truncate text-right">{v === null || v === undefined || v === "" ? "Not provided" : String(v)}</dd>
         </div>
       ))}
     </dl>
@@ -137,24 +137,22 @@ const MatchUniverseMerges = () => {
     return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Match Universe</Link>
-      </Button>
-
-      <div>
-        <h1 className="text-2xl font-serif font-bold">Duplicates</h1>
-        <p className="text-sm text-muted-foreground">
-          Exact email and phone matches merge on their own. These are the weaker matches that need your call.
-        </p>
-      </div>
+    <MuPage className="max-w-5xl">
+      <MuPageHeader
+        title="Duplicates"
+        description="Exact email and phone matches merge on their own. These are the weaker matches that need your call."
+        backTo="/admin/match-universe"
+        backLabel="Talent pool"
+      />
 
       {pairs.length === 0 && (
-        <Card>
-          <CardContent className="p-10 text-center text-muted-foreground">
-            No duplicates to review.
-          </CardContent>
-        </Card>
+        <MuSection>
+          <MuEmpty
+            art={art.objHandshake}
+            title="No duplicates to review"
+            description="Possible duplicates appear here when two profiles look like the same person."
+          />
+        </MuSection>
       )}
 
       {pairs.map((pair) => {
@@ -162,10 +160,10 @@ const MatchUniverseMerges = () => {
         const kept = keepId === pair.a.id ? pair.a : pair.b;
         const dropped = keepId === pair.a.id ? pair.b : pair.a;
         return (
-          <Card key={pair.candidate.id}>
-            <CardContent className="p-5 space-y-4">
+          <MuSection key={pair.candidate.id}>
+            <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Badge variant="outline">{pair.candidate.reason}</Badge>
+                <MuStatus label={pair.candidate.reason} />
                 <span className="text-xs text-muted-foreground">
                   Flagged {format(new Date(pair.candidate.created_at), "d MMM yyyy")}
                 </span>
@@ -202,11 +200,11 @@ const MatchUniverseMerges = () => {
                   }
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </MuSection>
         );
       })}
-    </div>
+    </MuPage>
   );
 };
 

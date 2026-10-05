@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   CalendarCheck,
   Loader2,
   Sparkles,
@@ -14,7 +13,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -442,56 +442,69 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
     );
   }
 
-  if (!op) return <p className="text-muted-foreground">Opportunity not found.</p>;
+  if (!op)
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty art={art.objMagnifier} title="Opportunity not found" description="It may have been deleted, or it could not be loaded." />
+      </div>
+    );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {!embedded && (
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/admin/match-universe/opportunities/${op.id}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" />Back to opportunity
-            </Link>
-          </Button>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold">{op.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Requirements are matched against the candidate pool. Matching uses the selected criteria.
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={extract} disabled={extracting}>
-            {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            Extract requirements
-          </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save requirements
-          </Button>
-        </div>
-      </div>
+      {(() => {
+        const headerActions = (
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save requirements
+            </Button>
+            <Button variant="outline" onClick={extract} disabled={extracting}>
+              {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              Extract requirements
+            </Button>
+          </>
+        );
+        const intro = "Requirements are matched against the candidate pool. Matching uses the selected criteria.";
+        // Embedded under the opportunity's own header, so the title is not repeated.
+        return embedded ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-2xl text-sm text-muted-foreground">{intro}</p>
+            <div className="flex flex-wrap gap-2">{headerActions}</div>
+          </div>
+        ) : (
+          <MuPageHeader
+            title={op.title}
+            description={intro}
+            backTo={`/admin/match-universe/opportunities/${op.id}`}
+            backLabel="Back to opportunity"
+            actions={headerActions}
+          />
+        );
+      })()}
 
 
       {/* Requirements */}
-      <section className="border border-border rounded-2xl bg-background p-6 space-y-5">
-        <h2 className="font-medium">Hard requirements</h2>
+      <MuSection title="Hard requirements">
+        <div className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Professions accepted</Label>
             <div className="flex flex-wrap gap-1.5">
               {op.match_professions.map((p) => (
-                <Badge key={p} variant="secondary" className="gap-1">
-                  {p}
-                  <button
-                    onClick={() => setOp({ ...op, match_professions: op.match_professions.filter((x) => x !== p) })}
-                    aria-label={`Remove ${p}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
+                <MuStatus
+                  key={p}
+                  tone="info"
+                  label={
+                    <>
+                      {p}
+                      <button
+                        onClick={() => setOp({ ...op, match_professions: op.match_professions.filter((x) => x !== p) })}
+                        aria-label={`Remove ${p}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </>
+                  }
+                />
               ))}
             </div>
             <Select
@@ -606,7 +619,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                     type="button"
                     size="sm"
                     variant={on ? "default" : "outline"}
-                    className="rounded-full h-8"
+                    className="h-8"
                     onClick={() =>
                       setOp({
                         ...op,
@@ -649,7 +662,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                       type="button"
                       size="sm"
                       variant={on ? "default" : "outline"}
-                      className="rounded-full h-8"
+                      className="h-8"
                       onClick={() =>
                         setOp({
                           ...op,
@@ -669,32 +682,37 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
         </div>
 
 
-      </section>
+        </div>
+      </MuSection>
 
       {/* Facets */}
-      <section className="border border-border rounded-2xl bg-background p-6 space-y-5">
-        <div>
-          <h2 className="font-medium">Skills and experience</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Required facets are weighted heavily. Desirable facets separate close candidates.
-          </p>
-        </div>
+      <MuSection
+        title="Skills and experience"
+        description="Required facets are weighted heavily. Desirable facets separate close candidates."
+      >
+        <div className="space-y-5">
 
         {(["required", "desirable"] as const).map((band) => (
           <div key={band} className="space-y-2">
             <Label className="capitalize">{band}</Label>
             <div className="flex flex-wrap gap-1.5">
               {(band === "required" ? required : desirable).map((f) => (
-                <Badge key={`${f.facet_type}:${f.code}`} variant={band === "required" ? "default" : "secondary"} className="gap-1">
-                  {facetLabel(f.code)}
-                  <span className="opacity-60 text-[10px] uppercase">{f.facet_type}</span>
-                  <button
-                    onClick={() => setFacets(facets.filter((x) => !(x.facet_type === f.facet_type && x.code === f.code)))}
-                    aria-label={`Remove ${f.code}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
+                <MuStatus
+                  key={`${f.facet_type}:${f.code}`}
+                  tone={band === "required" ? "good" : "info"}
+                  label={
+                    <>
+                      {facetLabel(f.code)}
+                      <span className="opacity-60 text-[10px] uppercase">{f.facet_type}</span>
+                      <button
+                        onClick={() => setFacets(facets.filter((x) => !(x.facet_type === f.facet_type && x.code === f.code)))}
+                        aria-label={`Remove ${f.code}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </>
+                  }
+                />
               ))}
               {(band === "required" ? required : desirable).length === 0 && (
                 <span className="text-sm text-muted-foreground">None set.</span>
@@ -703,7 +721,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
           </div>
         ))}
 
-        <div className="flex flex-wrap gap-2 items-end pt-2 border-t border-border">
+        <div className="flex flex-wrap gap-2 items-end pt-2 border-t border-line-soft">
           <div className="space-y-1">
             <Label className="text-xs">Type</Label>
             <Select value={newType} onValueChange={(v) => { setNewType(v as FacetType); setNewCode(""); }}>
@@ -736,38 +754,37 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
             <Plus className="mr-2 h-4 w-4" />Add
           </Button>
         </div>
-      </section>
+        </div>
+      </MuSection>
 
       {/* Matches */}
-      <section className="border border-border rounded-2xl bg-background p-6 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="font-medium">Ranked matches</h2>
-            <p className="text-sm text-muted-foreground mt-1">{matches.length} candidate{matches.length === 1 ? "" : "s"} from the candidate pool.</p>
-          </div>
+      <MuSection
+        title="Ranked matches"
+        description={`${matches.length} candidate${matches.length === 1 ? "" : "s"} from the candidate pool.`}
+        actions={
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Switch id="blocked" checked={includeBlocked} onCheckedChange={setIncludeBlocked} />
               <Label htmlFor="blocked" className="text-sm">Show blocked</Label>
             </div>
             <Button variant="outline" size="sm" onClick={() => runMatch()} disabled={running}>
-              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Re-run
+              {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Run again
             </Button>
           </div>
-        </div>
+        }
+      >
+        <div className="space-y-4">
 
         {/* Who did not make the list, and on what */}
         {excluded.people > 0 && (
-          <div className="rounded-xl border border-border bg-muted/20 p-4">
+          <div className="border border-line bg-muted/20 p-4">
             <p className="text-sm">
               <span className="font-medium">{excluded.people} excluded</span>
               <span className="text-muted-foreground"> from the ranked list.</span>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {excluded.reasons.map((r) => (
-                <Badge key={r.reason} variant="outline" className="rounded-full font-normal">
-                  {r.count} · {r.reason}
-                </Badge>
+                <MuStatus key={r.reason} label={<><span className="tabular-nums">{r.count}</span><span className="font-medium">{r.reason}</span></>} />
               ))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -778,7 +795,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
 
 
         {/* Coverage: who on this list is actually free in a window */}
-        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+        <div className="border border-line bg-muted/30 p-4 space-y-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label htmlFor="cov-from" className="text-xs">From</Label>
@@ -817,41 +834,44 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
 
 
         {matches.length === 0 && !running && (
-          <p className="text-sm text-muted-foreground">
-            No candidates match yet. Loosen the hard requirements, or check that profiles have been parsed into facets.
-          </p>
+          <MuEmpty
+            art={art.objMagnifier}
+            title="No candidates match yet"
+            description="Loosen the hard requirements, or check that profiles have been parsed into facets."
+          />
         )}
 
         <div className="space-y-3">
           {matches.map((m) => (
-            <div key={m.person_id} className="border border-border rounded-xl p-4 space-y-3">
+            <div key={m.person_id} className="border border-line p-4 space-y-3">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <Link to={`/admin/match-universe/${m.person_id}`} className="font-medium hover:underline">
                     {m.full_name || "Unnamed"}
                   </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {[m.profession, m.years_experience != null ? `${m.years_experience} yrs` : null, [m.lga, m.state].filter(Boolean).join(", ")]
-                      .filter(Boolean)
-                      .join(" | ") || "No profile detail yet"}
-                  </p>
+                  {(() => {
+                    const parts = [m.profession, m.years_experience != null ? `${m.years_experience} yrs` : null, [m.lga, m.state].filter(Boolean).join(", ")].filter(Boolean);
+                    return (
+                      <p className="flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+                        {parts.length ? parts.map((part, i) => <span key={i}>{part}</span>) : "No profile detail yet"}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2">
                   {covOn && (
-                    <Badge
-                      variant={
+                    <MuStatus
+                      tone={
                         (coverage[m.person_id] || "unknown") === "available"
-                          ? "default"
+                          ? "good"
                           : (coverage[m.person_id] || "unknown") === "unavailable"
-                            ? "destructive"
-                            : "outline"
+                            ? "warning"
+                            : "neutral"
                       }
-                      className="text-xs"
-                    >
-                      {COVERAGE_LABEL[coverage[m.person_id] || "unknown"]}
-                    </Badge>
+                      label={COVERAGE_LABEL[coverage[m.person_id] || "unknown"]}
+                    />
                   )}
-                  <Badge variant="outline" className="tabular-nums">{Number(m.score).toFixed(0)}</Badge>
+                  <MuStatus className="tabular-nums" label={Number(m.score).toFixed(0)} />
 
                   {shortlisted[m.person_id] ? (
                     <Select
@@ -883,15 +903,13 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
 
               <div className="flex flex-wrap gap-1.5">
                 {m.matched_required.map((c) => (
-                  <Badge key={`r-${c}`} className="text-xs">{facetLabel(c)}</Badge>
+                  <MuStatus key={`r-${c}`} tone="good" label={facetLabel(c)} />
                 ))}
                 {m.matched_desirable.map((c) => (
-                  <Badge key={`d-${c}`} variant="secondary" className="text-xs">{facetLabel(c)}</Badge>
+                  <MuStatus key={`d-${c}`} tone="info" label={facetLabel(c)} />
                 ))}
                 {m.missing_required.map((c) => (
-                  <Badge key={`m-${c}`} variant="outline" className="text-xs text-muted-foreground">
-                    Missing: {facetLabel(c)}
-                  </Badge>
+                  <MuStatus key={`m-${c}`} tone="neutral" label={`Missing: ${facetLabel(c)}`} />
                 ))}
               </div>
 
@@ -910,7 +928,11 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                 else if (wp.shift_fit === "unknown") bits.push("They have not told us which shifts suit them");
 
                 if (bits.length === 0) return null;
-                return <p className="text-xs text-muted-foreground">{bits.join(" | ")}</p>;
+                return (
+                  <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                    {bits.map((b, i) => <span key={i}>{b}</span>)}
+                  </p>
+                );
               })()}
 
               {/* Location is a flag, not a gate. */}
@@ -920,7 +942,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                 if (loc.outside_area) {
                   return (
                     <p className="text-xs text-amber-700">
-                      Outside the area asked for{m.state ? ` — listed as ${m.state}${m.lga ? `, ${m.lga}` : ""}` : ""}. Still ranked on everything else.
+                      Outside the area asked for{m.state ? `, listed as ${m.state}${m.lga ? `, ${m.lga}` : ""}` : ""}. Still ranked on everything else.
                     </p>
                   );
                 }
@@ -937,12 +959,13 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
               )}
 
               {rationales[m.person_id] && (
-                <p className="text-sm bg-muted/50 rounded-lg p-3 whitespace-pre-line">{rationales[m.person_id]}</p>
+                <p className="text-sm bg-muted/50 p-3 whitespace-pre-line">{rationales[m.person_id]}</p>
               )}
             </div>
           ))}
         </div>
-      </section>
+        </div>
+      </MuSection>
     </div>
   );
 }

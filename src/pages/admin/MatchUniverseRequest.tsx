@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import {
   Loader2, Save, CheckCircle2, CircleAlert, Stethoscope, MapPin, HeartPulse, CalendarDays,
@@ -7,14 +7,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { LocationField } from "@/components/LocationSelect";
 
-import { MuPageHeader, MuSection, MuNote } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuSection, MuNote } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import MatchmakerMatches from "./MatchmakerMatches";
 import { REQUEST_STATUS } from "./MatchUniverseRequests";
 
@@ -159,17 +159,30 @@ export default function MatchUniverseRequest() {
   if (loading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
-  if (!rec) return <p className="text-sm text-muted-foreground">Request not found.</p>;
+  if (!rec)
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Request not found"
+          description="It may have been removed, or it could not be loaded."
+          action={<Button variant="outline" asChild><Link to="/admin/match-universe/requests">Back to staffing requests</Link></Button>}
+        />
+      </div>
+    );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <MuPageHeader
         backTo="/admin/match-universe/requests"
-        backLabel="Requests"
+        backLabel="Staffing requests"
         title={rec.title}
         description="Save the brief here. Set the requirements below, then rank the candidate pool against them."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
+            </Button>
             <ConfirmAction
               title="Remove this request?"
               description={<p>"{rec.title}" leaves the requests list. Shortlists and history made from it are kept.</p>}
@@ -178,10 +191,7 @@ export default function MatchUniverseRequest() {
               onConfirm={binRequest}
               trigger={<Button variant="outline">Remove</Button>}
             />
-          <Button onClick={save} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
-          </Button>
-          </div>
+          </>
         }
       />
 
@@ -189,11 +199,11 @@ export default function MatchUniverseRequest() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reference</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Reference</label>
               <Input value={rec.title} onChange={(e) => setRec({ ...rec, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Location</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Location</label>
               <LocationField
                 value={rec.location}
                 onChange={(v, parts) =>
@@ -210,12 +220,12 @@ export default function MatchUniverseRequest() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Anything else the client said (optional)</label>
+            <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Anything else the client said (optional)</label>
             <Textarea rows={10} value={rec.brief ?? ""} onChange={(e) => setRec({ ...rec, brief: e.target.value })} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Internal notes</label>
+            <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Internal notes</label>
             <Textarea
               rows={3}
               value={rec.client_notes ?? ""}
@@ -226,7 +236,7 @@ export default function MatchUniverseRequest() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Stage</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Stage</label>
               <Select value={rec.request_status} onValueChange={(v) => setRec({ ...rec, request_status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -237,7 +247,7 @@ export default function MatchUniverseRequest() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Start date</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Start date</label>
               <Input
                 type="date"
                 disabled={rec.start_asap}
@@ -257,18 +267,15 @@ export default function MatchUniverseRequest() {
         </div>
       </MuSection>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Ready to match</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <MuSection title="Ready to match">
+        <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             {checklist.map((c) => (
               <div key={c.label} className="flex items-start gap-2.5">
                 {c.ok ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-navy" />
                 ) : (
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warn-ink" />
                 )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{c.label}</p>
@@ -283,8 +290,8 @@ export default function MatchUniverseRequest() {
               requirements. Ranking uses the saved criteria.
             </MuNote>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
       <MuSection
         title="Requirements and recommendations"

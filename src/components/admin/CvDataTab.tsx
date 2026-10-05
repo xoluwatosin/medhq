@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { Loader2, FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminDb } from "@/lib/admin-utils";
@@ -192,18 +193,24 @@ const CvDataTab = ({ personId, parseStatus }: Props) => {
       {summary && (
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Summary</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Summary</p>
             <p className="mt-2 text-sm leading-relaxed">{summary}</p>
           </CardContent>
         </Card>
       )}
 
       {ordered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {parseStatus === "parsed"
-            ? "The CV was read but nothing usable was stated on it."
-            : "Nothing has been read from a document yet. Anything the candidate told us themselves sits on their profile, not here."}
-        </p>
+        <Card>
+          <MuEmpty
+            art={art.objDocumentMagnifier}
+            title={parseStatus === "parsed" ? "Nothing usable on the CV" : "Nothing read yet"}
+            description={
+              parseStatus === "parsed"
+                ? "The CV was read but nothing usable was stated on it."
+                : "Nothing has been read from a document yet. Anything the candidate told us themselves sits on their profile, not here."
+            }
+          />
+        </Card>
 
       ) : (
         <Card>
@@ -239,9 +246,9 @@ const CvDataTab = ({ personId, parseStatus }: Props) => {
       {runs.length > 0 && (
         <Card>
           <CardContent className="p-4 space-y-2">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Reads on file</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Reads on file</p>
             {runs.map((run) => (
-              <div key={run.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3">
+              <div key={run.id} className="flex flex-wrap items-center justify-between gap-2 border border-line p-3">
                 <p className="text-sm flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                   {run.document_label || "CV"}

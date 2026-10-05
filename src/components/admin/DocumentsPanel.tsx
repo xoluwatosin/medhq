@@ -30,6 +30,7 @@ import DocumentReadout from "@/components/admin/DocumentReadout";
 import {
   MuEmpty, MuGroupHead, MuLedger, MuLedgerBody, MuLedgerRow, MuStatus, MuTone,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { MuDetailFacts, MuDetailSheet } from "@/components/admin/mu/MuDetailSheet";
 
 /** One colour vocabulary for document state, shared with the review queue. */
@@ -369,12 +370,11 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
           <Button
             size="sm"
             variant="outline"
-            className="rounded-none"
             onClick={() => askFor(requiredOpen.map((r) => r.doc_type))}
           >
             <Mail className="mr-2 h-4 w-4" />Request documents
           </Button>
-          <Button size="sm" className="rounded-none" onClick={() => setUploadOpen(true)}>
+          <Button size="sm" onClick={() => setUploadOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />Upload on their behalf
           </Button>
         </div>
@@ -421,7 +421,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
         />
         {outstanding.length === 0 ? (
           <MuEmpty
-            icon={ShieldCheck}
+            art={art.objShieldCheck}
             title="Nothing outstanding"
             description="Every document expected for this profession has been received and accepted."
           />
@@ -465,7 +465,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
           }
         />
         {settled.length === 0 ? (
-          <MuEmpty icon={FileText} title="No decisions recorded" />
+          <MuEmpty art={art.objFolderDocuments} title="No decisions recorded" description="Accepted and returned documents appear here." />
         ) : (
           <MuLedgerBody>
             {settled.map((d) => (
@@ -554,9 +554,8 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
           selectedDoc && (
             reclassing ? (
               <>
-                <Button variant="ghost" className="rounded-none" onClick={() => setReclassing(false)}>Cancel</Button>
+                <Button variant="ghost" onClick={() => setReclassing(false)}>Cancel</Button>
                 <Button
-                  className="rounded-none"
                   disabled={busy === selectedDoc.id}
                   onClick={() => reclassify(selectedDoc)}
                 >
@@ -565,10 +564,9 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
               </>
             ) : returning ? (
               <>
-                <Button variant="ghost" className="rounded-none" onClick={() => setReturning(false)}>Cancel</Button>
+                <Button variant="ghost" onClick={() => setReturning(false)}>Cancel</Button>
                 <Button
                   variant="destructive"
-                  className="rounded-none"
                   disabled={!reason.trim() || busy === selectedDoc.id}
                   onClick={() => review(selectedDoc, "rejected", reason.trim(), notify)}
                 >
@@ -577,14 +575,13 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
               </>
             ) : (
               <>
-                <Button variant="ghost" className="mr-auto rounded-none" onClick={() => open(selectedDoc.url)}>
+                <Button variant="ghost" className="mr-auto" onClick={() => open(selectedDoc.url)}>
                   <ExternalLink className="mr-1.5 h-4 w-4" />Open the file
                 </Button>
                 {!selectedDoc.superseded_at && (
                   <>
                     <Button
                       variant="ghost"
-                      className="rounded-none"
                       disabled={busy === selectedDoc.id}
                       onClick={() => {
                         setNewType(selectedDoc.doc_type || "Other");
@@ -596,7 +593,6 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                     </Button>
                     <Button
                       variant="ghost"
-                      className="rounded-none"
                       disabled={busy === selectedDoc.id}
                       onClick={() => supersede(selectedDoc)}
                     >
@@ -604,14 +600,12 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                     </Button>
                     <Button
                       variant="outline"
-                      className="rounded-none"
                       disabled={busy === selectedDoc.id}
                       onClick={() => { setReturning(true); setReason(""); setNotify(true); }}
                     >
                       <X className="mr-1.5 h-4 w-4" />Return with a reason
                     </Button>
                     <Button
-                      className="rounded-none"
                       disabled={busy === selectedDoc.id || selectedDoc.review_outcome === "accepted"}
                       onClick={() => review(selectedDoc, "accepted", "", true)}
                     >
@@ -635,13 +629,13 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                   and your name stay on the trail.
                 </p>
                 <Select value={newType} onValueChange={setNewType}>
-                  <SelectTrigger className="mt-2 rounded-none"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{DOC_TYPE_LABELS[t]}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Textarea
-                  className="mt-2 rounded-none"
+                  className="mt-2"
                   value={reclassNote}
                   onChange={(e) => setReclassNote(e.target.value)}
                   rows={2}
@@ -658,7 +652,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
                   The reason appears in the candidate's account so they know what to send instead.
                 </p>
                 <Textarea
-                  className="mt-2 rounded-none"
+                  className="mt-2"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={4}
@@ -732,7 +726,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
               {selected.request && (
                 <Button
                   variant="ghost"
-                  className="mr-auto rounded-none"
+                  className="mr-auto"
                   disabled={busy === selected.request.id}
                   onClick={() => cancelRequest(selected.request!.id)}
                 >
@@ -741,12 +735,11 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
               )}
               <Button
                 variant="outline"
-                className="rounded-none"
                 onClick={() => { setUploadType(selected.requirement.doc_type); setUploadOpen(true); }}
               >
                 <Upload className="mr-1.5 h-4 w-4" />Upload on their behalf
               </Button>
-              <Button className="rounded-none" onClick={() => askFor([selected.requirement.doc_type])}>
+              <Button onClick={() => askFor([selected.requirement.doc_type])}>
                 <Mail className="mr-1.5 h-4 w-4" />
                 {selected.request ? "Ask again" : "Ask for it"}
               </Button>
@@ -781,7 +774,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
 
       {/* Ask the candidate for documents */}
       <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-none">
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request documents from {personName}</DialogTitle>
             <DialogDescription>
@@ -815,7 +808,6 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             <div>
               <Label className="text-xs">Add a line of context (optional)</Label>
               <Textarea
-                className="rounded-none"
                 value={requestNote}
                 onChange={(e) => setRequestNote(e.target.value)}
                 rows={3}
@@ -825,12 +817,12 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             </div>
             <div>
               <Label className="text-xs">Ask for them by (optional)</Label>
-              <Input className="rounded-none" type="date" value={dueBy} onChange={(e) => setDueBy(e.target.value)} />
+              <Input type="date" value={dueBy} onChange={(e) => setDueBy(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" className="rounded-none" onClick={() => setRequestOpen(false)}>Cancel</Button>
-            <Button className="rounded-none" onClick={sendRequest} disabled={ask.length === 0 || requesting}>
+            <Button variant="ghost" onClick={() => setRequestOpen(false)}>Cancel</Button>
+            <Button onClick={sendRequest} disabled={ask.length === 0 || requesting}>
               {requesting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending</> : "Send the request"}
             </Button>
           </DialogFooter>
@@ -839,7 +831,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
 
       {/* Upload on behalf */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-none">
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload for {personName}</DialogTitle>
             <DialogDescription>
@@ -851,7 +843,7 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             <div>
               <Label className="text-xs">Document type</Label>
               <Select value={uploadType} onValueChange={setUploadType}>
-                <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{DOC_TYPE_LABELS[t]}</SelectItem>)}
                 </SelectContent>
@@ -860,7 +852,6 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             <div>
               <Label className="text-xs">Where did it come from?</Label>
               <Input
-                className="rounded-none"
                 value={sourceNote}
                 onChange={(e) => setSourceNote(e.target.value)}
                 placeholder="Emailed by the candidate on 12 Aug"
@@ -869,13 +860,12 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             </div>
             <div>
               <Label className="text-xs">Expiry date (optional)</Label>
-              <Input className="rounded-none" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+              <Input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">File</Label>
               <Input
                 ref={fileRef}
-                className="rounded-none"
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -883,8 +873,8 @@ const DocumentsPanel = ({ personId, personName, onChanged }: Props) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" className="rounded-none" onClick={() => setUploadOpen(false)}>Cancel</Button>
-            <Button className="rounded-none" onClick={doUpload} disabled={uploading}>
+            <Button variant="ghost" onClick={() => setUploadOpen(false)}>Cancel</Button>
+            <Button onClick={doUpload} disabled={uploading}>
               {uploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading</> : "Upload and file"}
             </Button>
           </DialogFooter>
