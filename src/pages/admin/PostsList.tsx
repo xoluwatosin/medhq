@@ -77,7 +77,7 @@ const PostsList = () => {
           <>
             <div className="flex items-center gap-2 pr-2">
               <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
-              <Label htmlFor="show-archived" className="text-sm text-muted-foreground">Show archived</Label>
+              <Label htmlFor="show-archived" className="text-sm font-semibold text-white">Show archived</Label>
             </div>
             <Button asChild><Link to="/admin/posts/new"><Plus className="mr-2 h-4 w-4" />New post</Link></Button>
           </>

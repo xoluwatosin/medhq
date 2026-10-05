@@ -1,8 +1,9 @@
 # Admin kit
 
-The Admin Centre's one look: the site's square navy register, plainer. No
-tilted cards, no offset shadows, no tape. Clip art appears only in empty
-states. The shared layer (`src/index.css` `.admin-kit`, `src/components/admin/mu/MuShell.tsx`,
+The Admin Centre's one look, close to the site: navy bands with tilted word
+headings, square cards with offset shadows, and clip art in the band and in
+empty states. On a phone, number tiles sit two across and nothing scrolls
+sideways. The shared layer (`src/index.css` `.admin-kit`, `src/components/admin/mu/MuShell.tsx`,
 `src/components/admin/console/*`, `src/components/field/*`) carries it, so a
 screen that uses the shared parts is already right.
 

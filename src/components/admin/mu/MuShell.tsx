@@ -69,7 +69,8 @@ const TILE_TILTS = [-1.2, 0.9, -0.6, 1.1];
 export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 | 3 | 4 }) => (
   <div
     className={cn(
-      "grid gap-4 sm:gap-5",
+      // Two across on a phone, so the numbers do not fill the first screen.
+      "grid grid-cols-2 gap-3 sm:gap-5",
       columns === 2 && "sm:grid-cols-2",
       columns === 3 && "sm:grid-cols-3",
       columns === 4 && "sm:grid-cols-2 lg:grid-cols-4",
@@ -84,19 +85,19 @@ export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 |
           to={s.to as string}
           style={{ ["--mc-tilt" as string]: `${TILE_TILTS[i % TILE_TILTS.length]}deg` }}
           className={cn(
-            "mc-tilt block border-2 border-navy p-4 sm:p-5",
+            "mc-tilt block min-w-0 border-2 border-navy p-3 sm:p-5",
             hot ? "bg-brand text-white shadow-offset" : "bg-card shadow-offset-blue",
             s.to && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
           )}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className={cn("text-[11px] font-extrabold uppercase tracking-[0.14em]", hot ? "text-white/80" : "text-label")}>{s.label}</p>
-              <p className={cn("mt-2 text-[34px] font-extrabold leading-none tracking-[-0.04em] tabular-nums", hot ? "text-white" : "text-navy")}>{s.value}</p>
+              <p className={cn("text-[10.5px] font-extrabold uppercase tracking-[0.1em] sm:text-[11px] sm:tracking-[0.14em]", hot ? "text-white/80" : "text-label")}>{s.label}</p>
+              <p className={cn("mt-2 text-[28px] font-extrabold sm:text-[34px] leading-none tracking-[-0.04em] tabular-nums", hot ? "text-white" : "text-navy")}>{s.value}</p>
               {s.hint && <p className={cn("mt-2 text-[12.5px] leading-snug", hot ? "text-white/85" : "text-muted-foreground")}>{s.hint}</p>}
             </div>
             {s.icon && (
-              <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center", hot ? "bg-white text-brand" : "bg-tint text-navy")}>
+              <span className={cn("hidden h-10 w-10 shrink-0 items-center justify-center sm:flex", hot ? "bg-white text-brand" : "bg-tint text-navy")}>
                 <s.icon className="h-[18px] w-[18px]" />
               </span>
             )}

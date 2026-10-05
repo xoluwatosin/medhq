@@ -240,8 +240,8 @@ const Applications = () => {
       </div>
 
       <ConsoleMobileList
-        emptyLabel={showingArchived && archived === null ? "Loading archived applications" : showingArchived && archivedFailed ? "Archived applications could not be loaded." : showingArchived && !search ? "No archived applications." : "No applications found."}
-        emptyArt={showingArchived && archived !== null && !archivedFailed && !search ? art.objFolderDocuments : undefined}
+        emptyLabel={showingArchived && archived === null ? "Loading archived applications" : showingArchived && archivedFailed ? "Archived applications could not be loaded." : showingArchived && !search ? "No archived applications" : "No applications found"}
+        emptyArt={showingArchived && (archived === null || archivedFailed) ? undefined : showingArchived && !search ? art.objFolderDocuments : art.objMagnifier}
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,

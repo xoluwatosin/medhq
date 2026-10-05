@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, Search, Trash2, Users, ArrowRight, Upload, FileDown, MoreHorizontal } from "lucide-react";
+import { Loader2, Plus, Search, Trash2, Users, ArrowRight, Upload, FileDown, MoreHorizontal, ChevronDown } from "lucide-react";
 import { PAGE_SIZE, adminDb, downloadTemplate, parseCSV } from "@/lib/admin-utils";
 import { ExportMenuItems } from "@/components/admin/ExportDropdown";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -278,8 +278,11 @@ const Audience = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search email or name" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
         </div>
-        <details>
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-navy">Filter</summary>
+        <details className="group">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-navy [&::-webkit-details-marker]:hidden">
+            Group and engagement
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
           <div className="space-y-3 pb-1">
             <SelectField label="Group" hideLabel value={groupFilter} onChange={onGroupFilter} options={groupFilterOptions} placeholder="All groups" />
             <SelectField label="Engagement" hideLabel value={engagement} onChange={onEngagement} options={engagementOptions} placeholder="Any engagement" />

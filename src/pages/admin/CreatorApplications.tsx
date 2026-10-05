@@ -292,10 +292,10 @@ const CreatorApplications = () => {
             : showingArchived && archivedFailed
               ? "Archived creator applications could not be loaded."
               : showingArchived && !search
-                ? "No archived creator applications."
-                : "No creator applications found."
+                ? "No archived creator applications"
+                : "No creator applications found"
         }
-        emptyArt={showingArchived && archived !== null && !archivedFailed && !search ? art.objFolderDocuments : undefined}
+        emptyArt={showingArchived && (archived === null || archivedFailed) ? undefined : showingArchived && !search ? art.objFolderDocuments : art.objMagnifier}
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
