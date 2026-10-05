@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { adminDb } from "@/lib/admin-utils";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format, formatDistanceToNowStrict } from "date-fns";
+import { PromoteEnquiries } from "@/components/admin/care/PromoteEnquiries";
 import {
   ENQUIRY_STAGES, loadEnquiries, loadServiceLines, loadSends, sendEnquiryReply,
   setEnquiryOwner, setEnquiryStage, stageLabel,
@@ -52,6 +53,16 @@ const Enquiries = () => {
   const setPage = (n: number) => setPageParam(String(n + 1));
 
   const [selected, setSelected] = useState<Enquiry | null>(null);
+  // Route to Care, from the enquiry itself.
+  const [routeOpen, setRouteOpen] = useState(false);
+  const [careServices, setCareServices] = useState<any[]>([]);
+  const openRoute = async () => {
+    if (careServices.length === 0) {
+      const { data } = await adminDb().from("services").select("id, slug, name, client_group, client_groups").eq("is_offered", true).order("sort_order");
+      setCareServices(data ?? []);
+    }
+    setRouteOpen(true);
+  };
   const [sends, setSends] = useState<EnquirySend[]>([]);
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
@@ -371,6 +382,20 @@ const Enquiries = () => {
               </div>
 
 
+              <div className="flex flex-col gap-3 border-l-4 border-l-brand bg-tint/50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-extrabold text-navy">Care</div>
+                  <div className="text-muted-foreground">
+                    {selected.care_client_id ? "This enquiry has a care record." : "Not routed into Care yet."}
+                  </div>
+                </div>
+                {selected.care_client_id ? (
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/admin/clients/${selected.care_client_id}`)}>Open care record</Button>
+                ) : (
+                  <Button size="sm" onClick={() => void openRoute()}>Route to Care</Button>
+                )}
+              </div>
+
               <div className="border border-line p-3 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 font-semibold"><Mail className="h-4 w-4" />Reply and brochure</div>
@@ -412,6 +437,13 @@ const Enquiries = () => {
           )}
         </DialogContent>
       </Dialog>
+      <PromoteEnquiries
+        open={routeOpen}
+        onOpenChange={setRouteOpen}
+        services={careServices}
+        onlyId={selected?.id}
+        onDone={() => { setSelected(null); void load(); }}
+      />
     </div>
   );
 };

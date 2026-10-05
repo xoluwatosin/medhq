@@ -52,11 +52,14 @@ export const PromoteEnquiries = ({
   onOpenChange,
   services,
   onDone,
+  onlyId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   services: ServiceRow[];
   onDone: () => void;
+  /** Route just this enquiry, opened from the enquiry itself. */
+  onlyId?: string;
 }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,11 +69,13 @@ export const PromoteEnquiries = ({
 
   const read = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await adminDb()
+    let query = adminDb()
       .from("contact_submissions")
       .select("id, name, email, phone, service_line, city, created_at")
       .is("care_client_id", null)
-      .eq("archived", false)
+      .eq("archived", false);
+    if (onlyId) query = query.eq("id", onlyId);
+    const { data, error } = await query
       .order("created_at", { ascending: false })
       .limit(200);
     setLoading(false);
@@ -82,14 +87,20 @@ export const PromoteEnquiries = ({
       Object.fromEntries(rows.map((e) => {
         const match = services.find((s) => s.slug === e.service_line);
         return [e.id, {
-          picked: false,
+          picked: e.id === onlyId,
           serviceId: match?.id ?? "",
           clientGroup: match?.client_group ?? match?.client_groups?.[0] ?? "adult",
           attachTo: "",
         }];
       })),
     );
-  }, [services]);
+    // Opened from one enquiry: it is already chosen, so check its matches now.
+    if (onlyId && rows.some((e) => e.id === onlyId)) {
+      enquiryMatches(onlyId)
+        .then((found) => setMatches((prev) => ({ ...prev, [onlyId]: found })))
+        .catch(() => { /* matches are a signal; routing still works without them */ });
+    }
+  }, [services, onlyId]);
 
   useEffect(() => { if (open) void read(); }, [open, read]);
 

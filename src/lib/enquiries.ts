@@ -60,6 +60,8 @@ export interface Enquiry {
   replied_at: string | null;
   archived: boolean;
   created_at: string;
+  /** Set once the enquiry has been routed into Care. */
+  care_client_id?: string | null;
 }
 
 export interface EnquirySend {
