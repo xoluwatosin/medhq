@@ -13,9 +13,10 @@ import { PAGE_SIZE, adminDb } from "@/lib/admin-utils";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 interface Application {
-  id: string; name: string; email: string; phone: string; role: string;
+  id: string; person_id?: string | null; name: string; email: string; phone: string; role: string;
   experience: string | null; message: string | null; status: string; archived: boolean; created_at: string;
   first_name?: string | null; last_name?: string | null; role_other?: string | null;
   qualification?: string | null; qualification_other?: string | null; years_experience?: number | null;
@@ -159,7 +160,15 @@ const Applications = () => {
               <TableRow><TableCell colSpan={7} className="p-0"><MuEmpty art={art.objMagnifier} title="No applications found" description="Try a different search or status." /></TableCell></TableRow>
             ) : paged.map((item) => (
               <TableRow key={item.id} className="cursor-pointer" onClick={() => { setCvPreviewUrl(null); setSelected(item); }}>
-                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell className="font-medium">
+                  {item.name}
+                  {/* Every join application made a person; open their record. */}
+                  {item.person_id && (
+                    <Link to={`/admin/match-universe/${item.person_id}`} onClick={(e) => e.stopPropagation()} className="mt-0.5 block text-xs font-bold text-brand hover:underline">
+                      Open in Talent pool
+                    </Link>
+                  )}
+                </TableCell>
                 <TableCell>{item.email}</TableCell>
                 <TableCell>{item.role}</TableCell>
                 <TableCell>{item.experience || (item.years_experience != null ? `${item.years_experience} yrs` : "Not stated")}</TableCell>

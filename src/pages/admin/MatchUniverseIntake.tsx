@@ -111,13 +111,14 @@ const MatchUniverseIntake = () => {
       <MuStats
         columns={4}
         stats={[
-          { label: "People in the candidate pool", value: health?.people_total ?? 0, icon: Users, hint: `${health?.people_week ?? 0} joined this week` },
+          { label: "People in the candidate pool", value: health?.people_total ?? 0, icon: Users, hint: `${health?.people_week ?? 0} joined this week`, to: "/admin/match-universe?view=all" },
           {
             label: "Documents to review",
             value: health?.docs_pending ?? 0,
             icon: Inbox,
             tone: (health?.docs_pending ?? 0) > 0 ? "attention" : "default",
             hint: `${health?.docs_today ?? 0} arrived today`,
+            to: "/admin/match-universe/verification",
           },
           {
             label: "Awaiting candidate response",
@@ -132,6 +133,7 @@ const MatchUniverseIntake = () => {
             icon: AlertTriangle,
             tone: (health?.merges_open ?? 0) > 0 ? "attention" : "default",
             hint: `${health?.conflicts_open ?? 0} field conflicts open`,
+            to: "/admin/match-universe/merges",
           },
         ]}
       />

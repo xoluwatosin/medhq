@@ -54,6 +54,8 @@ export interface MuStat {
   hint?: string;
   icon?: LucideIcon;
   tone?: "default" | "attention";
+  /** Opens the list behind the number. */
+  to?: string;
 }
 
 export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 | 3 | 4 }) => (
@@ -65,12 +67,16 @@ export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 |
       columns === 4 && "sm:grid-cols-2 lg:grid-cols-4",
     )}
   >
-    {stats.map((s) => (
-      <div
+    {stats.map((s) => {
+      const Tile = s.to ? Link : "div";
+      return (
+      <Tile
         key={s.label}
+        to={s.to as string}
         className={cn(
-          "border border-line bg-card p-4",
+          "block border border-line bg-card p-4",
           s.tone === "attention" && "border-l-4 border-l-brand",
+          s.to && "transition-colors hover:border-brand hover:bg-tint/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         )}
       >
         <div className="flex items-start justify-between gap-3">
@@ -90,8 +96,9 @@ export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 |
             </span>
           )}
         </div>
-      </div>
-    ))}
+      </Tile>
+      );
+    })}
   </div>
 );
 
