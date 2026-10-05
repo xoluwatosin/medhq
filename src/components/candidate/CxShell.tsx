@@ -4,7 +4,10 @@
 // badge only where something needs doing. Mobile: a navy header with a back
 // chevron and at most one right hand action, a four item tab bar at the
 // bottom, and the primary action in a sticky footer rather than in the flow.
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import AvatarPicker from "./AvatarPicker";
+import { avatarFor } from "./avatars";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home, FileText, CalendarDays, CalendarCheck, Sliders, Briefcase, ClipboardList, User, ChevronLeft, LogOut, LucideIcon,
@@ -101,6 +104,12 @@ export const CxShell = ({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const tabs = nav.filter((i) => MOBILE_TABS.includes(i.url));
+  const { user } = useAuth();
+  // The account holds the choice; a fresh pick shows at once, before the session refreshes.
+  const [picked, setAvatar] = useState<string | null>(null);
+  const avatar = picked ?? (user?.user_metadata as { avatar?: string } | undefined)?.avatar ?? null;
+  const [picking, setPicking] = useState(false);
+  const idArt = avatarFor(avatar) ?? profile?.art ?? clipArt.charNurse;
   const pageArt = PAGE_ART[Object.keys(PAGE_ART).find((u) => u === pathname || (u !== "/portal" && pathname.startsWith(u))) ?? ""];
 
   const signOut = () => supabase.auth.signOut().then(() => navigate("/portal/login"));
@@ -115,20 +124,25 @@ export const CxShell = ({
             <img src={logoWhite} alt="Medic Connect" className="w-[132px]" />
           </Link>
           {profile && (
-            <Link
-              to="/portal/details"
-              aria-label="Your details"
-              className="mb-7 block bg-white shadow-[5px_5px_0_hsl(var(--brand))] transition-transform hover:-translate-y-0.5"
-            >
+            <div className="mb-7 bg-white shadow-[5px_5px_0_hsl(var(--brand))]">
               <span className="flex items-center justify-between bg-brand px-3 py-1.5">
                 <span className="text-[10px] font-extrabold tracking-[0.16em] text-white">MEDIC CONNECT</span>
                 <span className="text-[10px] font-bold tracking-[0.1em] text-white/80">CANDIDATE</span>
               </span>
               <span className="flex items-end gap-3 p-3">
-                <span className="flex h-[68px] w-[56px] shrink-0 items-end justify-center overflow-hidden bg-tint">
-                  <img src={profile.art ?? clipArt.charNurse} alt="" className="h-full w-full object-cover object-top" />
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  aria-label="Change your ID character"
+                  title="Change your character"
+                  className="group relative flex h-[68px] w-[56px] shrink-0 items-end justify-center overflow-hidden bg-tint"
+                >
+                  <img src={idArt} alt="" className="h-full w-full object-cover object-top" />
+                  <span className="absolute inset-x-0 bottom-0 bg-navy/85 py-0.5 text-center text-[9px] font-extrabold uppercase tracking-[0.1em] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    Change
+                  </span>
+                </button>
+                <Link to="/portal/details" className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-[16px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{profile.name}</span>
                   {profile.role && <span className="truncate text-[12.5px] text-body">{profile.role}</span>}
                   {profile.verified ? (
@@ -139,10 +153,11 @@ export const CxShell = ({
                   ) : (
                     <span className="mt-1 text-[11px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground">Profile in progress</span>
                   )}
-                </span>
+                </Link>
               </span>
-            </Link>
+            </div>
           )}
+          <AvatarPicker open={picking} onOpenChange={setPicking} current={avatar} onPicked={setAvatar} />
           <nav className="flex flex-col gap-1">
             {nav.map((item) => {
               const active = isActive(pathname, item.url);
