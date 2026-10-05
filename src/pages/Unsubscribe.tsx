@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import KitPageHero from "@/components/kit/KitPageHero";
+import { Stamp } from "@/components/mc/brand";
+import { art } from "@/components/mc/art";
 import { KitMain, KitPanel, kitInput, kitPrimaryButton } from "@/components/kit/KitLayout";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
@@ -49,6 +51,8 @@ export default function Unsubscribe() {
       <KitPageHero
         eyebrow="Email preferences"
         title={done ? "You are unsubscribed" : "Unsubscribe"}
+        art={done ? art.objEnvelope : art.objEnvelopeHeart}
+        artClassName="bottom-8 h-[100px] md:mb-16 md:h-[170px] lg:h-[200px]"
         lead={done
           ? `${email || "Your email"} will no longer get marketing emails from Medic Connect.`
           : "Stop marketing emails from Medic Connect. Messages about your own care, application or bookings still arrive."}
@@ -58,6 +62,7 @@ export default function Unsubscribe() {
           <KitPanel>
             {done ? (
               <div className="space-y-3">
+                <Stamp title="UNSUBSCRIBED" sub="MARKETING EMAILS" className="mb-3" />
                 <p className="text-[16px] leading-[1.7] text-body">
                   Messages about your own care, application or bookings, and replies to you, still arrive.
                 </p>

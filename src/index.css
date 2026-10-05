@@ -459,7 +459,7 @@ All colors MUST be HSL.
      body grey at 16 to 17px, navy headings opened by a hairline. */
   .kit-prose { max-width: 760px; color: hsl(var(--body)); font-size: 16px; line-height: 1.7; }
   @media (min-width: 640px) { .kit-prose { font-size: 17px; } }
-  .kit-prose section + section { margin-top: 44px; padding-top: 36px; border-top: 1px solid hsl(var(--hairline-warm)); }
+  .kit-prose section + section { margin-top: 48px; padding-top: 28px; border-top: 4px solid hsl(var(--navy)); }
   .kit-prose h2 { color: hsl(var(--navy)); font-size: 26px; line-height: 1.2; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 14px; }
   .kit-prose h3 { color: hsl(var(--ink)); font-size: 19px; line-height: 1.4; font-weight: 700; margin: 26px 0 10px; }
   .kit-prose p + p { margin-top: 14px; }

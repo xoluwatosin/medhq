@@ -3,6 +3,8 @@ import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import KitPageHero from "@/components/kit/KitPageHero";
 import { KitMain } from "@/components/kit/KitLayout";
+import KitLegal from "@/components/kit/KitLegal";
+import { art } from "@/components/mc/art";
 
 const Terms = () => {
   return (
@@ -10,10 +12,10 @@ const Terms = () => {
       <SEO title="Terms of Service | Medic Connect" description="Terms governing the use of Medic Connect services and website." path="/terms" />
       <MedicHeader />
 
-      <KitPageHero eyebrow="Legal" title="Terms of service" lead="Last updated 17 February 2026." />
+      <KitPageHero eyebrow="Legal" title="Terms of service" accent={[2]} lead="Last updated 17 February 2026." art={art.objSignedContract} artClassName="bottom-8 h-[110px] md:mb-16 md:h-[190px] lg:h-[220px]" />
 
       <KitMain>
-        <div className="kit-prose mx-auto">
+        <KitLegal note={<>Questions about these terms? Email <a className="font-extrabold text-brand underline" href="mailto:hello@medicconnect.co">hello@medicconnect.co</a>.</>}>
 
           {/* 1. Agreement to Terms */}
           <section>
@@ -222,7 +224,7 @@ const Terms = () => {
               <p>Phone: +234 812 698 8237</p>
             </div>
           </section>
-        </div>
+        </KitLegal>
       </KitMain>
 
       <Footer />

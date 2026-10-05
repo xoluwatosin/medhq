@@ -3,6 +3,8 @@ import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import KitPageHero from "@/components/kit/KitPageHero";
 import { KitMain } from "@/components/kit/KitLayout";
+import KitLegal from "@/components/kit/KitLegal";
+import { art } from "@/components/mc/art";
 
 const Privacy = () => {
   return (
@@ -10,10 +12,10 @@ const Privacy = () => {
       <SEO title="Privacy Policy | Medic Connect" description="How Medic Connect collects, uses, and protects your personal information." path="/privacy" />
       <MedicHeader />
 
-      <KitPageHero eyebrow="Legal" title="Privacy policy" lead="Last updated 17 February 2026." />
+      <KitPageHero eyebrow="Legal" title="Privacy policy" accent={[1]} lead="Last updated 17 February 2026." art={art.objShieldCheck} artClassName="bottom-8 h-[110px] md:mb-16 md:h-[190px] lg:h-[220px]" />
 
       <KitMain>
-        <div className="kit-prose mx-auto">
+        <KitLegal note={<>Questions about your data? Email <a className="font-extrabold text-brand underline" href="mailto:hello@medicconnect.co">hello@medicconnect.co</a>.</>}>
 
           {/* 1. Introduction */}
           <section>
@@ -240,7 +242,7 @@ const Privacy = () => {
               If you are not satisfied with our response to your complaint, you have the right to lodge a complaint with the Nigeria Data Protection Commission (NDPC) or the UK Information Commissioner's Office (ICO), as applicable.
             </p>
           </section>
-        </div>
+        </KitLegal>
       </KitMain>
 
       <Footer />

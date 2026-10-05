@@ -6,6 +6,7 @@ import MedicHeader from "@/components/MedicHeader";
 import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
 import KitPageHero from "@/components/kit/KitPageHero";
+import { art } from "@/components/mc/art";
 import { KitMain, KitPanel, kitHeroPrimaryButton, kitSecondaryButton } from "@/components/kit/KitLayout";
 import HoverCard from "@/components/HoverCard";
 import NairaIcon from "@/components/mc/NairaIcon";
@@ -282,6 +283,7 @@ const Creator = () => {
         eyebrow="Creator programme"
         title="Tell the story of care at home"
         accent={[4]}
+        art={art.nurseFilmingExplainer}
         lead="Paid partnerships for creators who want to help families across Africa find professional, trusted care."
       >
         <a href="#apply" className={kitHeroPrimaryButton}>Apply now</a>

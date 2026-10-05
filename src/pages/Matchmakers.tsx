@@ -4,7 +4,9 @@ import { MapPin, ArrowRight } from "lucide-react";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import KitPageHero from "@/components/kit/KitPageHero";
-import { KitMain, KitPanel } from "@/components/kit/KitLayout";
+import { art } from "@/components/mc/art";
+import { ClipArt } from "@/components/mc/brand";
+import { KitMain } from "@/components/kit/KitLayout";
 import SEO from "@/components/SEO";
 import { adminDb } from "@/lib/admin-utils";
 import ShareButtons from "@/components/matchmaker/ShareButtons";
@@ -51,6 +53,7 @@ const Matchmakers = () => {
         eyebrow="By invitation"
         title="Healthcare Matchmakers Network"
         accent={[1]}
+        art={art.doctorNurseHandshake}
         lead="Healthcare opportunities we are placing now. Some sit inside Medic Connect, others are roles we fill for trusted partners. Apply directly, or pass one on to someone in your network."
       />
       <KitMain className="flex-1">
@@ -61,11 +64,15 @@ const Matchmakers = () => {
             {loading ? (
               <p className="text-[16px] text-body">Loading opportunities</p>
             ) : open.length === 0 ? (
-              <KitPanel tone="tint">
-                <p className="text-[16px] leading-[1.7] text-body">
-                  No live opportunities right now. Check back soon, or share this page with a peer who may be looking later.
-                </p>
-              </KitPanel>
+              <div className="flex flex-col items-start gap-5 border-2 border-navy bg-card p-6 shadow-offset sm:flex-row sm:items-center sm:p-8">
+                <ClipArt src={art.objMagnifier} size={110} />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy">Nothing open right now</h2>
+                  <p className="mt-2 text-[16px] leading-[1.7] text-body">
+                    Check back soon, or share this page with a peer who may be looking later.
+                  </p>
+                </div>
+              </div>
             ) : (
               open.map((o) => (
                 <Link key={o.id} to={`/hm/${o.slug}`} className="kit-curve block border-2 border-navy bg-card p-5 shadow-offset-tint transition-transform duration-200 hover:-translate-y-0.5 sm:p-6">
