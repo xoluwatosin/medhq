@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, Plus, Pencil, Trash2, Copy, Send } from "lucide-react";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -52,7 +53,11 @@ const Campaigns = () => {
   };
 
   const deleteCampaign = async (id: string) => {
-    await adminDb().from("campaigns").delete().eq("id", id);
+    const { error } = await adminDb().from("campaigns").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+      return;
+    }
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
     toast({ title: "Campaign deleted" });
   };
@@ -122,7 +127,13 @@ const Campaigns = () => {
                     <Button variant="ghost" size="icon" asChild><Link to={`/admin/campaigns/${c.id}`}><Pencil className="h-4 w-4" /></Link></Button>
                     <Button variant="ghost" size="icon" onClick={() => duplicate(c)}><Copy className="h-4 w-4" /></Button>
                     {c.status === "sent" && (c.total_recipients - c.total_delivered) > 0 && (
-                      <Button variant="ghost" size="icon" title="Resend to failed recipients" onClick={() => resendFailed(c)}><Send className="h-4 w-4 text-primary" /></Button>
+                      <ConfirmAction
+                        title="Retry the failed recipients?"
+                        description={<p>{c.total_recipients - c.total_delivered} people who did not receive "{c.title}" will be sent it again.</p>}
+                        confirmLabel="Send again"
+                        onConfirm={() => resendFailed(c)}
+                        trigger={<Button variant="ghost" size="icon" title="Resend to failed recipients"><Send className="h-4 w-4 text-primary" /></Button>}
+                      />
                     )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>

@@ -7,6 +7,7 @@ import { INVOICE_STATUS_LABELS, naira } from "@/lib/invoice-totals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Copy, Loader2, Mail, MessageCircle, RefreshCw, XCircle } from "lucide-react";
 
 export function InvoiceList() {
@@ -128,9 +129,18 @@ export function InvoiceList() {
                 <RefreshCw className="h-4 w-4" /> Check payment
               </Button>
               {invoice.status !== "paid" && invoice.status !== "cancelled" && (
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => cancel(invoice)} disabled={busy === invoice.id}>
+                <ConfirmAction
+                  title="Cancel this invoice?"
+                  description={<p>The payment link stops working and the invoice is marked cancelled. This cannot be undone.</p>}
+                  confirmLabel="Cancel invoice"
+                  destructive
+                  onConfirm={() => cancel(invoice)}
+                  trigger={
+                <Button size="sm" variant="ghost" className="gap-1.5" disabled={busy === invoice.id}>
                   <XCircle className="h-4 w-4" /> Cancel
                 </Button>
+                  }
+                />
               )}
             </div>
           </CardContent>

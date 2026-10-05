@@ -25,6 +25,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -617,9 +618,18 @@ const ContractEditor = () => {
               </Button>
             )}
             {["draft", "issued"].includes(contract.status) && (
-              <Button variant="outline" size="sm" onClick={withdraw} disabled={busy}>
-                <Ban className="mr-2 h-4 w-4" />Withdraw
-              </Button>
+              <ConfirmAction
+                title="Withdraw this contract?"
+                description={<p>The contract is voided and can no longer be signed. To offer terms again, draft a new one.</p>}
+                confirmLabel="Withdraw contract"
+                destructive
+                onConfirm={withdraw}
+                trigger={
+                  <Button variant="outline" size="sm" disabled={busy}>
+                    <Ban className="mr-2 h-4 w-4" />Withdraw
+                  </Button>
+                }
+              />
             )}
           </div>
         }

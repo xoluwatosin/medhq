@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Plus, Trash2, RotateCcw, Pencil, Check, X } from "lucide-react";
 
 export function CatalogueTab() {
@@ -144,19 +145,23 @@ export function CatalogueTab() {
                   </Button>
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() =>
+              <ConfirmAction
+                title={`Remove ${cat.name}?`}
+                description={<p>The category and every service in it come off the catalogue. Invoices already sent are not changed.</p>}
+                confirmLabel="Remove category"
+                destructive
+                onConfirm={() =>
                   deleteCategory.mutate(cat.id, {
                     onSuccess: () => toast.success("Category deleted"),
                     onError: (e) => toast.error(e.message),
                   })
                 }
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove
-              </Button>
+                trigger={
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove
+                  </Button>
+                }
+              />
             </CardHeader>
             <CardContent>
               <Table>
@@ -193,19 +198,23 @@ export function CatalogueTab() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() =>
+                        <ConfirmAction
+                          title={`Remove ${svc.name}?`}
+                          description={<p>It comes off the catalogue. Invoices already sent are not changed.</p>}
+                          confirmLabel="Remove service"
+                          destructive
+                          onConfirm={() =>
                             deleteService.mutate(svc.id, {
                               onSuccess: () => toast.success("Service deleted"),
                               onError: (e) => toast.error(e.message),
                             })
                           }
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
+                          trigger={
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          }
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

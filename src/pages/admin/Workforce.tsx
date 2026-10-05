@@ -157,6 +157,32 @@ const Workforce = () => {
       return;
     }
     setSaving(true);
+    // One person, one record. If this email or phone is already on the books,
+    // open that record instead of making a second one.
+    const email = (form.email.trim() || form.work_email.trim()).toLowerCase();
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    const phoneKey = phoneDigits.length < 7 ? null : phoneDigits.startsWith("2340") ? `234${phoneDigits.slice(4)}` : phoneDigits.startsWith("234") ? phoneDigits : phoneDigits.startsWith("0") ? `234${phoneDigits.slice(1)}` : phoneDigits;
+    const keys = [email && `email_key.eq.${email}`, phoneKey && `phone_key.eq.${phoneKey}`].filter(Boolean).join(",");
+    if (keys) {
+      const { data: existing, error: lookupError } = await adminDb().from("mu_people").select("id, full_name, is_staff").or(keys).limit(1);
+      if (lookupError) {
+        setSaving(false);
+        toast({ title: "Could not check for an existing record", description: lookupError.message, variant: "destructive" });
+        return;
+      }
+      if (existing?.length) {
+        setSaving(false);
+        const match = existing[0];
+        toast({
+          title: `${match.full_name} is already on our books`,
+          description: match.is_staff
+            ? "They already have a staff record. Open it from the register."
+            : "They are in the Talent Pool. Open their profile and use Move to staff register once their contract is signed.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     const { error } = await adminDb().from("mu_people").insert({
       full_name: form.full_name.trim(),
       email: form.email.trim() || form.work_email.trim() || null,

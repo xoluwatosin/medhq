@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -91,7 +92,11 @@ const Audience = () => {
   };
 
   const deleteMember = async (id: string) => {
-    await adminDb().from("audience_members").delete().eq("id", id);
+    const { error } = await adminDb().from("audience_members").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not remove them", description: error.message, variant: "destructive" });
+      return;
+    }
     setMembers((prev) => prev.filter((m) => m.id !== id));
     setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
   };
@@ -247,7 +252,7 @@ const Audience = () => {
                 <TableCell>{groupMap[m.group_id] || "—"}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{m.source}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd MMM yyyy")}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => deleteMember(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                <TableCell><ConfirmAction title="Remove this contact?" description={<p>{m.email} comes off the audience list and stops receiving campaigns.</p>} confirmLabel="Remove" destructive onConfirm={() => deleteMember(m.id)} trigger={<Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -261,9 +266,14 @@ const Audience = () => {
           title: m.name || m.email,
           state: `${groupMap[m.group_id] || "No group"} · added ${format(new Date(m.created_at), "dd MMM yyyy")}`,
           trailing: (
-            <Button variant="ghost" size="icon" onClick={() => deleteMember(m.id)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <ConfirmAction
+              title="Remove this contact?"
+              description={<p>{m.email} comes off the audience list and stops receiving campaigns.</p>}
+              confirmLabel="Remove"
+              destructive
+              onConfirm={() => deleteMember(m.id)}
+              trigger={<Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+            />
           ),
         }))}
       />

@@ -265,3 +265,28 @@ export const locateRoute = (domains: AdminDomain[], pathname: string): AdminLoca
     backUrl: best.item.url,
   };
 };
+
+/** Detail routes that live outside any listed destination but belong to one. */
+const ROUTE_PERMISSION_EXTRAS: { url: string; perm?: string; superAdmin?: boolean }[] = [
+  { url: "/admin/contracts", perm: "workforce" },
+];
+
+/**
+ * Whether the signed-in admin may open this route at all. The rail hides what
+ * they cannot reach; this stops a typed or bookmarked address from opening it
+ * anyway. Routes nobody has mapped stay open, the same as before, and the
+ * database policies still decide what data comes back.
+ */
+export const canOpenRoute = (pathname: string, access: AdminAccess): boolean => {
+  if (access.isSuperAdmin) return true;
+  const candidates = [
+    ...adminDomains.flatMap((d) => domainDestinations(d)),
+    ...ROUTE_PERMISSION_EXTRAS,
+  ].filter((item) => item.url !== "/admin" && (pathname === item.url || pathname.startsWith(`${item.url}/`)));
+  // Every destination that covers this path must allow it; the most specific
+  // one decides when they disagree.
+  const best = candidates.sort((a, b) => b.url.length - a.url.length)[0];
+  if (!best) return true;
+  if (best.superAdmin) return false;
+  return !best.perm || access.permissions.includes(best.perm);
+};

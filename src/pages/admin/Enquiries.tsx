@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,9 @@ const Enquiries = () => {
     setSelected(item);
     setSends([]);
     if (item.status === "new") {
-      await adminDb().from("contact_submissions").update({ status: "read" }).eq("id", item.id);
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: "read" } : i)));
+      const { error } = await adminDb().from("contact_submissions").update({ status: "read" }).eq("id", item.id);
+      if (error) toast({ title: "Could not mark it read", description: error.message, variant: "destructive" });
+      else setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: "read" } : i)));
     }
     try { setSends(await loadSends(item.id)); } catch { /* the history is not the point */ }
   };
@@ -85,11 +87,31 @@ const Enquiries = () => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, owner } : i)));
   };
 
+  // Archiving is one click, so it comes with an undo rather than a dialog.
   const archiveItem = async (id: string) => {
-    await adminDb().from("contact_submissions").update({ archived: true }).eq("id", id);
+    const { error } = await adminDb().from("contact_submissions").update({ archived: true }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not archive", description: error.message, variant: "destructive" });
+      return;
+    }
+    const removed = items.find((i) => i.id === id);
     setItems((prev) => prev.filter((i) => i.id !== id));
     setSelected(null);
-    toast({ title: "Enquiry archived" });
+    toast({
+      title: "Enquiry archived",
+      action: (
+        <ToastAction
+          altText="Undo archive"
+          onClick={async () => {
+            const { error: undoError } = await adminDb().from("contact_submissions").update({ archived: false }).eq("id", id);
+            if (undoError) toast({ title: "Could not undo", description: undoError.message, variant: "destructive" });
+            else if (removed) setItems((prev) => [removed, ...prev].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+          }}
+        >
+          Undo
+        </ToastAction>
+      ),
+    });
   };
 
   const resend = async (item: Enquiry, force: boolean) => {

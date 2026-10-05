@@ -58,13 +58,21 @@ const CreatorApplications = () => {
   }, []);
 
   const updateStatus = async (id: string, status: string) => {
-    await adminDb().from("creator_applications").update({ status }).eq("id", id);
+    const { error } = await adminDb().from("creator_applications").update({ status }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not change the status", description: error.message, variant: "destructive" });
+      return;
+    }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
     if (selected?.id === id) setSelected({ ...selected, status });
   };
 
   const archiveItem = async (id: string) => {
-    await adminDb().from("creator_applications").update({ archived: true }).eq("id", id);
+    const { error } = await adminDb().from("creator_applications").update({ archived: true }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not archive", description: error.message, variant: "destructive" });
+      return;
+    }
     setItems((prev) => prev.filter((i) => i.id !== id));
     setSelected(null);
     toast({ title: "Application archived" });

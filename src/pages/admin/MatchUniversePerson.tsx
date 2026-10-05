@@ -38,6 +38,7 @@ import ReadinessPanel, { useReadiness } from "@/components/admin/mu/ReadinessPan
 import { openDocumentTab, loadRequirements, type DocumentRequirement } from "@/lib/documents";
 import VerifiedBadge, { nyscOutstanding } from "@/components/VerifiedBadge";
 import { becomeWorkforce, returnToTalent } from "@/lib/lifecycle";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { IdCard } from "lucide-react";
 import {
   Person, PersonDocument, VERIFICATION_LABELS,
@@ -153,6 +154,7 @@ const MatchUniversePerson = () => {
   const [parsing, setParsing] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [confirmMove, setConfirmMove] = useState<"staff" | "talent" | null>(null);
   const navigate = useNavigate();
 
   // Move a hired candidate into the staff register. One person record, one
@@ -595,16 +597,38 @@ const MatchUniversePerson = () => {
                     opens the contract. The invitation to sign in stays locked
                     inside the staff record until that contract is signed. */}
                 {!isStaff ? (
-                  <DropdownMenuItem onClick={moveToStaff} disabled={converting}>
+                  <DropdownMenuItem onSelect={() => setConfirmMove("staff")} disabled={converting}>
                     <IdCard className="mr-2 h-4 w-4" />Move to staff register
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onClick={moveToTalent} disabled={converting}>
+                  <DropdownMenuItem onSelect={() => setConfirmMove("talent")} disabled={converting}>
                     <IdCard className="mr-2 h-4 w-4" />Return to Talent
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <ConfirmAction
+              open={confirmMove === "staff"}
+              onOpenChange={(o) => !o && setConfirmMove(null)}
+              title={`Move ${person.full_name} to the staff register?`}
+              description={
+                <>
+                  <p>They leave the Talent Pool and gain an employment record. Their sign-in, documents and history stay as they are.</p>
+                  <p>A signed contract must already be on file.</p>
+                </>
+              }
+              confirmLabel="Move to staff register"
+              onConfirm={moveToStaff}
+            />
+            <ConfirmAction
+              open={confirmMove === "talent"}
+              onOpenChange={(o) => !o && setConfirmMove(null)}
+              title={`Return ${person.full_name} to Talent?`}
+              description={<p>Their employment closes. Live assignments or contracts block this until they are resolved. History is kept.</p>}
+              confirmLabel="Return to Talent"
+              destructive
+              onConfirm={moveToTalent}
+            />
           </>
         }
         strip={

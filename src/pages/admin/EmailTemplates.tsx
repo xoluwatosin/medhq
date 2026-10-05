@@ -71,11 +71,13 @@ const EmailTemplates = () => {
   const [startOpen, setStartOpen] = useState(false);
 
   const load = useCallback(async () => {
-    const { data } = await adminDb()
+    const { data, error } = await adminDb()
       .from("email_kit_templates")
       .select("id, name, kind, purpose, updated_at")
       .order("updated_at", { ascending: false });
+    if (error) toast({ title: "Could not load the email library", description: error.message, variant: "destructive" });
     setList((data as TemplateRow[]) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

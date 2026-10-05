@@ -20,8 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   visibleDomains, myProfileDomain, domainLanding, domainDestinations, locateRoute,
-  isNavItemActive, type AdminDomain,
-} from "@/lib/admin-nav";
+  isNavItemActive, type AdminDomain, canOpenRoute } from "@/lib/admin-nav";
 
 /** The rail head: full lockup when open, the mark alone when retracted. */
 const RailHead = () => {
@@ -367,7 +366,18 @@ const AdminLayout = () => {
 
           <main className="flex-1">
             <div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:px-8 lg:py-7">
-              <Outlet />
+              {canOpenRoute(location.pathname, { isSuperAdmin, permissions }) ? (
+                <Outlet />
+              ) : (
+                <div className="mx-auto max-w-[520px] py-16 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">No access</p>
+                  <h1 className="mt-2 text-2xl font-bold tracking-tight">This area is not part of your access.</h1>
+                  <p className="mt-3 text-sm text-muted-foreground">Ask the super admin if you need it.</p>
+                  <Button asChild className="mt-6">
+                    <Link to="/admin">Back to the overview</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </main>
         </div>

@@ -39,7 +39,11 @@ const Archives = () => {
   }, []);
 
   const unarchive = async (table: string, id: string) => {
-    await adminDb().from(table).update({ archived: false }).eq("id", id);
+    const { error } = await adminDb().from(table).update({ archived: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not restore", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Item restored" });
     if (table === "contact_submissions") setEnquiries((p) => p.filter((i) => i.id !== id));
     if (table === "join_applications") setApplications((p) => p.filter((i) => i.id !== id));
