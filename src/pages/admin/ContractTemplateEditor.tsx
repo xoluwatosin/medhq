@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ArrowDown, ArrowUp, CheckCircle2, ExternalLink, FileStack, Loader2, Plus, Save, Search, Send,
+  ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Loader2, Plus, Save, Search, Send,
   Trash2, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { MuEmpty, MuNote, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
@@ -30,6 +29,8 @@ import {
   createContractFromTemplate, deleteTemplate, loadAcceptedCandidates, loadAnnexLibrary,
   loadTemplate, saveTemplate, searchCandidates,
 } from "@/lib/contract-templates";
+
+const sentence = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 interface RowState {
   person: CandidateRow;
@@ -236,7 +237,10 @@ const ContractTemplateEditor = () => {
   if (!template) {
     return (
       <MuPage>
-        <MuSection><MuEmpty icon={FileStack} title="Template not found" /></MuSection>
+        <MuPageHeader title="Contract template" backTo="/admin/contracts/templates" backLabel="All templates" />
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="Template not found" description="It may have been deleted, or the link is wrong." />
+        </MuSection>
       </MuPage>
     );
   }
@@ -285,15 +289,12 @@ const ContractTemplateEditor = () => {
                 <Input value={meta.department} onChange={(e) => setMeta({ ...meta, department: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Basis</Label>
-                <Select value={meta.contract_type} onValueChange={(v) => setMeta({ ...meta, contract_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CONTRACT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Basis"
+                  value={meta.contract_type}
+                  onChange={(v) => v && setMeta({ ...meta, contract_type: v })}
+                  options={CONTRACT_TYPES.map((t) => ({ value: t, label: sentence(t.replace("_", " ")) }))}
+                />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>What this template is for</Label>
@@ -345,18 +346,12 @@ const ContractTemplateEditor = () => {
                       )}
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">How it behaves</Label>
-                      <Select
+                      <SelectField
+                        label="How it behaves"
                         value={rule}
-                        onValueChange={(v) => setRules((p) => ({ ...p, [f.key]: v as FieldRule }))}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {(Object.keys(FIELD_RULE_LABELS) as FieldRule[]).map((r) => (
-                            <SelectItem key={r} value={r}>{FIELD_RULE_LABELS[r]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(v) => v && setRules((p) => ({ ...p, [f.key]: v as FieldRule }))}
+                        options={(Object.keys(FIELD_RULE_LABELS) as FieldRule[]).map((r) => ({ value: r, label: FIELD_RULE_LABELS[r] }))}
+                      />
                     </div>
                   </div>
                 );
@@ -446,7 +441,13 @@ const ContractTemplateEditor = () => {
             }
           >
             <div className="space-y-3">
-              {annexes.length === 0 && <p className="text-sm text-muted-foreground">No annexes on this template yet.</p>}
+              {annexes.length === 0 && (
+                <MuEmpty
+                  art={art.objFolderDocuments}
+                  title="No annexes yet"
+                  description="Add annexes from the library below."
+                />
+              )}
               {annexes.map((a) => (
                 <div key={a.code} className="flex flex-wrap items-start gap-3 border border-line p-3">
                   <Switch checked={a.include !== false} onCheckedChange={(v) => toggleAnnex(a.code, v)} />
@@ -548,7 +549,7 @@ const ContractTemplateEditor = () => {
             }
           >
             {rows.length === 0 ? (
-              <MuEmpty icon={UserPlus} title="Nobody chosen yet" description="Add the people this role was offered to." />
+              <MuEmpty art={art.objHandshake} title="Nobody chosen yet" description="Add the people this role was offered to." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {rows.map((row) => (
@@ -557,7 +558,7 @@ const ContractTemplateEditor = () => {
                       <div>
                         <p className="text-[14px] font-semibold">{row.person.full_name || "Unnamed"}</p>
                         <p className="text-[13px] text-muted-foreground">
-                          {[row.person.email, row.person.profession, row.person.city].filter(Boolean).join(" · ")}
+                          {[row.person.email, row.person.profession, row.person.city].filter(Boolean).join(", ")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

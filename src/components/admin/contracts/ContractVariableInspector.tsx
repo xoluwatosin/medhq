@@ -50,11 +50,11 @@ const ContractVariableInspector = ({
 }: Props) => {
   if (collapsed) {
     return (
-      <div className="flex w-10 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border/60 bg-background py-3">
+      <div className="flex w-10 shrink-0 flex-col items-center gap-2 border border-line bg-card py-3">
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+          className="p-1.5 text-muted-foreground hover:bg-muted"
           aria-label="Show details and checks"
           title="Show details and checks"
         >
@@ -63,8 +63,8 @@ const ContractVariableInspector = ({
         {checks.length > 0 && (
           <span
             className={cn(
-              "rounded-full px-1.5 text-xs font-semibold",
-              checks.some((c) => c.severity === "error") ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800",
+              "px-1.5 text-[11px] font-bold tabular-nums",
+              checks.some((c) => c.severity === "error") ? "bg-destructive/10 text-destructive" : "bg-warn-bg text-warn-ink",
             )}
             title={`${checks.length} open ${checks.length === 1 ? "check" : "checks"}`}
           >
@@ -79,13 +79,13 @@ const ContractVariableInspector = ({
   const warnings = checks.filter((c) => c.severity === "warning");
 
   return (
-    <aside className="w-80 shrink-0 space-y-4 rounded-2xl border border-border/60 bg-background p-4">
+    <aside className="w-80 shrink-0 space-y-4 border border-line bg-card p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Details and checks</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Details and checks</p>
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
+          className="p-1 text-muted-foreground hover:bg-muted"
           aria-label="Hide details and checks"
           title="Hide details and checks"
         >
@@ -97,7 +97,7 @@ const ContractVariableInspector = ({
       <section className="space-y-2">
         <p className="text-sm font-semibold">Before this can be issued</p>
         {checks.length === 0 ? (
-          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+          <p className="border border-line bg-tint px-3 py-2 text-xs text-navy">
             Nothing stands in the way. The wording is ready to freeze and send.
           </p>
         ) : (
@@ -108,10 +108,10 @@ const ContractVariableInspector = ({
                   type="button"
                   onClick={() => onJumpTo(check.area)}
                   className={cn(
-                    "flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left text-xs transition",
+                    "flex w-full items-start gap-2 border px-3 py-2 text-left text-xs transition",
                     check.severity === "error"
-                      ? "border-red-200 bg-red-50 text-red-900 hover:bg-red-100"
-                      : "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100",
+                      ? "border-destructive/30 bg-destructive/[0.06] text-destructive hover:bg-destructive/10"
+                      : "border-warn-line/40 bg-warn-bg text-warn-ink hover:bg-warn-bg/80",
                   )}
                 >
                   {check.severity === "error" ? (
@@ -131,7 +131,7 @@ const ContractVariableInspector = ({
       </section>
 
       {/* The facts the placeholders resolve against. */}
-      <section className="space-y-3 border-t border-border/60 pt-3">
+      <section className="space-y-3 border-t border-line-soft pt-3">
         <p className="text-sm font-semibold">Contract details</p>
         {CONTRACT_FIELDS.map((f) => (
           <div key={f.key} className="space-y-1">
@@ -169,7 +169,7 @@ const ContractVariableInspector = ({
 
       {/* Placeholder buttons: one tap drops the token into the focused editor. */}
       {editable && (
-        <section className="space-y-2 border-t border-border/60 pt-3">
+        <section className="space-y-2 border-t border-line-soft pt-3">
           <p className="flex items-center gap-1.5 text-sm font-semibold">
             <TextCursorInput className="h-4 w-4" />Insert a placeholder
           </p>
@@ -183,10 +183,10 @@ const ContractVariableInspector = ({
                 type="button"
                 onClick={() => onInsertToken(`{{${f.key}}}`)}
                 className={cn(
-                  "rounded-full border px-2 py-1 text-[11px] transition",
+                  "border px-2 py-1 text-[11px] font-medium transition",
                   (fields[f.key] || "").trim()
-                    ? "border-border/70 bg-muted/40 hover:bg-muted"
-                    : "border-dashed border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100",
+                    ? "border-line bg-muted/40 hover:bg-muted"
+                    : "border-dashed border-warn-line bg-warn-bg text-warn-ink hover:bg-warn-bg/80",
                 )}
                 title={(fields[f.key] || "").trim() ? String(fields[f.key]) : "No value yet"}
               >
@@ -198,7 +198,7 @@ const ContractVariableInspector = ({
       )}
 
       {/* The trail, so who did what never leaves the room. */}
-      <section className="space-y-2 border-t border-border/60 pt-3">
+      <section className="space-y-2 border-t border-line-soft pt-3">
         <p className="flex items-center gap-1.5 text-sm font-semibold">
           <History className="h-4 w-4" />Audit trail
         </p>
@@ -207,7 +207,7 @@ const ContractVariableInspector = ({
         ) : (
           <ol className="max-h-64 space-y-2 overflow-y-auto pr-1">
             {events.map((e) => (
-              <li key={e.id} className="rounded-xl border border-border/60 p-2.5">
+              <li key={e.id} className="border border-line-soft p-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-medium">{EVENT_LABELS[e.event_type] || e.event_type}</span>
                   <span className="text-[11px] text-muted-foreground">
@@ -216,7 +216,7 @@ const ContractVariableInspector = ({
                 </div>
                 {e.detail && <p className="mt-0.5 text-[11px] text-muted-foreground">{e.detail}</p>}
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {[e.actor_name, e.actor_role].filter(Boolean).join(" · ") || "System"}
+                  {[e.actor_name, e.actor_role].filter(Boolean).join(", ") || "System"}
                 </p>
               </li>
             ))}

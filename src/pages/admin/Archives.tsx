@@ -7,6 +7,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, ArchiveRestore, Search } from "lucide-react";
 import { adminDb } from "@/lib/admin-utils";
 import { format } from "date-fns";
+import { MuEmpty, MuPage, MuPageHeader, MuToolbar } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+
+const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
+
+interface ArchiveGroup {
+  value: string;
+  label: string;
+  table: string;
+  items: any[];
+  columns: { head: string; key: string }[];
+}
 
 const Archives = () => {
   const [enquiries, setEnquiries] = useState<any[]>([]);
@@ -57,86 +69,65 @@ const Archives = () => {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
+  const groups: ArchiveGroup[] = [
+    { value: "enquiries", label: "Contact enquiries", table: "contact_submissions", items: filterBySearch(enquiries, ["name", "email"]), columns: [{ head: "Name", key: "name" }, { head: "Email", key: "email" }] },
+    { value: "applications", label: "Join applications", table: "join_applications", items: filterBySearch(applications, ["name", "email", "role"]), columns: [{ head: "Name", key: "name" }, { head: "Role", key: "role" }] },
+    { value: "creator", label: "Creator applications", table: "creator_applications", items: filterBySearch(creatorApps, ["name", "email", "country"]), columns: [{ head: "Name", key: "name" }, { head: "Country", key: "country" }] },
+    { value: "posts", label: "Blog posts", table: "blog_posts", items: filterBySearch(posts, ["title"]), columns: [{ head: "Title", key: "title" }, { head: "Category", key: "category" }] },
+    { value: "campaigns", label: "Campaigns", table: "campaigns", items: filterBySearch(campaigns, ["title"]), columns: [{ head: "Title", key: "title" }, { head: "Status", key: "status" }] },
+  ];
+
   return (
-    <div>
-      <h1 className="text-2xl font-serif font-bold mb-6">Archive</h1>
-      <div className="relative max-w-sm mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search archives…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-      </div>
-      <Accordion type="multiple" defaultValue={["enquiries", "applications", "creator", "posts", "campaigns"]}>
-        <AccordionItem value="enquiries">
-          <AccordionTrigger>Contact Enquiries ({filterBySearch(enquiries, ["name", "email"]).length})</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-              <TableBody>
-                {filterBySearch(enquiries, ["name", "email"]).map((i) => (
-                  <TableRow key={i.id}><TableCell>{i.name}</TableCell><TableCell>{i.email}</TableCell><TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => unarchive("contact_submissions", i.id)}><ArchiveRestore className="h-4 w-4" /></Button></TableCell></TableRow>
-                ))}
-                {filterBySearch(enquiries, ["name", "email"]).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empty</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="applications">
-          <AccordionTrigger>Join Applications ({filterBySearch(applications, ["name", "email"]).length})</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-              <TableBody>
-                {filterBySearch(applications, ["name", "email", "role"]).map((i) => (
-                  <TableRow key={i.id}><TableCell>{i.name}</TableCell><TableCell>{i.role}</TableCell><TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => unarchive("join_applications", i.id)}><ArchiveRestore className="h-4 w-4" /></Button></TableCell></TableRow>
-                ))}
-                {filterBySearch(applications, ["name", "email", "role"]).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empty</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="creator">
-          <AccordionTrigger>Creator Applications ({filterBySearch(creatorApps, ["name", "email"]).length})</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Country</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-              <TableBody>
-                {filterBySearch(creatorApps, ["name", "email", "country"]).map((i) => (
-                  <TableRow key={i.id}><TableCell>{i.name}</TableCell><TableCell>{i.country}</TableCell><TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => unarchive("creator_applications", i.id)}><ArchiveRestore className="h-4 w-4" /></Button></TableCell></TableRow>
-                ))}
-                {filterBySearch(creatorApps, ["name", "email", "country"]).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empty</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="posts">
-          <AccordionTrigger>Blog Posts ({filterBySearch(posts, ["title"]).length})</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Category</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-              <TableBody>
-                {filterBySearch(posts, ["title"]).map((i) => (
-                  <TableRow key={i.id}><TableCell>{i.title}</TableCell><TableCell>{i.category}</TableCell><TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => unarchive("blog_posts", i.id)}><ArchiveRestore className="h-4 w-4" /></Button></TableCell></TableRow>
-                ))}
-                {filterBySearch(posts, ["title"]).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empty</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="campaigns">
-          <AccordionTrigger>Campaigns ({filterBySearch(campaigns, ["title"]).length})</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead><TableHead className="w-10" /></TableRow></TableHeader>
-              <TableBody>
-                {filterBySearch(campaigns, ["title"]).map((i: any) => (
-                  <TableRow key={i.id}><TableCell>{i.title}</TableCell><TableCell>{i.status}</TableCell><TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => unarchive("campaigns", i.id)}><ArchiveRestore className="h-4 w-4" /></Button></TableCell></TableRow>
-                ))}
-                {filterBySearch(campaigns, ["title"]).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Empty</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
+    <MuPage>
+      <MuPageHeader title="Archive" description="Archived enquiries, applications, posts and campaigns. Restore anything that was filed by mistake." />
+      <MuToolbar>
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search the archive" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+      </MuToolbar>
+      <Accordion type="multiple" defaultValue={groups.map((g) => g.value)} className="border border-line bg-card">
+        {groups.map((g) => (
+          <AccordionItem key={g.value} value={g.value} className="border-line-soft last:border-b-0">
+            <AccordionTrigger className="px-5 text-[15px] font-extrabold text-navy hover:no-underline">
+              {g.label} ({g.items.length})
+            </AccordionTrigger>
+            <AccordionContent className="pb-0">
+              {g.items.length === 0 ? (
+                <MuEmpty
+                  art={search ? art.objMagnifier : art.objFolderDocuments}
+                  title={search ? "No matches" : "Nothing archived"}
+                  description={search ? "Nothing archived here matches that search." : "Archived items of this kind will appear here."}
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      {g.columns.map((c) => <TableHead key={c.key} className={HEAD}>{c.head}</TableHead>)}
+                      <TableHead className={HEAD}>Date</TableHead>
+                      <TableHead className="w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {g.items.map((i) => (
+                      <TableRow key={i.id} className="border-line-soft">
+                        {g.columns.map((c) => <TableCell key={c.key}>{i[c.key]}</TableCell>)}
+                        <TableCell className="text-sm text-muted-foreground">{format(new Date(i.created_at), "dd MMM yyyy")}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" aria-label="Restore" onClick={() => unarchive(g.table, i.id)}>
+                            <ArchiveRestore className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
       </Accordion>
-    </div>
+    </MuPage>
   );
 };
 

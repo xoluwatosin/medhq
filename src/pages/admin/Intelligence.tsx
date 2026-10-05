@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Card, CardContent, CardHeader, CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -17,6 +13,12 @@ import {
 import { adminDb, exportToCSV } from "@/lib/admin-utils";
 import { toast } from "sonner";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+
+const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
+
+const sentence = (value: string) => value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, " ");
 
 const icons: Record<string, any> = {
   invited: MailOpen,
@@ -259,38 +261,31 @@ export default function Intelligence() {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-serif font-bold">Insights</h1>
-          <p className="text-sm text-muted-foreground">
-            Behavioural intake health, campaign funnels, and candidate flow diagnostics.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            Refreshed {lastRefreshed ? new Date(lastRefreshed).toLocaleString("en-GB") : "never"}
-          </span>
+    <MuPage>
+      <MuPageHeader
+        title="Insights"
+        description={`Intake health, campaign funnels and candidate flow. Refreshed ${lastRefreshed ? new Date(lastRefreshed).toLocaleString("en-GB") : "never"}.`}
+        actions={
           <Button size="sm" variant="outline" onClick={doRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`mr-1 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {alerts.length > 0 && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+        <div className="border border-warn-line/40 bg-warn-bg p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-warn-ink" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900">
+              <p className="text-sm font-bold text-warn-ink">
                 {alerts.length} unresolved alert{alerts.length > 1 ? "s" : ""}
               </p>
-              <ul className="mt-1 space-y-1 text-sm text-amber-800">
+              <ul className="mt-1 space-y-1 text-sm text-warn-ink">
                 {alerts.map((a) => (
                   <li key={a.id} className="flex items-center justify-between">
                     <span>{a.title} {a.detail?.reason ? `(${a.detail.reason})` : ""}</span>
-                    <Button size="sm" variant="ghost" className="h-7 text-amber-700" onClick={() => resolveAlert(a.id)}>
+                    <Button size="sm" variant="ghost" className="h-7 text-warn-ink" onClick={() => resolveAlert(a.id)}>
                       Mark resolved
                     </Button>
                   </li>
@@ -306,11 +301,11 @@ export default function Intelligence() {
           <TabsTrigger value="health"><Brain className="h-4 w-4 mr-1" /> Health</TabsTrigger>
           <TabsTrigger value="campaigns"><Megaphone className="h-4 w-4 mr-1" /> Campaigns</TabsTrigger>
           <TabsTrigger value="acquisition"><Globe className="h-4 w-4 mr-1" /> Acquisition</TabsTrigger>
-          <TabsTrigger value="queue"><Inbox className="h-4 w-4 mr-1" /> Queue <Badge variant="secondary" className="ml-1">{queuePendingCount}</Badge></TabsTrigger>
+          <TabsTrigger value="queue"><Inbox className="h-4 w-4 mr-1" /> Queue <span className="ml-1.5 bg-muted px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-muted-foreground">{queuePendingCount}</span></TabsTrigger>
           <TabsTrigger value="report"><Users className="h-4 w-4 mr-1" /> Invited report</TabsTrigger>
           <TabsTrigger value="audit">
             <ShieldCheck className="h-4 w-4 mr-1" /> Audit
-            {auditMismatches > 0 && <Badge variant="destructive" className="ml-1">{auditMismatches}</Badge>}
+            {auditMismatches > 0 && <span className="ml-1.5 bg-warn-bg px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-warn-ink">{auditMismatches}</span>}
           </TabsTrigger>
         </TabsList>
 
@@ -320,31 +315,23 @@ export default function Intelligence() {
             {funnel.map((f) => {
               const Icon = icons[f.stage] || Brain;
               return (
-                <Card key={f.stage} className="text-center">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs uppercase tracking-wide text-muted-foreground">{f.stage.replace(/_/g, " ")}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{Number(f.people).toLocaleString()}</div>
-                    <Icon className="h-4 w-4 mx-auto mt-2 text-muted-foreground" />
-                  </CardContent>
-                </Card>
+                <div key={f.stage} className="border border-line bg-card p-4 text-center">
+                  <p className={HEAD}>{f.stage.replace(/_/g, " ")}</p>
+                  <div className="mt-2 text-[26px] font-extrabold leading-none tracking-[-0.03em] text-navy tabular-nums">{Number(f.people).toLocaleString()}</div>
+                  <Icon className="mx-auto mt-2 h-4 w-4 text-muted-foreground" />
+                </div>
               );
             })}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold">Where candidates are stuck</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+            <MuSection title="Where candidates are stuck" padded={false}>
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Step</TableHead>
-                        <TableHead className="text-right">People</TableHead>
+                      <TableRow className="border-line-soft hover:bg-transparent">
+                        <TableHead className={HEAD}>Step</TableHead>
+                        <TableHead className={`${HEAD} text-right`}>People</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -355,7 +342,7 @@ export default function Intelligence() {
                         </TableRow>
                       ))}
                       {!stuck.length && (
-                        <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">No data yet</TableCell></TableRow>
+                        <TableRow className="hover:bg-transparent"><TableCell colSpan={2} className="p-0"><MuEmpty art={art.objClipboard} title="No data yet" description="Nobody is stuck at a step yet." /></TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
@@ -368,21 +355,16 @@ export default function Intelligence() {
                     state: `${Number(s.people).toLocaleString()} people`,
                   }))}
                 />
-              </CardContent>
-            </Card>
+              </MuSection>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold">Sign-up failures (last 30 days)</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+            <MuSection title="Sign-up failures (last 30 days)" padded={false}>
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Reason</TableHead>
-                        <TableHead className="text-right">Count</TableHead>
-                        <TableHead>Last seen</TableHead>
+                      <TableRow className="border-line-soft hover:bg-transparent">
+                        <TableHead className={HEAD}>Reason</TableHead>
+                        <TableHead className={`${HEAD} text-right`}>Count</TableHead>
+                        <TableHead className={HEAD}>Last seen</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -390,11 +372,11 @@ export default function Intelligence() {
                         <TableRow key={f.reason}>
                           <TableCell className="font-mono text-xs">{f.reason}</TableCell>
                           <TableCell className="text-right font-medium">{Number(f.failures).toLocaleString()}</TableCell>
-                          <TableCell className="text-xs">{f.last_seen ? new Date(f.last_seen).toLocaleString("en-GB") : "—"}</TableCell>
+                          <TableCell className="text-xs">{f.last_seen ? new Date(f.last_seen).toLocaleString("en-GB") : "Not recorded"}</TableCell>
                         </TableRow>
                       ))}
                       {!failures.length && (
-                        <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No failures recorded</TableCell></TableRow>
+                        <TableRow className="hover:bg-transparent"><TableCell colSpan={3} className="p-0"><MuEmpty art={art.objShieldCheck} title="No failures recorded" description="Sign-up failures from the last 30 days will appear here." /></TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
@@ -404,32 +386,27 @@ export default function Intelligence() {
                   rows={failures.map((f) => ({
                     key: f.reason,
                     title: f.reason,
-                    state: `${Number(f.failures).toLocaleString()} failures · last seen ${f.last_seen ? new Date(f.last_seen).toLocaleString("en-GB") : "—"}`,
+                    state: `${Number(f.failures).toLocaleString()} failures, last seen ${f.last_seen ? new Date(f.last_seen).toLocaleString("en-GB") : "Not recorded"}`,
                   }))}
                 />
-              </CardContent>
-            </Card>
+              </MuSection>
           </div>
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Campaign engagement (unique recipients)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+          <MuSection title="Campaign engagement (unique recipients)" padded={false}>
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead>Sent</TableHead>
-                      <TableHead>Delivered</TableHead>
-                      <TableHead><MailOpen className="inline h-3 w-3 mr-1" />Opened</TableHead>
-                      <TableHead><MousePointer className="inline h-3 w-3 mr-1" />Clicked</TableHead>
-                      <TableHead>Bounced</TableHead>
-                      <TableHead>Complained</TableHead>
-                      <TableHead>Claimed</TableHead>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      <TableHead className={HEAD}>Campaign</TableHead>
+                      <TableHead className={HEAD}>Sent</TableHead>
+                      <TableHead className={HEAD}>Delivered</TableHead>
+                      <TableHead className={HEAD}><MailOpen className="inline h-3 w-3 mr-1" />Opened</TableHead>
+                      <TableHead className={HEAD}><MousePointer className="inline h-3 w-3 mr-1" />Clicked</TableHead>
+                      <TableHead className={HEAD}>Bounced</TableHead>
+                      <TableHead className={HEAD}>Complained</TableHead>
+                      <TableHead className={HEAD}>Claimed</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -437,7 +414,7 @@ export default function Intelligence() {
                       <TableRow key={c.campaign_id}>
                         <TableCell>
                           <div className="font-medium">{c.title || "Untitled"}</div>
-                          {!c.tracking_enabled && <Badge variant="outline" className="mt-1 text-xs">Not tracked</Badge>}
+                          {!c.tracking_enabled && <MuStatus label="Not tracked" tone="neutral" className="mt-1" />}
                         </TableCell>
                         <TableCell>{Number(c.sent).toLocaleString()}</TableCell>
                         <TableCell>{Number(c.delivered).toLocaleString()}</TableCell>
@@ -449,7 +426,7 @@ export default function Intelligence() {
                       </TableRow>
                     ))}
                     {!campaigns.length && (
-                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No campaigns yet</TableCell></TableRow>
+                      <TableRow className="hover:bg-transparent"><TableCell colSpan={8} className="p-0"><MuEmpty art={art.objEnvelope} title="No campaigns yet" description="Sent campaigns and their engagement will appear here." /></TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -459,45 +436,40 @@ export default function Intelligence() {
                 rows={campaigns.map((c) => ({
                   key: c.campaign_id,
                   title: c.title || "Untitled",
-                  state: `${Number(c.delivered).toLocaleString()} delivered · ${Number(c.opened).toLocaleString()} opened · ${Number(c.clicked).toLocaleString()} clicked`,
-                  status: !c.tracking_enabled ? <Badge variant="outline" className="text-xs">Not tracked</Badge> : undefined,
+                  state: `${Number(c.delivered).toLocaleString()} delivered, ${Number(c.opened).toLocaleString()} opened, ${Number(c.clicked).toLocaleString()} clicked`,
+                  status: !c.tracking_enabled ? <MuStatus label="Not tracked" tone="neutral" /> : undefined,
                 }))}
               />
-            </CardContent>
-          </Card>
+            </MuSection>
         </TabsContent>
 
         <TabsContent value="acquisition" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Acquisition by UTM source</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+          <MuSection title="Acquisition by UTM source" padded={false}>
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Medium</TableHead>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead className="text-right">Signups</TableHead>
-                      <TableHead className="text-right">Enquiries</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      <TableHead className={HEAD}>Source</TableHead>
+                      <TableHead className={HEAD}>Medium</TableHead>
+                      <TableHead className={HEAD}>Campaign</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>Signups</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>Enquiries</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {acquisition.map((a, i) => (
                       <TableRow key={`${a.source}-${a.medium}-${a.campaign}-${i}`}>
                         <TableCell>{a.source || "direct"}</TableCell>
-                        <TableCell>{a.medium || "—"}</TableCell>
-                        <TableCell>{a.campaign || "—"}</TableCell>
+                        <TableCell>{a.medium || "None"}</TableCell>
+                        <TableCell>{a.campaign || "None"}</TableCell>
                         <TableCell className="text-right">{Number(a.signups).toLocaleString()}</TableCell>
                         <TableCell className="text-right">{Number(a.enquiries).toLocaleString()}</TableCell>
                         <TableCell className="text-right font-medium">{Number(a.signups + a.enquiries).toLocaleString()}</TableCell>
                       </TableRow>
                     ))}
                     {!acquisition.length && (
-                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No acquisition data</TableCell></TableRow>
+                      <TableRow className="hover:bg-transparent"><TableCell colSpan={6} className="p-0"><MuEmpty art={art.objMagnifier} title="No acquisition data" description="Sign-ups and enquiries with UTM tags will appear here." /></TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -507,11 +479,10 @@ export default function Intelligence() {
                 rows={acquisition.map((a, i) => ({
                   key: `${a.source}-${a.medium}-${a.campaign}-${i}`,
                   title: a.source || "direct",
-                  state: `${a.medium || "—"} · ${a.campaign || "—"} · ${Number(a.signups + a.enquiries).toLocaleString()} total`,
+                  state: `${a.medium || "None"}, ${a.campaign || "None"}, ${Number(a.signups + a.enquiries).toLocaleString()} total`,
                 }))}
               />
-            </CardContent>
-          </Card>
+            </MuSection>
         </TabsContent>
 
         <TabsContent value="queue" className="space-y-4">
@@ -525,17 +496,16 @@ export default function Intelligence() {
               </Button>
             </div>
           </div>
-          <Card>
-            <CardContent className="p-0">
+          <MuSection padded={false}>
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Candidate</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Queued</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      <TableHead className={HEAD}>Candidate</TableHead>
+                      <TableHead className={HEAD}>Reason</TableHead>
+                      <TableHead className={HEAD}>Status</TableHead>
+                      <TableHead className={HEAD}>Queued</TableHead>
+                      <TableHead className={`${HEAD} text-right`}>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -546,7 +516,7 @@ export default function Intelligence() {
                           <div className="text-xs text-muted-foreground">{q.email}</div>
                         </TableCell>
                         <TableCell className="text-xs">{q.reason === "invited_no_account" ? "No account" : q.reason === "profile_gaps" ? "Profile incomplete" : "No activity"}</TableCell>
-                        <TableCell><Badge variant={q.status === "pending" ? "default" : "secondary"}>{q.status}</Badge></TableCell>
+                        <TableCell><MuStatus label={sentence(q.status)} tone={q.status === "pending" ? "info" : "neutral"} /></TableCell>
                         <TableCell className="text-xs">{new Date(q.queued_at).toLocaleString("en-GB")}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -569,7 +539,7 @@ export default function Intelligence() {
                       </TableRow>
                     ))}
                     {!queue.length && (
-                      <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Queue is empty</TableCell></TableRow>
+                      <TableRow className="hover:bg-transparent"><TableCell colSpan={5} className="p-0"><MuEmpty art={art.objEnvelope} title="Queue is empty" description="Follow-up nudges waiting to be sent will appear here." /></TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -579,8 +549,8 @@ export default function Intelligence() {
                 rows={queue.map((q) => ({
                   key: q.id,
                   title: q.mu_people?.full_name || q.email,
-                  state: `${q.reason === "invited_no_account" ? "No account" : q.reason === "profile_gaps" ? "Profile incomplete" : "No activity"} · queued ${new Date(q.queued_at).toLocaleString("en-GB")}`,
-                  status: <Badge variant={q.status === "pending" ? "default" : "secondary"}>{q.status}</Badge>,
+                  state: `${q.reason === "invited_no_account" ? "No account" : q.reason === "profile_gaps" ? "Profile incomplete" : "No activity"}, queued ${new Date(q.queued_at).toLocaleString("en-GB")}`,
+                  status: <MuStatus label={sentence(q.status)} tone={q.status === "pending" ? "info" : "neutral"} />,
                   trailing: q.status === "pending" ? (
                     <div className="flex items-center gap-1">
                       <Button size="sm" variant="outline" onClick={() => sendNudges([q.id])}>
@@ -597,8 +567,7 @@ export default function Intelligence() {
                   ),
                 }))}
               />
-            </CardContent>
-          </Card>
+            </MuSection>
         </TabsContent>
 
         <TabsContent value="report" className="space-y-4">
@@ -610,33 +579,32 @@ export default function Intelligence() {
               <Download className="h-4 w-4 mr-1" /> Download CSV
             </Button>
           </div>
-          <Card>
-            <CardContent className="p-0">
+          <MuSection padded={false}>
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Invited</TableHead>
-                      <TableHead>Claimed</TableHead>
-                      <TableHead>State</TableHead>
-                      <TableHead>Failure reason</TableHead>
-                      <TableHead>Failure at</TableHead>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      <TableHead className={HEAD}>Email</TableHead>
+                      <TableHead className={HEAD}>Invited</TableHead>
+                      <TableHead className={HEAD}>Claimed</TableHead>
+                      <TableHead className={HEAD}>State</TableHead>
+                      <TableHead className={HEAD}>Failure reason</TableHead>
+                      <TableHead className={HEAD}>Failure at</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {invitedReport.map((r) => (
                       <TableRow key={r.email}>
                         <TableCell className="font-medium">{r.email}</TableCell>
-                        <TableCell className="text-xs">{r.invited_at ? new Date(r.invited_at).toLocaleString("en-GB") : "—"}</TableCell>
+                        <TableCell className="text-xs">{r.invited_at ? new Date(r.invited_at).toLocaleString("en-GB") : "Not recorded"}</TableCell>
                         <TableCell className="text-xs">{r.claimed_at ? new Date(r.claimed_at).toLocaleString("en-GB") : "No"}</TableCell>
-                        <TableCell><Badge variant={r.state === "active" ? "secondary" : "destructive"}>{stateLabel[r.state] || r.state}</Badge></TableCell>
-                        <TableCell className="font-mono text-xs">{r.failure_reason || "—"}</TableCell>
-                        <TableCell className="text-xs">{r.failure_at ? new Date(r.failure_at).toLocaleString("en-GB") : "—"}</TableCell>
+                        <TableCell><MuStatus label={stateLabel[r.state] || r.state} tone={r.state === "active" ? "good" : "bad"} /></TableCell>
+                        <TableCell className="font-mono text-xs">{r.failure_reason || "None"}</TableCell>
+                        <TableCell className="text-xs">{r.failure_at ? new Date(r.failure_at).toLocaleString("en-GB") : "Not recorded"}</TableCell>
                       </TableRow>
                     ))}
                     {!invitedReport.length && (
-                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No report data</TableCell></TableRow>
+                      <TableRow className="hover:bg-transparent"><TableCell colSpan={6} className="p-0"><MuEmpty art={art.objClipboard} title="No report data" description="Invited addresses and their state will appear here." /></TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -646,24 +614,20 @@ export default function Intelligence() {
                 rows={invitedReport.map((r) => ({
                   key: r.email,
                   title: r.email,
-                  state: `Invited ${r.invited_at ? new Date(r.invited_at).toLocaleString("en-GB") : "—"} · claimed ${r.claimed_at ? new Date(r.claimed_at).toLocaleString("en-GB") : "no"}`,
-                  status: <Badge variant={r.state === "active" ? "secondary" : "destructive"}>{stateLabel[r.state] || r.state}</Badge>,
+                  state: `Invited ${r.invited_at ? new Date(r.invited_at).toLocaleString("en-GB") : "Not recorded"}, claimed ${r.claimed_at ? new Date(r.claimed_at).toLocaleString("en-GB") : "no"}`,
+                  status: <MuStatus label={stateLabel[r.state] || r.state} tone={r.state === "active" ? "good" : "bad"} />,
                 }))}
               />
-            </CardContent>
-          </Card>
+            </MuSection>
         </TabsContent>
 
         <TabsContent value="audit" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
-              <div>
-                <CardTitle className="text-sm font-semibold">Figure audit</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Every dashboard figure is recounted straight from the underlying records. Anything that disagrees is flagged here and raises an alert. Runs automatically each morning at 08:45.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
+          <MuSection
+            title="Figure audit"
+            description="Every dashboard figure is recounted straight from the underlying records. Anything that disagrees is flagged here and raises an alert. Runs automatically each morning at 08:45."
+            padded={false}
+            actions={
+              <>
                 <Button size="sm" variant="outline" onClick={runReconcile} disabled={reconciling || auditing}>
                   <Wrench className={`h-4 w-4 mr-1 ${reconciling ? "animate-pulse" : ""}`} />
                   {reconciling ? "Putting right" : "Put figures right"}
@@ -672,26 +636,25 @@ export default function Intelligence() {
                   <ShieldCheck className={`h-4 w-4 mr-1 ${auditing ? "animate-pulse" : ""}`} />
                   {auditing ? "Checking" : "Run audit now"}
                 </Button>
-              </div>
-
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="px-6 pb-3 text-xs text-muted-foreground">
-                {audit.length
-                  ? `${auditMismatches} figure${auditMismatches === 1 ? "" : "s"} disagree with the records, ${auditWarnings} need a look, ${audit.length - auditMismatches - auditWarnings} agree. Last checked ${audit[0]?.created_at ? new Date(audit[0].created_at).toLocaleString("en-GB") : "—"}.`
-                  : "No audit has been recorded yet."}
-              </div>
+              </>
+            }
+          >
+              {audit.length > 0 && (
+                <div className="border-b border-line-soft px-5 py-3 text-xs text-muted-foreground">
+                  {`${auditMismatches} figure${auditMismatches === 1 ? "" : "s"} disagree with the records, ${auditWarnings} need a look, ${audit.length - auditMismatches - auditWarnings} agree. Last checked ${audit[0]?.created_at ? new Date(audit[0].created_at).toLocaleString("en-GB") : "Not recorded"}.`}
+                </div>
+              )}
               <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Check</TableHead>
-                      <TableHead>Figure</TableHead>
-                      <TableHead>Where</TableHead>
-                      <TableHead>Dashboard</TableHead>
-                      <TableHead>Records</TableHead>
-                      <TableHead>Verdict</TableHead>
-                      <TableHead>Note</TableHead>
+                    <TableRow className="border-line-soft hover:bg-transparent">
+                      <TableHead className={HEAD}>Check</TableHead>
+                      <TableHead className={HEAD}>Figure</TableHead>
+                      <TableHead className={HEAD}>Where</TableHead>
+                      <TableHead className={HEAD}>Dashboard</TableHead>
+                      <TableHead className={HEAD}>Records</TableHead>
+                      <TableHead className={HEAD}>Verdict</TableHead>
+                      <TableHead className={HEAD}>Note</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -700,18 +663,16 @@ export default function Intelligence() {
                         <TableCell className="text-xs">{auditCheckLabel[r.check_key] || r.check_key}</TableCell>
                         <TableCell className="text-xs">{auditMetricLabel[r.metric] || r.metric}</TableCell>
                         <TableCell className="text-xs max-w-[220px] truncate">{r.scope === "global" ? "Whole system" : r.scope}</TableCell>
-                        <TableCell className="text-xs">{r.dashboard_value === null ? "—" : Number(r.dashboard_value).toLocaleString()}</TableCell>
-                        <TableCell className="text-xs">{r.source_value === null ? "—" : Number(r.source_value).toLocaleString()}</TableCell>
+                        <TableCell className="text-xs">{r.dashboard_value === null ? "Not recorded" : Number(r.dashboard_value).toLocaleString()}</TableCell>
+                        <TableCell className="text-xs">{r.source_value === null ? "Not recorded" : Number(r.source_value).toLocaleString()}</TableCell>
                         <TableCell>
-                          <Badge variant={r.severity === "mismatch" ? "destructive" : r.severity === "warning" ? "outline" : "secondary"}>
-                            {r.severity === "mismatch" ? "Disagrees" : r.severity === "warning" ? "Worth a look" : "Agrees"}
-                          </Badge>
+                          <MuStatus label={r.severity === "mismatch" ? "Disagrees" : r.severity === "warning" ? "Worth a look" : "Agrees"} tone={r.severity === "mismatch" ? "bad" : r.severity === "warning" ? "warning" : "good"} />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground max-w-[320px]">{r.note}</TableCell>
                       </TableRow>
                     ))}
                     {!audit.length && (
-                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Run the audit to see results</TableCell></TableRow>
+                      <TableRow className="hover:bg-transparent"><TableCell colSpan={7} className="p-0"><MuEmpty art={art.objDocumentMagnifier} title="No audit yet" description="Run the audit to recount every dashboard figure." /></TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -720,50 +681,43 @@ export default function Intelligence() {
                 emptyLabel="Run the audit to see results"
                 rows={audit.map((r) => ({
                   key: r.id,
-                  title: `${auditCheckLabel[r.check_key] || r.check_key} · ${auditMetricLabel[r.metric] || r.metric}`,
-                  state: `${r.scope === "global" ? "Whole system" : r.scope} · dashboard ${r.dashboard_value === null ? "—" : Number(r.dashboard_value).toLocaleString()} vs records ${r.source_value === null ? "—" : Number(r.source_value).toLocaleString()}`,
+                  title: `${auditCheckLabel[r.check_key] || r.check_key}, ${auditMetricLabel[r.metric] || r.metric}`,
+                  state: `${r.scope === "global" ? "Whole system" : r.scope}, dashboard ${r.dashboard_value === null ? "Not recorded" : Number(r.dashboard_value).toLocaleString()} vs records ${r.source_value === null ? "Not recorded" : Number(r.source_value).toLocaleString()}`,
                   status: (
-                    <Badge variant={r.severity === "mismatch" ? "destructive" : r.severity === "warning" ? "outline" : "secondary"}>
-                      {r.severity === "mismatch" ? "Disagrees" : r.severity === "warning" ? "Worth a look" : "Agrees"}
-                    </Badge>
+                    <MuStatus label={r.severity === "mismatch" ? "Disagrees" : r.severity === "warning" ? "Worth a look" : "Agrees"} tone={r.severity === "mismatch" ? "bad" : r.severity === "warning" ? "warning" : "good"} />
                   ),
                 }))}
               />
-            </CardContent>
-          </Card>
+            </MuSection>
         </TabsContent>
       </Tabs>
 
 
       {tab === "health" && journey.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Candidate journey detail</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <MuSection title="Candidate journey detail" padded={false}>
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Stuck step</TableHead>
-                    <TableHead>Open questions</TableHead>
-                    <TableHead>Documents</TableHead>
-                    <TableHead>Saves</TableHead>
-                    <TableHead>Last activity</TableHead>
+                  <TableRow className="border-line-soft hover:bg-transparent">
+                    <TableHead className={HEAD}>Name</TableHead>
+                    <TableHead className={HEAD}>Email</TableHead>
+                    <TableHead className={HEAD}>Stuck step</TableHead>
+                    <TableHead className={HEAD}>Open questions</TableHead>
+                    <TableHead className={HEAD}>Documents</TableHead>
+                    <TableHead className={HEAD}>Saves</TableHead>
+                    <TableHead className={HEAD}>Last activity</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {journey.slice(0, 50).map((j) => (
                     <TableRow key={j.person_id}>
-                      <TableCell className="font-medium">{j.full_name || "—"}</TableCell>
-                      <TableCell className="text-xs">{j.email || "—"}</TableCell>
+                      <TableCell className="font-medium">{j.full_name || "Unnamed"}</TableCell>
+                      <TableCell className="text-xs">{j.email || "None"}</TableCell>
                       <TableCell>{stepLabel[j.stuck_step] || j.stuck_step}</TableCell>
                       <TableCell>{j.questions_open}</TableCell>
                       <TableCell>{j.documents}</TableCell>
                       <TableCell>{j.profile_saves}</TableCell>
-                      <TableCell className="text-xs">{j.last_activity_at ? new Date(j.last_activity_at).toLocaleString("en-GB") : "—"}</TableCell>
+                      <TableCell className="text-xs">{j.last_activity_at ? new Date(j.last_activity_at).toLocaleString("en-GB") : "Not recorded"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -773,13 +727,12 @@ export default function Intelligence() {
               emptyLabel="No candidates yet"
               rows={journey.slice(0, 50).map((j) => ({
                 key: j.person_id,
-                title: j.full_name || j.email || "—",
-                state: `${stepLabel[j.stuck_step] || j.stuck_step} · ${j.questions_open} open questions · last active ${j.last_activity_at ? new Date(j.last_activity_at).toLocaleString("en-GB") : "—"}`,
+                title: j.full_name || j.email || "Unnamed",
+                state: `${stepLabel[j.stuck_step] || j.stuck_step}, ${j.questions_open} open questions, last active ${j.last_activity_at ? new Date(j.last_activity_at).toLocaleString("en-GB") : "Not recorded"}`,
               }))}
             />
-          </CardContent>
-        </Card>
+          </MuSection>
       )}
-    </div>
+    </MuPage>
   );
 }

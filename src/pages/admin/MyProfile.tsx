@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import {
-  Briefcase, CalendarDays, CheckCircle2, Download, FileSignature, Loader2, Mail, MapPin, Phone, Save,
+  Briefcase, CalendarDays, CheckCircle2, Download, Loader2, Mail, MapPin, Phone, Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { art } from "@/components/mc/art";
 import { humaniseTerm } from "@/lib/readable";
 import {
   DocumentRequirement, STATUS_HELP, STATUS_LABELS, loadRequirements, openDocumentTab,
@@ -160,8 +161,9 @@ const MyProfile = () => {
     return (
       <MuPage>
         <MuPageHeader title="My profile" />
-        <MuSection>
+        <MuSection padded={false}>
           <MuEmpty
+            art={art.objIdVerification}
             title="No staff record linked to this sign-in"
             description="Ask an administrator to link your account to your staff record."
           />
@@ -228,7 +230,7 @@ const MyProfile = () => {
             description="What we are required to hold on file. Upload a clear copy; a member of the team checks each one."
             padded={false}
           >
-            <div className="divide-y divide-border/60">
+            <div className="divide-y divide-line-soft">
               {reqs.map((r) => (
                 <MuRecord
                   key={r.doc_type}
@@ -274,9 +276,9 @@ const MyProfile = () => {
         <TabsContent value="contract" className="mt-4">
           <MuSection title="Your contract" padded={false}>
             {contracts.length === 0 ? (
-              <MuEmpty icon={FileSignature} title="No contract issued yet" />
+              <MuEmpty art={art.objSignedContract} title="No contract issued yet" description="Your contract will appear here once it has been issued." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contracts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -334,7 +336,7 @@ const MyProfile = () => {
 
           {open && (
             <>
-              <div className="overflow-x-auto rounded-2xl bg-muted/40 p-3">
+              <div className="overflow-x-auto border border-line-soft bg-muted/40 p-3">
                 <ContractDocument
                   ref={docRef}
                   fields={effectiveFields(open)}

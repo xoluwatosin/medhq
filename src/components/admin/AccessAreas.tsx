@@ -22,7 +22,7 @@ const AccessAreas = ({ value, onChange, lockedKeys = [], disabled }: Props) => {
         const keys = group.areas.map((a) => a.key).filter((k) => !lockedKeys.includes(k));
         const all = keys.length > 0 && keys.every((k) => value.includes(k));
         return (
-          <div key={group.key} className="rounded-xl border border-border/70 p-3">
+          <div key={group.key} className="border border-line p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-sm font-medium">{group.label}</p>
               {keys.length > 1 && (

@@ -10,15 +10,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Ban, Briefcase, CalendarDays, FileSignature, KeyRound, Loader2, Mail, MapPin,
-  Phone, Plus, Save, Send, ShieldCheck, UserCog, Users,
+  Phone, Plus, Save, Send, ShieldCheck, UserCog,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -123,7 +123,7 @@ const WorkforceStaff = () => {
     }
     setCapabilityReason("");
     await loadCapability();
-    toast({ title: active ? "Clinical Assessor added" : "Clinical Assessor removed" });
+    toast({ title: active ? "Clinical assessor added" : "Clinical assessor removed" });
   };
 
   const load = useCallback(async () => {
@@ -303,7 +303,14 @@ const WorkforceStaff = () => {
   }
 
   if (!person) {
-    return <MuEmpty title="That staff record could not be found" />;
+    return (
+      <MuPage>
+        <MuPageHeader backTo="/admin/workforce" backLabel="Workforce" title="Staff record" />
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="That staff record could not be found" description="It may have been removed, or the link is wrong." />
+        </MuSection>
+      </MuPage>
+    );
   }
 
   return (
@@ -312,7 +319,7 @@ const WorkforceStaff = () => {
         backTo="/admin/workforce"
         backLabel="Workforce"
         title={person.full_name}
-        description={[person.job_title, person.department].filter(Boolean).join(" · ") || "No job details"}
+        description={[person.job_title, person.department].filter(Boolean).join(", ") || "No job details"}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <MuStatus label={STAFF_STATUS_LABELS[person.staff_status] || person.staff_status} tone={person.staff_status === "active" ? "good" : "warning"} />
@@ -358,7 +365,7 @@ const WorkforceStaff = () => {
           aria-label="Record section"
           value={tab}
           onChange={(e) => setTab(e.target.value)}
-          className="min-h-12 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+          className="min-h-12 w-full border border-line bg-card px-3 text-sm text-foreground"
         >
           <option value="overview">Overview</option>
           <option value="documents">Documents</option>
@@ -415,26 +422,23 @@ const WorkforceStaff = () => {
                 <Input value={person.department || ""} onChange={(e) => patchPerson({ department: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Employment type</Label>
-                <Select value={person.employment_type || "full_time"} onValueChange={(v) => patchPerson({ employment_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Employment type"
+                  value={person.employment_type || "full_time"}
+                  onChange={(v) => v && patchPerson({ employment_type: v })}
+                  options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label>Staff status</Label>
-                <Select value={person.staff_status || "pending"} onValueChange={(v) => patchPerson({ staff_status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["pending", "active", "on_notice", ...(person.staff_status === "exited" ? ["exited"] : [])].map((k) => (
-                      <SelectItem key={k} value={k}>{STAFF_STATUS_LABELS[k]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Staff status"
+                  value={person.staff_status || "pending"}
+                  onChange={(v) => v && patchPerson({ staff_status: v })}
+                  options={["pending", "active", "on_notice", ...(person.staff_status === "exited" ? ["exited"] : [])].map((k) => ({
+                    value: k,
+                    label: STAFF_STATUS_LABELS[k],
+                  }))}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Start date</Label>
@@ -456,8 +460,8 @@ const WorkforceStaff = () => {
           </MuSection>
 
           <MuSection
-            title="Clinical Assessor"
-            description="Assessment visits can only be assigned to an active Clinical Assessor with a sign-in."
+            title="Clinical assessor"
+            description="Assessment visits can only be assigned to an active clinical assessor with a sign-in."
           >
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[220px] flex-1 space-y-1.5">
@@ -474,10 +478,10 @@ const WorkforceStaff = () => {
                 disabled={savingCapability || (!capability?.active && !(capability?.has_account && capability?.staff_active))}
                 onClick={() => setAssessor(!capability?.active)}
               >
-                {capability?.active ? "Remove Clinical Assessor" : "Make Clinical Assessor"}
+                {capability?.active ? "Remove clinical assessor" : "Make clinical assessor"}
               </Button>
               <MuStatus
-                label={capability?.active ? "Clinical Assessor" : "Not an assessor"}
+                label={capability?.active ? "Clinical assessor" : "Not an assessor"}
                 tone={capability?.active ? "good" : "neutral"}
               />
               {capability?.active && (capability.live_assessments ?? 0) > 0 && (
@@ -489,7 +493,7 @@ const WorkforceStaff = () => {
             </div>
             {capability?.active && (capability.live_assessments ?? 0) > 0 && (
               <MuNote title="Reassign their visits first" tone="warning">
-                Clinical Assessor cannot be removed while assessments are still assigned to them. Move those visits
+                The clinical assessor role cannot be removed while assessments are still assigned to them. Move those visits
                 to another assessor, then remove the capability.
               </MuNote>
             )}
@@ -512,9 +516,9 @@ const WorkforceStaff = () => {
             padded={false}
           >
             {contacts.length === 0 ? (
-              <MuEmpty icon={Users} title="No emergency contact on file" description="Add at least one before their first shift." />
+              <MuEmpty art={art.objPhoneHandset} title="No emergency contact on file" description="Add at least one before their first shift." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contacts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -532,7 +536,7 @@ const WorkforceStaff = () => {
                 ))}
               </div>
             )}
-            <div className="grid gap-3 border-t border-border/60 p-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 border-t border-line-soft p-5 sm:grid-cols-2 xl:grid-cols-3">
               <Input placeholder="Name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} />
               <Input placeholder="Relationship" value={contact.relationship} onChange={(e) => setContact({ ...contact, relationship: e.target.value })} />
               <Input placeholder="Phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
@@ -571,12 +575,12 @@ const WorkforceStaff = () => {
           >
             {contracts.length === 0 ? (
               <MuEmpty
-                icon={FileSignature}
+                art={art.objSignedContract}
                 title="No contract on file"
                 description="Nobody can be invited into the system until a contract has been signed."
               />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contracts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -687,7 +691,7 @@ const WorkforceStaff = () => {
                 {namedAreas(access?.permissions).length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {namedAreas(access?.permissions).map((label) => (
-                      <Badge key={label} variant="secondary" className="text-xs font-normal">{label}</Badge>
+                      <MuStatus key={label} label={label} tone="neutral" />
                     ))}
                   </div>
                 )}
@@ -708,9 +712,9 @@ const WorkforceStaff = () => {
         <TabsContent value="activity" className="mt-4">
           <MuSection title="Activity" description="Every recorded change on this person, most recent first." padded={false}>
             {activity.length === 0 ? (
-              <MuEmpty title="Nothing recorded yet" />
+              <MuEmpty art={art.objClipboard} title="Nothing recorded yet" description="Changes to this record will be listed here." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {activity.map((a) => (
                   <div key={a.id} className="flex items-start justify-between gap-3 px-5 py-3">
                     <div className="min-w-0">
@@ -739,15 +743,12 @@ const WorkforceStaff = () => {
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Contract type</Label>
-              <Select value={draft.contract_type} onValueChange={(v) => setDraft({ ...draft, contract_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectField
+                label="Contract type"
+                value={draft.contract_type}
+                onChange={(v) => v && setDraft({ ...draft, contract_type: v })}
+                options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Job title</Label>
@@ -782,15 +783,12 @@ const WorkforceStaff = () => {
               <Input type="number" value={draft.pay_amount} onChange={(e) => setDraft({ ...draft, pay_amount: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Frequency</Label>
-              <Select value={draft.pay_frequency} onValueChange={(v) => setDraft({ ...draft, pay_frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAY_FREQUENCIES.map((f) => (
-                    <SelectItem key={f} value={f}>{PAY_FREQUENCY_LABELS[f]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectField
+                label="Frequency"
+                value={draft.pay_frequency}
+                onChange={(v) => v && setDraft({ ...draft, pay_frequency: v })}
+                options={PAY_FREQUENCIES.map((f) => ({ value: f, label: PAY_FREQUENCY_LABELS[f] }))}
+              />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Place of work</Label>

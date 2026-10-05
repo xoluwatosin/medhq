@@ -6,7 +6,7 @@
 // it. Editing an annex here changes what future contracts carry. It never
 // touches a contract already issued: that pack is frozen at issue.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FileText, Loader2, Paperclip, Plus, Save, Trash2, Upload } from "lucide-react";
+import { BookOpen, Loader2, Paperclip, Plus, Save, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { useToast } from "@/hooks/use-toast";
 import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ContractRichTextEditor from "@/components/contracts/ContractRichTextEditor";
 import {
   AnnexLibraryItem, createAnnexItem, deleteAnnexItem, installAnnexPack, loadAnnexLibrary, saveAnnexItem,
@@ -181,13 +182,13 @@ const AnnexLibrary = () => {
         backTo="/admin/workforce"
         backLabel="Back to workforce"
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button variant="outline" onClick={installPack} disabled={installing}>
               {installing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpen className="mr-2 h-4 w-4" />}
               Load the employee pack
             </Button>
             <Button onClick={() => setAdding(true)}><Plus className="mr-2 h-4 w-4" />New annex</Button>
-          </div>
+          </>
         }
       />
 
@@ -196,7 +197,14 @@ const AnnexLibrary = () => {
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <MuSection><MuEmpty icon={FileText} title="The library is empty" description="Add the first annex to begin." /></MuSection>
+        <MuSection padded={false}>
+          <MuEmpty
+            art={art.objFolderDocuments}
+            title="The library is empty"
+            description="Add the first annex to begin."
+            action={<Button onClick={() => setAdding(true)}><Plus className="mr-2 h-4 w-4" />New annex</Button>}
+          />
+        </MuSection>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <MuSection title="Annexes" padded={false}>

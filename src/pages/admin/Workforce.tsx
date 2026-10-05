@@ -6,15 +6,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Briefcase, FileSignature, FileWarning, Loader2, Plus, Search, ShieldCheck, UserPlus, Users,
+  FileSignature, FileWarning, Loader2, MoreHorizontal, Plus, Search, ShieldCheck, UserPlus, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { StateSelect, LgaSelect } from "@/components/LocationSelect";
@@ -219,84 +221,84 @@ const Workforce = () => {
             <Button size="sm" variant="outline" asChild>
               <Link to="/admin/contracts/templates">Contract templates</Link>
             </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/admin/contracts/annexes">Annex library</Link>
-            </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" />Add staff member</Button>
-            </DialogTrigger>
-
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add a staff member</DialogTitle>
-                <DialogDescription>
-                  Creates the employment record only. Their sign-in comes later, once a contract has been signed
-                  and you send the invitation.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Full name</Label>
-                  <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Work email</Label>
-                  <Input type="email" value={form.work_email} onChange={(e) => setForm({ ...form, work_email: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Personal email</Label>
-                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Phone</Label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Job title</Label>
-                  <Input value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Department</Label>
-                  <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Employment type</Label>
-                  <Select value={form.employment_type} onValueChange={(v) => setForm({ ...form, employment_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Start date</Label>
-                  <Input type="date" value={form.staff_start_date} onChange={(e) => setForm({ ...form, staff_start_date: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>State</Label>
-                  <StateSelect value={form.state} onChange={(v) => setForm({ ...form, state: v, lga: "" })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>LGA</Label>
-                  <LgaSelect state={form.state} value={form.lga} onChange={(v) => setForm({ ...form, lga: v })} />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={addStaff} disabled={saving}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                  Add to register
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost"><MoreHorizontal className="mr-2 h-4 w-4" />More</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild><Link to="/admin/contracts/annexes">Annex library</Link></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Add staff member</Button>
           </>
         }
-
       />
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add a staff member</DialogTitle>
+            <DialogDescription>
+              Creates the employment record only. Their sign-in comes later, once a contract has been signed
+              and you send the invitation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Full name</Label>
+              <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Work email</Label>
+              <Input type="email" value={form.work_email} onChange={(e) => setForm({ ...form, work_email: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Personal email</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Job title</Label>
+              <Input value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Department</Label>
+              <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <SelectField
+                label="Employment type"
+                value={form.employment_type}
+                onChange={(v) => v && setForm({ ...form, employment_type: v })}
+                options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Start date</Label>
+              <Input type="date" value={form.staff_start_date} onChange={(e) => setForm({ ...form, staff_start_date: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>State</Label>
+              <StateSelect value={form.state} onChange={(v) => setForm({ ...form, state: v, lga: "" })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>LGA</Label>
+              <LgaSelect state={form.state} value={form.lga} onChange={(v) => setForm({ ...form, lga: v })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={addStaff} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+              Add to register
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <MuStats stats={stats} columns={4} />
 
@@ -319,7 +321,7 @@ const Workforce = () => {
           <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
           <MuEmpty
-            icon={Briefcase}
+            art={rows.length === 0 ? art.objClipboard : art.objMagnifier}
             title={rows.length === 0 ? "No staff members" : "No one matches this view"}
             description={
               rows.length === 0
@@ -328,7 +330,7 @@ const Workforce = () => {
             }
           />
         ) : (
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-line-soft">
             {filtered.map((r) => (
               <li key={r.id}>
                 <Link
@@ -340,7 +342,7 @@ const Workforce = () => {
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {[r.job_title, r.department, EMPLOYMENT_TYPE_LABELS[r.employment_type || ""] || r.employment_type]
                         .filter(Boolean)
-                        .join(" · ") || "No job details"}
+                        .join(", ") || "No job details"}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
