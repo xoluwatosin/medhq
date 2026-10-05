@@ -1036,6 +1036,11 @@ All colors MUST be HSL.
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #fff;
+    /* The page-wide anywhere rule split headings mid-word ("LOCATIO N").
+       Headings wrap only between words. */
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
   }
   .admin-kit thead tr { border-bottom: 0; }
   .admin-kit thead tr:hover { background: transparent; }
