@@ -54,9 +54,9 @@ block builder (`_shared/email-kit`). Two senders use neither.
 Families, in journey order:
 
 1. **Request received**, for every request (today only the enquiry reply, which depends on the service line having a reply set up).
-2. **Assessment booked**: date, time, who is coming, what to have ready, the ₦35,000 fee.
+2. **Assessment booked**: date, time, who is coming, what to have ready, the ₦35,000 fee. *Template written: `assessmentBookedEmail` in `_shared/care-family-emails.ts`; not yet sent by anything, because assessment bookings are not recorded yet.*
 3. **Assessment reminder**, the day before.
-4. **Your proposal is ready**, with a link into the family pages.
+4. **Your care plan is ready**, with a link into the family pages. *Template written: `carePlanReadyEmail`; to be sent when staff send the plan.*
 5. **Your quote**, if it is sent apart from the invoice.
 6. **Payment received** (receipt).
 7. **Care is starting**: start date and the carer introduction (the carer ID card).
