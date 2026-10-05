@@ -12,9 +12,9 @@ export const AVATARS: { key: string; label: string; src: string }[] = [
   { key: "nurseMan2", label: "Tunde", src: art.nurseMan2 },
   { key: "charDoctor", label: "Emeka", src: art.charDoctor },
   { key: "doctorWoman", label: "Amaka", src: art.doctorWoman },
-  { key: "laundryAttendantLinens", label: "Tolu", src: art.laundryAttendantLinens },
   { key: "scientistSampleRack", label: "Chidi", src: art.scientistSampleRack },
   { key: "charCaregiver", label: "Bisi", src: art.charCaregiver },
+  { key: "carerManJacket", label: "Femi", src: art.carerManJacket },
   { key: "nursingStudentTextbooks", label: "Zara", src: art.nursingStudentTextbooks },
 ];
 
