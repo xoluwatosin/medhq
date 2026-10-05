@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import logoMark from "@/assets/brand/m-full-soft.svg";
+import logoNavy from "@/assets/brand/medicconnect-logo.svg";
+import { NotchTag, Watermark } from "@/components/mc/brand";
 import { BandSlotContext } from "@/components/admin/mu/AdminBand";
 import {
-  SidebarProvider, Sidebar, SidebarContent, SidebarGroup,
+  SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -24,29 +26,52 @@ import {
   isNavItemActive, type AdminDomain, canOpenRoute } from "@/lib/admin-nav";
 
 /** The rail head: full lockup when open, the mark alone when retracted. */
+/** The rail in four short groups, so nine areas read as four decisions. */
+const RAIL_GROUPS: { label: string; keys: string[] }[] = [
+  { label: "Today", keys: ["overview", "me"] },
+  { label: "People", keys: ["care", "talent", "workforce", "programmes"] },
+  { label: "Reach", keys: ["inbox", "communications", "content"] },
+  { label: "Running the business", keys: ["finance", "insights", "administration"] },
+];
+
 const RailHead = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   return (
-    <div className={`flex shrink-0 items-center ${collapsed ? "justify-center px-0 pb-3 pt-4" : "px-4 pb-4 pt-5"}`}>
+    <div className={`flex shrink-0 items-center ${collapsed ? "justify-center px-0 pb-3 pt-4" : "px-3 pb-4 pt-4"}`}>
       {collapsed ? (
-        <img src={logoMark} alt="Medic Connect" className="h-7 w-7" />
+        <span className="flex h-10 w-10 items-center justify-center bg-white">
+          <img src={logoMark} alt="Medic Connect" className="h-6 w-6" />
+        </span>
       ) : (
-        <div>
-          <img src={logoWhite} alt="Medic Connect" className="h-6 w-auto" />
-          <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">Admin Centre</p>
-        </div>
+        <Link to="/admin" className="block w-full">
+          {/* The site header's white plate, so admin opens on the same mark. */}
+          <span className="flex items-center bg-white px-3.5 py-3 shadow-[4px_4px_0_hsl(var(--brand))]">
+            <img src={logoNavy} alt="Medic Connect" className="h-7 w-auto" />
+          </span>
+          <span className="mt-3 inline-flex"><NotchTag tone="blue" size="sm">Admin centre</NotchTag></span>
+        </Link>
       )}
     </div>
   );
 };
 
 /** Retract control, pinned to the foot of the rail. */
-const RailFoot = () => {
+const RailFoot = ({ name, email }: { name: string; email: string }) => {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "A";
   return (
-    <div className="shrink-0 p-2">
+    <div className="shrink-0 space-y-1 p-2">
+      {!collapsed && (
+        <Link to="/admin/me" className="flex items-center gap-2.5 px-2 py-2 hover:bg-white/10">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white text-[12px] font-extrabold text-navy">{initials}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13.5px] font-bold text-white">{name}</span>
+            <span className="block truncate text-[11.5px] text-white/55">{email}</span>
+          </span>
+        </Link>
+      )}
       <button
         onClick={toggleSidebar}
         aria-label={collapsed ? "Widen the menu" : "Narrow the menu"}
@@ -241,33 +266,43 @@ const AdminLayout = () => {
       <div className="admin-kit flex min-h-dvh w-full bg-background">
         {/* Desktop command rail: the business domains, nothing else. */}
         <Sidebar collapsible="icon" className="hidden border-r border-navy/20 md:flex">
-          <SidebarContent className="flex flex-col gap-0">
+          <SidebarContent className="relative flex flex-col gap-0 overflow-hidden">
+            <Watermark glyph="o" size={260} opacity={0.08} className="-bottom-[90px] -left-[90px] top-auto" />
             <RailHead />
 
             <div className="mx-3 h-px shrink-0 bg-white/15" />
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
-              <SidebarGroup className="px-2 py-1">
-                <SidebarGroupContent>
-                  <SidebarMenu className="gap-1">
-                    {domains.map((domain) => (
-                      <SidebarMenuItem key={domain.key}>
-                        <SidebarMenuButton asChild isActive={here.domain?.key === domain.key} tooltip={domain.label}>
-                          <Link to={domainLanding(domain)}>
-                            <domain.icon className="h-[18px] w-[18px] shrink-0" />
-                            <span className="truncate">{domain.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+              {RAIL_GROUPS.map((group) => {
+                const inGroup = domains.filter((d) => group.keys.includes(d.key));
+                if (inGroup.length === 0) return null;
+                return (
+                  <SidebarGroup key={group.label} className="px-2 py-1.5">
+                    <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu className="gap-1">
+                        {inGroup.map((domain) => (
+                          <SidebarMenuItem key={domain.key}>
+                            <SidebarMenuButton asChild isActive={here.domain?.key === domain.key} tooltip={domain.label}>
+                              <Link to={domainLanding(domain)}>
+                                <span className="rail-tile flex h-7 w-7 shrink-0 items-center justify-center">
+                                  <domain.icon className="h-[16px] w-[16px]" />
+                                </span>
+                                <span className="truncate">{domain.label}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                );
+              })}
             </div>
 
             <div className="mx-3 h-px shrink-0 bg-white/15" />
 
-            <RailFoot />
+            <RailFoot name={adminDisplayName || "Admin"} email={user?.email ?? ""} />
           </SidebarContent>
         </Sidebar>
 

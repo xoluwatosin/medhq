@@ -1095,8 +1095,8 @@ All colors MUST be HSL.
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    font-weight: 600;
-    color: hsl(0 0% 100% / 0.45);
+    font-weight: 800;
+    color: hsl(var(--brand-soft));
     padding-left: 0.75rem;
     margin-bottom: 0.25rem;
   }
@@ -1105,7 +1105,7 @@ All colors MUST be HSL.
   .admin-kit [data-sidebar="menu-button"] {
     color: hsl(0 0% 100% / 0.78);
     font-size: 14.5px;
-    min-height: 2.75rem;
+    min-height: 2.5rem;
     gap: 0.7rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
@@ -1121,11 +1121,26 @@ All colors MUST be HSL.
     transform: translateY(1px);
   }
 
+  /* Each area's icon sits on its own small tile. */
+  .admin-kit [data-sidebar="menu-button"] .rail-tile {
+    background: hsl(0 0% 100% / 0.08);
+    color: hsl(0 0% 100% / 0.85);
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+  .admin-kit [data-sidebar="menu-button"]:hover .rail-tile { background: hsl(0 0% 100% / 0.16); color: #fff; }
+
+  /* Where you are: a white block, navy words, the tile in brand blue, a hard offset. */
   .admin-kit [data-sidebar="menu-button"][data-active="true"] {
+    background: #fff;
+    color: hsl(var(--navy));
+    font-weight: 800;
+    box-shadow: 4px 4px 0 hsl(var(--brand));
+  }
+  .admin-kit [data-sidebar="menu-button"][data-active="true"] .rail-tile {
     background: hsl(var(--brand));
     color: #fff;
-    font-weight: 600;
   }
+  .admin-kit [data-sidebar="menu-button"][data-active="true"]:hover { background: #fff; color: hsl(var(--navy)); }
 
   /* Retracted: square icon plates, centred, still comfortably tappable. */
   .admin-kit [data-collapsible="icon"] [data-sidebar="menu-button"] {

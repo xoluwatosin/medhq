@@ -654,7 +654,9 @@ const MatchUniverse = () => {
 
       {/* One filter area for every screen size: the everyday filters in a row,
           everything else folded under More filters. */}
-      <div className="flex flex-col gap-3">
+      {/* Finding people: one panel, so the controls read as one group. */}
+      <div className="flex flex-col gap-3 border-2 border-navy bg-tint/40 p-3 sm:p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-navy">Find people</p>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -707,15 +709,15 @@ const MatchUniverse = () => {
           </div>
         </div>
         <details
-          className="border border-line-soft bg-card"
+          className="border-t border-navy/20 pt-1"
           open={moreOpen}
           onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}
         >
-          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2.5 text-[13.5px] font-semibold text-navy">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 py-2 text-[13.5px] font-extrabold text-navy">
             More filters
             {moreSet > 0 && <span className="bg-navy px-2 py-0.5 text-[12px] font-bold text-white">{moreSet} set</span>}
           </summary>
-          <div className="grid grid-cols-1 gap-2 border-t border-line-soft p-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 pb-1 sm:grid-cols-2 lg:grid-cols-4">
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
@@ -852,7 +854,6 @@ const MatchUniverse = () => {
 
       <MuSection
         title={`Showing ${filtered.length} of ${rows.length} people`}
-        description="Select a person to view their profile, documents and match history."
         padded={false}
         actions={
           checked.size > 0 ? (
