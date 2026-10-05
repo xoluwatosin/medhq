@@ -177,6 +177,75 @@ person may see. Nothing above grants anything.
 | Two people in one household both receiving care, such as a mother and her son | One household, two care records, each pointing at its own person; on the son's record the mother is "Mother", on the mother's record the son is "Son"; one request can cover both; each sees only their own record unless the other consents |
 | The same family enquires again a year later | Staff confirm the existing household and person; a new request on the existing care record |
 | A relative who is also a Medic Connect carer | Separate care-side and professional records, one sign-in (account-model.md 2.2) |
+| An employer or HMO pays for an employee's care | The organisation is the payer; its billing contact gets finance access only |
+| A husband and wife both receive care and want their own privacy | Two care records marked independent; nothing on one shows on the other (section 3.2) |
+
+### 3.1 Payers: a person or an organisation
+
+A payer can be a person or an organisation (agreed 5 October 2026).
+
+```text
+Organisation ────── an employer, HMO or insurer, church or mosque, NGO,
+  │                 government body or other. Name, kind, billing address,
+  │                 billing email. Its people are Persons with a role in it
+  │                 (billing contact, approver).
+  │
+Payer arrangement ─ on a care record: one or more payers, each a Person or
+                    an Organisation, each with a share (a percentage, or
+                    named invoice lines). The usual case is one payer at 100%.
+```
+
+Rules:
+
+1. **A payer is exactly one of a person or an organisation.** Never both,
+   never neither.
+2. **Shares add up to the whole.** An HMO paying 70% and the family 30%
+   gives two payers; each invoice goes to one payer for their share.
+3. **Paying gives finance access only.** An organisation's billing contact
+   gets a finance grant backed by a `finance_participant` basis. They never
+   see clinical detail by default.
+4. **Reports to an organisation are a separate consent.** An employer asking
+   for attendance, or an HMO asking for a care summary, needs the service
+   user's recorded consent for that disclosure, scoped and revocable.
+5. **Invoices snapshot the payer** they were raised to, so a change of payer
+   never rewrites an old invoice.
+
+### 3.2 Independent records within a family
+
+Some families want each person's care kept apart: a husband and wife who
+each want privacy, an adult child who doesn't want a parent to see their
+care, a teenager's confidential care, or relatives who don't get on. The
+model already keeps records apart by default, because every view is decided
+by a grant on one care record. What has to be closed off is the shared
+things around the records, where one person's care could leak to another.
+
+A care record can be marked **independent**. Then:
+
+| Shared thing | Independent rule |
+|---|---|
+| Household | The record can sit in a household for the office's logistics, but no family-side screen shows the household or its other members |
+| Requests and agreements | Never a joint request or a joint agreement with another record |
+| Invoices | One invoice per record. A payer covering two people gets two invoices, not one combined bill, unless both service users consent |
+| Visits | A carer visiting the same house records against each record separately and sees only the records they are assigned to |
+| Notes, notifications, documents | Addressed to one record only; never a household message |
+| Contacts | A relative can be an emergency contact on the record without seeing anything |
+| Office view | Staff still see the link, marked "Independent: do not discuss across records" |
+
+Two layers, so the common case stays simple:
+
+- **Clinical detail is always private to each person.** Plans, notes,
+  observations and documents on one record are never shown to another
+  family member without a grant backed by a recorded basis. This holds for
+  every family, independent or not; being family or paying confers no right
+  to it.
+- **Logistics are shared by default.** Most families arrange care together:
+  one household, one request covering several people, one combined invoice
+  to the same payer, one carer visit for the house.
+- **Independent is opt-in.** When a family member asks for their care to be
+  kept apart, staff mark that record independent and the rules in the table
+  above apply to it. Intake asks one plain question when a request covers
+  more than one person: "Should we arrange care for Tolu and Ada together, or
+  keep each person's care separate?"
 
 ---
 
@@ -197,9 +266,13 @@ can be checked row by row.
 | 7 | Membership without roles | One member row per person per household |
 | 8 | Matching at intake | Offer existing people and households for staff to confirm; a merge function for care-side duplicates like the talent one |
 | 9 | Tokens open one thing | New links reference a session or a grant only; old links keep working until they expire |
+| 10 | Organisation payers | Add organisations and their people; a payer arrangement per care record (person or organisation, with shares); move `client_commercial.payer_person_id` into it |
+| 11 | Independent records | An independent flag on the care record; enforce the rules in section 3.2 in the family portal, invoices, requests and visit screens; the intake question for multi-person requests |
 
 Steps 1 to 5 should land before the family portal (Tranche 10) and before
 care packages (Tranche 8), because both read roles and relationships.
+Step 10 must land before recurring invoices (Tranche 11). Step 11 must land
+before the family portal and before visits (Tranches 9 and 10).
 
 ---
 
@@ -209,7 +282,10 @@ care packages (Tranche 8), because both read roles and relationships.
    service user, asked the same way on every form. Agreed 5 October 2026.
 2. **Repeat enquiries.** A returning family joins its existing household and
    care record, after staff confirm. Recommended.
-3. **Organisation payers.** Some care will be paid by an employer, insurer
-   or church rather than a person. The model has no organisation yet. Should
-   a payer be able to be an organisation?
-4. **Which records are tests.** Staff need to mark them so step 1 can run.
+3. **Organisation payers.** A payer can be a person or an organisation.
+   Agreed 5 October 2026. Split payment between several payers is
+   recommended in section 3.1.
+4. **Which records are tests.** Marked by staff on 5 October 2026.
+5. **Independent records.** Clinical detail is always private per person;
+   logistics are shared by default; a record is marked independent when a
+   family member asks. Recommended in section 3.2.
