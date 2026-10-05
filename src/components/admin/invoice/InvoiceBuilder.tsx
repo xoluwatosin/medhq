@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServicePickerModal } from "./ServicePickerModal";
 import { BookOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { selectAll } from "@/lib/select-all";
 
 interface Props {
   onCreated: () => void;
@@ -29,13 +30,14 @@ export function InvoiceBuilder({ onCreated }: Props) {
   const { data: clients = [] } = useQuery({
     queryKey: ["invoice-clients"],
     queryFn: async () => {
-      const { data, error } = await adminDb()
-        .from("clients")
-        .select("id, full_name, first_name, last_name, client_contacts(first_name, last_name, full_name, email, phone, is_primary)")
-        .order("full_name")
-        .limit(300);
-      if (error) throw error;
-      return data as any[];
+      // Every client, not only the first 300.
+      return selectAll<any>((a, z) =>
+        adminDb()
+          .from("clients")
+          .select("id, full_name, first_name, last_name, client_contacts(first_name, last_name, full_name, email, phone, is_primary)")
+          .order("full_name")
+          .order("id")
+          .range(a, z));
     },
   });
 

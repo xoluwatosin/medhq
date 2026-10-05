@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderEmail } from "../_shared/email-kit/render.ts";
 import type { BlockInstance, EmailKind } from "../_shared/email-kit/types.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
+import { selectAll } from "../_shared/select-all.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -577,12 +578,13 @@ serve(async (req) => {
     } else if (campaign.audience_type === "groups") {
       const groupIds = (campaign.template_data as any)?.audience_group_ids || campaign.manual_recipients || [];
       if (groupIds.length > 0) {
-        const { data } = await supabase.from("audience_members").select("email, name").in("group_id", groupIds);
-        members = data || [];
+        members = await selectAll<{ email: string; name?: string | null }>((a, z) =>
+          supabase.from("audience_members").select("email, name").in("group_id", groupIds).order("id").range(a, z));
       }
     } else {
-      const { data } = await supabase.from("audience_members").select("email, name");
-      members = data || [];
+      // Every contact, a page at a time: a plain select stops at 1,000 rows.
+      members = await selectAll<{ email: string; name?: string | null }>((a, z) =>
+        supabase.from("audience_members").select("email, name").order("id").range(a, z));
     }
 
 

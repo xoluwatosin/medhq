@@ -37,6 +37,7 @@ import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import { LgaSelect } from "@/components/LocationSelect";
 import { NIGERIA_STATES } from "@/lib/nigeria-locations";
 import { freshnessLabel, isFresh as isAvailabilityFresh } from "@/lib/availability";
+import { selectAll } from "@/lib/select-all";
 
 // Governed rule: a record with no meaningful activity in this many days is
 // dormant. Falls back to when the record was created if it has never had any
@@ -136,24 +137,28 @@ const MatchUniverse = () => {
   const [lookingFilter, setLookingFilter] = useListParam<string>("looking", "all");
 
   const load = async () => {
+    // Each list is read whole, a page at a time: a plain select stops at
+    // 1,000 rows, and documents alone are close to that.
+    const all = (q: () => any, key = "id") =>
+      selectAll<any>((a, z) => q().order(key).range(a, z)).then((data) => ({ data }));
     const [{ data: people }, { data: mm }, { data: jn }, { data: docs }, { count: merges }, { count: claims }, { data: facetRows }, { data: prefRows }, { data: refRows }, { data: readinessRows }] = await Promise.all([
-      adminDb().from("mu_people").select("*").order("last_activity_at", { ascending: false }),
-      adminDb()
+      all(() => adminDb().from("mu_people").select("*").order("last_activity_at", { ascending: false })),
+      all(() => adminDb()
         .from("matchmaker_applications")
         .select("id, person_id, created_at, current_position, utm_source, referrer")
-        .order("created_at", { ascending: false }),
-      adminDb()
+        .order("created_at", { ascending: false })),
+      all(() => adminDb()
         .from("join_applications")
         .select("id, person_id, created_at, role, role_other, qualification, utm_source, referrer")
-        .order("created_at", { ascending: false }),
-      adminDb().from("mu_documents").select("person_id, label, url, verified"),
+        .order("created_at", { ascending: false })),
+      all(() => adminDb().from("mu_documents").select("id, person_id, label, url, verified")),
       adminDb().from("mu_merge_candidates").select("id", { count: "exact", head: true }).eq("status", "pending"),
       adminDb().from("mu_parsed_fields").select("id", { count: "exact", head: true }).eq("status", "pending"),
       // What each person is actually good at, and what work they will take on.
       // Both are filters the office asks for by name, so they load with the roster.
-      adminDb().from("mu_profile_facets").select("person_id, facet_type, code").eq("facet_type", "specialty"),
-      adminDb().from("mu_work_preferences").select("person_id, care_types, live_in"),
-      adminDb().from("mu_references").select("person_id"),
+      all(() => adminDb().from("mu_profile_facets").select("id, person_id, facet_type, code").eq("facet_type", "specialty")),
+      all(() => adminDb().from("mu_work_preferences").select("person_id, care_types, live_in"), "person_id"),
+      all(() => adminDb().from("mu_references").select("id, person_id")),
       // Placement readiness is decided entirely by the database rule set — this
       // page only reads the totals and never re-implements the logic.
       (adminDb() as any).rpc("mu_readiness_summary"),

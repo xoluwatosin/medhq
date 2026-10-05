@@ -13,6 +13,7 @@ import { PAGE_SIZE, adminDb, downloadTemplate, parseCSV } from "@/lib/admin-util
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format } from "date-fns";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
+import { selectAll } from "@/lib/select-all";
 
 interface Group { id: string; name: string; description: string; created_at: string; }
 interface Member { id: string; email: string; name: string; group_id: string; source: string; created_at: string; }
@@ -46,10 +47,14 @@ const Audience = () => {
     const db = adminDb();
     const [g, m] = await Promise.all([
       db.from("audience_groups").select("*").order("created_at"),
-      db.from("audience_members").select("*").order("created_at", { ascending: false }),
+      // Every contact: a plain select stops at 1,000 rows.
+      selectAll<any>((a, z) =>
+        db.from("audience_members").select("*").order("created_at", { ascending: false }).order("id").range(a, z),
+      ).catch(() => null),
     ]);
+    if (g.error || !m) toast({ title: "Could not load the audience", description: "Reload to try again.", variant: "destructive" });
     setGroups(g.data || []);
-    setMembers(m.data || []);
+    setMembers(m || []);
     if (!newGroupId && g.data?.length) setNewGroupId(g.data[0].id);
     setLoading(false);
   };
@@ -59,12 +64,15 @@ const Audience = () => {
   // Engagement memory from the email event stream, so the audience can be
   // sliced by who actually reads what we send.
   useEffect(() => {
-    (adminDb() as any)
-      .from("campaign_events")
-      .select("event_type, recipient_email")
-      .in("event_type", ["opened", "clicked"])
-      .limit(10000)
-      .then(({ data }: any) => {
+    selectAll<any>((a, z) =>
+      (adminDb() as any)
+        .from("campaign_events")
+        .select("id, event_type, recipient_email")
+        .in("event_type", ["opened", "clicked"])
+        .order("id")
+        .range(a, z),
+    )
+      .then((data: any[]) => {
         const opened = new Set<string>();
         const clicked = new Set<string>();
         for (const r of data || []) {
@@ -74,7 +82,8 @@ const Audience = () => {
           if (r.event_type === "clicked") { clicked.add(em); opened.add(em); }
         }
         setEngaged({ opened, clicked });
-      });
+      })
+      .catch(() => { /* engagement slices are a nicety; the list still works without them */ });
   }, []);
 
   const addMember = async () => {

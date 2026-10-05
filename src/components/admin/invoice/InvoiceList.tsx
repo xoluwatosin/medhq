@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Copy, Loader2, Mail, MessageCircle, RefreshCw, XCircle } from "lucide-react";
+import { selectAll } from "@/lib/select-all";
 
 export function InvoiceList() {
   const { toast } = useToast();
@@ -18,13 +19,9 @@ export function InvoiceList() {
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["paystack-invoices"],
     queryFn: async () => {
-      const { data, error } = await adminDb()
-        .from("paystack_invoices")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data as any[];
+      // Every invoice, not only the latest 200.
+      return selectAll<any>((a, z) =>
+        adminDb().from("paystack_invoices").select("*").order("created_at", { ascending: false }).order("id").range(a, z));
     },
   });
 
