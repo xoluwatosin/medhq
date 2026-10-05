@@ -371,7 +371,7 @@ const CareRequestDialog = ({
               <p className="label-caps mt-5 text-[11px]">What to expect</p>
               <ol className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:gap-0">
                 {[
-                  { t: "A care needs assessment", d: "A paid needs assessment may be required" },
+                  { t: "Care needs", d: "A paid assessment may be required" },
                   { t: "A match", d: "A carer chosen for the plan and the person" },
                   { t: "Care begins", d: "On the days you agree" },
                 ].map((step, i) => (
