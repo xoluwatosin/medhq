@@ -24,12 +24,14 @@ Efficiency.
   campaign copies keep their layout; catalogue reset asks first; closed
   postings keep their close date; dead Auto-send button removed.
 
+- Unsaved edits are protected on contract templates, the annex library and
+  posting details. Staffing requests can be removed, and Last matched is
+  recorded. Staff leave through Return to Talent. Overview counts match the
+  pages they open.
+
 Still open from section 2: matching ranks staff and paused people (a
-database function change, after cutover), staffing requests can't be
-binned and "Last matched" is never filled, staff status can be set to
-exited without Return to Talent, contract template issue ignores unsaved
-edits, annex library loses unsaved edits, posting editor loses unsaved
-Details, Overview counts that don't match their pages, the Email Library.
+database function change, after cutover), and the Email Library (unused
+by campaigns and system emails).
 
 ## The verdict
 
