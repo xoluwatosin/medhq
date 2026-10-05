@@ -7,11 +7,3 @@ export const TRACK_ART: Record<string, string> = {
   "non-clinical-professional": art.receptionistFrontDesk,
   student: art.nursingStudentTextbooks,
 };
-
-/** The same figures, keyed by the track id stored on a candidate. */
-export const TRACK_ART_BY_ID: Record<string, string> = {
-  clinical: art.charNurse,
-  support: art.caregiverSuitcase,
-  non_clinical: art.receptionistFrontDesk,
-  student: art.nursingStudentTextbooks,
-};

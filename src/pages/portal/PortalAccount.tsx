@@ -1,6 +1,6 @@
 // Candidate home. Facts imported from documents stay as proposals until the
 // candidate confirms or corrects them, then quiet links lead to everything else.
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,10 +10,7 @@ import FieldAnswerInput from "@/components/portal/FieldAnswerInput";
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import CxPortalPage from "@/components/candidate/CxPortalPage";
 import VerifiedBadge from "@/components/VerifiedBadge";
-import Readiness from "@/components/candidate/Readiness";
-import { Chevrons, TapeLabel } from "@/components/mc/brand";
-import { art } from "@/components/mc/art";
-import { TRACK_ART_BY_ID } from "@/components/candidate/track-art";
+import { CxNavyWatermark } from "@/components/candidate/CxShell";
 import {
   CxButton, CxCard, CxEmpty, CxEyebrow, CxFixBlock, CxPill, CxRow, CxRows, CxSection, CxField, cxInputClass,
 } from "@/components/candidate/primitives";
@@ -60,14 +57,6 @@ const QUESTION_LABELS: Record<string, string> = {
   documents: "Please add the documents we requested",
   nysc_certificate: "Please upload your NYSC certificate",
 };
-
-/** In-page targets are plain anchors; routes are router links. */
-const NextLink = ({ to, className, children }: { to: string; className: string; children: React.ReactNode }) =>
-  to.startsWith("#") ? (
-    <a href={to} className={className}>{children}</a>
-  ) : (
-    <Link to={to} className={className}>{children}</Link>
-  );
 
 const label = (field: string) => QUESTION_LABELS[field] ?? "Please check this information";
 
@@ -184,38 +173,6 @@ const PortalAccount = () => {
   };
 
 
-  const docsNeedYou = p.required.length - p.acceptedRequired > 0 || p.openRequests > 0;
-  const steps = [
-    { label: "CV", done: p.hasCv },
-    { label: "Documents", done: !docsNeedYou },
-    ...(p.rules.needsAvailability ? [{ label: "Availability", done: p.availabilitySet }] : []),
-    { label: "Preferences", done: p.prefsDone },
-    { label: "Questions", done: p.attention.length === 0 },
-  ];
-
-  const next = !p.hasCv
-    ? { to: "/portal/documents", art: art.objFolderDocuments, title: "Start with your CV", body: "Upload it once and we read your employers, qualifications and skills out of it, so you confirm instead of typing.", action: "Upload your CV", done: false }
-    : p.attention.length > 0
-      ? { to: "#questions", art: art.objClipboardChecks, title: label(p.attention[0].field), body: p.attention.length === 1 ? "One question is waiting for you below." : `${p.attention.length} questions are waiting for you below.`, action: "Answer now", done: false }
-      : !p.prefsDone
-        ? { to: "/portal/preferences", art: art.objHandsHeart, title: "Tell us the work you want", body: "The care you take, live-in or live-out, and the shifts that suit you. We cannot put you forward without it.", action: "Set preferences", done: false }
-        : p.rules.needsAvailability && !p.availabilitySet
-          ? { to: "/portal/availability", art: art.objCalendarSeven, title: "Say when you can work", body: "Set your usual week once. We only bring you work you can take.", action: "Set availability", done: false }
-          : docsNeedYou
-            ? { to: "/portal/documents", art: art.objFolderDocuments, title: "Finish your documents", body: "Some of what we need is still to come in or still being checked.", action: "Open documents", done: false }
-            : { to: "/portal/offers", art: art.objHandshake, title: "You are ready to be put forward", body: "We will come to you when a role fits, and email you if anything expires.", action: "See offers", done: true };
-
-  const tiles = [
-    { to: "/portal/documents", art: art.objFolderDocuments, title: "Documents", line: "Your CV, licence and certificates, checked once.", state: p.openRequests > 0 ? "Requested" : docsNeedYou ? "In progress" : "Done", needs: p.openRequests > 0 || !p.hasCv },
-    ...(p.rules.needsAvailability
-      ? [{ to: "/portal/availability", art: art.objCalendarSeven, title: "Availability", line: "The days you can work.", state: p.availabilitySet ? "Done" : "Needs you", needs: !p.availabilitySet }]
-      : []),
-    { to: "/portal/preferences", art: art.objHandsHeart, title: "Work preferences", line: "The care you take and the shifts that suit you.", state: p.prefsDone ? "Done" : "Needs you", needs: !p.prefsDone },
-    { to: "/portal/offers", art: art.objHandshake, title: "Offers", line: "Work offered to you.", state: p.openOffers > 0 ? "Needs you" : "None yet", needs: p.openOffers > 0 },
-    { to: "/portal/applications", art: art.objClipboardChecks, title: "Applications", line: "Roles you have applied for.", state: "Open", needs: false },
-    { to: "/portal/details", art: art.objIdVerification, title: "Your details", line: "What we hold about you.", state: addressDone ? "On file" : "Add address", needs: false },
-  ];
-
   if (!lifecycle.loading && lifecycle.mode?.mode === "workforce") {
     return <Navigate to="/portal/workforce" replace />;
   }
@@ -226,22 +183,7 @@ const PortalAccount = () => {
       person={p.person}
       nav={p.nav}
       title="Home"
-      eyebrow="Your profile"
-      heroTitle={`Hello, ${first}.`}
-      intro={p.outstanding === 0
-        ? "Everything we need is in. We will come to you when a role fits."
-        : "Check what we hold about you, fix anything wrong, then add what is missing."}
-      hero={
-        <>
-          <Readiness steps={steps} onNavy />
-          {p.person?.verification_state === "verified" && (
-            <div className="mt-5">
-              <VerifiedBadge state={p.person.verification_state} reqs={p.reqs} size="lg" onNavy />
-            </div>
-          )}
-        </>
-      }
-      art={TRACK_ART_BY_ID[p.person?.track] ?? art.charNurse}
+      eyebrow="Candidate portal"
       headerAction={
         <Link
           to="/portal/details"
@@ -253,73 +195,50 @@ const PortalAccount = () => {
       }
 
     >
-      {/* Phones: where you stand, under the slim header. */}
-      <div className="md:hidden">
-        <p className="text-[26px] font-extrabold leading-[1.05] tracking-[-0.045em] text-navy">Hello, {first}.</p>
-        <p className="mt-2 text-[15px] leading-[1.6] text-body">
-          {p.outstanding === 0
-            ? "Everything we need is in. We will come to you when a role fits."
-            : "Check what we hold about you, fix anything wrong, then add what is missing."}
-        </p>
-        <div className="mt-4">
-          <Readiness steps={steps} />
+      {/* The one navy surface on this screen: who you are and where you stand. */}
+      <CxCard kind="navy" className="p-6 sm:p-7">
+        <CxNavyWatermark />
+        <div className="relative z-10">
+          <CxEyebrow onNavy>Good to see you</CxEyebrow>
+          <h2 className="cx-heading mt-2 text-[24px] text-white sm:text-[28px]">{first}</h2>
+          <p className="mt-2.5 cx-measure text-[15px] leading-relaxed text-body-navy">
+            {p.outstanding === 0
+              ? "Everything we need is in. We will come to you when a role fits, and email you if anything expires."
+              : "Please check what we already know about you, correct anything that is wrong, then add what is missing."}
+          </p>
+          {p.attention.length > 0 && (
+            <p className="mt-4 text-[14.5px] font-bold text-white">
+              {p.attention.length === 1
+                ? "One question is waiting for you below."
+                : `${p.attention.length} questions are waiting for you below.`}
+            </p>
+          )}
+          {p.person?.verification_state === "verified" && (
+            <div className="mt-5">
+              <VerifiedBadge state={p.person.verification_state} reqs={p.reqs} size="lg" onNavy />
+            </div>
+          )}
         </div>
-      </div>
+      </CxCard>
 
-      {/* The one thing to do next, hanging under the hero. */}
-      <NextLink
-        to={next.to}
-        className="group relative flex flex-col gap-4 border-2 border-navy bg-white p-6 shadow-offset transition-colors hover:bg-tint sm:flex-row sm:items-center sm:gap-6 sm:p-7 md:-mt-[76px]"
-      >
-        <img src={next.art} alt="" className="absolute right-4 top-4 h-[56px] w-[56px] object-contain sm:static sm:h-[84px] sm:w-[84px] sm:shrink-0" />
-        <div className="min-w-0 flex-1">
-          <TapeLabel tone={next.done ? "tint" : "blue"} tilt={-2} className="!text-[11px]">
-            {next.done ? "ALL SET" : "DO THIS NEXT"}
-          </TapeLabel>
-          <p className="mt-3 text-[22px] font-extrabold leading-[1.15] tracking-[-0.035em] text-navy sm:text-[26px]">{next.title}</p>
-          <p className="mt-1.5 max-w-[60ch] text-[15px] leading-[1.6] text-body">{next.body}</p>
-        </div>
-        <span className="inline-flex min-h-[48px] shrink-0 items-center gap-3 self-start bg-navy px-5 text-[15.5px] font-extrabold text-white shadow-[4px_4px_0_hsl(var(--brand))] group-hover:bg-brand sm:self-center">
-          {next.action}
-          <Chevrons size={12} />
-        </span>
-      </NextLink>
 
-      {/* Every part of the profile, as a tile with its state. */}
-      <section aria-label="Your profile">
-        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6">
-          {tiles.map((t, i) => (
-            <li key={t.to}>
-              <Link
-                to={t.to}
-                style={{ ["--mc-tilt" as string]: `${[-0.8, 0.6, -0.5][i % 3]}deg` }}
-                className={cn(
-                  "mc-tilt relative flex h-full flex-col gap-2 border-2 p-4 transition-colors sm:p-5",
-                  t.needs ? "border-navy bg-white shadow-offset hover:bg-tint" : "border-navy/15 bg-white hover:border-navy",
-                )}
-              >
-                <img src={t.art} alt="" className="h-[64px] w-[64px] object-contain sm:h-[76px] sm:w-[76px]" />
-                <p className="mt-1 text-[17px] font-extrabold leading-[1.2] tracking-[-0.025em] text-navy sm:text-[19px]">{t.title}</p>
-                <p className="hidden text-[14px] leading-[1.5] text-body sm:block">{t.line}</p>
-                <span className="mt-auto pt-2">
-                  <span
-                    className={cn(
-                      "inline-block px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em]",
-                      t.needs ? "bg-price text-white" : t.state === "Done" || t.state === "On file" ? "bg-brand text-white" : "bg-tint text-navy",
-                    )}
-                  >
-                    {t.state}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {!p.hasCv && (
+        <CxCard kind="needs-you" className="p-5 sm:p-6">
+          <p className="text-[16px] font-bold text-ink">Start with your CV</p>
+          <p className="mt-1.5 cx-measure text-[14.5px] leading-relaxed text-body">
+            Upload it once and we read your employers, qualifications and skills out of it.
+            You then confirm what we found instead of typing it all out.
+          </p>
+          <div className="mt-3.5">
+            <CxButton asChild className="sm:w-auto">
+              <Link to="/portal/documents">Upload your CV</Link>
+            </CxButton>
+          </div>
+        </CxCard>
+      )}
 
-      <div id="questions" className="scroll-mt-24" />
       <CxSection
-        title="Questions for you"
+        title="What we need from you"
         intro="These are the answers we cannot put you forward without. Confirm anything we already hold, correct it where necessary, and add what is missing."
       >
         <CxCard kind={p.attention.length > 0 ? "needs-you" : "quiet"}>
@@ -383,6 +302,76 @@ const PortalAccount = () => {
       )}
 
 
+
+      <CxSection title="Where you stand" intro="Tap anything to open it.">
+        <CxCard>
+          <CxRows>
+            <CxRow
+              title="Offers"
+              sentence={p.openOffers > 0
+                ? "Work has been offered to you and we are waiting on your answer."
+                : "Nothing waiting on you right now."}
+              right={
+                <>
+                  {p.openOffers > 0 && <CxPill tone="needs-you">Needs you</CxPill>}
+                  <CxButton rank="tertiary" asChild><Link to="/portal/offers">Open</Link></CxButton>
+                </>
+              }
+            />
+            <CxRow
+              title="Documents"
+              sentence={p.required.length - p.acceptedRequired > 0 || p.openRequests > 0
+                ? "Some of what we need is still to come in or still being checked."
+                : "Everything we asked for is on file and accepted."}
+              right={
+                <>
+                  {p.openRequests > 0 && <CxPill tone="needs-you">Requested</CxPill>}
+                  <CxButton rank="tertiary" asChild><Link to="/portal/documents">Open</Link></CxButton>
+                </>
+              }
+            />
+            {p.rules.needsAvailability && (
+              <CxRow
+                title="Your availability"
+                sentence={p.availabilitySet
+                  ? "Set. Keep it current so we only bring you work you can take."
+                  : "Tell us the dates you can work. Without it we cannot put you forward."}
+                right={
+                  <>
+                    <CxPill>{p.availabilitySet ? "Set" : "Needs you"}</CxPill>
+                    <CxButton rank="tertiary" asChild><Link to="/portal/availability">Open</Link></CxButton>
+                  </>
+                }
+              />
+            )}
+            <CxRow
+              title="Work preferences"
+              sentence={p.prefsDone
+                ? "We match on these. Change them whenever your situation changes."
+                : "Required. Tell us the care you take, live-in or live-out, and the shifts that suit you."}
+              right={
+                <>
+                  <CxPill>{p.prefsDone ? "Done" : "Needs you"}</CxPill>
+                  <CxButton rank="tertiary" asChild><Link to="/portal/preferences">Open</Link></CxButton>
+                </>
+              }
+            />
+            <CxRow
+              title="Applications"
+              sentence="Every role you have applied for and where it stands."
+              right={<CxButton rank="tertiary" asChild><Link to="/portal/applications">Open</Link></CxButton>}
+            />
+            {addressDone && (
+              <CxRow
+                title="Your home address"
+                sentence="On file. It helps us send you work close to home."
+                right={<CxPill tone="settled">On file</CxPill>}
+              />
+            )}
+
+          </CxRows>
+        </CxCard>
+      </CxSection>
 
     </CxPortalPage>
   );
