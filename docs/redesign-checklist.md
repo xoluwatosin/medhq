@@ -22,7 +22,7 @@ The Medic Connect design system rollout, page by page. Tick items as they ship.
 - [ ] Heard (volunteer pages), if they are to join the main look
 - [ ] Request care and welcome forms (modals) and emails
 - [ ] Admin Centre: inventory done (docs/admin-inventory.md); defects fixed in code (merges, approvals, autosave, confirmations, silent failures, route access, settings, invoices, intake count, admin 404)
-- [ ] Apply the merge function migration (supabase/migrations/20261005090000_mu_merge_people.sql) to the live database; Merge fails until it is
+- [x] Merge function migration applied to the live database (via the SQL editor, 5 October)
 - [ ] Admin Centre phases: kit (plain register), pipeline (retire Applications and Creator into Pool and Programmes), care and inbox, content and comms
 
 ## Admin wishes
