@@ -27,6 +27,7 @@ import {
 import QuestionBuilder from "@/components/admin/QuestionBuilder";
 import { LocationField } from "@/components/LocationSelect";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { createAudienceGroup as makeAudienceGroup } from "@/lib/audience-groups";
 
 interface AudienceGroup {
   id: string;
@@ -167,14 +168,16 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
   const createAudienceGroup = async () => {
     if (!groupDraftName.trim()) return;
     setCreatingGroup(true);
-    const { data, error } = await adminDb()
-      .from("audience_groups")
-      .insert({ name: groupDraftName.trim(), description: groupDraftDesc.trim() || null })
-      .select("id, name")
-      .single();
+    let data: { id: string; name: string };
+    try {
+      data = (await makeAudienceGroup(groupDraftName, groupDraftDesc)).group;
+    } catch (error: any) {
+      setCreatingGroup(false);
+      toast({ title: "Could not create group", description: error.message, variant: "destructive" });
+      return;
+    }
     setCreatingGroup(false);
-    if (error) { toast({ title: "Could not create group", description: error.message, variant: "destructive" }); return; }
-    setGroups([data, ...groups]);
+    setGroups([data, ...groups.filter((g: any) => g.id !== data.id)]);
     update({ audience_group_id: data.id });
     await adminDb().from("matchmaker_opportunities").update({ audience_group_id: data.id }).eq("id", op.id);
     setGroupDialogOpen(false);

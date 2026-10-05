@@ -17,6 +17,7 @@ import { art } from "@/components/mc/art";
 import { format } from "date-fns";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import { selectAll } from "@/lib/select-all";
+import { createAudienceGroup, deleteAudienceGroup, renameAudienceGroup } from "@/lib/audience-groups";
 
 interface Group { id: string; name: string; description: string; created_at: string; }
 interface Member { id: string; email: string; name: string; group_id: string; source: string; created_at: string; }
@@ -96,11 +97,40 @@ const Audience = () => {
     else { toast({ title: "Member added" }); setAddOpen(false); setNewEmail(""); setNewName(""); fetchAll(); }
   };
 
+  const [editGroup, setEditGroup] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [dropGroup, setDropGroup] = useState<any | null>(null);
+  const saveGroup = async () => {
+    try {
+      await renameAudienceGroup(editGroup.id, editName, editDesc);
+      toast({ title: "Group renamed" });
+      setEditGroup(null);
+      fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not rename", description: error.message, variant: "destructive" });
+    }
+  };
+  const removeGroup = async () => {
+    try {
+      await deleteAudienceGroup(dropGroup.id);
+      toast({ title: "Group deleted" });
+      setDropGroup(null);
+      fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+    }
+  };
+
   const createGroup = async () => {
     if (!groupName) return;
-    const { error } = await adminDb().from("audience_groups").insert({ name: groupName, description: groupDesc });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Group created" }); setNewGroupOpen(false); setGroupName(""); setGroupDesc(""); fetchAll(); }
+    try {
+      const made = await createAudienceGroup(groupName, groupDesc);
+      toast({ title: made.reused ? "That group already exists" : "Group created" });
+      setNewGroupOpen(false); setGroupName(""); setGroupDesc(""); fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not create group", description: error.message, variant: "destructive" });
+    }
   };
 
   const deleteMember = async (id: string) => {
@@ -198,11 +228,22 @@ const Audience = () => {
       />
       {groups.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {groups.map((g) => (
-            <div key={g.id} className="border border-line bg-card px-2.5 py-1 text-xs font-semibold text-navy">
-              {g.name} <span className="font-normal text-muted-foreground">({members.filter((m) => m.group_id === g.id).length})</span>
-            </div>
-          ))}
+          {groups.map((g) => {
+            const count = members.filter((m) => m.group_id === g.id).length;
+            return (
+              <DropdownMenu key={g.id}>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="border border-line bg-card px-2.5 py-1 text-xs font-semibold text-navy hover:border-brand">
+                    {g.name} <span className="font-normal text-muted-foreground">({count})</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => { setEditGroup(g); setEditName(g.name); setEditDesc(g.description ?? ""); }}>Rename</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onClick={() => setDropGroup({ ...g, count })}>Delete group</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })}
         </div>
       )}
 
@@ -394,6 +435,28 @@ const Audience = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={!!editGroup} onOpenChange={(o) => { if (!o) setEditGroup(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Rename group</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Group name" aria-label="Group name" />
+            <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description (optional)" aria-label="Description" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditGroup(null)}>Cancel</Button>
+            <Button onClick={() => void saveGroup()} disabled={!editName.trim()}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ConfirmAction
+        open={!!dropGroup}
+        onOpenChange={(o) => { if (!o) setDropGroup(null); }}
+        title={`Delete ${dropGroup?.name ?? "this group"}?`}
+        description={`${dropGroup?.count ?? 0} ${dropGroup?.count === 1 ? "person is" : "people are"} in this group. They are removed from it, but stay in any other group. Campaigns that used it keep their history.`}
+        confirmLabel="Delete group"
+        destructive
+        onConfirm={removeGroup}
+      />
     </div>
   );
 };

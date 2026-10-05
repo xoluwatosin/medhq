@@ -9,6 +9,7 @@ import { Plus, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { SelectField } from "@/components/field";
+import { createAudienceGroup } from "@/lib/audience-groups";
 
 interface Group { id: string; name: string }
 
@@ -80,17 +81,17 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
   const createGroup = async () => {
     if (!name.trim()) return;
     setCreating(true);
-    const { data, error } = await adminDb()
-      .from("audience_groups")
-      .insert({ name: name.trim(), description: desc.trim() || null })
-      .select("id, name")
-      .single();
-    setCreating(false);
-    if (error) {
+    let data: Group;
+    try {
+      const made = await createAudienceGroup(name, desc);
+      data = made.group as Group;
+      toast({ title: made.reused ? "That group already exists, using it" : "Group created", description: data.name });
+    } catch (error: any) {
+      setCreating(false);
       toast({ title: "Could not create group", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Group created", description: data.name });
+    setCreating(false);
     setName(""); setDesc(""); setCreateOpen(false);
     await onGroupsChanged();
     onGroupCreated?.(data as Group);
