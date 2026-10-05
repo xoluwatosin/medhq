@@ -29,6 +29,34 @@ Efficiency.
   recorded. Staff leave through Return to Talent. Overview counts match the
   pages they open.
 
+## Done (5 October, evening): the kit and the merges
+
+- One admin look (`docs/admin-kit.md`) in the shared layer and on all 60
+  screens: square, navy, heavy headings, square chips, flat tiles, empty
+  states with clip art, load errors that are not empty states, sentence case.
+- Lists past 1,000 rows read a page at a time (campaign sends, Audience,
+  email analytics, invoices, the invoice client picker, Talent pool).
+- Administration is one page: People and access, Notifications, Alert keys.
+- One Care list: Requests is a view, with Paused and Closed views added.
+- Route to Care is on the enquiry, with Open care record once routed.
+- Programmes is the Creator page.
+- Intake tiles open the list behind the number; legacy applications link
+  to the person they made.
+- A Contracts register across everyone, under Workforce.
+- One application stage on the posting screen (through
+  `mu_set_application_stage`).
+- One shortlist control on the role's Matches and the person's
+  Opportunities.
+- Availability shown once on the person record.
+- Audience groups made one way (a same-name group is reused), and they can
+  be renamed and deleted.
+- Each list has its own Archived view; the central Archive page is retired.
+- Talent pool header cut from ten buttons to three.
+
+Kept on purpose: Staffing requests stay separate from Opportunities;
+Profession and Specialty stay as two filters (they are different things:
+what someone is, and what they are good at).
+
 Still open from section 2: matching ranks staff and paused people (a
 database function change, after cutover), and the Email Library (unused
 by campaigns and system emails).

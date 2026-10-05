@@ -24,7 +24,7 @@ The Medic Connect design system rollout, page by page. Tick items as they ship.
 - [ ] Candidate portal: screen-by-screen polish once real data is in (offers, contracts, applications)
 - [ ] Admin Centre: inventory done (docs/admin-inventory.md); defects fixed in code (merges, approvals, autosave, confirmations, silent failures, route access, settings, invoices, intake count, admin 404)
 - [x] Merge function migration applied to the live database (via the SQL editor, 5 October)
-- [ ] Admin Centre phases: kit (plain register), pipeline (retire Applications and Creator into Pool and Programmes), care and inbox, content and comms
+- [x] Admin Centre: one kit on every screen, and the merges (see docs/admin-ux-inventory.md, "Done (5 October, evening)")
 
 ## Admin wishes
 
