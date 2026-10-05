@@ -1009,6 +1009,33 @@ All colors MUST be HSL.
     border-radius: 0;
   }
 
+  /* Pop-ups render outside the layout; the root carries the same look. */
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper] > *) {
+    border-radius: 0;
+  }
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"]) :is(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, button, input, select, textarea) {
+    border-radius: 0;
+  }
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"]) :is(h2, [id$="-title"]) {
+    color: hsl(var(--navy));
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Badges and the shared controls are square in admin. */
+  .admin-kit :is(.cx-control, .rounded-full.border.text-xs.font-semibold) {
+    border-radius: 0;
+  }
+
+  /* Table heads: small bold caps, the same on every list. */
+  .admin-kit thead th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: hsl(var(--label));
+  }
+
   /* Navy command rail: the admin sidebar is a navy surface, not a grey card. */
   .admin-kit {
     --sidebar-background: 231 48% 28%;

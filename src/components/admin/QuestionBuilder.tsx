@@ -1,9 +1,11 @@
-// Monday.com-style question builder: add/reorder/remove typed questions.
+// Question builder: add, reorder and remove typed questions.
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,20 +50,24 @@ const QuestionBuilder = ({ value, onChange }: Props) => {
   return (
     <div className="space-y-3">
       {value.length === 0 && (
-        <div className="text-sm text-muted-foreground border border-dashed border-border rounded-xl p-6 text-center">
-          No questions yet. Add the first to gather structured info from applicants.
+        <div className="border border-dashed border-line bg-card">
+          <MuEmpty
+            art={art.objClipboard}
+            title="No questions yet"
+            description="Add the first question to gather structured answers from applicants."
+          />
         </div>
       )}
 
       {value.map((q, i) => (
-        <div key={q.id} className="border border-border rounded-xl bg-background p-4">
+        <div key={q.id} className="border border-line bg-card p-4">
           <div className="flex items-start gap-2">
             <div className="flex flex-col items-center pt-1 text-muted-foreground">
               <GripVertical className="h-4 w-4 opacity-60" />
-              <button type="button" onClick={() => move(i, -1)} className="hover:text-foreground" title="Move up">
+              <button type="button" onClick={() => move(i, -1)} className="hover:text-foreground" title="Move up" aria-label="Move up">
                 <ChevronUp className="h-3.5 w-3.5" />
               </button>
-              <button type="button" onClick={() => move(i, 1)} className="hover:text-foreground" title="Move down">
+              <button type="button" onClick={() => move(i, 1)} className="hover:text-foreground" title="Move down" aria-label="Move down">
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -71,27 +77,28 @@ const QuestionBuilder = ({ value, onChange }: Props) => {
                 <Input
                   value={q.label}
                   onChange={(e) => patch(i, { label: e.target.value })}
-                  placeholder={`Question ${i + 1} — e.g. Why are you a fit for this role?`}
+                  aria-label={`Question ${i + 1}`}
+                  placeholder={`Question ${i + 1}, for example: why are you a fit for this role?`}
                 />
-                <Select value={q.type} onValueChange={(v: QuestionType) => setType(i, v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(QUESTION_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Answer type"
+                  hideLabel
+                  value={q.type}
+                  onChange={(v) => { if (v) setType(i, v as QuestionType); }}
+                  options={Object.entries(QUESTION_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                />
               </div>
 
               <Input
                 value={q.help || ""}
                 onChange={(e) => patch(i, { help: e.target.value })}
+                aria-label="Helper text"
                 placeholder="Helper text (optional)"
                 className="text-sm"
               />
 
               {(q.type === "single_select" || q.type === "multi_select") && (
-                <div className="space-y-2 pl-2 border-l-2 border-muted">
+                <div className="space-y-2 border-l-2 border-line pl-2">
                   {(q.options || []).map((opt, oi) => (
                     <div key={oi} className="flex items-center gap-2">
                       <Input
@@ -107,6 +114,7 @@ const QuestionBuilder = ({ value, onChange }: Props) => {
                         type="button"
                         variant="ghost"
                         size="sm"
+                        aria-label="Remove option"
                         onClick={() => patch(i, { options: (q.options || []).filter((_, x) => x !== oi) })}
                       >
                         <X className="h-3.5 w-3.5" />
@@ -129,7 +137,7 @@ const QuestionBuilder = ({ value, onChange }: Props) => {
                   <Switch checked={q.required} onCheckedChange={(v) => patch(i, { required: v })} />
                   <span className="text-xs text-muted-foreground">{q.required ? "Required" : "Optional"}</span>
                 </div>
-                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => remove(i)}>
+                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" aria-label="Remove question" onClick={() => remove(i)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

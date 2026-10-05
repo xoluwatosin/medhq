@@ -5,8 +5,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { MuEmpty, MuGroupHead, MuLedger, MuLedgerBody, MuLedgerRow, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Check, X, FileText, Megaphone } from "lucide-react";
 import { adminDb } from "@/lib/admin-utils";
@@ -27,6 +27,7 @@ const Approvals = () => {
   const [items, setItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchPending = async () => {
@@ -37,6 +38,7 @@ const Approvals = () => {
     ]);
     const failed = blogRes.error || campaignRes.error;
     if (failed) toast({ title: "Could not load the queue", description: failed.message, variant: "destructive" });
+    setLoadError(failed ? failed.message : null);
     const blogItems: PendingItem[] = (blogRes.data || []).map((p: any) => ({ ...p, type: "blog" as const }));
     const campaignItems: PendingItem[] = (campaignRes.data || []).map((c: any) => ({ ...c, type: "campaign" as const }));
     setItems([...blogItems, ...campaignItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
@@ -92,36 +94,55 @@ const Approvals = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <h1 className="text-2xl font-serif font-bold mb-2">Approvals</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Approving a story publishes it. Approving a campaign sends it. Neither can be taken back.</p>
-      {items.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12">Nothing is waiting for approval.</p>
+    <div className="space-y-6">
+      <MuPageHeader
+        title="Approvals"
+        description="Approving a story publishes it. Approving a campaign sends it. Neither can be taken back."
+      />
+      {loadError ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            title="Could not load the queue"
+            description={loadError}
+            action={<Button variant="outline" onClick={() => { setLoading(true); fetchPending(); }}>Try again</Button>}
+          />
+        </MuSection>
+      ) : items.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            art={art.objClipboardChecks}
+            title="Nothing to approve"
+            description="Stories and campaigns other admins submit will wait here for you."
+          />
+        </MuSection>
       ) : (
-        <div className="space-y-3">
+        <MuLedger>
+          <MuGroupHead label="Waiting for approval" sentence={`${items.length} ${items.length === 1 ? "item" : "items"}, newest first.`} />
+          <MuLedgerBody>
           {items.map((item) => {
             const busy = processing === item.id;
             const label = item.type === "blog" ? "story" : "campaign";
             return (
-              <Card key={item.id}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-                  <div className="flex items-center gap-3">
-                    {item.type === "blog" ? <FileText className="h-4 w-4 text-muted-foreground" /> : <Megaphone className="h-4 w-4 text-muted-foreground" />}
-                    <div>
-                      <Link
-                        to={item.type === "blog" ? `/admin/posts/${item.id}` : `/admin/campaigns/${item.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {item.title || "Untitled"}
-                      </Link>
-                      <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="text-xs">{item.type === "blog" ? "Blog post" : "Campaign"}</Badge>
-                        {item.created_by_name && <span>by {item.created_by_name}</span>}
-                        <span>{format(new Date(item.created_at), "dd MMM yyyy")}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
+              <MuLedgerRow
+                key={item.id}
+                icon={item.type === "blog" ? FileText : Megaphone}
+                title={
+                  <Link
+                    to={item.type === "blog" ? `/admin/posts/${item.id}` : `/admin/campaigns/${item.id}`}
+                    className="hover:underline"
+                  >
+                    {item.title || "Untitled"}
+                  </Link>
+                }
+                sentence={
+                  <>
+                    {item.created_by_name ? `By ${item.created_by_name}, ` : ""}
+                    submitted {format(new Date(item.created_at), "dd MMM yyyy")}
+                  </>
+                }
+                status={<MuStatus label={item.type === "blog" ? "Blog post" : "Campaign"} tone="info" />}
+                trailing={
+                  <>
                     <ConfirmAction
                       title={item.type === "blog" ? "Publish this story?" : "Send this campaign?"}
                       description={
@@ -151,12 +172,13 @@ const Approvals = () => {
                         </Button>
                       }
                     />
-                  </div>
-                </CardContent>
-              </Card>
+                  </>
+                }
+              />
             );
           })}
-        </div>
+          </MuLedgerBody>
+        </MuLedger>
       )}
     </div>
   );

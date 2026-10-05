@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { adminDb } from "@/lib/admin-utils";
 import { formatDate } from "@/lib/format";
 import {
@@ -61,6 +62,7 @@ const SeoMarketsRegister = () => {
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +71,7 @@ const SeoMarketsRegister = () => {
       .select("id, country_code, state_name, city_name, lga_name, market_key, market_state, demand_state, safety_state, notes, evidence_as_of")
       .order("market_key");
     if (error) toast.error("Could not load markets");
+    setLoadError(Boolean(error));
     setRows((data ?? []) as MarketRow[]);
     setLoading(false);
   };
@@ -136,6 +139,20 @@ const SeoMarketsRegister = () => {
         </Button>
       </div>
 
+      {loadError ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            title="Could not load markets"
+            description="The register did not load. Try again in a moment."
+            action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
+          />
+        </MuSection>
+      ) : rows.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMapPinHome} title="No markets yet" description="Add a market to record its demand, safety and evidence." />
+        </MuSection>
+      ) : (
+      <>
       <ConsoleTable
         columns={COLUMNS}
         rows={rows}
@@ -165,11 +182,13 @@ const SeoMarketsRegister = () => {
         rows={rows.map((row) => ({
           key: row.id,
           title: row.market_key,
-          state: `${[row.city_name, row.state_name, row.country_code].filter(Boolean).join(", ")} · Demand ${label(row.demand_state).toLowerCase()} · Safety ${label(row.safety_state).toLowerCase()}`,
+          state: `${[row.city_name, row.state_name, row.country_code].filter(Boolean).join(", ")}. Demand ${label(row.demand_state).toLowerCase()}, safety ${label(row.safety_state).toLowerCase()}`,
           status: <Status label={label(row.market_state)} tone={marketTone(row.market_state)} />,
           onOpen: () => openMarket(row),
         }))}
       />
+      </>
+      )}
 
       <Dialog open={Boolean(editing) || creating} onOpenChange={(next) => { if (!next) { setEditing(null); setCreating(false); } }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -198,27 +217,24 @@ const SeoMarketsRegister = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <Label htmlFor="market-demand">Demand</Label>
-                <Select value={draft.demand_state} onValueChange={(value) => setDraft({ ...draft, demand_state: value })}>
-                  <SelectTrigger id="market-demand"><SelectValue /></SelectTrigger>
-                  <SelectContent>{DEMAND_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="market-market-state">Market state</Label>
-                <Select value={draft.market_state} onValueChange={(value) => setDraft({ ...draft, market_state: value })}>
-                  <SelectTrigger id="market-market-state"><SelectValue /></SelectTrigger>
-                  <SelectContent>{MARKET_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="market-safety">Safety</Label>
-                <Select value={draft.safety_state} onValueChange={(value) => setDraft({ ...draft, safety_state: value })}>
-                  <SelectTrigger id="market-safety"><SelectValue /></SelectTrigger>
-                  <SelectContent>{SAFETY_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+              <SelectField
+                label="Demand"
+                value={draft.demand_state}
+                onChange={(value) => { if (value) setDraft({ ...draft, demand_state: value }); }}
+                options={DEMAND_STATES.map((value) => ({ value, label: label(value) }))}
+              />
+              <SelectField
+                label="Market state"
+                value={draft.market_state}
+                onChange={(value) => { if (value) setDraft({ ...draft, market_state: value }); }}
+                options={MARKET_STATES.map((value) => ({ value, label: label(value) }))}
+              />
+              <SelectField
+                label="Safety"
+                value={draft.safety_state}
+                onChange={(value) => { if (value) setDraft({ ...draft, safety_state: value }); }}
+                options={SAFETY_STATES.map((value) => ({ value, label: label(value) }))}
+              />
             </div>
             <div>
               <Label htmlFor="market-evidence">Evidence date</Label>

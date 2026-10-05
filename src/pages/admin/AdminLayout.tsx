@@ -82,6 +82,13 @@ const AdminLayout = () => {
   // than one destination; specialist pages stay out of it.
   const localNav = here.domain && here.domain.items.length > 1 ? here.domain.items : [];
 
+  // Dialogs, sheets and menus render outside this layout, at the end of the
+  // page. Marking the page root lets the admin look reach them too.
+  useEffect(() => {
+    document.documentElement.classList.add("admin-kit-root");
+    return () => document.documentElement.classList.remove("admin-kit-root");
+  }, []);
+
   // Command palette: the fastest route between thirty-odd pages.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

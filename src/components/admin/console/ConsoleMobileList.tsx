@@ -51,7 +51,7 @@ const ConsoleMobileList = ({ rows, emptyLabel, emptyIcon: EmptyIcon, className }
     {rows.length === 0 ? (
       <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
         {EmptyIcon && (
-          <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-grey-pill text-muted-copy">
+          <span className="mb-1 flex h-10 w-10 items-center justify-center bg-tint text-navy">
             <EmptyIcon className="h-4 w-4" />
           </span>
         )}

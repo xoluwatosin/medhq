@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MuEmpty, MuPageHeader, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleRecordCard from "@/components/admin/console/ConsoleRecordCard";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { adminDb } from "@/lib/admin-utils";
 import { formatDate } from "@/lib/format";
 import {
@@ -70,6 +71,7 @@ const SeoPageRecord = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [form, setForm] = useState({
     title: "", h1: "", meta_description: "", page_promise: "", primary_query: "",
     canonical_path: "", notes: "", publication_state: "planned", evidence_state: "missing",
@@ -79,6 +81,7 @@ const SeoPageRecord = () => {
     if (!id) return;
     setLoading(true);
     const { data, error } = await adminDb().from("seo_pages").select(SELECT).eq("id", id).maybeSingle();
+    setLoadError(Boolean(error));
     if (error || !data) {
       toast.error("Could not load the page record");
       setLoading(false);
@@ -154,28 +157,43 @@ const SeoPageRecord = () => {
   }, [page]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
-  if (!page) return <p className="py-10 text-center text-sm text-muted-copy">Page not found</p>;
+  if (!page) {
+    return (
+      <section className="mx-auto w-full max-w-[1120px] space-y-6">
+        <MuPageHeader title="SEO page" backTo="/admin/seo/pages" backLabel="SEO pages" />
+        <MuSection padded={false}>
+          {loadError ? (
+            <MuEmpty
+              title="Could not load the page record"
+              description="The record did not load. Try again in a moment."
+              action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
+            />
+          ) : (
+            <MuEmpty art={art.objDocumentMagnifier} title="Page not found" description="This SEO page may have been removed. Go back to the register to find another." />
+          )}
+        </MuSection>
+      </section>
+    );
+  }
 
   return (
-    <section className="mx-auto w-full max-w-[1120px] space-y-4" aria-labelledby="seo-page-heading">
-      <Button asChild variant="link" className="h-auto p-0 text-xs">
-        <Link to="/admin/seo/pages"><ArrowLeft className="mr-1 h-3.5 w-3.5" /> SEO pages</Link>
-      </Button>
-
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 id="seo-page-heading" className="text-2xl font-semibold tracking-tight text-navy">{page.title ?? page.page_key}</h1>
-          <p className="mt-1 font-mono text-xs text-muted-copy">{page.path}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Status label={label(page.publication_state)} tone={publicationTone(page.publication_state)} />
-            <Status label={label(page.index_state)} tone={indexTone(page.index_state)} />
-            <Status label={`${label(page.evidence_state)} evidence`} tone={evidenceTone(page.evidence_state)} />
-          </div>
-        </div>
-        <Button type="button" variant={editing ? "outline" : "default"} onClick={() => setEditing(!editing)} className="shrink-0">
-          {editing ? "Cancel" : "Edit"}
-        </Button>
-      </header>
+    <section className="mx-auto w-full max-w-[1120px] space-y-4" aria-label={page.title ?? page.page_key}>
+      <MuPageHeader
+        title={page.title ?? page.page_key}
+        description={page.path}
+        backTo="/admin/seo/pages"
+        backLabel="SEO pages"
+        actions={
+          <Button type="button" variant={editing ? "outline" : "default"} onClick={() => setEditing(!editing)} className="shrink-0">
+            {editing ? "Cancel" : "Edit"}
+          </Button>
+        }
+      />
+      <div className="flex flex-wrap gap-2">
+        <Status label={label(page.publication_state)} tone={publicationTone(page.publication_state)} />
+        <Status label={label(page.index_state)} tone={indexTone(page.index_state)} />
+        <Status label={`${label(page.evidence_state)} evidence`} tone={evidenceTone(page.evidence_state)} />
+      </div>
 
       {blockers.length > 0 && (
         <div className="border border-line-soft bg-warn-bg p-4">
@@ -197,20 +215,18 @@ const SeoPageRecord = () => {
           <div><Label htmlFor="page-query">Primary query</Label><Input id="page-query" value={form.primary_query} onChange={(event) => setForm({ ...form, primary_query: event.target.value })} /></div>
           <div><Label htmlFor="page-canonical">Canonical path</Label><Input id="page-canonical" value={form.canonical_path} onChange={(event) => setForm({ ...form, canonical_path: event.target.value })} /></div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="page-publication">Publication</Label>
-              <Select value={form.publication_state} onValueChange={(value) => setForm({ ...form, publication_state: value })}>
-                <SelectTrigger id="page-publication"><SelectValue /></SelectTrigger>
-                <SelectContent>{PUBLICATION_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="page-evidence">Evidence</Label>
-              <Select value={form.evidence_state} onValueChange={(value) => setForm({ ...form, evidence_state: value })}>
-                <SelectTrigger id="page-evidence"><SelectValue /></SelectTrigger>
-                <SelectContent>{EVIDENCE_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              label="Publication"
+              value={form.publication_state}
+              onChange={(value) => { if (value) setForm({ ...form, publication_state: value }); }}
+              options={PUBLICATION_STATES.map((value) => ({ value, label: label(value) }))}
+            />
+            <SelectField
+              label="Evidence"
+              value={form.evidence_state}
+              onChange={(value) => { if (value) setForm({ ...form, evidence_state: value }); }}
+              options={EVIDENCE_STATES.map((value) => ({ value, label: label(value) }))}
+            />
           </div>
           <div><Label htmlFor="page-notes">Notes</Label><Textarea id="page-notes" rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></div>
           <Button type="button" onClick={save} disabled={saving} className="w-full sm:w-auto">Save changes</Button>
@@ -245,10 +261,14 @@ const SeoPageRecord = () => {
             fullWidth: true,
             value: (
               <div className="flex flex-wrap items-center gap-2">
-                <Select value={page.index_state} onValueChange={setIndexState}>
-                  <SelectTrigger className="h-10 w-full sm:w-56" aria-label="Index state"><SelectValue /></SelectTrigger>
-                  <SelectContent>{INDEX_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
+                <SelectField
+                  label="Index state"
+                  hideLabel
+                  value={page.index_state}
+                  onChange={(value) => { if (value) void setIndexState(value); }}
+                  options={INDEX_STATES.map((value) => ({ value, label: label(value) }))}
+                  className="w-full sm:w-56"
+                />
                 <span className="text-xs text-muted-copy">Validated by the database before a page becomes indexable.</span>
               </div>
             ),
@@ -330,8 +350,8 @@ const SeoPageRecord = () => {
                     {link.seo_markets?.market_key ?? "Market removed"}
                     {link.seo_markets && <Status label={label(link.seo_markets.market_state)} tone={marketTone(link.seo_markets.market_state)} />}
                     <span className="text-xs text-muted-copy">
-                      Safety {label(link.seo_markets?.safety_state).toLowerCase()} ·{" "}
-                      {Object.keys(link.local_evidence ?? {}).length > 0 ? "Local evidence recorded" : "No local evidence"}
+                      Safety {label(link.seo_markets?.safety_state).toLowerCase()},{" "}
+                      {Object.keys(link.local_evidence ?? {}).length > 0 ? "local evidence recorded" : "no local evidence"}
                     </span>
                   </span>
                 ),

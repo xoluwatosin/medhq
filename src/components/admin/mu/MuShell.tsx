@@ -156,6 +156,24 @@ export const MuEmpty = ({
   </div>
 );
 
+/** A list or record that failed to load. Never an empty state in disguise. */
+export const MuLoadError = ({
+  what,
+  onRetry,
+}: {
+  /** "the enquiries", "this client" */
+  what: string;
+  onRetry?: () => void;
+}) => (
+  <div role="alert" className="flex flex-col items-start gap-3 border-l-4 border-l-destructive bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="text-[15px] font-extrabold text-navy">We could not load {what}</p>
+      <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again. Nothing has been changed.</p>
+    </div>
+    {onRetry && <Button variant="outline" onClick={onRetry}>Try again</Button>}
+  </div>
+);
+
 export const MuToolbar = ({ children }: { children: ReactNode }) => (
   <div className="flex flex-col gap-2 border border-line bg-tint/40 p-3 lg:flex-row lg:items-center">
     {children}

@@ -161,8 +161,8 @@ export const BlockPalette = ({
   onAdd: (blockId: string) => void;
   height?: string;
 }) => (
-  <aside className="rounded-lg border bg-card">
-    <p className="border-b px-4 py-3 text-sm font-medium">Blocks</p>
+  <aside className="border border-line bg-card">
+    <p className="border-b border-line-soft px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Blocks</p>
     <ScrollArea style={{ height }}>
       <div className="space-y-4 p-3">
         {GROUP_ORDER.map((group) => {
@@ -184,7 +184,7 @@ export const BlockPalette = ({
                       e.dataTransfer.setData("application/x-mc-new-block", b.id);
                       e.dataTransfer.effectAllowed = "copy";
                     }}
-                    className="flex w-full cursor-grab items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    className="flex w-full cursor-grab items-center justify-between px-2 py-1.5 text-left text-sm hover:bg-muted"
                     title="Click to add, or drag onto the email"
                   >
                     <span>{b.name}</span>
@@ -244,8 +244,8 @@ export const BlockCanvas = ({
   };
 
   return (
-    <div className="rounded-lg border bg-card">
-      <p className="border-b px-4 py-3 text-sm font-medium">{title}</p>
+    <div className="border border-line bg-card">
+      <p className="border-b border-line-soft px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">{title}</p>
       <div
         className="space-y-1 p-3"
         onDragOver={acceptsDrop ? (e) => e.preventDefault() : undefined}
@@ -258,7 +258,7 @@ export const BlockCanvas = ({
         )}
         {blocks.map((b, i) => (
           <div key={b.id}>
-            {dropGap === i && <div className="mx-1 mb-1 h-0.5 rounded bg-primary" />}
+            {dropGap === i && <div className="mx-1 mb-1 h-0.5 bg-primary" />}
             <div
               onClick={() => onSelect(b.id)}
               draggable={Boolean(onReorder)}
@@ -268,7 +268,7 @@ export const BlockCanvas = ({
               }}
               onDragEnd={() => setDropGap(null)}
               onDragOver={acceptsDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropGap(gapFromEvent(e, i)); } : undefined}
-              className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+              className={`flex cursor-pointer items-center gap-2 border px-3 py-2 text-sm ${
                 selected === b.id ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted"
               }`}
             >
@@ -294,7 +294,7 @@ export const BlockCanvas = ({
           </div>
         ))}
         {acceptsDrop && dropGap === blocks.length && blocks.length > 0 && (
-          <div className="mx-1 h-0.5 rounded bg-primary" />
+          <div className="mx-1 h-0.5 bg-primary" />
         )}
         {acceptsDrop && blocks.length > 0 && (
           <p className="px-1 pt-1 text-xs text-muted-foreground">
@@ -418,8 +418,8 @@ export const BlockInspector = ({
   onChange: (patch: Partial<BlockInstance>) => void;
   height?: string;
 }) => (
-  <aside className="rounded-lg border bg-card">
-    <p className="border-b px-4 py-3 text-sm font-medium">
+  <aside className="border border-line bg-card">
+    <p className="border-b border-line-soft px-4 py-3 text-sm font-semibold text-navy">
       {current ? BLOCK_BY_ID[current.blockId]?.name ?? current.blockId : "Nothing selected"}
     </p>
     <ScrollArea style={{ height }}>
@@ -430,7 +430,7 @@ export const BlockInspector = ({
           </p>
         )}
         {current && BLOCK_BY_ID[current.blockId]?.notes && (
-          <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+          <p className="bg-muted px-3 py-2 text-xs text-muted-foreground">
             {BLOCK_BY_ID[current.blockId]?.notes}
           </p>
         )}
@@ -461,7 +461,7 @@ export const RuleReport = ({
   const warnings = problems.filter((p) => p.severity === "warning");
   if (!errors.length && !warnings.length && !clipWarning) return null;
   return (
-    <div className="space-y-1.5 rounded-lg border bg-card p-4">
+    <div className="space-y-1.5 border border-line bg-card p-4">
       {errors.map((p, i) => (
         <p key={`e${i}`} className="flex items-start gap-2 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{p.message}
@@ -549,8 +549,8 @@ export const KitDesignPanel = ({
   );
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="mb-3 text-sm font-medium">Design</p>
+    <div className="border border-line bg-card p-4">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Design</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Row label="Masthead" group="masthead" options={MASTHEADS} />
         <Row
@@ -614,7 +614,7 @@ export const FieldInput = ({
           {field.label}
           {field.width ? ` · ${field.width} by ${field.height} pixels` : ""}
         </Label>
-        {ref?.url && <img loading="lazy" decoding="async" src={ref.url} alt={ref.alt ?? ""} className="h-24 w-full rounded-md object-cover" />}
+        {ref?.url && <img loading="lazy" decoding="async" src={ref.url} alt={ref.alt ?? ""} className="h-24 w-full object-cover" />}
         <div className="flex gap-2">
           <Input
             value={ref?.url ?? ""}

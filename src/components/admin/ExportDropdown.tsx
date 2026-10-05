@@ -13,6 +13,21 @@ interface ExportDropdownProps {
   filename: string;
 }
 
+/**
+ * The same two export choices as items, for pages that keep secondary
+ * actions in a "More" menu instead of showing an Export button.
+ */
+export const ExportMenuItems = ({ data, filename }: ExportDropdownProps) => (
+  <>
+    <DropdownMenuItem onClick={() => exportToCSV(data, filename)}>
+      Export CSV
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={() => exportToExcel(data, filename)}>
+      Export Excel
+    </DropdownMenuItem>
+  </>
+);
+
 const ExportDropdown = ({ data, filename }: ExportDropdownProps) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -22,12 +37,7 @@ const ExportDropdown = ({ data, filename }: ExportDropdownProps) => (
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem onClick={() => exportToCSV(data, filename)}>
-        Export CSV
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => exportToExcel(data, filename)}>
-        Export Excel
-      </DropdownMenuItem>
+      <ExportMenuItems data={data} filename={filename} />
     </DropdownMenuContent>
   </DropdownMenu>
 );

@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { adminDb } from "@/lib/admin-utils";
 import { formatDate } from "@/lib/format";
 import {
@@ -67,6 +68,7 @@ const SeoClaimsRegister = () => {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [approving, setApproving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const toggle = (id: string) => {
     setSelected((current) => {
@@ -105,6 +107,7 @@ const SeoClaimsRegister = () => {
       .select("id, claim_code, claim_type, claim_text, evidence_type, evidence_reference, evidence_url, evidence_as_of, valid_from, valid_until, state, risk_level, seo_page_claims(page_id, usage_key, seo_pages(page_key))")
       .order("claim_code");
     if (error) toast.error("Could not load claims");
+    setLoadError(Boolean(error));
     setRows((data ?? []) as ClaimRow[]);
     setLoading(false);
   };
@@ -197,6 +200,20 @@ const SeoClaimsRegister = () => {
         </Button>
       </div>
 
+      {loadError ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            title="Could not load claims"
+            description="The register did not load. Try again in a moment."
+            action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
+          />
+        </MuSection>
+      ) : rows.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty art={art.objClipboardChecks} title="No claims yet" description="Add a public claim with its evidence so pages can cite it." />
+        </MuSection>
+      ) : (
+      <>
       <ConsoleTable
         columns={COLUMNS}
         rows={rows}
@@ -233,11 +250,13 @@ const SeoClaimsRegister = () => {
         rows={rows.map((row) => ({
           key: row.id,
           title: row.claim_text,
-          state: `${label(row.claim_type)} · ${row.valid_until ? `Expires ${formatDate(row.valid_until)}` : "No expiry"} · ${usedIn(row) === 0 ? "Not used" : `${usedIn(row)} pages`}`,
+          state: `${label(row.claim_type)}, ${row.valid_until ? `expires ${formatDate(row.valid_until)}` : "no expiry"}, ${usedIn(row) === 0 ? "not used" : `${usedIn(row)} pages`}`,
           status: <Status label={label(effective.get(row.id) ?? row.state)} tone={claimTone(effective.get(row.id) ?? row.state)} />,
           onOpen: () => openClaim(row),
         }))}
       />
+      </>
+      )}
 
       <Dialog open={Boolean(editing) || creating} onOpenChange={(next) => { if (!next) { setEditing(null); setCreating(false); } }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -251,28 +270,25 @@ const SeoClaimsRegister = () => {
               <Label htmlFor="claim-text">Claim</Label>
               <Textarea id="claim-text" rows={3} value={draft.claim_text} onChange={(event) => setDraft({ ...draft, claim_text: event.target.value })} />
             </div>
-            <div>
-              <Label htmlFor="claim-type">Type</Label>
-              <Select value={draft.claim_type} onValueChange={(value) => setDraft({ ...draft, claim_type: value })}>
-                <SelectTrigger id="claim-type"><SelectValue /></SelectTrigger>
-                <SelectContent>{CLAIM_TYPES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              label="Type"
+              value={draft.claim_type}
+              onChange={(value) => { if (value) setDraft({ ...draft, claim_type: value }); }}
+              options={CLAIM_TYPES.map((value) => ({ value, label: label(value) }))}
+            />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="claim-state">State</Label>
-                <Select value={draft.state} onValueChange={(value) => setDraft({ ...draft, state: value })}>
-                  <SelectTrigger id="claim-state"><SelectValue /></SelectTrigger>
-                  <SelectContent>{CLAIM_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="claim-risk">Risk</Label>
-                <Select value={draft.risk_level} onValueChange={(value) => setDraft({ ...draft, risk_level: value })}>
-                  <SelectTrigger id="claim-risk"><SelectValue /></SelectTrigger>
-                  <SelectContent>{RISK_LEVELS.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+              <SelectField
+                label="State"
+                value={draft.state}
+                onChange={(value) => { if (value) setDraft({ ...draft, state: value }); }}
+                options={CLAIM_STATES.map((value) => ({ value, label: label(value) }))}
+              />
+              <SelectField
+                label="Risk"
+                value={draft.risk_level}
+                onChange={(value) => { if (value) setDraft({ ...draft, risk_level: value }); }}
+                options={RISK_LEVELS.map((value) => ({ value, label: label(value) }))}
+              />
             </div>
             <div>
               <Label htmlFor="claim-evidence-type">Evidence type</Label>

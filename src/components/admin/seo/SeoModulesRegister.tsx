@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { adminDb } from "@/lib/admin-utils";
 import { formatDate } from "@/lib/format";
 import { REVIEW_STATES, label, reviewTone } from "@/lib/seo-registry";
@@ -49,6 +50,7 @@ const SeoModulesRegister = () => {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [approving, setApproving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const toggle = (id: string) => {
     setSelected((current) => {
@@ -90,6 +92,7 @@ const SeoModulesRegister = () => {
       .select("id, module_code, name, module_type, summary, content, owner_domain, review_state, effective_from, review_due_at")
       .order("module_code");
     if (error) toast.error("Could not load modules");
+    setLoadError(Boolean(error));
     setRows((data ?? []) as ModuleRow[]);
     setLoading(false);
   };
@@ -159,6 +162,20 @@ const SeoModulesRegister = () => {
           </>
         )}
       </div>
+      {loadError ? (
+        <MuSection padded={false}>
+          <MuEmpty
+            title="Could not load modules"
+            description="The register did not load. Try again in a moment."
+            action={<Button type="button" variant="outline" onClick={() => void load()}>Try again</Button>}
+          />
+        </MuSection>
+      ) : rows.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty art={art.objFolderDocuments} title="No modules yet" description="Canonical content modules appear here once they are registered." />
+        </MuSection>
+      ) : (
+      <>
       <ConsoleTable
         columns={COLUMNS}
         rows={rows}
@@ -190,11 +207,13 @@ const SeoModulesRegister = () => {
         rows={rows.map((row) => ({
           key: row.id,
           title: `${row.module_code} ${row.name}`,
-          state: `${label(row.module_type)} · ${row.owner_domain ?? "No owner"}`,
+          state: `${label(row.module_type)}, ${row.owner_domain ?? "no owner"}`,
           status: <Status label={label(row.review_state)} tone={reviewTone(row.review_state)} />,
           onOpen: () => openModule(row),
         }))}
       />
+      </>
+      )}
 
       <Dialog open={Boolean(open)} onOpenChange={(next) => !next && setOpen(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -208,15 +227,12 @@ const SeoModulesRegister = () => {
               <Label htmlFor="module-content">Content</Label>
               <Textarea id="module-content" value={content} onChange={(event) => setContent(event.target.value)} rows={8} className="font-mono text-xs" />
             </div>
-            <div>
-              <Label htmlFor="module-state">Review state</Label>
-              <Select value={reviewState} onValueChange={setReviewState}>
-                <SelectTrigger id="module-state"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {REVIEW_STATES.map((value) => <SelectItem key={value} value={value}>{label(value)}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              label="Review state"
+              value={reviewState}
+              onChange={(value) => { if (value) setReviewState(value); }}
+              options={REVIEW_STATES.map((value) => ({ value, label: label(value) }))}
+            />
             <div>
               <Label htmlFor="module-note">Change note</Label>
               <Input id="module-note" value={changeNote} onChange={(event) => setChangeNote(event.target.value)} />
