@@ -21,7 +21,7 @@ The Medic Connect design system rollout, page by page. Tick items as they ship.
 - [ ] Smaller public pages: Creator, Agency vs private nurse, Privacy, Terms, Unsubscribe, matchmaker pages (/hm)
 - [ ] Heard (volunteer pages), if they are to join the main look
 - [ ] Request care and welcome forms (modals) and emails
-- [ ] Admin Centre (to discuss)
+- [ ] Admin Centre: inventory done (docs/admin-inventory.md); phases 1 to 5 to agree
 
 ## Admin wishes
 
