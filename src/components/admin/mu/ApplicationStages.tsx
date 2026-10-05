@@ -19,7 +19,7 @@ import {
   APPLICATION_STAGES, STAGE_LABEL, slotSentence,
   type ApplicationRecord,
 } from "@/lib/applications";
-import { MuEmpty, MuRow, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuRow, MuSection } from "@/components/admin/mu/MuShell";
 
 interface DraftSlot { date: string; time: string; duration: string; mode: string; location: string }
 
@@ -102,7 +102,7 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
     <>
       <MuSection
         title={rows.length === 1 ? "One role application" : `${rows.length} role applications`}
-        description="The stage is what the candidate sees in their own account. Interview times are offered here and booked there."
+        description="Candidates see the stage in their own account."
         padded={false}
       >
         {rows.length === 0 && (
@@ -130,13 +130,6 @@ const ApplicationStages = ({ personId, onChanged }: { personId: string; onChange
                 key={row.id}
                 title={row.title}
                 state={sentence}
-                status={
-                  row.stage === "not_taken_forward" || row.stage === "withdrawn" ? (
-                    <MuStatus tone="neutral" label="Closed" />
-                  ) : row.stage === "offer_made" ? (
-                    <MuStatus tone="good" label="Placed" />
-                  ) : undefined
-                }
                 action={
                   <div className="flex flex-wrap items-center gap-2">
                     <Select

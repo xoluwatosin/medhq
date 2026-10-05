@@ -132,7 +132,7 @@ export default function MatchUniverseRequests() {
     <MuPage className="max-w-5xl mx-auto">
       <MuPageHeader
         title="Staffing requests"
-        description="Pick the client\u2019s requirements from the controlled lists. Matching uses the selected criteria to rank the candidate pool."
+        description="Client requests ranked against the candidate pool."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -141,10 +141,7 @@ export default function MatchUniverseRequests() {
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>New client request</DialogTitle>
-                <DialogDescription>
-                  Pick the requirements from the lists. The location, start date and any further detail are set on the
-                  request itself.
-                </DialogDescription>
+                <DialogDescription>Location and start date are set on the request.</DialogDescription>
               </DialogHeader>
               <div className="space-y-5">
                 <div className="space-y-1.5">

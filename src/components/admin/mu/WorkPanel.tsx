@@ -465,10 +465,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
     <div className="space-y-6">
       {/* The person record shows availability once, in its own section. */}
       {include?.includes("availability") && (
-        <MuSection
-          title="Their availability, exactly as given"
-          description="What they have told us, day by day, with the hours they named. A blank day is silence, not a no."
-        >
+        <MuSection title="Their availability, exactly as given">
           <AvailabilityDetail personId={personId} />
         </MuSection>
       )}
@@ -478,7 +475,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       <>
       <MuSection
         title="Engagements"
-        description="The relationship itself, established once and papered once. Employment, a fixed term placement, or a bank and locum agreement covering a scope of work."
+        description="Employment, fixed term or bank and locum agreements."
         actions={
           <Button size="sm" onClick={() => compose("placement")}>
             <Send className="mr-1.5 h-4 w-4" />Establish an engagement
@@ -490,7 +487,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
           <MuEmpty
             art={art.objSignedContract}
             title="No engagement yet"
-            description="Nothing has been proposed to this candidate. Work can only be offered once an engagement is running."
+            description="Nothing proposed yet."
           />
         ) : (
           <ul className="divide-y divide-line-soft">{engagementOffers.map(offerRow)}</ul>
@@ -499,12 +496,12 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
 
       <MuSection
         title="Work under the engagement"
-        description="Shifts and assignments handed out under a live engagement. No new paper: the engagement already covers them."
         actions={
           <Button
             size="sm"
             variant="outline"
             disabled={liveEngagements.length === 0}
+            title={liveEngagements.length === 0 ? "Needs a running engagement" : undefined}
             onClick={() => compose("shift")}
           >
             <Send className="mr-1.5 h-4 w-4" />Offer work
@@ -516,10 +513,10 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
           <MuEmpty
             art={art.objCalendar}
             title="Nothing to offer work under"
-            description="They hold no running engagement, so there is nothing for a shift to sit under yet."
+            description="Establish an engagement first."
           />
         ) : workOffers.length === 0 ? (
-          <MuEmpty art={art.objCalendar} title="No work offered yet" description="Their engagement is running and shifts can be offered against it." />
+          <MuEmpty art={art.objCalendar} title="No work offered yet" />
         ) : (
           <ul className="divide-y divide-line-soft">{workOffers.map(offerRow)}</ul>
         )}
@@ -528,7 +525,6 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       {binnedOffers.length > 0 && (
         <MuSection
           title="Bin"
-          description="Offers moved out of the way. They are kept, not destroyed, and can be restored."
           actions={
             <Button size="sm" variant="ghost" onClick={() => setShowBin((v) => !v)}>
               {showBin ? "Hide" : `Show ${binnedOffers.length}`}
@@ -538,13 +534,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
         >
           {showBin ? (
             <ul className="divide-y divide-border/60 opacity-80">{binnedOffers.map(offerRow)}</ul>
-          ) : (
-            <p className="px-5 py-4 text-sm text-muted-foreground">
-              {binnedOffers.length === 1
-                ? "One offer is in the bin."
-                : `${binnedOffers.length} offers are in the bin.`}
-            </p>
-          )}
+          ) : null}
         </MuSection>
       )}
       </>
@@ -552,7 +542,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       )}
 
       {shows("engagements") && (
-      <MuSection title="Placements running" description="Roles they are working right now." padded={false}>
+      <MuSection title="Placements running" padded={false}>
 
 
         {engagements.length === 0 ? (
@@ -601,7 +591,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
       <MuSection
 
         title="Leave"
-        description="Approved leave blocks the calendar so those days are excluded from matching."
+        description="Approved leave is excluded from matching."
         actions={pendingLeave.length > 0 ? <MuStatus tone="warning" label={`${pendingLeave.length} waiting`} /> : undefined}
         padded={false}
       >
@@ -658,7 +648,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
           <div className="space-y-5">
             {prefillHints.length > 0 && (
               <div className="border border-line bg-muted/40 p-3">
-                <p className="text-xs font-medium">Carried in from their record</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Carried in from their record</p>
                 <ul className="mt-1.5 space-y-1 text-xs text-muted-foreground">
                   {prefillHints.map((h, i) => <li key={i}>{h}</li>)}
                 </ul>
@@ -672,7 +662,7 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                 <div className="space-y-1.5">
                   <Label className="text-xs">What kind</Label>
                   <Select value={etype} onValueChange={(v) => setEtype(v as OfferLayerType)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger title={`${spec.description} ${paperLine(etype)}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {ENGAGEMENT_TYPES.map((t) => (
                         <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
@@ -684,8 +674,6 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">{spec.description}</p>
-                  <p className="text-xs text-muted-foreground">{paperLine(etype)}</p>
                 </div>
                 {spec.layer === "work" ? (
                   <div className="space-y-1.5">
@@ -700,9 +688,6 @@ const WorkPanel = ({ personId, personName, onChanged, include }: Props) => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Work rests on the engagement they already signed, so nothing new is issued.
-                    </p>
                   </div>
                 ) : (
                 <div className="space-y-1.5">

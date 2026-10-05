@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { LocationField } from "@/components/LocationSelect";
 
-import { MuEmpty, MuPageHeader, MuSection, MuNote } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import MatchmakerMatches from "./MatchmakerMatches";
 import { REQUEST_STATUS } from "./MatchUniverseRequests";
@@ -177,7 +177,7 @@ export default function MatchUniverseRequest() {
         backTo="/admin/match-universe/requests"
         backLabel="Staffing requests"
         title={rec.title}
-        description="Save the brief here. Set the requirements below, then rank the candidate pool against them."
+        description="The client's brief and its shortlist."
         actions={
           <>
             <Button onClick={save} disabled={saving}>
@@ -195,7 +195,7 @@ export default function MatchUniverseRequest() {
         }
       />
 
-      <MuSection title="The client's brief" description="What the client told you. Requirements are read from this.">
+      <MuSection title="The client's brief">
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -267,35 +267,30 @@ export default function MatchUniverseRequest() {
         </div>
       </MuSection>
 
-      <MuSection title="Ready to match">
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {checklist.map((c) => (
-              <div key={c.label} className="flex items-start gap-2.5">
+      <MuSection
+        title="Matching checklist"
+        actions={<MuStatus tone={ready ? "good" : "warning"} label={ready ? "Complete" : "Shortlist will be rough"} />}
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {checklist.map((c) => (
+            <div key={c.label} title={c.help} className="flex items-center justify-between gap-2.5 border border-line px-3 py-2.5">
+              <span className="flex items-center gap-2.5 text-sm font-medium">
                 {c.ok ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-navy" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-navy" />
                 ) : (
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warn-ink" />
+                  <CircleAlert className="h-4 w-4 shrink-0 text-warn-ink" />
                 )}
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{c.label}</p>
-                  <p className="text-xs leading-relaxed text-muted-foreground">{c.help}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          {!ready && (
-            <MuNote tone="warning" title="The shortlist will be rough until this is filled in">
-              Save the brief, run “Extract requirements” below, correct anything that was read incorrectly, then save the
-              requirements. Ranking uses the saved criteria.
-            </MuNote>
-          )}
+                {c.label}
+              </span>
+              <MuStatus tone={c.ok ? "good" : "warning"} label={c.ok ? "Set" : "Missing"} />
+            </div>
+          ))}
         </div>
       </MuSection>
 
       <MuSection
         title="Requirements and recommendations"
-        description="The one place requirements are set. Extract them from the brief, correct them, save, then run the match."
+        description="Extract from the brief, correct, save, then run the match."
       >
         <MatchmakerMatches key={matchesKey} embedded onSaved={refreshRequirements} />
       </MuSection>

@@ -549,7 +549,7 @@ const MatchUniverse = () => {
     { key: "engagement", on: engagementFilter !== "all", label: engagementFilter === "recent" ? "Active in the last 90 days" : "Quiet for 90 days", clear: () => setEngagementFilter("all") },
     { key: "availability", on: freshnessFilter !== "all", label: `Availability: ${humaniseTerm(freshnessFilter)}`, clear: () => setFreshnessFilter("all") },
     { key: "looking", on: lookingFilter !== "all", label: LOOKING_OPTIONS.find((o) => o.code === lookingFilter)?.label ?? humaniseTerm(lookingFilter), clear: () => setLookingFilter("all") },
-    { key: "readiness", on: readinessFilter !== "all", label: `Readiness: ${humaniseTerm(readinessFilter)}`, clear: () => setReadinessFilter("all") },
+    { key: "readiness", on: readinessFilter !== "all", label: `Outstanding: ${({ ready: "nothing", office: "with the office", candidate: "with the candidate", any: "anything" } as Record<string, string>)[readinessFilter] ?? readinessFilter}`, clear: () => setReadinessFilter("all") },
     { key: "docs", on: docFilter !== "all", label: `Documents: ${humaniseTerm(docFilter)}`, clear: () => setDocFilter("all") },
     { key: "referees", on: refFilter !== "all", label: `Referees: ${humaniseTerm(refFilter)}`, clear: () => setRefFilter("all") },
     { key: "verified", on: verifyFilter !== "all", label: humaniseTerm(verifyFilter), clear: () => setVerifyFilter("all") },
@@ -763,11 +763,11 @@ const MatchUniverse = () => {
             <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Any placement readiness</SelectItem>
-                <SelectItem value="ready">Ready</SelectItem>
-                <SelectItem value="office">Office action required</SelectItem>
-                <SelectItem value="candidate">Candidate action required</SelectItem>
-                <SelectItem value="any">Any blocker</SelectItem>
+                <SelectItem value="all">Any outstanding work</SelectItem>
+                <SelectItem value="ready">Nothing outstanding</SelectItem>
+                <SelectItem value="office">With the office</SelectItem>
+                <SelectItem value="candidate">With the candidate</SelectItem>
+                <SelectItem value="any">Anything outstanding</SelectItem>
               </SelectContent>
             </Select>
             <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
@@ -891,7 +891,7 @@ const MatchUniverse = () => {
               <TableHead>Location</TableHead>
               <TableHead>Documents</TableHead>
               <TableHead className="hidden lg:table-cell">Verification</TableHead>
-              <TableHead className="hidden lg:table-cell">Readiness</TableHead>
+              <TableHead className="hidden lg:table-cell">Outstanding</TableHead>
               <TableHead className="hidden xl:table-cell">Looking status</TableHead>
               <TableHead className="hidden xl:table-cell">Last activity</TableHead>
 
@@ -962,9 +962,9 @@ const MatchUniverse = () => {
                 <TableCell className="hidden lg:table-cell text-sm">
                   {(() => {
                     const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
-                    if (it.candidate === 0 && it.office === 0) return <MuStatus tone="good" label="Ready" />;
-                    if (it.office > 0) return <MuStatus tone="warning" label="Office action required" />;
-                    return <MuStatus tone="warning" label="Candidate action required" />;
+                    if (it.candidate === 0 && it.office === 0) return <MuStatus tone="good" label="Nothing" />;
+                    if (it.office > 0) return <MuStatus tone="warning" label="With the office" />;
+                    return <MuStatus tone="neutral" label="With the candidate" />;
                   })()}
                 </TableCell>
                 <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
@@ -999,10 +999,10 @@ const MatchUniverse = () => {
           const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
           const readinessLabel =
             it.candidate === 0 && it.office === 0
-              ? "Ready"
+              ? "Nothing outstanding"
               : it.office > 0
-                ? "Office action required"
-                : "Candidate action required";
+                ? "With the office"
+                : "With the candidate";
           return {
             key: r.person.id,
             title: r.person.full_name || "Unnamed",

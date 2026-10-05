@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MuEmpty, MuPage, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuStatus, MuToolbar, type MuTone } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -159,8 +159,8 @@ const CreatorApplications = () => {
         description="People who asked to make content with Medic Connect."
         actions={<ExportDropdown data={filtered} filename="creator-applications" />}
       />
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <MuToolbar>
+        <div className="relative flex-1 lg:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search name, email, country…"
@@ -169,7 +169,7 @@ const CreatorApplications = () => {
               setSearch(e.target.value);
               setPage(0);
             }}
-            className="pl-9"
+            className="pl-9 bg-background"
           />
         </div>
         <Select
@@ -179,7 +179,7 @@ const CreatorApplications = () => {
             setPage(0);
           }}
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-full bg-background lg:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -191,7 +191,7 @@ const CreatorApplications = () => {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </MuToolbar>
       <div className="hidden md:block overflow-x-auto border border-line bg-card">
         <Table>
           <TableHeader>

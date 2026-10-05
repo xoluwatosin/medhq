@@ -145,7 +145,7 @@ const MatchUniverseAvailability = () => {
     <MuPage>
       <MuPageHeader
         title="Availability"
-        description="Search candidates by date range and shift. Unknown means the candidate has not confirmed, not that they are unavailable."
+        description="Who is free for a date range and shift."
         actions={
           <Button variant="outline" asChild>
             <Link to="/admin/workforce">Workforce</Link>
@@ -159,7 +159,7 @@ const MatchUniverseAvailability = () => {
           { label: "Free in window", value: free.length, icon: CalendarCheck, tone: free.length ? "attention" : "default" },
           { label: "Booked or unavailable", value: busy.length, icon: CalendarClock },
           { label: "Have not told us yet", value: silent.length, icon: Users, hint: "Silence is not a no" },
-          { label: "Outdated availability", value: stale.length, icon: CalendarClock, hint: "Never set or over two weeks old" },
+          { label: "Outdated availability", value: stale.length, icon: CalendarClock },
         ]}
       />
 
@@ -223,9 +223,15 @@ const MatchUniverseAvailability = () => {
             <MuEmpty
               art={art.objCalendar}
               title={`Nobody has told us they are free between ${humanDate(from)} and ${humanDate(to)}`}
-              description="No matches in this range. The nearest available candidates are listed below."
+              description={
+                nextLoading
+                  ? "Looking further ahead…"
+                  : nextFree.length > 0
+                    ? "The nearest free candidates are below."
+                    : "Nobody has a free date in the next six months either."
+              }
             />
-            {nextFree.length > 0 ? (
+            {nextFree.length > 0 && (
               <ul className="mt-4 divide-y divide-line-soft border border-line">
                 {nextFree.map((n) => (
                   <li key={n.person_id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
@@ -257,10 +263,6 @@ const MatchUniverseAvailability = () => {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="mt-3 text-center text-sm text-muted-foreground">
-                {nextLoading ? "Looking further ahead…" : "Nobody in the candidate pool has a free date in the next six months either."}
-              </p>
             )}
           </div>
         ) : (

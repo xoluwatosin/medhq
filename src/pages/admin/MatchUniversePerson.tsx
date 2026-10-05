@@ -2,9 +2,10 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { humaniseTerm } from "@/lib/readable";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Loader2, ArrowLeft, Mail, Phone, MapPin, Briefcase, FileText, ExternalLink, CalendarDays,
-  Compass, ShieldCheck, ShieldAlert, Check, X, MessageCircle, Save, Send, MoreHorizontal, RefreshCw,
+  Compass, ShieldCheck, ShieldAlert, Check, X, MessageCircle, Save, Send, MoreHorizontal, RefreshCw, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -690,55 +691,39 @@ const MatchUniversePerson = () => {
             hasAccount={!!person.auth_user_id}
             onChanged={load}
           />
-          {/* Two columns on a desk: the record we hold on the left, the CV read
-              beside it, so the comparison is a glance and not a scroll. */}
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-
-          <MuSection
-
-            title="Profile details"
-            description="Profession is what this person does, taken from their CV or what they told us, never the role they applied to. Licence and right to work sit under Verification with the tier that earned them, because a tick on a form is a claim and not a credential."
-          >
-            {/* One record, read as a table. Claims carry a quiet provenance
-                line rather than a badge, because the value is the point. */}
+          {/* One record, said once. Contact details live in the band above;
+              the licence has its own place; what the CV says is folded away
+              for the moments it is needed. */}
+          <MuSection title="About them" padded={false}>
             <MuTable
+              className="border-0"
               rows={[
-                { label: "Full name", value: person.full_name },
-                { label: "Email", value: person.email },
-                { label: "Phone", value: person.phone },
-                {
-                  label: "Joined as",
-                  value: (person as any).track ? trackLabel((person as any).track) : null,
-                  note: (person as any).track_source === "candidate_confirmed"
-                    ? "Confirmed by the candidate"
-                    : (person as any).track_source === "inferred"
-                      ? "Worked out from their job title. The candidate confirms it at next sign-in."
-                      : undefined,
-                },
-                { label: "Institution", value: (person as any).institution ?? null },
-                { label: "Course", value: (person as any).course_of_study ?? null },
-                { label: "Level of study", value: (person as any).study_level ?? null },
-                { label: "Year of study", value: (person as any).year_of_study ?? null },
-                { label: "Expected graduation", value: (person as any).expected_graduation ?? null },
-                {
-                  label: "Why they are joining us",
-                  value: (person as any).joining_statement ?? null,
-                  note: "Written by the student in place of a second referee",
-                },
-                { label: "State", value: person.state },
-                { label: "LGA", value: person.lga },
                 { label: "Home address", value: addressLine },
                 {
                   label: "Sex",
                   value: SEX_OPTIONS.find((o) => o.code === String((person as any).sex ?? "").toLowerCase())?.label ?? null,
                   note: CLAIM_NOTE,
                 },
-
                 {
                   label: "Languages",
-                  value: Array.isArray(person.languages)
-                    ? person.languages.join(", ")
-                    : (person.languages as any) ?? null,
+                  value: Array.isArray(person.languages) ? person.languages.join(", ") : (person.languages as any) ?? null,
+                },
+              ]}
+            />
+          </MuSection>
+
+          <MuSection title="Work" padded={false}>
+            <MuTable
+              className="border-0"
+              rows={[
+                {
+                  label: "Joined as",
+                  value: (person as any).track ? trackLabel((person as any).track) : null,
+                  note: (person as any).track_source === "candidate_confirmed"
+                    ? "Confirmed by the candidate"
+                    : (person as any).track_source === "inferred"
+                      ? "Worked out from their job title; they confirm it at next sign-in"
+                      : undefined,
                 },
                 { label: "Profession", value: profession, note: CLAIM_NOTE },
                 {
@@ -746,43 +731,63 @@ const MatchUniversePerson = () => {
                   value: person.years_experience != null ? String(person.years_experience) : null,
                   note: experienceNote,
                 },
-                { label: "Licensing body", value: person.licensing_body, note: CLAIM_NOTE },
-                { label: "Licence number", value: person.license_number, note: CLAIM_NOTE },
-                {
-                  label: "Licence expiry",
-                  value: person.license_expiry ? String(person.license_expiry) : null,
-                  note: CLAIM_NOTE,
-                },
-                {
-                  label: "NYSC",
-                  value: (person as any).nysc_status ? humaniseTerm(String((person as any).nysc_status)) : null,
-                  note: CLAIM_NOTE,
-                },
-                {
-                  label: "Right to work",
-                  value:
-                    (person as any).right_to_work === true ? "Yes, they hold the right to work"
-                    : (person as any).right_to_work === false ? "No, they do not hold the right to work"
-                    : null,
-                  note: CLAIM_NOTE,
-                },
-
+                // Students only: shown when there is something to show.
+                ...[
+                  { label: "Institution", value: (person as any).institution ?? null },
+                  { label: "Course", value: (person as any).course_of_study ?? null },
+                  { label: "Level of study", value: (person as any).study_level ?? null },
+                  { label: "Year of study", value: (person as any).year_of_study ?? null },
+                  { label: "Expected graduation", value: (person as any).expected_graduation ?? null },
+                  { label: "Why they are joining us", value: (person as any).joining_statement ?? null, note: "In place of a second referee" },
+                ].filter((row) => row.value),
               ]}
             />
           </MuSection>
-          <MuSection
-            title="CV summary"
-            description="Data extracted from the CV. Missing or conflicting fields are raised with the candidate in their portal."
-          >
-            <CvDataTab
-              personId={person.id}
-              parseStatus={(person as any).parse_status ?? "not_parsed"}
-              gaps={Array.isArray((person as any).candidate_gaps) ? (person as any).candidate_gaps : []}
-              actor={actor}
-              onProfileChanged={load}
+
+          <MuSection title="Licence" padded={false}>
+            <MuTable
+              className="border-0"
+              rows={[
+                { label: "Licensing body", value: person.licensing_body, note: CLAIM_NOTE },
+                { label: "Licence number", value: person.license_number, note: CLAIM_NOTE },
+                {
+                  label: "Expiry",
+                  value: person.license_expiry ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      {format(new Date(String(person.license_expiry)), "d MMM yyyy")}
+                      {(() => {
+                        const days = Math.ceil((new Date(String(person.license_expiry)).getTime() - Date.now()) / 86400000);
+                        return days < 0
+                          ? <MuStatus tone="bad" label="Expired" />
+                          : days <= 60
+                            ? <MuStatus tone="warning" label={`Expires in ${days} days`} />
+                            : <MuStatus tone="good" label="In date" />;
+                      })()}
+                    </span>
+                  ) : null,
+                  note: CLAIM_NOTE,
+                },
+              ]}
             />
           </MuSection>
-          </div>
+
+          <Collapsible>
+            <MuSection padded={false}>
+              <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-tint/40">
+                <span className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">What their CV says</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-navy" aria-hidden="true" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="border-t-2 border-navy p-5">
+                <CvDataTab
+                  personId={person.id}
+                  parseStatus={(person as any).parse_status ?? "not_parsed"}
+                  gaps={Array.isArray((person as any).candidate_gaps) ? (person as any).candidate_gaps : []}
+                  actor={actor}
+                  onProfileChanged={load}
+                />
+              </CollapsibleContent>
+            </MuSection>
+          </Collapsible>
         </TabsContent>
 
 

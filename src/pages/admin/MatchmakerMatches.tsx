@@ -455,17 +455,13 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
             </Button>
           </>
         );
-        const intro = "Requirements are matched against the candidate pool. Matching uses the selected criteria.";
         // Embedded under the opportunity's own header, so the title is not repeated.
         return embedded ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="max-w-2xl text-sm text-muted-foreground">{intro}</p>
-            <div className="flex flex-wrap gap-2">{headerActions}</div>
-          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">{headerActions}</div>
         ) : (
           <MuPageHeader
             title={op.title}
-            description={intro}
+            description="Requirements and ranked matches."
             backTo={`/admin/match-universe/opportunities/${op.id}`}
             backLabel="Back to opportunity"
             actions={headerActions}
@@ -559,7 +555,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                 setOp({ ...op, min_licence_evidence: v, match_requires_licence: v !== "none" })
               }
             >
-              <SelectTrigger id="licence"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="licence" title="Candidates below this tier are excluded and told why."><SelectValue /></SelectTrigger>
               <SelectContent>
                 {EVIDENCE_TIERS.map((t) => (
                   <SelectItem key={t} value={t}>{TIER_LABELS[t]}</SelectItem>
@@ -575,7 +571,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                 setOp({ ...op, min_right_to_work_evidence: v, match_requires_right_to_work: v !== "none" })
               }
             >
-              <SelectTrigger id="rtw"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="rtw" title="Candidates below this tier are excluded and told why."><SelectValue /></SelectTrigger>
               <SelectContent>
                 {EVIDENCE_TIERS.map((t) => (
                   <SelectItem key={t} value={t}>{TIER_LABELS[t]}</SelectItem>
@@ -584,21 +580,10 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
             </Select>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          A tier, not a tick. "Self declared or better" keeps everyone who said yes on a form. "Document on file"
-          drops anyone with nothing uploaded. "Verified only" keeps those an admin has passed. Candidates below the
-          tier are excluded and told why; unknown is never silently treated as a pass.
-        </p>
 
         {/* What the role asks of a person's own stated preferences. */}
         <div className="space-y-4 pt-2 border-t border-border/60">
-          <div>
-            <h3 className="text-sm font-medium">The work itself</h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              Matched against what each person said they want. Someone who has said nothing still ranks, just lower.
-              Someone who has said they do not take this work, or will not live in, is set aside with the reason shown.
-            </p>
-          </div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">The work itself</h3>
 
           <div className="space-y-2">
             <Label>Kind of care</Label>
@@ -680,7 +665,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
       {/* Facets */}
       <MuSection
         title="Skills and experience"
-        description="Required facets are weighted heavily. Desirable facets separate close candidates."
+        description="Required facets weigh most. Desirable ones separate close candidates."
       >
         <div className="space-y-5">
 
@@ -713,7 +698,9 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
           </div>
         ))}
 
-        <div className="flex flex-wrap gap-2 items-end pt-2 border-t border-line-soft">
+        <div className="border-2 border-navy bg-tint/40 p-3">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Add a facet</p>
+        <div className="flex flex-wrap gap-2 items-end">
           <div className="space-y-1">
             <Label className="text-xs">Type</Label>
             <Select value={newType} onValueChange={(v) => { setNewType(v as FacetType); setNewCode(""); }}>
@@ -747,12 +734,12 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
           </Button>
         </div>
         </div>
+        </div>
       </MuSection>
 
       {/* Matches */}
       <MuSection
-        title="Ranked matches"
-        description={`${matches.length} candidate${matches.length === 1 ? "" : "s"} from the candidate pool.`}
+        title={`Ranked matches (${matches.length})`}
         actions={
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
@@ -769,25 +756,20 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
 
         {/* Who did not make the list, and on what */}
         {excluded.people > 0 && (
-          <div className="border border-line bg-muted/20 p-4">
-            <p className="text-sm">
-              <span className="font-medium">{excluded.people} excluded</span>
-              <span className="text-muted-foreground"> from the ranked list.</span>
-            </p>
+          <div className="border-2 border-navy bg-tint/40 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Excluded ({excluded.people})</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {excluded.reasons.map((r) => (
                 <MuStatus key={r.reason} label={<><span className="tabular-nums">{r.count}</span><span className="font-medium">{r.reason}</span></>} />
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Location never excludes anyone. People outside the area still rank, marked as such.
-            </p>
           </div>
         )}
 
 
         {/* Coverage: who on this list is actually free in a window */}
-        <div className="border border-line bg-muted/30 p-4 space-y-3">
+        <div className="border-2 border-navy bg-tint/40 p-3 space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Coverage</p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label htmlFor="cov-from" className="text-xs">From</Label>
@@ -814,13 +796,11 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
             </Button>
           </div>
           {covOn && (
-            <p className="text-sm text-muted-foreground">
-              Of the {matches.length} candidates ranked,{" "}
-              <span className="font-medium text-foreground">{coverageTally.available} are free</span>,{" "}
-              {coverageTally.unavailable} are busy and {coverageTally.unknown} have not told us yet. Silence is not a no,
-              so those sort below.
-
-            </p>
+            <div className="flex flex-wrap gap-2">
+              <MuStatus tone="good" label={`${coverageTally.available} free`} />
+              <MuStatus tone="warning" label={`${coverageTally.unavailable} busy`} />
+              <MuStatus label={`${coverageTally.unknown} not told us yet`} />
+            </div>
           )}
         </div>
 
@@ -920,12 +900,15 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                 if (!loc) return null;
                 if (loc.outside_area) {
                   return (
-                    <p className="text-xs text-amber-700">
-                      Outside the area asked for{m.state ? `, listed as ${m.state}${m.lga ? `, ${m.lga}` : ""}` : ""}. Still ranked on everything else.
-                    </p>
+                    <div>
+                      <MuStatus
+                        tone="warning"
+                        label={`Outside the area${m.state ? `: ${m.state}${m.lga ? `, ${m.lga}` : ""}` : ""}`}
+                      />
+                    </div>
                   );
                 }
-                if (loc.unknown) return <p className="text-xs text-muted-foreground">No location on file.</p>;
+                if (loc.unknown) return <div><MuStatus label="No location on file" /></div>;
                 return null;
               })()}
 

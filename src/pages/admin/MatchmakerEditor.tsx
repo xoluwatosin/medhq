@@ -284,7 +284,6 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           <div>
             <Label htmlFor="slug">Slug</Label>
             <Input id="slug" value={op.slug} onChange={(e) => update({ slug: e.target.value })} className="mt-1 font-mono text-sm" />
-            <p className="text-xs text-muted-foreground mt-1">Saved drafts and previews share this URL.</p>
           </div>
           <div>
             <Label htmlFor="location">Location</Label>
@@ -316,8 +315,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="mb-3">
-            <Label>Standard applicant fields</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">First name, last name and email are always required. Toggle everything else on or off for this opportunity.</p>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Standard applicant fields (name and email always required)</Label>
           </div>
           <div className="space-y-2">
             {(["phone", "current_position", "years_experience", "cover_note"] as StandardFieldKey[]).map((k) => {
@@ -346,10 +344,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <div>
-              <Label>Applicant questions</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Custom, typed questions. Load from a template or save the current set as one.</p>
-            </div>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Applicant questions</Label>
             <div className="flex items-center gap-2 flex-wrap">
               <Select
                 value=""
@@ -388,7 +383,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <Label>Document uploads</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Document uploads</Label>
             <Button variant="outline" size="sm" onClick={() => update({ document_fields: [...op.document_fields, blankDoc()] })}>
               <Plus className="mr-1 h-3.5 w-3.5" />Add field
             </Button>
@@ -456,11 +451,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
         <Separator />
 
         <div>
-          <Label>Audience group</Label>
-          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-            Manually sending this opportunity to a group makes that group its audience. Auto-create one or pick an existing.
-          </p>
-          <div className="flex gap-2 items-center flex-wrap">
+          <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Audience group</Label>
+          <div className="mt-2 flex gap-2 items-center flex-wrap">
             <Select
               value={op.audience_group_id || "__none"}
               onValueChange={(v) => update({ audience_group_id: v === "__none" ? null : v })}
@@ -532,7 +524,6 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
               <Label>Template name *</Label>
               <Input value={saveTplName} onChange={(e) => setSaveTplName(e.target.value)} className="mt-1" placeholder="For example, ICU nurse standard questions" />
             </div>
-            <p className="text-xs text-muted-foreground">Snapshots the current questions. Editing this template later won't change opportunities already using them.</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSaveTplOpen(false)}>Cancel</Button>
@@ -555,7 +546,6 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
               <Label>Description</Label>
               <Input value={groupDraftDesc} onChange={(e) => setGroupDraftDesc(e.target.value)} className="mt-1" placeholder="Optional" />
             </div>
-            <p className="text-xs text-muted-foreground">This group will be linked to this opportunity and available across Audience and Campaigns.</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setGroupDialogOpen(false)}>Cancel</Button>

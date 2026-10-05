@@ -170,7 +170,7 @@ const MatchUniverseOpportunities = () => {
     <MuPage>
       <MuPageHeader
         title="Opportunities"
-        description="Post internal and partner opportunities. Public pages keep the Healthcare Matchmakers Network branding."
+        description="Public postings and their share links."
         actions={
           <>
             <Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New opportunity</Button>

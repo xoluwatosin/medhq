@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { Loader2, ExternalLink, FileText, Search, ArrowUpDown, Mail, MailX, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MuEmpty, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuStatus, MuToolbar, type MuTone } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -273,27 +273,28 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-3 mb-4 items-center">
-            <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <div className="mb-4">
+          <MuToolbar>
+            <div className="relative flex-1 min-w-0 lg:max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search name, email, role…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Search name, email, role…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-background" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="w-full bg-background lg:w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All stages</SelectItem>
                 {APPLICATION_STAGES.map((k) => <SelectItem key={k} value={k}>{STAGE_LABEL[k]}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Source" /></SelectTrigger>
+              <SelectTrigger className="w-full bg-background lg:w-[160px]"><SelectValue placeholder="Source" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All sources</SelectItem>
                 {sources.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-              <SelectTrigger className="w-[190px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full bg-background lg:w-[190px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="created_desc">Newest first</SelectItem>
                 <SelectItem value="created_asc">Oldest first</SelectItem>
@@ -302,13 +303,16 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                 <SelectItem value="exp_asc">Least experience</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground ml-auto">{filtered.length} of {apps.length}</span>
+            <span className="text-xs text-muted-foreground lg:ml-auto">{filtered.length} of {apps.length}</span>
             {embedded && (
               <ExportDropdown data={filtered} filename={`matchmaker-${opp?.slug || "applications"}`} />
             )}
+          </MuToolbar>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="mb-4 border-2 border-navy bg-tint/40 p-3">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Email candidates</p>
+            <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => setChecked(new Set(filtered.filter((a) => STAGE_IN_PROGRESS.includes(a.stage)).map((a) => a.id)))}>
               Select everyone in progress
             </Button>
@@ -331,6 +335,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                 <Button size="sm" variant="ghost" onClick={() => setChecked(new Set())}>Clear</Button>
               </>
             )}
+            </div>
           </div>
 
           <div className="hidden md:block border border-line overflow-hidden bg-card">
@@ -539,9 +544,8 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
               <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">Message</Label>
+              <Label className="text-xs">Message (Markdown, [[cta:Label|url]] for a button)</Label>
               <Textarea rows={14} value={bodyText} onChange={(e) => setBodyText(e.target.value)} className="font-mono text-xs" />
-              <p className="text-xs text-muted-foreground mt-1">Markdown supported. Use [[cta:Label|url]] for a button.</p>
             </div>
             <div className="border-t pt-4">
               <Label className="text-xs">Send a test to yourself</Label>
@@ -554,15 +558,13 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                 />
                 <Button
                   variant="outline"
+                  title="Uses the first selected candidate, or sample data. Not logged."
                   onClick={sendTest}
                   disabled={testing || (composeType === "interview_invite" && !bookingLink.startsWith("https://"))}
                 >
                   {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send test
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Uses the first selected candidate's details when available, otherwise sample data. Not logged and never sent to candidates.
-              </p>
             </div>
           </div>
           <DialogFooter>

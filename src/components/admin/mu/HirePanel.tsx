@@ -34,7 +34,7 @@ import {
   MuEmpty, MuField, MuFieldGrid, MuNote, MuRecord, MuSection, MuStatus, MuTone,
 } from "@/components/admin/mu/MuShell";
 import WorkPanel from "@/components/admin/mu/WorkPanel";
-import { OFFER_STATUS_ADMIN_LABEL, type Offer } from "@/lib/offers";
+import { type Offer } from "@/lib/offers";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -134,11 +134,7 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
 
       <MuSection
         title={showBin ? "Contracts in the bin" : "Contracts"}
-        description={
-          showBin
-            ? "Drafts moved out of the way. Nothing here was destroyed, and any of it can be restored."
-            : "Draft it, issue it for signature, then it becomes active. Renewals and amendments stack here rather than replacing the last one."
-        }
+        description={showBin ? "Binned drafts can be restored." : undefined}
         padded={false}
         actions={
           <>
@@ -163,14 +159,7 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
           <MuEmpty
             icon={FileSignature}
             title={showBin ? "The bin is empty" : "No contract on file"}
-            description={
-              showBin
-                ? "Nothing has been binned for this candidate."
-                : acceptedOffers.length > 0
-                ? "They have accepted an offer, so a contract can be built straight from its terms."
-                : "Send an offer first, then build the contract from the terms they accept."
-
-            }
+            description={showBin || acceptedOffers.length > 0 ? undefined : "Send an offer first."}
           />
         ) : (
           <div className="divide-y divide-border/60">
@@ -271,20 +260,12 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
         )}
       </MuSection>
 
-      {acceptedOffers.length > 0 && (
-        <MuNote title="Offers they have accepted">
-          {acceptedOffers
-            .map((o) => `${o.title || "Untitled offer"} (${OFFER_STATUS_ADMIN_LABEL[o.status] || o.status})`)
-            .join(", ")}
-        </MuNote>
-      )}
-
       <Dialog open={templateDialog} onOpenChange={setTemplateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Start the contract</DialogTitle>
             <DialogDescription>
-              Pick the role template. The candidate and accepted offer details are still carried into the draft.
+              Candidate and offer details carry into the draft.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

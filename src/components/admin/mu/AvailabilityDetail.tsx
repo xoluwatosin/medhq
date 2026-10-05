@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminDb } from "@/lib/admin-utils";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { MuStatus } from "./MuShell";
 import {
   BLOCKS,
   BLOCK_LABEL,
@@ -145,22 +146,18 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
 
   return (
     <div className={cn("space-y-5", className)}>
-      <p className="text-sm text-foreground">
-        {counts.free > 0
-          ? `They have said they are free on ${counts.free} of the next ${weeks * 7} days.`
-          : `They have not named a single free day in the next ${weeks * 7} days.`}{" "}
-        {counts.booked > 0 ? `They have said they are booked on ${counts.booked} days. ` : ""}
-        {counts.silent > 0
-          ? `They have said nothing about ${counts.silent} days, which is silence rather than a no.`
-          : "They have answered for every day in this window."}{" "}
-        <span className="text-muted-foreground">{freshnessLabel(lastUpdate)}.</span>
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <MuStatus tone={counts.free > 0 ? "good" : "neutral"} label={`${counts.free} of ${weeks * 7} days free`} />
+        {counts.booked > 0 && <MuStatus tone="warning" label={`${counts.booked} booked`} />}
+        {counts.silent > 0 && <MuStatus label={`${counts.silent} not told us`} />}
+        <MuStatus label={freshnessLabel(lastUpdate)} />
+      </div>
 
       {/* The usual week they told us about, before any single day overrides it. */}
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Their usual week</p>
         {weekly.every((w) => !w.blocks) ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">They have not set a usual week, only single days.</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">No usual week set</p>
         ) : (
           <div className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             {weekly.map((w) => {
@@ -256,7 +253,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 border border-dashed border-border/70 bg-muted/20" /> Not told us
           </span>
-          <span>Dots are morning, afternoon, evening, night.</span>
+          <span>Dots: morning, afternoon, evening, night</span>
         </div>
       </div>
 
@@ -266,9 +263,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
           The exact hours they gave
         </p>
         {named.length === 0 ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            They have not named any free hours in this window.
-          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground">No free hours named in this window</p>
         ) : (
           <ul className="mt-2 divide-y divide-line-soft border border-line">
             {named.slice(0, 60).map(({ date, blocks, source }) => (
@@ -287,9 +282,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
           </ul>
         )}
         {named.length > 60 && (
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Showing the first 60 days they named. The rest sit further out than this window.
-          </p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Showing the first 60 days</p>
         )}
       </div>
     </div>

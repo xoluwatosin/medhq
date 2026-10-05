@@ -140,7 +140,7 @@ const MatchUniverseMerges = () => {
     <MuPage className="max-w-5xl">
       <MuPageHeader
         title="Duplicates"
-        description="Exact email and phone matches merge on their own. These are the weaker matches that need your call."
+        description="Possible matches that need your call."
         backTo="/admin/match-universe"
         backLabel="Talent pool"
       />

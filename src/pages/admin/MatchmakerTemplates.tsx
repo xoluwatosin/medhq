@@ -108,8 +108,7 @@ const MatchmakerTemplates = () => {
             <Textarea id="td" rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="mt-1" placeholder="Optional. What this template is for." />
           </div>
           <div>
-            <Label>Questions</Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-3">These questions get copied into an opportunity when you load this template.</p>
+            <Label className="mb-3 block">Questions</Label>
             <QuestionBuilder value={editing.questions} onChange={(q) => setEditing({ ...editing, questions: q })} />
           </div>
         </div>
@@ -121,7 +120,7 @@ const MatchmakerTemplates = () => {
     <MuPage className="max-w-4xl mx-auto">
       <MuPageHeader
         title="Question templates"
-        description="Reusable question sets you can drop into any opportunity."
+        description="Reusable question sets for opportunities."
         backTo="/admin/match-universe/opportunities"
         backLabel="Opportunities"
         actions={

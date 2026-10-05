@@ -1041,7 +1041,8 @@ All colors MUST be HSL.
   .admin-kit thead tr:hover { background: transparent; }
 
   /* Tables sit on a card with the site's navy edge and hard offset. */
-  .admin-kit main div:has(> table):not(:has(> table thead.bg-navy)) {
+  /* Only a list table standing on its own; a table inside a card is the card's. */
+  .admin-kit main div:has(> table > thead):not(:has(> table thead.bg-navy)):not(section > div):not(section div div) {
     border: 2px solid hsl(var(--navy));
     box-shadow: 6px 6px 0 hsl(var(--navy));
     background: hsl(var(--card));

@@ -10,7 +10,7 @@ import { FilterChips } from "@/components/admin/FilterChips";
 
 import { formatDistanceToNow } from "date-fns";
 import {
-  AlertTriangle, CalendarDays, Check, Clock, ExternalLink, FileText, Flame, Inbox, Loader2,
+  AlertTriangle, CalendarDays, Check, Clock, ExternalLink, FileText, Flame, Loader2,
   Mail, ScanLine, Search, ShieldCheck, StickyNote, Tag, X,
 } from "lucide-react";
 
@@ -243,13 +243,12 @@ const MatchUniverseVerification = () => {
         backTo="/admin/match-universe"
         backLabel="Talent pool"
         title="Document review"
-        description="Documents awaiting a decision, most urgent first. Uploads from the portal, applications and admin all arrive here."
+        description="Documents awaiting a decision, most urgent first."
       />
 
       <MuStats
-        columns={3}
+        columns={2}
         stats={[
-          { label: "Waiting on review", value: rows.length, icon: Inbox, tone: rows.length ? "attention" : "default" },
           { label: "Arrived today", value: arrivedToday, icon: Clock },
           { label: "On a live shortlist", value: pressured, icon: Flame, hint: "Review these first." },
         ]}
@@ -293,11 +292,7 @@ const MatchUniverseVerification = () => {
             ? `${backlog} document${backlog === 1 ? "" : "s"} to review`
             : `${filtered.length} of ${backlog} document${backlog === 1 ? "" : "s"} to review`
         }
-        description={
-          rows.length < backlog
-            ? `Open the file, then accept it or return it with a reason. Showing the first ${rows.length}, most urgent first.`
-            : "Open the file, then accept it or return it with a reason. Accepting a document settles what it proves."
-        }
+        description={rows.length < backlog ? `Showing the first ${rows.length}.` : undefined}
 
         padded={false}
         actions={
@@ -331,7 +326,7 @@ const MatchUniverseVerification = () => {
           <MuEmpty
             art={art.objDocumentMagnifier}
             title="Nothing to review"
-            description="All documents have been accepted or returned. New uploads appear here immediately."
+            description="New uploads appear here as they arrive."
           />
         )}
 

@@ -42,11 +42,8 @@ const Chip = ({ on, label, onClick }: { on: boolean; label: string; onClick: () 
 const Group = ({
   label, help, children,
 }: { label: string; help?: string; children: React.ReactNode }) => (
-  <div className="space-y-2">
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      {help ? <p className="mt-0.5 text-xs text-muted-foreground">{help}</p> : null}
-    </div>
+  <div className="space-y-2" title={help}>
+    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">{label}</p>
     <div className="flex flex-wrap gap-1.5">{children}</div>
   </div>
 );
@@ -67,7 +64,7 @@ interface Props {
 const RequirementChoices = ({ value, onChange, showProfessions = true, compact = false }: Props) => (
   <div className={cn("space-y-5", compact && "space-y-4")}>
     {showProfessions && (
-      <Group label="Profession" help="Only these professions are ranked. Leave empty and every profession is in scope.">
+      <Group label="Profession" help="Leave empty to rank every profession.">
         {PROFESSIONS.map((p) => (
           <Chip
             key={p}
@@ -79,7 +76,7 @@ const RequirementChoices = ({ value, onChange, showProfessions = true, compact =
       </Group>
     )}
 
-    <Group label="Type of care" help="Matched against what each candidate has said they will take on.">
+    <Group label="Type of care" help="Matched against what each candidate will take on.">
       {CARE_TYPES.map((c) => (
         <Chip
           key={c.code}
@@ -90,7 +87,7 @@ const RequirementChoices = ({ value, onChange, showProfessions = true, compact =
       ))}
     </Group>
 
-    <Group label="Shift patterns" help="A candidate who has ruled out these shifts is excluded.">
+    <Group label="Shift patterns" help="Candidates who ruled out these shifts are excluded.">
       {SHIFT_PATTERNS.map((s) => (
         <Chip
           key={s.code}
@@ -103,7 +100,7 @@ const RequirementChoices = ({ value, onChange, showProfessions = true, compact =
 
     <div className={cn("grid gap-4", compact ? "sm:grid-cols-2" : "sm:grid-cols-2")}>
       <div className="space-y-1.5">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Living arrangement</label>
+        <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Living arrangement</label>
         <Select
           value={value.match_live_in ?? "any"}
           onValueChange={(v) => onChange({ match_live_in: v })}
@@ -117,7 +114,7 @@ const RequirementChoices = ({ value, onChange, showProfessions = true, compact =
         </Select>
       </div>
       <div className="space-y-1.5">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Least experience accepted</label>
+        <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Least experience accepted</label>
         <Select
           value={value.match_min_years == null ? "none" : String(value.match_min_years)}
           onValueChange={(v) => onChange({ match_min_years: v === "none" ? null : Number(v) })}

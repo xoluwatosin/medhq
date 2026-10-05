@@ -139,7 +139,7 @@ const MatchUniverseIntake = () => {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <MuSection title="Document sources" description="All files on record, grouped by intake source.">
+        <MuSection title="Document sources">
           <ul className="space-y-2">
             {Object.entries(health?.docs_by_source ?? {}).map(([k, v]) => (
               <li key={k} className="flex items-center justify-between text-sm">
@@ -153,7 +153,7 @@ const MatchUniverseIntake = () => {
           </ul>
         </MuSection>
 
-        <MuSection title="CV processing status" description="Parse state across every profile.">
+        <MuSection title="CV processing status">
           <ul className="space-y-2">
             {Object.entries(health?.parse_status ?? {}).map(([k, v]) => (
               <li key={k} className="flex items-center justify-between text-sm">
@@ -171,7 +171,7 @@ const MatchUniverseIntake = () => {
 
       <MuSection
         title="Portal access"
-        description="Candidates who cannot complete their profile until invited to the portal."
+        description="Candidates need an invite to finish their profile."
         actions={
           <>
             <Button size="sm" variant="outline" disabled={busy === "sweep"} onClick={sweep}>
@@ -199,7 +199,6 @@ const MatchUniverseIntake = () => {
 
       <MuSection
         title={`${backlog.length} profile${backlog.length === 1 ? "" : "s"} the parser has not finished with`}
-        description="Failures first. Profiles with no CV need chasing rather than reprocessing."
         padded={false}
       >
         {backlog.length === 0 && (
