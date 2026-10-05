@@ -4,9 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Copy, Send } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Copy, Send, ArchiveRestore } from "lucide-react";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { adminDb } from "@/lib/admin-utils";
+import { selectAll } from "@/lib/select-all";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
@@ -40,6 +42,44 @@ const Campaigns = () => {
   };
 
   useEffect(() => { fetchCampaigns(); }, []);
+
+  // Campaigns are not archived from this page, but archived ones stay reachable here.
+  const [view, setView] = useState<"active" | "archived">("active");
+  const showingArchived = view === "archived";
+  const [archived, setArchived] = useState<Campaign[] | null>(null);
+  const [archivedFailed, setArchivedFailed] = useState(false);
+
+  useEffect(() => {
+    if (!showingArchived || archived !== null) return;
+    (async () => {
+      setArchivedFailed(false);
+      try {
+        const rows = await selectAll<Campaign>((from, to) =>
+          adminDb().from("campaigns").select("*").eq("archived", true)
+            .order("created_at", { ascending: false }).order("id").range(from, to),
+        );
+        setArchived(rows);
+      } catch (err) {
+        setArchivedFailed(true);
+        setArchived([]);
+        toast({ title: "Could not load archived campaigns", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+      }
+    })();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [showingArchived, archived]);
+
+  const restoreCampaign = async (id: string) => {
+    const { error } = await adminDb().from("campaigns").update({ archived: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not restore", description: error.message, variant: "destructive" });
+      return;
+    }
+    setArchived((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
+    toast({ title: "Campaign restored" });
+    fetchCampaigns();
+  };
+
+  const rows = showingArchived ? archived ?? [] : campaigns;
 
   const createNew = async () => {
     const { data, error } = await adminDb().from("campaigns").insert({ title: "Untitled Campaign" }).select().single();
@@ -88,7 +128,23 @@ const Campaigns = () => {
         description="Email campaigns to patients, carers and staff, with delivery and open rates."
         actions={<Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New campaign</Button>}
       />
-      {campaigns.length === 0 ? (
+      <Tabs value={view} onValueChange={(v) => setView(v as "active" | "archived")}>
+        <TabsList>
+          <TabsTrigger value="active">Campaigns</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {showingArchived && archived === null ? (
+        <div className="flex justify-center border border-line bg-card py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : showingArchived && archivedFailed ? (
+        <div className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-foreground">
+          Archived campaigns could not be loaded. Refresh to try again.
+        </div>
+      ) : showingArchived && rows.length === 0 ? (
+        <MuSection padded={false}>
+          <MuEmpty art={art.objFolderDocuments} title="No archived campaigns" description="Archived campaigns appear here and can be restored." />
+        </MuSection>
+      ) : rows.length === 0 ? (
         <MuSection padded={false}>
           <MuEmpty
             art={art.objEnvelope}
@@ -105,7 +161,7 @@ const Campaigns = () => {
             <TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Recipients</TableHead><TableHead>Delivered</TableHead><TableHead>Opened</TableHead><TableHead>Clicked</TableHead><TableHead>Date</TableHead><TableHead className="w-24"><span className="sr-only">Actions</span></TableHead></TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.map((c) => (
+            {rows.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">
                   <div>{c.title || "Untitled"}</div>
@@ -141,6 +197,11 @@ const Campaigns = () => {
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">{c.sent_at ? format(new Date(c.sent_at), "dd MMM yyyy") : format(new Date(c.created_at), "dd MMM yyyy")}</TableCell>
                 <TableCell>
+                  {showingArchived ? (
+                    <Button variant="ghost" size="sm" onClick={() => void restoreCampaign(c.id)}>
+                      <ArchiveRestore className="mr-2 h-4 w-4" />Restore
+                    </Button>
+                  ) : (
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" asChild><Link to={`/admin/campaigns/${c.id}`} aria-label="Edit"><Pencil className="h-4 w-4" /></Link></Button>
                     <Button variant="ghost" size="icon" onClick={() => duplicate(c)} title="Duplicate" aria-label="Duplicate"><Copy className="h-4 w-4" /></Button>
@@ -161,6 +222,7 @@ const Campaigns = () => {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -170,12 +232,21 @@ const Campaigns = () => {
       <ConsoleMobileList
         emptyLabel="No campaigns yet."
         emptyIcon={Megaphone}
-        rows={campaigns.map((c) => ({
+        rows={rows.map((c) => ({
           key: c.id,
           title: c.title || "Untitled",
           state: `${c.total_recipients} recipients, ${c.sent_at ? format(new Date(c.sent_at), "dd MMM yyyy") : format(new Date(c.created_at), "dd MMM yyyy")}`,
           status: <MuStatus label={c.status} tone={statusTone[c.status] ?? "neutral"} />,
-          to: `/admin/campaigns/${c.id}`,
+          // An archived row carries its Restore button, so it is not a link as well.
+          ...(showingArchived
+            ? {
+                trailing: (
+                  <Button variant="outline" size="sm" onClick={() => void restoreCampaign(c.id)}>
+                    <ArchiveRestore className="mr-2 h-4 w-4" />Restore
+                  </Button>
+                ),
+              }
+            : { to: `/admin/campaigns/${c.id}` }),
         }))}
       />
       </>
