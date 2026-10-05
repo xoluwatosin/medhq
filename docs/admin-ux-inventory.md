@@ -11,6 +11,26 @@ contacts, 97 enquiries, 9 care requests). Loading a list whole and filtering
 in the browser is fine at this size. The exceptions are noted under
 Efficiency.
 
+## Done (5 October)
+
+- Filters that remember, with chips and Clear all: Talent Pool, Clients,
+  Enquiries, Document review. Talent Pool folded to five views, everyday
+  filters up front and More filters.
+- One way to issue a contract, with checks and the signing email, from
+  all four places. Signed contracts are countersigned, not marked active.
+- One requirements editor on a staffing request.
+- Availability's Offer work opens the right tab; shortlists that moved on
+  can't be erased from the person record; bulk accept keeps failures;
+  campaign copies keep their layout; catalogue reset asks first; closed
+  postings keep their close date; dead Auto-send button removed.
+
+Still open from section 2: matching ranks staff and paused people (a
+database function change, after cutover), staffing requests can't be
+binned and "Last matched" is never filled, staff status can be set to
+exited without Return to Talent, contract template issue ignores unsaved
+edits, annex library loses unsaved edits, posting editor loses unsaved
+Details, Overview counts that don't match their pages, the Email Library.
+
 ## The verdict
 
 1. **Filters have no memory, anywhere.** Every filter, search, view tab,
