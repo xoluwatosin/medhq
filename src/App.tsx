@@ -96,6 +96,7 @@ import Invoices from "./pages/admin/Invoices";
 import SetPassword from "./pages/SetPassword";
 import ContractSign from "./pages/ContractSign";
 import ContractEditor from "./pages/admin/ContractEditor";
+import ContractsRegister from "./pages/admin/ContractsRegister";
 import ContractTemplates from "./pages/admin/ContractTemplates";
 import ContractTemplateEditor from "./pages/admin/ContractTemplateEditor";
 import AnnexLibrary from "./pages/admin/AnnexLibrary";
@@ -296,6 +297,7 @@ const App = () => (
               <Route path="me" element={<MyProfile />} />
               <Route path="workforce" element={<Workforce />} />
               <Route path="workforce/:id" element={<WorkforceStaff />} />
+              <Route path="contracts" element={<ContractsRegister />} />
               <Route path="contracts/templates" element={<ContractTemplates />} />
               <Route path="contracts/templates/:id" element={<ContractTemplateEditor />} />
               <Route path="contracts/annexes" element={<AnnexLibrary />} />

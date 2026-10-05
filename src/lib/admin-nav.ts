@@ -92,7 +92,8 @@ export const adminDomains: AdminDomain[] = [
     icon: IdCard,
     url: "/admin/workforce",
     items: [
-      { title: "Workforce", url: "/admin/workforce", icon: IdCard, perm: "workforce", keywords: "staff register contracts compliance employees" },
+      { title: "Workforce", url: "/admin/workforce", icon: IdCard, perm: "workforce", keywords: "staff register compliance employees" },
+      { title: "Contracts", url: "/admin/contracts", icon: FileSignature, perm: "workforce", exact: true, keywords: "contracts awaiting signature countersign issued drafts register" },
     ],
     aside: [
       { title: "Contract templates", url: "/admin/contracts/templates", icon: FileSignature, perm: "workforce", keywords: "contract template employment letter" },

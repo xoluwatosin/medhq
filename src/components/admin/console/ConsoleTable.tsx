@@ -22,7 +22,7 @@ const ConsoleTable = <T,>({ columns, rows, rowKey, renderRow, className }: Conso
           <col key={column.key} style={{ width: column.width }} />
         ))}
       </colgroup>
-      <thead className="bg-grey-pill text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-copy">
+      <thead className="bg-tint/40 text-[11px] font-bold uppercase tracking-[0.12em] text-label">
         <tr className="h-8 border-b border-line-soft">
           {columns.map((column) => (
             <th key={column.key} scope="col" className="border-r border-line-soft px-3 py-2 last:border-r-0">
