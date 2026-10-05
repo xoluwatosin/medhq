@@ -87,7 +87,7 @@ const WelcomeIntake = ({ forceOpen = false, onClose }: WelcomeIntakeProps) => {
               <div className="min-w-0">
                 <PriceLine price={chosen.price} />
                 <p className="mt-1.5 text-[14px] leading-[1.5] text-body">
-                  A <b className="text-ink">₦35,000</b> care needs assessment may be done before care begins.
+                  Before care begins, we may visit for a care needs assessment, so the plan is right from the first day. It costs <b className="text-ink">₦35,000</b>.
                 </p>
               </div>
             </div>
