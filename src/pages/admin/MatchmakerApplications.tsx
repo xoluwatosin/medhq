@@ -16,7 +16,7 @@ import ExportDropdown from "@/components/admin/ExportDropdown";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
-import { APP_STATUS_LABELS } from "@/lib/matchmaker";
+import { APPLICATION_STAGES, STAGE_LABEL } from "@/lib/applications";
 import { openDocumentTab } from "@/lib/documents";
 import ConsoleMobileList, { ConsoleMobileRow } from "@/components/admin/console/ConsoleMobileList";
 
@@ -50,6 +50,8 @@ interface App {
   requirement_answers: Record<string, any>;
   question_answers: Record<string, any>;
   status: string;
+  /** The one application stage, shared with the candidate's record. */
+  stage: string;
   admin_notes: string | null;
   created_at: string;
   utm_source: string | null;
@@ -61,9 +63,14 @@ interface App {
   landing_path: string | null;
 }
 
-const statusTone: Record<string, MuTone> = {
-  new: "info", reviewing: "neutral", shortlisted: "good", rejected: "warning", hired: "good",
-};
+// One stage list for an application, the same one the candidate's record and
+// their portal use. The old status column is kept in step by the database.
+const stageTone = (stage: string): MuTone =>
+  stage === "offer_made" ? "good"
+    : stage === "applied" ? "info"
+      : stage === "not_taken_forward" || stage === "withdrawn" ? "neutral"
+        : "warning";
+const STAGE_IN_PROGRESS = ["shortlisted", "interview_offered", "interview_booked", "interview_held"];
 
 interface MatchmakerApplicationsProps {
   embedded?: boolean;
@@ -196,7 +203,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = apps.filter((a) => {
-      if (statusFilter !== "all" && a.status !== statusFilter) return false;
+      if (statusFilter !== "all" && a.stage !== statusFilter) return false;
       if (sourceFilter !== "all" && sourceOf(a) !== sourceFilter) return false;
       if (q) {
         const hay = `${a.full_name} ${a.email} ${a.phone || ""} ${a.current_position || ""}`.toLowerCase();
@@ -224,10 +231,14 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
   };
 
 
-  const updateStatus = async (appId: string, status: string) => {
-    await adminDb().from("matchmaker_applications").update({ status }).eq("id", appId);
-    setApps((p) => p.map((a) => (a.id === appId ? { ...a, status } : a)));
-    if (selected?.id === appId) setSelected({ ...selected, status });
+  const updateStage = async (appId: string, stage: string) => {
+    const { error } = await (adminDb() as any).rpc("mu_set_application_stage", { _application_id: appId, _stage: stage, _note: null });
+    if (error) {
+      toast({ title: "Stage not changed", description: error.message, variant: "destructive" });
+      return;
+    }
+    setApps((p) => p.map((a) => (a.id === appId ? { ...a, stage } : a)));
+    if (selected?.id === appId) setSelected({ ...selected, stage });
   };
 
   const updateNotes = async (appId: string, notes: string) => {
@@ -270,8 +281,8 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {Object.entries(APP_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                <SelectItem value="all">All stages</SelectItem>
+                {APPLICATION_STAGES.map((k) => <SelectItem key={k} value={k}>{STAGE_LABEL[k]}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
@@ -298,8 +309,8 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Button size="sm" variant="outline" onClick={() => setChecked(new Set(filtered.filter((a) => a.status === "shortlisted").map((a) => a.id)))}>
-              Select all shortlisted
+            <Button size="sm" variant="outline" onClick={() => setChecked(new Set(filtered.filter((a) => STAGE_IN_PROGRESS.includes(a.stage)).map((a) => a.id)))}>
+              Select everyone in progress
             </Button>
             <Button size="sm" variant="outline" onClick={() => openCompose("interview_invite")}>
               <Mail className="mr-2 h-4 w-4" />Test invite email
@@ -372,7 +383,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                       {mail?.reject && <span className="inline-flex items-center gap-1 text-muted-foreground">{mail?.invite && <br />}<MailX className="h-3.5 w-3.5" />Rejected</span>}
                       {!mail && <span className="text-muted-foreground">Not yet</span>}
                     </TableCell>
-                    <TableCell><MuStatus tone={statusTone[a.status] ?? "neutral"} label={APP_STATUS_LABELS[a.status] ?? a.status} /></TableCell>
+                    <TableCell><MuStatus tone={stageTone(a.stage)} label={STAGE_LABEL[a.stage] ?? a.stage} /></TableCell>
 
                   </TableRow>
                   );
@@ -396,7 +407,7 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                       .map((part, i) => <span key={i}>{part}</span>)}
                   </span>
                 ),
-                status: <MuStatus tone={statusTone[a.status] ?? "neutral"} label={APP_STATUS_LABELS[a.status] ?? a.status} />,
+                status: <MuStatus tone={stageTone(a.stage)} label={STAGE_LABEL[a.stage] ?? a.stage} />,
                 onOpen: () => setSelected(a),
               };
             })}
@@ -481,12 +492,12 @@ const MatchmakerApplications = ({ embedded }: MatchmakerApplicationsProps) => {
                   </div>
                 )}
                 <div>
-                  <p className="text-muted-foreground text-xs mb-1">Status</p>
-                  <Select value={selected.status} onValueChange={(v) => updateStatus(selected.id, v)}>
-                    <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <p className="text-muted-foreground text-xs mb-1">Stage</p>
+                  <Select value={selected.stage} onValueChange={(v) => updateStage(selected.id, v)}>
+                    <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(APP_STATUS_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      {APPLICATION_STAGES.filter((k) => k !== "withdrawn" || selected.stage === "withdrawn").map((k) => (
+                        <SelectItem key={k} value={k}>{STAGE_LABEL[k]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
