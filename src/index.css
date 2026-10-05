@@ -398,7 +398,7 @@ All colors MUST be HSL.
   }
   .cx-join input.cx-chip,
   .cx-join select.cx-chip,
-  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 52px; font-size: 16px; background: #fff; }
+  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 52px; font-size: 16px; background-color: #fff; }
   .cx-join label { font-size: 14.5px; font-weight: 800; color: hsl(var(--navy)); }
   .cx-join button.cx-control[type="submit"] { min-height: 54px; font-size: 16.5px; font-weight: 800; box-shadow: 4px 4px 0 hsl(var(--brand)); }
   .cx-join button.cx-control[type="submit"]:disabled { box-shadow: none; }
@@ -425,12 +425,31 @@ All colors MUST be HSL.
   .cx-portal .cx-chip { border-radius: 0; }
   .cx-portal input.cx-chip,
   .cx-portal select.cx-chip,
-  .cx-portal textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 48px; font-size: 15.5px; background: #fff; }
+  .cx-portal textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 48px; font-size: 15.5px; background-color: #fff; }
   .cx-portal input.cx-chip:focus,
   .cx-portal select.cx-chip:focus,
   .cx-portal textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
   .cx-portal .cx-control.bg-navy { box-shadow: 4px 4px 0 hsl(var(--brand)); font-weight: 800; }
   .cx-portal .cx-control.bg-navy:disabled { box-shadow: none; }
+
+  /* One field look on candidate pages: every text box, phone dropdown and
+     site dropdown is 48px, 2px navy-tint border, 10px corners, a navy arrow. */
+  .cx-portal :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-join :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-portal button[role="combobox"], .cx-join button[role="combobox"] {
+    border-radius: 10px; border: 2px solid hsl(var(--navy) / 0.2); background-color: #fff; font-size: 15.5px; color: hsl(var(--ink));
+  }
+  .cx-portal :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select), .cx-join :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select),
+  .cx-portal button[role="combobox"], .cx-join button[role="combobox"] { min-height: 48px; }
+  .cx-portal :is(input, textarea, select):focus, .cx-join :is(input, textarea, select):focus,
+  .cx-portal button[role="combobox"]:focus, .cx-join button[role="combobox"]:focus { border-color: hsl(var(--brand)); outline: none; box-shadow: none; }
+  .cx-portal button[role="combobox"] > svg, .cx-join button[role="combobox"] > svg { color: hsl(var(--navy)); opacity: 1; }
+  .cx-portal select, .cx-join select {
+    appearance: none; padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2326306B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .cx-portal label, .cx-portal .cx-label { color: hsl(var(--navy)); }
   .cx-portal .cx-section-head h2.cx-heading { font-size: 24px; line-height: 1.1; color: hsl(var(--navy)); }
   .cx-portal .cx-section-head { border-top: 4px solid hsl(var(--navy)); padding-top: 18px; margin-top: 10px; }
   @media (min-width: 768px) { .cx-portal .cx-section-head h2.cx-heading { font-size: 28px; } }

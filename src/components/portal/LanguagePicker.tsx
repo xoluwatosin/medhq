@@ -41,7 +41,7 @@ const LanguagePicker = ({ value, onChange }: Props) => {
               key={c}
               type="button"
               onClick={() => remove(c)}
-              className="inline-flex items-center gap-1.5 border border-border bg-muted px-2.5 py-1 text-[13px] font-semibold text-foreground"
+              className="inline-flex items-center gap-1.5 border-2 border-navy bg-tint px-2.5 py-1 text-[13.5px] font-bold text-navy hover:bg-white"
             >
               {c}
               <X className="h-3.5 w-3.5" aria-hidden />
@@ -71,14 +71,14 @@ const LanguagePicker = ({ value, onChange }: Props) => {
       />
 
       {focused && suggestions.length > 0 && (
-        <ul className="mt-1.5 max-h-56 overflow-y-auto border border-border bg-background">
+        <ul className="mt-1.5 max-h-56 overflow-y-auto border-2 border-navy bg-white shadow-[5px_5px_0_hsl(var(--navy))]">
           {suggestions.map((s) => (
             <li key={s}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => add(s)}
-                className="flex w-full px-3 py-2.5 text-left text-[14.5px] hover:bg-muted"
+                className="flex min-h-10 w-full px-3 py-2.5 text-left text-[14.5px] font-semibold hover:bg-tint hover:text-navy"
               >
                 {s}
               </button>

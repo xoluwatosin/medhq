@@ -303,7 +303,7 @@ const PortalContractDoc = () => {
               </div>
 
               <label className="mt-5 flex items-start gap-3 text-[15px] leading-relaxed text-body">
-                <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
+                <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5 h-5 w-5 rounded-none border-2 border-navy data-[state=checked]:border-brand data-[state=checked]:bg-brand" />
                 <span>
                   By giving my name and ticking this box I confirm that this is my electronic
                   signature and that it has the same effect as a signature in ink.

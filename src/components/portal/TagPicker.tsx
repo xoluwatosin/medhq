@@ -41,7 +41,7 @@ const TagPicker = ({ options, value, placeholder = "Type anything we have missed
 
   return (
     <div className="space-y-3">
-      <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto border border-border bg-background p-2.5">
+      <div className="flex max-h-60 flex-wrap gap-2 overflow-y-auto border-2 border-navy/15 bg-white p-3">
         {options.map((option) => {
           const on = chosen.some((c) => c.toLowerCase() === option.toLowerCase());
           return (
@@ -51,13 +51,18 @@ const TagPicker = ({ options, value, placeholder = "Type anything we have missed
               onClick={() => toggle(option)}
               aria-pressed={on}
               className={cn(
-                "flex items-center gap-1.5 border px-2.5 py-1.5 text-[13.5px] transition-colors",
+                "flex min-h-10 items-center gap-2 border-2 px-3 py-1.5 text-[14px] font-bold transition-colors",
                 on
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-body hover:border-primary",
+                  ? "border-navy bg-tint text-navy shadow-[2px_2px_0_hsl(var(--brand))]"
+                  : "border-navy/15 bg-white text-ink hover:border-navy/50",
               )}
             >
-              {on && <Check className="h-3.5 w-3.5" />}
+              <span
+                aria-hidden="true"
+                className={cn("grid h-4 w-4 shrink-0 place-items-center border-2", on ? "border-brand bg-brand text-white" : "border-navy/30")}
+              >
+                {on && <Check className="h-3 w-3" strokeWidth={4} />}
+              </span>
               {option}
             </button>
           );
@@ -71,7 +76,7 @@ const TagPicker = ({ options, value, placeholder = "Type anything we have missed
               key={extra}
               type="button"
               onClick={() => toggle(extra)}
-              className="border border-primary bg-primary px-2.5 py-1.5 text-[13.5px] text-primary-foreground"
+              className="border-2 border-navy bg-navy px-2.5 py-1.5 text-[13.5px] font-bold text-white"
             >
               <Check className="mr-1.5 inline h-3.5 w-3.5" />
               {extra}
@@ -92,7 +97,7 @@ const TagPicker = ({ options, value, placeholder = "Type anything we have missed
         <button
           type="button"
           onClick={addOther}
-          className="flex h-11 shrink-0 items-center gap-1.5 border border-border px-3 text-[14px] font-semibold text-ink"
+          className="flex h-12 shrink-0 items-center gap-1.5 rounded-[10px] border-2 border-navy px-4 text-[14.5px] font-extrabold text-navy hover:bg-tint"
         >
           <Plus className="h-4 w-4" /> Add
         </button>
