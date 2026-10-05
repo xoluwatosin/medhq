@@ -20,7 +20,8 @@ export interface SelectFieldProps {
   hideLabel?: boolean;
   help?: string;
   error?: string | null;
-  placeholder?: string;
+  /** The blank first choice. Pass false when a value is always chosen (a filter's "All"). */
+  placeholder?: string | false;
   disabled?: boolean;
   disabledReason?: string;
   readOnly?: boolean;
@@ -71,7 +72,7 @@ export const SelectField = ({
           onChange={(e) => onChange(e.target.value)}
           className={cn(fieldControlClass(invalid), "appearance-none bg-background")}
         >
-          <option value="">{placeholder}</option>
+          {placeholder !== false && <option value="">{placeholder}</option>}
           {options.map((option) => (
             <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}

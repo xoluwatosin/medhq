@@ -20,7 +20,10 @@ export const MuPageHeader = ({
   breadcrumb,
   backTo,
   backLabel = "Back",
+  id,
 }: {
+  /** For aria-labelledby on the page's main region. */
+  id?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
@@ -37,7 +40,7 @@ export const MuPageHeader = ({
     )}
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="max-w-2xl space-y-1.5">
-        <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-[-0.03em] text-navy sm:text-[30px]">{title}</h1>
+        <h1 id={id} className="text-[26px] font-extrabold leading-[1.1] tracking-[-0.03em] text-navy sm:text-[30px]">{title}</h1>
         {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
