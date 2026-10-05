@@ -6,7 +6,7 @@
 // attached. Every send is written down, so nobody is sent the same guide twice.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { kitEmail, kitParagraph, kitSubhead, kitFacts, kitList, kitButton } from "../_shared/kit-email.ts";
+import { KIT_ART, kitEmail, kitParagraph, kitSubhead, kitFacts, kitSteps, kitButton } from "../_shared/kit-email.ts";
 import { emailTags } from "../_shared/email-tags.ts";
 
 const corsHeaders = {
@@ -116,26 +116,29 @@ Deno.serve(async (req) => {
 
     const bodyHtml = [
       kitParagraph(`Dear ${first},`),
-      kitParagraph(line?.reply_intro || "Thank you for getting in touch with Medic Connect."),
+      kitParagraph(line?.reply_intro || "Thank you for getting in touch with Medic Connect. Here is what happens from here."),
+      kitSubhead("What happens next"),
+      kitSteps([
+        { title: "We'll be in touch", detail: "A care coordinator calls or messages you on WhatsApp, usually the same working day." },
+        { title: "Care needs", detail: "A paid assessment may be required. If it is, a nurse visits the home for about ninety minutes, and it costs **₦35,000**." },
+        { title: "A match", detail: "A carer chosen for the plan and the person. You see their profile before care begins." },
+        { title: "Care begins", detail: "On the days you agree, with your coordinator alongside." },
+      ]),
       kitSubhead("What you told us"),
       kitFacts(facts),
-      kitSubhead("What happens next"),
-      kitList([
-        "A care adviser calls you, usually the same working day, to understand the situation properly.",
-        "We book a care needs assessment at home. It costs ₦35,000 and takes about ninety minutes.",
-        "A nurse assesses the person, the home and the risks, and writes a care plan with you.",
-        "We match carers to that plan, share their profiles with you, and agree a start date.",
-      ]),
       kitParagraph(line?.reply_outro || "The guide attached takes you through the assessment, our services and how our pricing is structured."),
       brochureUrl ? kitButton("Open your guide", brochureUrl) : "",
       kitParagraph("If anything changes, or it becomes urgent, reply to this email or message us on WhatsApp on +234 812 698 8237."),
+      kitParagraph("The Medic Connect care team"),
     ].join("");
 
     const html = kitEmail({
       eyebrow: "Care enquiry",
-      title: "What happens next",
+      title: "Your request is in",
+      accent: "request",
+      art: KIT_ART.coordinator,
       standfirst: `Your enquiry about ${lineName.toLowerCase()}.`,
-      preheader: subject,
+      preheader: "A care coordinator will be in touch, usually the same working day.",
       bodyHtml,
       footnote: "Medic Connect Limited, 145 Igbosere Road, Lagos Island, Nigeria.",
     });

@@ -77,3 +77,18 @@ System:
 
 1. **Branded Supabase sign-in email** (magic link) and password reset.
 2. **Interview invitation and application update** moved onto the shell.
+
+## Design, 5 October 2026
+
+The shell (`_shared/kit-email.ts`) now follows the site: one square card with a
+navy edge and a blue offset, a navy masthead with a white tag eyebrow, a heavy
+title with one word on a blue swipe (`accent`), an optional character or object
+(`art`, from `KIT_ART`), the four-colour stripe, heavy navy rules between
+sections (`kitSubhead`), numbered steps (`kitSteps`) and square buttons.
+
+Images are served from `public/email-kit/` on the live site. Before this the
+shell pointed at `/email-kit/medicconnect-logo-white.png` but no such file was
+in the repo, so the logo will only show once this branch is deployed.
+
+Redesigned so far: the care enquiry reply. The other emails pick up the new
+shell as they are; each gets its own art and copy pass next.
