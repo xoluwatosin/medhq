@@ -32,7 +32,7 @@ const ConsoleTabs = ({ tabs, active, onChange, label, controls }: ConsoleTabsPro
           onClick={() => onChange(tab.id)}
           className={cn(
             "min-h-11 shrink-0 border-b-2 border-transparent bg-transparent px-0 pb-2 pt-1 text-sm font-medium text-muted-copy transition-colors hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            isActive && "border-navy font-semibold text-ink",
+            isActive && "border-brand font-extrabold text-navy",
           )}
         >
           {tab.label}

@@ -940,24 +940,73 @@ All colors MUST be HSL.
 
 
 /* ---------------------------------------------------------------------------
-   Admin centre: retain its density while sharing the soft surface language.
+   Admin centre: the site's square, navy register, plainer. No tilt, no
+   offset shadows, no tape; clip art only in empty states. Surfaces are
+   square with a 1px line; headings are heavy navy Figtree, never serif.
 --------------------------------------------------------------------------- */
 @layer components {
-  .admin-kit :is(.rounded-lg, .rounded-xl, .rounded-2xl) {
-    border-radius: 16px;
+  .admin-kit :is(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+    border-radius: 0;
   }
 
-  .admin-kit :is(button, [role="tab"], input, select, textarea).rounded-md,
-  .admin-kit :is(button, [role="tab"]) {
-    border-radius: 10px;
+  .admin-kit :is(button, [role="tab"], input, select, textarea) {
+    border-radius: 0;
   }
 
-  .admin-kit :is(.rounded-full, [role="progressbar"], [role="progressbar"] > *) {
+  /* Round only where round means something: avatars, switches, radios, progress. */
+  .admin-kit :is([role="switch"], [role="switch"] > span, [role="radio"], [role="progressbar"], [role="progressbar"] > *, .admin-round) {
     border-radius: 9999px;
   }
 
+  /* Cards are flat panels on a line, not floating tiles. */
+  .admin-kit :is(.shadow, .shadow-sm, .shadow-md) {
+    box-shadow: none;
+  }
+
+  /* The serif alias was never a serif; headings are heavy navy sans. */
+  .admin-kit .font-serif {
+    font-family: inherit;
+  }
+  .admin-kit main h1 {
+    color: hsl(var(--navy));
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-size: 26px;
+  }
+  @media (min-width: 640px) {
+    .admin-kit main h1 { font-size: 30px; }
+  }
+  .admin-kit main h2 { color: hsl(var(--navy)); }
+
+  /* shadcn tabs read as the hairline rail: an underline, not a grey pill box. */
+  .admin-kit div[role="tablist"][data-orientation] {
+    background: transparent;
+    height: auto;
+    padding: 0;
+    gap: 1.25rem;
+    border-bottom: 1px solid hsl(var(--line));
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"] {
+    min-height: 44px;
+    padding: 0 0.125rem;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+  }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"][data-state="active"] {
+    border-bottom-color: hsl(var(--brand));
+    color: hsl(var(--navy));
+    font-weight: 800;
+  }
+
   .admin-kit [data-sidebar="menu-button"] {
-    border-radius: 12px;
+    border-radius: 0;
   }
 
   /* Navy command rail: the admin sidebar is a navy surface, not a grey card. */

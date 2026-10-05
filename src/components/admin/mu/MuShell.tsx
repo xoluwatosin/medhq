@@ -7,7 +7,6 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronDown, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const MuPage = ({ children, className }: { children: ReactNode; className?: string }) => (
@@ -38,7 +37,7 @@ export const MuPageHeader = ({
     )}
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="max-w-2xl space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight">{title}</h1>
+        <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-[-0.03em] text-navy sm:text-[30px]">{title}</h1>
         {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
@@ -64,33 +63,31 @@ export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 |
     )}
   >
     {stats.map((s) => (
-      <Card
+      <div
         key={s.label}
         className={cn(
-          "border-border/70 shadow-none",
-          s.tone === "attention" && "border-primary/30 bg-primary/[0.04]",
+          "border border-line bg-card p-4",
+          s.tone === "attention" && "border-l-4 border-l-brand",
         )}
       >
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{s.value}</p>
-              {s.hint && <p className="mt-1 text-xs text-muted-foreground leading-snug">{s.hint}</p>}
-            </div>
-            {s.icon && (
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
-                  s.tone === "attention" && "bg-primary/10 text-primary",
-                )}
-              >
-                <s.icon className="h-4 w-4" />
-              </span>
-            )}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">{s.label}</p>
+            <p className="mt-1.5 text-[26px] font-extrabold leading-none tracking-[-0.03em] text-navy tabular-nums">{s.value}</p>
+            {s.hint && <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{s.hint}</p>}
           </div>
-        </CardContent>
-      </Card>
+          {s.icon && (
+            <span
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center bg-tint text-navy",
+                s.tone === "attention" && "bg-brand text-white",
+              )}
+            >
+              <s.icon className="h-4 w-4" />
+            </span>
+          )}
+        </div>
+      </div>
     ))}
   </div>
 );
@@ -116,7 +113,7 @@ export const MuSection = ({
     {(title || actions) && (
       <div className="flex flex-col gap-3 border-b border-line-soft px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          {title && <h2 className="text-[16px] font-semibold tracking-[-0.02em]">{title}</h2>}
+          {title && <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">{title}</h2>}
           {description && <p className="max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">{description}</p>}
         </div>
 
@@ -127,31 +124,40 @@ export const MuSection = ({
   </section>
 );
 
+/** The one place clip art appears in admin: an empty list or record. */
 export const MuEmpty = ({
   icon: Icon,
+  art,
   title,
   description,
   action,
 }: {
   icon?: LucideIcon;
+  /** A clip art object from the site's set, shown on a tint square. */
+  art?: string;
   title: string;
   description?: string;
   action?: ReactNode;
 }) => (
   <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-    {Icon && (
-      <span className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    {art ? (
+      <span className="relative mb-2 block h-[84px] w-[84px]">
+        <span aria-hidden="true" className="absolute bottom-0 right-0 h-[76%] w-[76%] bg-tint" />
+        <img src={art} alt="" className="absolute inset-0 h-full w-full object-contain" />
+      </span>
+    ) : Icon && (
+      <span className="mb-1 flex h-11 w-11 items-center justify-center bg-tint text-navy">
         <Icon className="h-5 w-5" />
       </span>
     )}
-    <p className="text-sm font-medium">{title}</p>
+    <p className="text-[15px] font-extrabold tracking-[-0.01em] text-navy">{title}</p>
     {description && <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{description}</p>}
     {action && <div className="mt-3">{action}</div>}
   </div>
 );
 
 export const MuToolbar = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col gap-2 rounded-none border border-border/70 bg-muted/30 p-3 lg:flex-row lg:items-center">
+  <div className="flex flex-col gap-2 border border-line bg-tint/40 p-3 lg:flex-row lg:items-center">
     {children}
   </div>
 );
@@ -330,7 +336,7 @@ export const MuStatus = ({
 }) => (
   <span
     className={cn(
-      "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+      "inline-flex shrink-0 items-center gap-1.5 px-2 py-0.5 text-[12px] font-bold",
       TONE_CLASS[tone],
       className,
     )}
