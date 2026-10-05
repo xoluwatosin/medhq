@@ -656,6 +656,28 @@ const MatchUniversePerson = () => {
             One tab, because a credential is only ever as good as the document
             behind it. Nothing here is a manual switch. */}
         <TabsContent value="verification" className="space-y-6 mt-4">
+          {/* Every required document is in and some wait on us: a nudge to
+              review them, shown only until the decisions are made. */}
+          {!readiness.loading &&
+            readiness.items.some((i) => i.code.startsWith("document_pending:")) &&
+            !readiness.items.some((i) => i.code.startsWith("document_missing:") || i.code.startsWith("document_rejected:")) && (
+              <div className="flex flex-col gap-3 border-2 border-navy bg-brand p-4 text-white shadow-offset sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[15px] font-extrabold">Every required document is in</p>
+                  <p className="mt-1 text-[13.5px] text-white/85">
+                    {readiness.office.length === 1 ? "One waits" : `${readiness.office.length} wait`} for a decision. Accepting them verifies {person.full_name?.split(" ")[0] || "this person"}.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 border-white bg-white text-navy hover:bg-tint"
+                  onClick={() => document.getElementById("person-documents")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  Review them
+                </Button>
+              </div>
+            )}
           <ReadinessPanel
             items={readiness.items}
             loading={readiness.loading}
@@ -665,7 +687,9 @@ const MatchUniversePerson = () => {
               credential it proves, so the proofs below are read only. */}
           {/* The documents carry their own ledgers, so they open with the site's
               section rule rather than a second box around boxes. */}
-          <MuSectionOpener label="Documents" title="What is on file, and a decision on each" />
+          <div id="person-documents" className="scroll-mt-24">
+            <MuSectionOpener label="Documents" title="What is on file, and a decision on each" />
+          </div>
           <DocumentsPanel personId={person.id} personName={person.full_name} onChanged={load} />
 
           <MuSection title="What their documents prove" padded={false}>

@@ -3,6 +3,7 @@ import {
   Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Orbit, HeartPulse,
   Briefcase, ShieldCheck, Inbox, CalendarDays, Copy, ClipboardList, UserCog, IdCard,
   BarChart3, KeyRound, FileSignature, Library, Layers, Search,
+  UserX,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -75,6 +76,7 @@ export const adminDomains: AdminDomain[] = [
     url: "/admin/match-universe",
     items: [
       { title: "Talent pool", url: "/admin/match-universe", icon: Orbit, perm: "match_universe", exact: true, keywords: "Candidates candidate pool Match Universe register nurses talent" },
+      { title: "Not signed in", url: "/admin/match-universe/not-signed-in", icon: UserX, perm: "match_universe", keywords: "unclaimed accounts invite never signed in claim records" },
       { title: "Intake", url: "/admin/match-universe/intake", icon: Inbox, perm: "match_universe", keywords: "Candidate intake front of funnel parsing new arrivals applications" },
       { title: "Opportunities", url: "/admin/match-universe/opportunities", icon: Briefcase, perm: "match_universe", keywords: "Match Universe jobs roles vacancies recruitment" },
       { title: "Staffing requests", url: "/admin/match-universe/requests", icon: ClipboardList, perm: "match_universe", keywords: "Client requests staffing brief client need matching" },

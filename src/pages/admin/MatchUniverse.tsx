@@ -82,7 +82,12 @@ interface Row {
   latestAt: string;
 }
 
-const MatchUniverse = () => {
+/**
+ * The Talent pool holds the people who have claimed their account. Records
+ * whose owner has not signed in yet live on their own page ("unclaimed"),
+ * where the job is to invite them in.
+ */
+const MatchUniverse = ({ scope = "claimed" }: { scope?: "claimed" | "unclaimed" }) => {
   const { toast } = useToast();
   // Filters live in the address bar and the list remembers the last set used.
   useRestoreListParams();
@@ -112,7 +117,6 @@ const MatchUniverse = () => {
   const [sortBy, setSortBy] = useListParam<"recent" | "docs_desc" | "name_asc" | "exp_desc">("sort", "recent");
   const [checked, setChecked] = useState<Set<string>>(new Set());
   // Account state: who can actually sign in, and who we have asked but not heard from.
-  const [accountFilter, setAccountFilter] = useListParam<string>("account", "all");
   // Talent is a lifecycle state, not a UI convenience. People currently on the
   // Workforce belong in Workforce, so the default pool leaves them out. Their
   // record and history are untouched and still reachable here under "Everyone".
@@ -124,10 +128,14 @@ const MatchUniverse = () => {
   // The primary register view. Active talent is the working default; the rest
   // surface a specific operational job (chase readiness, re-engage, invite,
   // stand down).
-  const [rawView, setView] = useListParam<"active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all">("view", "active");
-  const view = rawView === "dormant" ? "all" : rawView;
+  type ViewId = "active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "never_invited" | "invited" | "documents_in" | "all";
+  const [rawView, setView] = useListParam<ViewId>("view", scope === "claimed" ? "active" : "never_invited");
+  const SCOPE_VIEWS: ViewId[] = scope === "claimed"
+    ? ["active", "documents_in", "needs_completion", "unavailable", "all"]
+    : ["never_invited", "invited", "all"];
+  const view: ViewId = rawView === "dormant" ? "all" : SCOPE_VIEWS.includes(rawView) ? rawView : SCOPE_VIEWS[0];
   // Placement readiness, read from mu_readiness_summary, never recomputed here.
-  const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number }>>(new Map());
+  const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number; docsMissing: number | null }>>(new Map());
   const [readinessFilter, setReadinessFilter] = useListParam<"all" | "ready" | "office" | "candidate" | "any">("readiness", "all");
   const [professionFilter, setProfessionFilter] = useListParam<string>("profession", "all");
   const [stateFilter, setStateFilter] = useListParam<string>("state", "all");
@@ -165,9 +173,15 @@ const MatchUniverse = () => {
       (adminDb() as any).rpc("mu_readiness_summary"),
     ]);
 
-    const readinessMap = new Map<string, { candidate: number; office: number }>();
+    const readinessMap = new Map<string, { candidate: number; office: number; docsMissing: number | null }>();
     ((readinessRows || []) as any[]).forEach((r) => {
-      readinessMap.set(r.person_id, { candidate: r.candidate_items ?? 0, office: r.office_items ?? 0 });
+      // documents_missing arrives with the 20261005230000 migration; before
+      // that it is absent and nobody is nudged.
+      readinessMap.set(r.person_id, {
+        candidate: r.candidate_items ?? 0,
+        office: r.office_items ?? 0,
+        docsMissing: typeof r.documents_missing === "number" ? r.documents_missing : null,
+      });
     });
     setReadiness(readinessMap);
 
@@ -299,13 +313,21 @@ const MatchUniverse = () => {
 
   const isDormant = (r: Row) => daysSince(r.person.last_activity_at || r.person.created_at) >= DORMANT_DAYS;
   const isNotLooking = (r: Row) => NOT_LOOKING_CODES.includes((r.person as any).looking_status);
-  const readinessOf = (r: Row) => readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
+  const readinessOf = (r: Row) => readiness.get(r.person.id) ?? { candidate: 0, office: 0, docsMissing: null };
   const needsCompletion = (r: Row) => {
     const it = readinessOf(r);
     return it.candidate > 0 || it.office > 0;
   };
   const isExited = (r: Row) => (r.person as any).staff_status === "exited";
-  const isUnclaimed = (r: Row) => !r.person.invited_at || (Boolean(r.person.invited_at) && !r.person.claimed_at);
+  // Claimed: the person has signed in to their account at least once.
+  const isClaimed = (r: Row) => Boolean(r.person.claimed_at) || Boolean((r.person as any).auth_user_id);
+  const isUnclaimed = (r: Row) => !isClaimed(r);
+  // Every required document is in and at least one waits on us: a nudge to
+  // review them, not a status of its own.
+  const documentsIn = (r: Row) => {
+    const it = readiness.get(r.person.id);
+    return Boolean(it && it.docsMissing === 0 && it.office > 0);
+  };
 
   const matchesView = (r: Row, v: typeof rawView) => {
     const p = r.person;
@@ -323,6 +345,12 @@ const MatchUniverse = () => {
         return isDormant(r);
       case "unclaimed":
         return isUnclaimed(r);
+      case "never_invited":
+        return !p.invited_at;
+      case "invited":
+        return Boolean(p.invited_at);
+      case "documents_in":
+        return documentsIn(r);
       case "unavailable":
         return isNotLooking(r);
       case "all":
@@ -334,8 +362,10 @@ const MatchUniverse = () => {
   // Counts respect the lifecycle filter (Talent / Workforce / Everyone), same
   // as the "All" view does, so the tab row and the table never disagree.
   const afterLifecycle = useMemo(
-    () => rows.filter((r) => lifecycleFilter === "all" || ((r.person as any).lifecycle_state ?? "talent") === lifecycleFilter),
-    [rows, lifecycleFilter],
+    () => rows.filter((r) =>
+      (scope === "claimed" ? isClaimed(r) : isUnclaimed(r)) &&
+      (lifecycleFilter === "all" || ((r.person as any).lifecycle_state ?? "talent") === lifecycleFilter)),
+    [rows, lifecycleFilter, scope],
   );
 
   const viewCounts = useMemo(
@@ -344,6 +374,9 @@ const MatchUniverse = () => {
       needs_completion: afterLifecycle.filter((r) => matchesView(r, "needs_completion")).length,
       dormant: afterLifecycle.filter((r) => matchesView(r, "dormant")).length,
       unclaimed: afterLifecycle.filter((r) => matchesView(r, "unclaimed")).length,
+      never_invited: afterLifecycle.filter((r) => matchesView(r, "never_invited")).length,
+      invited: afterLifecycle.filter((r) => matchesView(r, "invited")).length,
+      documents_in: afterLifecycle.filter((r) => matchesView(r, "documents_in")).length,
       unavailable: afterLifecycle.filter((r) => matchesView(r, "unavailable")).length,
       all: afterLifecycle.length,
     }),
@@ -362,13 +395,6 @@ const MatchUniverse = () => {
       }
       if (sourceFilter !== "all" && !r.sources.includes(sourceFilter)) return false;
       if (verifyFilter !== "all" && p.verification_state !== verifyFilter) return false;
-      if (accountFilter !== "all") {
-        const claimed = Boolean(p.claimed_at);
-        const invited = Boolean(p.invited_at);
-        if (accountFilter === "claimed" && !claimed) return false;
-        if (accountFilter === "invited" && (claimed || !invited)) return false;
-        if (accountFilter === "never" && (claimed || invited)) return false;
-      }
       if (specialtyFilter !== "all" && !r.specialties.includes(specialtyFilter)) return false;
       if (trackFilter !== "all") {
         const t = (p as any).track ?? "";
@@ -415,7 +441,7 @@ const MatchUniverse = () => {
     });
     return out;
   }, [
-    afterLifecycle, search, sourceFilter, docFilter, verifyFilter, sortBy, accountFilter,
+    afterLifecycle, search, sourceFilter, docFilter, verifyFilter, sortBy,
     specialtyFilter, careFilter, liveInFilter, trackFilter, refFilter, view, readiness,
     professionFilter, stateFilter, lgaFilter, minExpFilter, engagementFilter, freshnessFilter,
     lookingFilter, readinessFilter,
@@ -554,7 +580,6 @@ const MatchUniverse = () => {
     { key: "referees", on: refFilter !== "all", label: `Referees: ${humaniseTerm(refFilter)}`, clear: () => setRefFilter("all") },
     { key: "verified", on: verifyFilter !== "all", label: humaniseTerm(verifyFilter), clear: () => setVerifyFilter("all") },
     { key: "channel", on: sourceFilter !== "all", label: `Channel: ${humaniseTerm(sourceFilter)}`, clear: () => setSourceFilter("all") },
-    { key: "account", on: accountFilter !== "all", label: `Account: ${humaniseTerm(accountFilter)}`, clear: () => setAccountFilter("all") },
   ]
     .filter((f) => f.on)
     .map(({ key, label, clear }) => ({ key, label, onRemove: clear }));
@@ -572,16 +597,18 @@ const MatchUniverse = () => {
     );
 
   const totals = {
-    people: rows.length,
-    withDocs: rows.filter((r) => r.docs > 0).length,
-    verified: rows.filter((r) => r.person.verification_state === "verified").length,
+    people: afterLifecycle.length,
+    withDocs: afterLifecycle.filter((r) => r.docs > 0).length,
+    verified: afterLifecycle.filter((r) => r.person.verification_state === "verified").length,
   };
 
   return (
     <MuPage>
       <MuPageHeader
-        title="Talent pool"
-        description="The talent register. One profile per person."
+        title={scope === "claimed" ? "Talent pool" : "Not signed in"}
+        description={scope === "claimed"
+          ? "Everyone who has claimed their account. One profile per person."
+          : "Records whose owner has not claimed their account yet. Invite them in."}
         actions={
           <>
             <Button variant={pendingReviews > 0 ? "default" : "outline"} size="sm" asChild>
@@ -623,6 +650,7 @@ const MatchUniverse = () => {
         }
       />
 
+      {scope === "claimed" ? (
       <MuStats
         columns={4}
         stats={[
@@ -638,16 +666,30 @@ const MatchUniverse = () => {
           },
         ]}
       />
+      ) : (
+      <MuStats
+        columns={3}
+        stats={[
+          { label: "Not signed in", value: afterLifecycle.length, icon: UserX },
+          { label: "Never invited", value: viewCounts.never_invited, icon: Send, tone: viewCounts.never_invited > 0 ? "attention" : "default" },
+          { label: "Invited, waiting", value: viewCounts.invited, icon: Inbox },
+        ]}
+      />
+      )}
 
       <ConsoleTabs
         label="Talent pool view"
         active={view}
         onChange={(id) => setView(id as typeof view)}
-        tabs={[
+        tabs={scope === "claimed" ? [
           { id: "active", label: "Active talent", count: viewCounts.active },
+          { id: "documents_in", label: "Documents in, to review", count: viewCounts.documents_in },
           { id: "needs_completion", label: "Needs completion", count: viewCounts.needs_completion },
           { id: "unavailable", label: "Not looking", count: viewCounts.unavailable },
-          { id: "unclaimed", label: "Not signed in", count: viewCounts.unclaimed },
+          { id: "all", label: "All", count: viewCounts.all },
+        ] : [
+          { id: "never_invited", label: "Never invited", count: viewCounts.never_invited },
+          { id: "invited", label: "Invited, waiting", count: viewCounts.invited },
           { id: "all", label: "All", count: viewCounts.all },
         ]}
       />
@@ -818,15 +860,6 @@ const MatchUniverse = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={accountFilter} onValueChange={setAccountFilter}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any account state</SelectItem>
-                <SelectItem value="claimed">Has signed in</SelectItem>
-                <SelectItem value="invited">Invited, not claimed</SelectItem>
-                <SelectItem value="never">Never invited</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -853,7 +886,7 @@ const MatchUniverse = () => {
       <FilterChips filters={activeFilters} onClearAll={clearAllFilters} />
 
       <MuSection
-        title={`Showing ${filtered.length} of ${rows.length} people`}
+        title={`Showing ${filtered.length} of ${afterLifecycle.length} people`}
         padded={false}
         actions={
           checked.size > 0 ? (
@@ -962,6 +995,13 @@ const MatchUniverse = () => {
                 <TableCell className="hidden lg:table-cell text-sm">
                   {(() => {
                     const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
+                    if (documentsIn(r)) {
+                      return (
+                        <Link to={`/admin/match-universe/${r.person.id}?tab=verification`} className="hover:underline">
+                          <MuStatus tone="warning" label="Documents in, review them" />
+                        </Link>
+                      );
+                    }
                     if (it.candidate === 0 && it.office === 0) return <MuStatus tone="good" label="Nothing" />;
                     if (it.office > 0) return <MuStatus tone="warning" label="With the office" />;
                     return <MuStatus tone="neutral" label="With the candidate" />;
@@ -997,8 +1037,9 @@ const MatchUniverse = () => {
         emptyIcon={Users}
         rows={filtered.map((r): ConsoleMobileRow => {
           const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
-          const readinessLabel =
-            it.candidate === 0 && it.office === 0
+          const readinessLabel = documentsIn(r)
+            ? "Documents in, review them"
+            : it.candidate === 0 && it.office === 0
               ? "Nothing outstanding"
               : it.office > 0
                 ? "With the office"

@@ -284,6 +284,7 @@ const App = () => (
               <Route path="approvals" element={<Approvals />} />
               {/* Match Universe — unified admin workspace for talent pool and opportunities */}
               <Route path="match-universe" element={<MatchUniverse />} />
+              <Route path="match-universe/not-signed-in" element={<MatchUniverse scope="unclaimed" />} />
               <Route path="match-universe/opportunities" element={<MatchUniverseOpportunities />} />
               <Route path="match-universe/opportunities/templates" element={<MatchmakerTemplates />} />
               <Route path="match-universe/opportunities/:id/*" element={<MatchUniverseOpportunity />} />

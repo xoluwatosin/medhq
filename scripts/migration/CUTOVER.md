@@ -35,6 +35,7 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
     - `supabase/migrations/20261005200000_care_link_scope.sql` (a link opens one care record; its person comes from its contact)
     - `supabase/migrations/20261005210000_care_payers.sql` (payers: people or organisations, with shares; drops `client_commercial.payer_person_id`)
     - `supabase/migrations/20261005220000_mu_document_proves_credential.sql` (accepting a document settles the credentials it proves; returning it takes the evidence back. Its NOTICE line says how many credentials were settled from documents already accepted)
+    - `supabase/migrations/20261005230000_mu_readiness_summary_documents.sql` (adds a missing-documents count to the readiness summary, so the Talent pool can nudge "Documents in, review them". Before it runs, the nudge simply does not show)
     - any later file in `supabase/migrations/` dated after 20261003231023
     Check with: `select proname from pg_proc where proname = 'mu_merge_people';` (one row), `select count(*) from information_schema.tables where table_name ilike 'heard%';` (0) `select count(*) from clients where person_id is null;` (0) and `select count(*) from clients where home_id is null and coalesce(address_line, state_code, lga_code) is not null;` (0).
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.

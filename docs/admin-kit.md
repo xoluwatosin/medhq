@@ -49,5 +49,10 @@ screen that uses the shared parts is already right.
 11. **Say each fact once per screen.** If a count, status or sentence appears
     in the band, a tile and a section, keep the one where it is acted on.
 12. **Candidate status words:** "Verified" (all required documents accepted)
-    and "Documents complete" (everything required is on file). "Ready" and
-    "Ready for placement" are retired.
+    is the one status. When everything required is on file but not yet
+    decided, that is a nudge to staff ("Documents in, review them"), never a
+    second status beside Verified. "Ready" and "Ready for placement" are
+    retired.
+13. **Talent pool means claimed.** Only people who have signed in to their
+    account are in the Talent pool. Records nobody has claimed yet live on
+    Talent, Not signed in, where the job is to invite them.
