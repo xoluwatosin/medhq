@@ -366,6 +366,13 @@ const WorkPreferencesPanel = ({
           <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
               <p className={qCls}>{t.liveIn}</p>
+              {cand ? (
+                <div className="flex flex-wrap gap-2.5">
+                  {LIVE_IN_OPTIONS.filter((o) => o.code !== "unknown").map((o) => (
+                    <Chip tile key={o.code} label={o.label} on={prefs.live_in === o.code} onClick={() => patch({ live_in: o.code })} />
+                  ))}
+                </div>
+              ) : (
               <div className="grid gap-2 sm:grid-cols-2">
                 {LIVE_IN_OPTIONS.filter((o) => o.code !== "unknown").map((o) => (
                   <button key={o.code} type="button" onClick={() => patch({ live_in: o.code })} className={optCls(prefs.live_in === o.code)}>
@@ -373,6 +380,7 @@ const WorkPreferencesPanel = ({
                   </button>
                 ))}
               </div>
+              )}
             </CardContent>
           </Card>
         )}
