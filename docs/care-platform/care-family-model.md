@@ -110,7 +110,7 @@ so counts, chases and stages reflect real work.
 
 ## 3. The untangled model
 
-Five things, each stored once.
+Four things, each stored once.
 
 ```text
 Person ──────────── a human. Name, contact details, date of birth, sign-in.
@@ -120,17 +120,16 @@ Person ──────────── a human. Name, contact details, date
 Household ───────── people who live or arrange care together, and the home
   │                 address. Membership only, no roles.
   │
-Relationship ────── person to person, one direction, one vocabulary, with
-  │                 the inverse recorded alongside.
-  │
 Care record ─────── one person receiving care, and the service relationship
   │                 with Medic Connect: stage, requests, assessments, plans,
   │                 packages. Points at its Person. Holds a care address
   │                 only when care happens away from the household address.
   │
-Roles on a record ─ per care record, per person: primary contact, enquirer,
-                    payer, emergency contact. Facts about operations, not
-                    authority.
+Contacts on a ──── per care record, per person: their relationship to the
+record              service user (the clinical convention, "Tobi Belewu,
+                    Mother"), and flags for primary contact, next of kin,
+                    enquirer, payer and emergency contact. Facts about
+                    operations, not authority.
 
 Access (unchanged from account-model.md): grants and bases decide what a
 person may see. Nothing above grants anything.
@@ -147,10 +146,15 @@ person may see. Nothing above grants anything.
 3. **One address for the home.** The household holds it. A care record
    holds a care address only when care is delivered somewhere else, and
    then that one wins for carers.
-4. **Relationships are asked as a sentence with both names.**
-   "Bukayo is Tobi's ___ ." The answer is stored from the first person to
-   the second, the inverse is stored with it, and every screen reads the
-   same table. One vocabulary.
+4. **A relationship is always the contact's relationship to the service
+   user**, the clinical convention: "Tobi Belewu, Mother". It is stored on
+   the contact row of that care record, from one vocabulary of terms that
+   describe the contact (Mother, Son, Spouse, Guardian, Friend, Employer).
+   Every form asks it the same way, as "[Name]'s relationship to [service
+   user]". Because it hangs off the care record, two service users in one
+   family never clash: on Bukayo's record Tobi is "Mother"; on Tobi's record
+   Bukayo is "Son". The household view of who is related to whom is read
+   from these rows, not stored separately.
 5. **Roles are per care record.** One row per person per care record, with
    flags for primary contact, enquirer, payer and emergency contact. Exactly
    one primary contact. The enquirer is always set.
@@ -160,17 +164,17 @@ person may see. Nothing above grants anything.
    questionnaire session for one person) or a portal invitation (one grant).
    The other pointers are derived, not stored.
 8. **Membership carries no role.** A household member is just a member.
-   Roles belong to care records; relationships belong to people.
+   Roles and relationships belong to care records.
 
 ### How the awkward cases land
 
 | Case | Model |
 |---|---|
 | Caring for yourself | One person; care record points at them; they hold every role; access by `self_identity` |
-| A parent arranging care for a child | Two people in one household; relationship "Ada is Tolu's mother"; mother holds the roles; access by `guardian_authority` |
-| A son arranging care for his mother | Two people; "Kunle is Ronke's son"; the son holds enquirer and primary contact; access by the mother's consent |
+| A parent arranging care for a child | Two people in one household; on the child's record the parent is "Mother"; she holds the contact roles; access by `guardian_authority` |
+| A son arranging care for his mother | Two people; on the mother's record the son is "Son"; he holds enquirer and primary contact; access by the mother's consent |
 | A sponsor abroad who only pays | A person outside the household; payer role on the care record; finance-only grant |
-| Two people in one household both receiving care, such as a mother and her son | One household, two care records, each pointing at its own person; the relationship between them is stored once; one request can cover both; each sees only their own record unless the other consents |
+| Two people in one household both receiving care, such as a mother and her son | One household, two care records, each pointing at its own person; on the son's record the mother is "Mother", on the mother's record the son is "Son"; one request can cover both; each sees only their own record unless the other consents |
 | The same family enquires again a year later | Staff confirm the existing household and person; a new request on the existing care record |
 | A relative who is also a Medic Connect carer | Separate care-side and professional records, one sign-in (account-model.md 2.2) |
 
@@ -186,7 +190,7 @@ can be checked row by row.
 |---|---|---|
 | 1 | Clear the test records | Staff list which records are tests; delete them with their links |
 | 2 | Every care record gets a person | Create the missing person rows from the care record; add `clients.person_id`, then make it required |
-| 3 | One relationship direction | Re-read the three intake answers in the direction the form asked; move contact relationships into person relationships; one vocabulary; the care record reads the household table |
+| 3 | One relationship convention | Every form asks the contact's relationship to the service user; flip the intake answers saved the other way round (re-checked by staff); one vocabulary; the household tab reads the contact rows |
 | 4 | Roles per care record | Contact rows stop storing copies of name and phone and read the person; add payer and emergency contact flags; backfill the enquirer on the 6 requests missing it |
 | 5 | Authority in one place | Retire the old contact authority fields (unused) |
 | 6 | One home address | Household address is the home; move differing care-record addresses into a care address only where they really differ (2 records to check) |
@@ -201,8 +205,8 @@ care packages (Tranche 8), because both read roles and relationships.
 
 ## 5. Decisions needed
 
-1. **Relationship wording.** Ask it as a sentence with both names, stored in
-   one direction. Recommended.
+1. **Relationship convention.** Always the contact's relationship to the
+   service user, asked the same way on every form. Agreed 5 October 2026.
 2. **Repeat enquiries.** A returning family joins its existing household and
    care record, after staff confirm. Recommended.
 3. **Organisation payers.** Some care will be paid by an employer, insurer
