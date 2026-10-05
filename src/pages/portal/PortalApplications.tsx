@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import CxPortalPage from "@/components/candidate/CxPortalPage";
+import { art } from "@/components/mc/art";
 import { CxButton, CxCard, CxEmpty, CxPill, CxRow, CxRows } from "@/components/candidate/primitives";
 import { STAGE_LABEL_CANDIDATE, slotSentence } from "@/lib/applications";
 import { usePortal } from "./usePortal";
@@ -57,7 +58,7 @@ const PortalApplications = () => {
     >
       <CxCard>
         {p.apps.length === 0 ? (
-          <CxEmpty>
+          <CxEmpty art={art.objClipboardChecks}>
             No applications yet. Keep your details and availability current and we will come to you when
             something fits.
           </CxEmpty>

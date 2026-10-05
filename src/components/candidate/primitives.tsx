@@ -160,11 +160,14 @@ export const CxRow = ({
   title,
   sentence,
   right,
+  art,
   className,
 }: {
   title: string;
   sentence?: ReactNode;
   right?: ReactNode;
+  /** An optional clip art object at the start of the row. */
+  art?: string;
   className?: string;
 }) => (
   <div
@@ -173,11 +176,14 @@ export const CxRow = ({
       className,
     )}
   >
-    <div className="min-w-0">
-      <p className="text-[15.5px] font-bold text-ink">{title}</p>
-      {sentence && <p className="mt-1 cx-measure text-[14.5px] leading-relaxed text-body">{sentence}</p>}
+    <div className="flex min-w-0 items-center gap-4">
+      {art && <img src={art} alt="" loading="lazy" className="h-12 w-12 shrink-0 object-contain" />}
+      <div className="min-w-0">
+        <p className="text-[15.5px] font-bold text-ink">{title}</p>
+        {sentence && <p className="mt-1 cx-measure text-[14.5px] leading-relaxed text-body">{sentence}</p>}
+      </div>
     </div>
-    {right && <div className="flex shrink-0 items-center gap-3">{right}</div>}
+    {right && <div className={cn("flex shrink-0 items-center gap-3", art && "pl-16 sm:pl-0")}>{right}</div>}
   </div>
 );
 
@@ -246,9 +252,12 @@ export const CxSection = ({
 );
 
 // Empty is a sentence, never a blank and never a zero.
-export const CxEmpty = ({ children, action }: { children: string; action?: ReactNode }) => (
-  <div className="flex flex-col items-start gap-3 px-5 py-8 sm:px-[22px]">
-    <p className="cx-measure text-[15px] leading-relaxed text-body">{children}</p>
-    {action}
+export const CxEmpty = ({ children, action, art }: { children: string; action?: ReactNode; art?: string }) => (
+  <div className="flex items-center gap-5 px-5 py-8 sm:px-[22px]">
+    {art && <img src={art} alt="" loading="lazy" className="h-20 w-20 shrink-0 object-contain" />}
+    <div className="flex flex-col items-start gap-3">
+      <p className="cx-measure text-[15px] leading-relaxed text-body">{children}</p>
+      {action}
+    </div>
   </div>
 );

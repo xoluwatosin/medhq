@@ -10,6 +10,8 @@ import FieldAnswerInput from "@/components/portal/FieldAnswerInput";
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import CxPortalPage from "@/components/candidate/CxPortalPage";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { art } from "@/components/mc/art";
+import { TRACK_ART_BY_ID } from "@/components/candidate/track-art";
 import { CxNavyWatermark } from "@/components/candidate/CxShell";
 import {
   CxButton, CxCard, CxEmpty, CxEyebrow, CxFixBlock, CxPill, CxRow, CxRows, CxSection, CxField, cxInputClass,
@@ -198,7 +200,12 @@ const PortalAccount = () => {
       {/* The one navy surface on this screen: who you are and where you stand. */}
       <CxCard kind="navy" className="p-6 sm:p-7">
         <CxNavyWatermark />
-        <div className="relative z-10">
+        <img
+          src={TRACK_ART_BY_ID[p.person?.track] ?? art.charNurse}
+          alt=""
+          className="pointer-events-none absolute -bottom-7 right-6 hidden h-[230px] object-contain lg:block"
+        />
+        <div className="relative z-10 lg:pr-[200px]">
           <CxEyebrow onNavy>Good to see you</CxEyebrow>
           <h2 className="cx-heading mt-2 text-[24px] text-white sm:text-[28px]">{first}</h2>
           <p className="mt-2.5 cx-measure text-[15px] leading-relaxed text-body-navy">
@@ -243,7 +250,7 @@ const PortalAccount = () => {
       >
         <CxCard kind={p.attention.length > 0 ? "needs-you" : "quiet"}>
           {p.attention.length === 0 ? (
-            <CxEmpty>Nothing needs your attention. We will email you if that changes.</CxEmpty>
+            <CxEmpty art={art.objShieldCheck}>Nothing needs your attention. We will email you if that changes.</CxEmpty>
           ) : (
             <CxRows>{p.attention.map(question)}</CxRows>
           )}
@@ -307,6 +314,7 @@ const PortalAccount = () => {
         <CxCard>
           <CxRows>
             <CxRow
+              art={art.objHandshake}
               title="Offers"
               sentence={p.openOffers > 0
                 ? "Work has been offered to you and we are waiting on your answer."
@@ -319,6 +327,7 @@ const PortalAccount = () => {
               }
             />
             <CxRow
+              art={art.objFolderDocuments}
               title="Documents"
               sentence={p.required.length - p.acceptedRequired > 0 || p.openRequests > 0
                 ? "Some of what we need is still to come in or still being checked."
@@ -332,6 +341,7 @@ const PortalAccount = () => {
             />
             {p.rules.needsAvailability && (
               <CxRow
+                art={art.objCalendarSeven}
                 title="Your availability"
                 sentence={p.availabilitySet
                   ? "Set. Keep it current so we only bring you work you can take."
@@ -345,6 +355,7 @@ const PortalAccount = () => {
               />
             )}
             <CxRow
+              art={art.objHandsHeart}
               title="Work preferences"
               sentence={p.prefsDone
                 ? "We match on these. Change them whenever your situation changes."
@@ -357,12 +368,14 @@ const PortalAccount = () => {
               }
             />
             <CxRow
+              art={art.objClipboardChecks}
               title="Applications"
               sentence="Every role you have applied for and where it stands."
               right={<CxButton rank="tertiary" asChild><Link to="/portal/applications">Open</Link></CxButton>}
             />
             {addressDone && (
               <CxRow
+                art={art.objMapPinHome}
                 title="Your home address"
                 sentence="On file. It helps us send you work close to home."
                 right={<CxPill tone="settled">On file</CxPill>}

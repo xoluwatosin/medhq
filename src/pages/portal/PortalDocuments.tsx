@@ -17,6 +17,7 @@ import ReferencesPanel from "@/components/portal/ReferencesPanel";
 import ContractPackList from "@/components/contracts/ContractPackList";
 import { PortalContract, loadMyContracts } from "@/lib/contracts";
 import CxPortalPage from "@/components/candidate/CxPortalPage";
+import { art } from "@/components/mc/art";
 import { CxButton, CxCard, CxEmpty, CxFixBlock, CxPill, CxRow, CxRows, CxSection } from "@/components/candidate/primitives";
 import { usePortal } from "./usePortal";
 import { uploadPortalDocument } from "@/lib/portal-actions";
@@ -335,7 +336,7 @@ const PortalDocuments = () => {
 
         <CxCard className="mt-4">
           {p.docs.length === 0 ? (
-            <CxEmpty>Nothing on file yet. Start with your CV.</CxEmpty>
+            <CxEmpty art={art.objPaperUpload}>Nothing on file yet. Start with your CV.</CxEmpty>
           ) : (
             <CxRows>
               {p.docs.map((d) => (

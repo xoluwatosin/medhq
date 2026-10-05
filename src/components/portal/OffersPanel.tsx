@@ -3,6 +3,7 @@
 // Every offer carries the whole story: what it is, when, where, what it pays
 // if we said, and what happened. Accepting a run of shifts books those hours;
 // accepting a role opens an engagement. Nothing is buried in loose text.
+import { art } from "@/components/mc/art";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,7 @@ const OffersPanel = ({ personId, onChanged }: { personId: string; onChanged?: ()
         {open.length === 0 ? (
           <PortalEmpty
             icon={BriefcaseBusiness}
+            art={art.objHandshake}
             title="Nothing waiting on you"
             description="Keep your availability and preferences current and we will come to you when something fits."
           />

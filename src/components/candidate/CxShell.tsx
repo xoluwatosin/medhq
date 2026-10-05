@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import markSoft from "@/assets/brand/m-o-soft.svg";
+import { art as clipArt } from "@/components/mc/art";
 import { Watermark } from "@/components/mc/brand";
 
 export type CxNavItem = {
@@ -43,6 +44,16 @@ const TAB_LABEL: Record<string, string> = {
   "/portal/documents": "Documents",
   "/portal/availability": "Availability",
   "/portal/offers": "Offers",
+};
+
+/** The object beside each page title on desktop. */
+const PAGE_ART: Record<string, string> = {
+  "/portal/documents": clipArt.objFolderDocuments,
+  "/portal/availability": clipArt.objCalendarSeven,
+  "/portal/preferences": clipArt.objHandsHeart,
+  "/portal/offers": clipArt.objHandshake,
+  "/portal/applications": clipArt.objClipboardChecks,
+  "/portal/details": clipArt.objIdVerification,
 };
 
 const isActive = (pathname: string, url: string) =>
@@ -87,19 +98,20 @@ export const CxShell = ({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const tabs = nav.filter((i) => MOBILE_TABS.includes(i.url));
+  const pageArt = PAGE_ART[Object.keys(PAGE_ART).find((u) => u === pathname || (u !== "/portal" && pathname.startsWith(u))) ?? ""];
 
   const signOut = () => supabase.auth.signOut().then(() => navigate("/portal/login"));
 
   return (
     <div className="cx cx-portal flex min-h-dvh w-full bg-navy md:bg-white">
       {/* Desktop rail */}
-      <aside className="sticky top-0 hidden h-dvh w-[260px] shrink-0 flex-col overflow-hidden bg-navy px-4 py-7 md:flex">
+      <aside className="relative hidden w-[260px] shrink-0 flex-col overflow-hidden bg-navy px-4 py-7 md:flex">
         <Watermark glyph="inf" size={420} opacity={0.12} className="-bottom-[120px] -left-[150px]" />
         <div className="relative z-10 flex h-full flex-col">
           <Link to="/" className="mb-10 ml-2 block">
             <img src={logoWhite} alt="Medic Connect" className="w-[132px]" />
           </Link>
-          <nav className="flex flex-1 flex-col gap-1">
+          <nav className="flex flex-col gap-1">
             {nav.map((item) => {
               const active = isActive(pathname, item.url);
               return (
@@ -124,7 +136,7 @@ export const CxShell = ({
           <button
             type="button"
             onClick={signOut}
-            className="mt-auto flex min-h-11 items-center gap-2.5 px-3 text-[14.5px] font-bold text-body-navy transition-colors hover:bg-white/10 hover:text-white"
+            className="mt-6 flex min-h-11 items-center gap-2.5 border-t border-hairline-navy px-3 pt-6 text-[14.5px] font-bold text-body-navy transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             <span>Sign out</span>
@@ -170,9 +182,12 @@ export const CxShell = ({
 
         <main className="min-w-0 flex-1 bg-white px-[18px] py-6 md:px-12 md:py-12">
           <div className="mx-auto flex w-full max-w-[900px] flex-col gap-[26px]">
-            <div className="hidden md:block">
-              {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
-              <h1 className="text-[40px] leading-[1.02] tracking-[-0.05em] text-navy">{title}</h1>
+            <div className="hidden items-end justify-between gap-6 md:flex">
+              <div>
+                {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}
+                <h1 className="text-[40px] leading-[1.02] tracking-[-0.05em] text-navy">{title}</h1>
+              </div>
+              {pageArt && <img src={pageArt} alt="" className="-mb-2 h-[92px] w-[92px] shrink-0 rotate-[-6deg] object-contain" />}
             </div>
             {children}
           </div>
