@@ -33,6 +33,7 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
     - `supabase/migrations/20261005180000_care_family_membership.sql` (one member row per person per family; roles read from the care records)
     - `supabase/migrations/20261005190000_care_person_matching.sql` (care duplicates: matching, "different people" answers, the merge)
     - `supabase/migrations/20261005200000_care_link_scope.sql` (a link opens one care record; its person comes from its contact)
+    - `supabase/migrations/20261005210000_care_payers.sql` (payers: people or organisations, with shares; drops `client_commercial.payer_person_id`)
     - any later file in `supabase/migrations/` dated after 20261003231023
     Check with: `select proname from pg_proc where proname = 'mu_merge_people';` (one row), `select count(*) from information_schema.tables where table_name ilike 'heard%';` (0) `select count(*) from clients where person_id is null;` (0) and `select count(*) from clients where home_id is null and coalesce(address_line, state_code, lga_code) is not null;` (0).
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.

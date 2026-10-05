@@ -45,6 +45,7 @@ import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
 import HomeSection from "@/components/admin/care/HomeSection";
 import PossibleDuplicates from "@/components/admin/care/PossibleDuplicates";
+import PayersSection from "@/components/admin/care/PayersSection";
 import { homeOverview, linkScope, type HomeOverview, type LinkScope } from "@/lib/care-records";
 import RecordLifecycle from "@/components/admin/care/RecordLifecycle";
 
@@ -1053,6 +1054,7 @@ const ClientRecord = () => {
               <Wallet className="h-4 w-4" /> Nothing here is shown on the pre-assessment or to a clinical reviewer.
             </p>
           </MuSection>
+          <PayersSection clientId={String(id)} />
           <CareFinanceSection clientId={String(id)} contacts={contacts} />
           </>
         )}

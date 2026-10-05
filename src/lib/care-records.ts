@@ -240,3 +240,64 @@ export const linkScope = async (tokenId: string): Promise<LinkScope> => {
   if (error) throw error;
   return data as LinkScope;
 };
+
+// Who pays for a care record: people or organisations, with shares that add
+// up to 100. Paying gives no access by itself.
+export const ORGANISATION_KINDS: Record<string, string> = {
+  employer: "Employer",
+  hmo_insurer: "HMO or insurer",
+  faith: "Church or mosque",
+  ngo: "NGO or charity",
+  government: "Government body",
+  other: "Other organisation",
+};
+
+export interface PayerRow {
+  id: string;
+  share_percent: number;
+  person: { id: string; full_name: string; email: string | null; phone: string | null } | null;
+  organisation: {
+    id: string; name: string; kind: string; billing_email: string | null; billing_phone: string | null;
+    people: { id: string; full_name: string; email: string | null; role: string }[];
+  } | null;
+}
+
+export interface PayersOverview {
+  payers: PayerRow[];
+  people: { id: string; full_name: string }[];
+  organisations: { id: string; name: string; kind: string }[];
+}
+
+export const payersOverview = async (clientId: string): Promise<PayersOverview> => {
+  const { data, error } = await adminDb().rpc("care_payers_overview", { _client_id: clientId });
+  if (error) throw error;
+  return data as PayersOverview;
+};
+
+export const setPayers = async (
+  clientId: string,
+  payers: { person_id?: string; organisation_id?: string; share_percent: number }[],
+) => {
+  const { error } = await adminDb().rpc("care_payers_set", { _client_id: clientId, _payers: payers });
+  if (error) throw error;
+};
+
+export const saveOrganisation = async (input: {
+  name: string; kind: string; billingEmail?: string | null; billingPhone?: string | null;
+}) => {
+  const { data, error } = await adminDb().rpc("care_organisation_save", {
+    _id: null, _name: input.name, _kind: input.kind,
+    _billing_email: input.billingEmail ?? null, _billing_phone: input.billingPhone ?? null,
+    _billing_address: null, _notes: null,
+  });
+  if (error) throw error;
+  return data as string;
+};
+
+export const addOrganisationPerson = async (organisationId: string, fullName: string, email?: string | null) => {
+  const { error } = await adminDb().rpc("care_organisation_person_add", {
+    _organisation_id: organisationId, _person_id: null, _full_name: fullName,
+    _email: email ?? null, _phone: null, _role: "billing_contact",
+  });
+  if (error) throw error;
+};

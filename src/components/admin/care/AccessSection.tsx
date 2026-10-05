@@ -248,16 +248,7 @@ export const AccessSection = ({
     );
   };
 
-  const setPayer = async (person: AccessPerson) => {
-    setBusy(true);
-    const { error } = await supabase.rpc("care_payer_set", {
-      _client_id: clientId, _person_id: person.person_id,
-    });
-    setBusy(false);
-    if (error) { fail(error, "Could not set the payer"); return; }
-    await after("Payer set");
-  };
-
+  // Payers, and their shares, are set on the Commercial tab.
   const sendInvitation = async (person: AccessPerson, retry = false) => {
     if (!person.grant_id) return;
     setBusy(true);
@@ -361,11 +352,6 @@ export const AccessSection = ({
                             <Button size="sm" variant="outline"
                               onClick={() => { setReasonText(""); setReasonFor({ person, action: "revoke" }); }}>
                               Revoke
-                            </Button>
-                          )}
-                          {!person.is_payer && (
-                            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void setPayer(person)}>
-                              Set as payer
                             </Button>
                           )}
                         </div>
