@@ -403,7 +403,7 @@ later: apps/people/   Capacitor shell with native adapters
 | Contracts issued from three places are not emailed or checked | Staff never receive their contract | Admin fix, see `admin-ux-inventory.md` |
 | Email Library unused, system emails read templates with no editor | Staff can't change what is sent | D10 |
 | Raw care tokens in session storage | Token exposure on shared devices | Roadmap "required before scale" |
-| Heard leftovers | Two copies of Heard if this deployment still serves it; stale tables and access keys | Confirm the Heard domain no longer points here, export the 8 Heard rows, then remove the code, functions, tables and keys |
+| Heard leftovers | Two copies of Heard if this deployment still serves it; stale tables and access keys | Confirm the Heard domain no longer points here, export the 9 Heard rows, then remove the code, functions, tables and keys |
 | Data protection | Health data under the Nigeria Data Protection Act 2023 | A data map, retention rules and a data protection impact assessment before family portal launch. Take legal advice. |
 
 ---
