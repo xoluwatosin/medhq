@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import MedicHeader from "@/components/MedicHeader";
 import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
+import KitPageHero from "@/components/kit/KitPageHero";
+import { KitMain, KitPanel, kitHeroPrimaryButton, kitSecondaryButton } from "@/components/kit/KitLayout";
 import HoverCard from "@/components/HoverCard";
 import NairaIcon from "@/components/mc/NairaIcon";
 import { Button } from "@/components/ui/button";
@@ -263,9 +265,9 @@ const Creator = () => {
   ];
 
   const benefits = [
-    { title: "Paid Partnerships", description: "Per post fees and monthly retainer options for consistent, quality collaboration.", icon: NairaIcon },
-    { title: "Long-term Collaboration", description: "Grow alongside a Pan-African healthcare brand that's just getting started.", icon: Handshake },
-    { title: "Meaningful Impact", description: "Contribute to something that genuinely changes lives across Africa.", icon: Heart },
+    { title: "Paid partnerships", description: "Per post fees and monthly retainer options for consistent, quality collaboration.", icon: NairaIcon },
+    { title: "Long-term collaboration", description: "Grow alongside a Pan-African healthcare brand that's just getting started.", icon: Handshake },
+    { title: "Meaningful impact", description: "Contribute to something that genuinely changes lives across Africa.", icon: Heart },
   ];
 
   return (
@@ -276,64 +278,62 @@ const Creator = () => {
         path="/creator"
       />
       <MedicHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
-        {/* Hero */}
-        <section className="relative kit-curve-lg overflow-hidden bg-navy mt-2 mb-8 animate-fade-in">
-          <div className="p-8 md:p-12 lg:p-16 text-center">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <h1 className="text-[34px] sm:text-[46px] lg:text-[56px] font-medium leading-[1.06] tracking-[-0.03em] text-white animate-slide-down">
-                Medic Connect Creator Programme
-              </h1>
-              <p className="text-lg text-muted-foreground animate-slide-up stagger-1">
-                The voice behind Africa's healthcare operating system
-              </p>
-            </div>
-          </div>
-        </section>
+      <KitPageHero
+        eyebrow="Creator programme"
+        title="Tell the story of care at home"
+        accent={[4]}
+        lead="Paid partnerships for creators who want to help families across Africa find professional, trusted care."
+      >
+        <a href="#apply" className={kitHeroPrimaryButton}>Apply now</a>
+      </KitPageHero>
+      <KitMain>
 
         {/* Who We Are */}
-        <section className="mb-10 md:mb-12 max-w-3xl mx-auto animate-slide-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Who We Are</h2>
-          <p className="text-muted-foreground leading-relaxed mb-4">
+        <section className="mx-auto mb-14 max-w-3xl">
+          <hr className="mb-6 border-t-4 border-navy" />
+          <h2 className="text-[30px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy sm:text-[40px] mb-5">Who we are</h2>
+          <p className="mb-4 text-[17px] leading-[1.7] text-body">
             Medic Connect is Africa's healthcare operating system, the infrastructure connecting families, caregivers, and healthcare professionals across the continent. From clinical home care to eldercare, postnatal support to staffing, we are redefining how Africa experiences healthcare.
           </p>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-[17px] leading-[1.7] text-body">
             Now we're looking for creators to help tell that story.
           </p>
         </section>
 
         {/* Who We're Looking For */}
-        <section className="mb-10 md:mb-12">
-          <div className="max-w-3xl mx-auto kit-curve bg-card p-6 md:p-8 border border-hairline-warm animate-slide-up">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Who We're Looking For</h2>
-            <p className="text-muted-foreground mb-6">
+        <section className="mx-auto mb-14 max-w-3xl">
+          <KitPanel>
+            <h2 className="mb-4 text-[24px] font-extrabold tracking-[-0.03em] text-navy sm:text-[30px]">Who we are looking for</h2>
+            <p className="mb-6 text-[17px] leading-[1.7] text-body">
               We're looking for credible, passionate creators (healthcare professionals, wellness advocates, lifestyle creators, and students) who understand the importance of healthcare access in Africa and want to use their platform meaningfully.
             </p>
-            <p className="font-semibold mb-4">You're a strong fit if you:</p>
+            <p className="mb-4 text-[16px] font-bold text-ink">You're a strong fit if you:</p>
             <ul className="space-y-3">
               {criteria.map((item) => (
                 <li key={item} className="flex items-start gap-3">
-                  <span className="mt-0.5 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Check className="w-4 h-4 text-primary" />
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-tint">
+                    <Check className="h-4 w-4 text-brand" aria-hidden="true" />
                   </span>
-                  <span className="text-muted-foreground">{item}</span>
+                  <span className="text-[16px] leading-[1.6] text-body">{item}</span>
                 </li>
               ))}
             </ul>
-          </div>
+          </KitPanel>
         </section>
 
         {/* What You'll Do */}
-        <section className="mb-10 md:mb-12 max-w-3xl mx-auto animate-slide-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">What You'll Do</h2>
-          <p className="text-muted-foreground leading-relaxed">
+        <section className="mx-auto mb-14 max-w-3xl">
+          <hr className="mb-6 border-t-4 border-navy" />
+          <h2 className="text-[30px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy sm:text-[40px] mb-5">What you will do</h2>
+          <p className="text-[17px] leading-[1.7] text-body">
             Create authentic, purposeful content that builds awareness and trust around professional healthcare at home, in your voice, on your platform, for an audience that needs to hear it.
           </p>
         </section>
 
         {/* What You Get */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center animate-slide-up">What You Get</h2>
+        <section className="mb-14">
+          <hr className="mb-6 border-t-4 border-navy" />
+          <h2 className="text-[30px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy sm:text-[40px] mb-8">What you get</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {benefits.map((benefit, index) => (
               <HoverCard key={benefit.title} {...benefit} index={index} />
@@ -342,14 +342,15 @@ const Creator = () => {
         </section>
 
         {/* Application Form */}
-        <section className="mb-10 md:mb-12">
-          <div className="kit-curve-lg bg-muted p-8 md:p-12 animate-slide-up">
-            <h2 className="text-3xl font-bold mb-8 text-center">Apply Now</h2>
+        <section id="apply" className="mb-14 scroll-mt-28">
+          <div className="kit-curve-lg bg-muted p-6 sm:p-10 md:p-12">
+            <h2 className="text-[30px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy sm:text-[40px] mb-2 text-center">Apply now</h2>
+            <p className="mb-8 text-center text-[16px] text-body">It takes about five minutes. We reply to every application.</p>
             <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Input
-                    placeholder="Full Name"
+                    placeholder="Full name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     maxLength={100}
@@ -360,7 +361,7 @@ const Creator = () => {
                 <div>
                   <Input
                     type="email"
-                    placeholder="Email Address"
+                    placeholder="Email address"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     maxLength={255}
@@ -386,7 +387,7 @@ const Creator = () => {
                       </PopoverTrigger>
                       <PopoverContent className="w-[250px] p-0 bg-background border border-border shadow-lg z-50">
                         <Command>
-                          <CommandInput placeholder="Search country..." />
+                          <CommandInput placeholder="Search country" />
                           <CommandList>
                             <CommandEmpty>No country found.</CommandEmpty>
                             <CommandGroup>
@@ -410,7 +411,7 @@ const Creator = () => {
                     </Popover>
                     <Input
                       type="tel"
-                      placeholder="Phone Number"
+                      placeholder="Phone number"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       maxLength={20}
@@ -433,7 +434,7 @@ const Creator = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-background border border-border shadow-lg z-50">
                       <Command>
-                        <CommandInput placeholder="Search country..." />
+                        <CommandInput placeholder="Search country" />
                         <CommandList>
                           <CommandEmpty>No country found.</CommandEmpty>
                           <CommandGroup>
@@ -548,24 +549,22 @@ const Creator = () => {
                 disabled={isSubmitting}
                 className="w-full rounded-full py-6 glow-on-hover hover:scale-[1.02] transition-all"
               >
-                {isSubmitting ? "Submitting..." : "Submit Application"}
+                {isSubmitting ? "Submitting" : "Send application"}
               </Button>
             </form>
           </div>
         </section>
 
         {/* Questions CTA */}
-        <div className="kit-curve-lg bg-card p-12 text-center border border-hairline-warm animate-scale-in">
-          <h2 className="text-2xl font-bold mb-4">Have questions?</h2>
-          <p className="text-muted-foreground mb-6">Reach out to our team. We're happy to tell you more about the Creator Programme.</p>
-          <Button asChild variant="outline" className="rounded-full px-8 py-6 hover:scale-105 transition-all">
-            <a href="https://wa.me/2348126988237" className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              WhatsApp Us
-            </a>
-          </Button>
-        </div>
-      </main>
+        <KitPanel tone="tint" className="text-center">
+          <h2 className="mb-3 text-[24px] font-extrabold tracking-[-0.03em] text-navy">Have questions?</h2>
+          <p className="mb-6 text-[16px] text-body">Message the team. We're happy to tell you more about the creator programme.</p>
+          <a href="https://wa.me/2348126988237" className={kitSecondaryButton}>
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            WhatsApp us
+          </a>
+        </KitPanel>
+      </KitMain>
       <Footer />
     </div>
   );
