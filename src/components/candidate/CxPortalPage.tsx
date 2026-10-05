@@ -37,7 +37,7 @@ export const CxPortalPage = ({
 
   if (loading) {
     return (
-      <div className="cx flex min-h-dvh items-center justify-center bg-desk">
+      <div className="cx cx-portal flex min-h-dvh items-center justify-center bg-white">
         <Loader2 className="h-6 w-6 animate-spin text-navy" />
       </div>
     );
@@ -45,7 +45,7 @@ export const CxPortalPage = ({
 
   if (!person) {
     return (
-      <div className="cx flex min-h-dvh items-center justify-center bg-desk px-5">
+      <div className="cx cx-portal flex min-h-dvh items-center justify-center bg-white px-5">
         <div className="cx-card max-w-md border border-line bg-white p-7">
           <img loading="lazy" decoding="async" src={logo} alt="Medic Connect" className="h-9 w-9" />
           <h1 className="cx-heading mt-4 text-[22px] text-ink">We could not find your profile</h1>
@@ -64,7 +64,7 @@ export const CxPortalPage = ({
       <SEO title={`${title} | Medic Connect`} description="Your Medic Connect candidate profile." path="/portal" noindex />
       <CxShell title={title} eyebrow={eyebrow} back={back} nav={nav} headerAction={headerAction} footer={footer}>
         {intro && (
-          <p className="hidden cx-measure text-[15.5px] leading-relaxed text-body md:-mt-3 md:block">{intro}</p>
+          <p className="hidden cx-measure text-[17px] leading-[1.6] text-body md:-mt-2 md:block">{intro}</p>
         )}
         {children}
       </CxShell>

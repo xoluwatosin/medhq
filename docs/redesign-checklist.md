@@ -12,10 +12,11 @@ The Medic Connect design system rollout, page by page. Tick items as they ship.
 - [x] The SEO pages (governed core pages and expansion pages)
 - [x] The Bridge (blog list and story pages)
 - [x] Sign-up steps: account, confirm, first profile answers
+- [x] Candidate portal frame, sign in, and the shared portal cards, fields and headings
 
 ## To do
 
-- [ ] Candidate portal: login, documents, availability, preferences, offers, contracts, applications, details
+- [ ] Candidate portal: screen-by-screen polish once real data is in (offers, contracts, applications)
 - [ ] Family care pages: invitation, onboarding, proposal, pre-assessment, contract signing
 - [ ] Smaller public pages: Creator, Agency vs private nurse, Privacy, Terms, Unsubscribe, matchmaker pages (/hm)
 - [ ] Heard (volunteer pages), if they are to join the main look

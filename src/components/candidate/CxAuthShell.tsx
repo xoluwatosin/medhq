@@ -11,6 +11,7 @@ import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import markTint from "@/assets/brand/m-o-tint.svg";
 import logoNavy from "@/assets/brand/medicconnect-logo.svg";
 import { CxNavyWatermark } from "./CxShell";
+import { TapeLabel, Watermark } from "@/components/mc/brand";
 import { cxInputClass } from "./primitives";
 
 // On a phone the navy has to run under the status bar and above the home bar.
@@ -62,7 +63,7 @@ export const CxAuthShell = ({
 
   return (
     <div className="cx min-h-dvh bg-navy md:grid md:min-h-dvh md:grid-cols-[minmax(300px,34%)_1fr]">
-      <aside className="relative hidden overflow-hidden bg-desk md:flex md:flex-col md:justify-between md:px-10 md:py-12 lg:px-12">
+      <aside className="relative hidden overflow-hidden bg-white md:flex md:flex-col md:justify-between md:px-10 md:py-12 lg:px-12">
         <img loading="lazy" decoding="async"
           src={markTint}
           alt=""
@@ -78,13 +79,13 @@ export const CxAuthShell = ({
           className,
         )}
       >
-        <CxNavyWatermark />
+        <Watermark glyph="inf" size={520} opacity={0.12} className="-right-[180px] -top-[140px]" />
         <div className="relative z-10 flex w-full flex-1 flex-col md:flex-none md:max-w-[480px]">
           <div className="md:hidden">
             <img loading="lazy" decoding="async" src={logoWhite} alt="Medic Connect" className="w-[118px]" />
             <div className="mt-5 h-px w-full bg-hairline-navy" />
           </div>
-          <h1 className="cx-heading mt-7 text-[26px] text-white md:mt-0 md:text-[32px]">{title}</h1>
+          <h1 className="mt-7 text-[32px] leading-[1.02] tracking-[-0.05em] !text-white md:mt-0 md:text-[44px]">{title}</h1>
 
           {intro && (
             <p className="mt-2 cx-measure text-[15px] leading-relaxed text-body-navy">{intro}</p>
@@ -112,7 +113,7 @@ const CxAuthDoor = ({
 }) => (
   <div className="relative z-10 flex flex-1 flex-col">
     <img loading="lazy" decoding="async" src={logoWhite} alt="Medic Connect" className="w-[132px]" />
-    <h1 className="cx-heading mt-9 text-[26px] text-white">{title}</h1>
+    <h1 className="mt-9 text-[32px] leading-[1.02] tracking-[-0.05em] !text-white">{title}</h1>
     {intro && <p className="mt-2 cx-measure text-[15px] leading-relaxed text-body-navy">{intro}</p>}
     <div className="mt-7 flex flex-col gap-4">{children}</div>
     {footer && (
@@ -135,6 +136,7 @@ export const CxAuthAside = ({
   quote,
   attribution,
   note,
+  art,
 }: {
   eyebrow?: string;
   heading?: string;
@@ -144,15 +146,17 @@ export const CxAuthAside = ({
   quote?: string;
   attribution?: string;
   note?: ReactNode;
+  /** A person standing at the foot of the panel. */
+  art?: string;
 }) => {
   if (variant === "statement") {
     return (
       <>
         <img loading="lazy" decoding="async" src={logoNavy} alt="Medic Connect" className="relative z-10 w-[150px]" />
-        <p className="font-handwritten relative z-10 max-w-[14ch] text-[44px] leading-[1.05] text-ink lg:text-[52px]">
-          Inspired by illness.
+        <p className="relative z-10 max-w-[12ch] text-[44px] font-extrabold leading-[1] tracking-[-0.05em] text-navy lg:text-[56px]">
+          Inspired by <span className="inline-block -rotate-2 bg-brand px-3 text-white shadow-[4px_4px_0_hsl(var(--navy))]">illness.</span>
         </p>
-        <div className="relative z-10 h-px w-16 bg-brand" />
+        <div className="relative z-10 h-1 w-16 bg-brand" />
       </>
     );
   }
@@ -162,7 +166,7 @@ export const CxAuthAside = ({
     <div className="relative z-10">
       <img loading="lazy" decoding="async" src={logoNavy} alt="Medic Connect" className="mb-12 w-[150px]" />
       {eyebrow && <p className="cx-eyebrow text-brand">{eyebrow}</p>}
-      <h2 className="cx-heading mt-4 max-w-[15ch] text-[36px] leading-[1.05] text-ink lg:text-[42px]">
+      <h2 className="mt-4 max-w-[15ch] text-[36px] leading-[1.02] tracking-[-0.05em] text-navy lg:text-[44px]">
         {heading}
       </h2>
       {lede && (
@@ -186,11 +190,11 @@ export const CxAuthAside = ({
         <ul className="flex max-w-[44ch] flex-col gap-5">
           {items.map((it, i) => (
             <li key={it.title} className="flex gap-4">
-              <span className="cx-chip flex h-8 w-8 shrink-0 items-center justify-center bg-navy text-[13.5px] font-extrabold text-white">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-navy text-[13.5px] font-extrabold text-white shadow-[3px_3px_0_hsl(var(--brand))]">
                 {i + 1}
               </span>
               <div className="min-w-0 pt-0.5">
-                <p className="text-[15.5px] font-bold text-ink">{it.title}</p>
+                <p className="text-[15.5px] font-extrabold text-navy">{it.title}</p>
                 {it.body && <p className="mt-1 text-[14.5px] leading-relaxed text-body">{it.body}</p>}
               </div>
             </li>
@@ -205,11 +209,11 @@ export const CxAuthAside = ({
               {i < items.length - 1 && (
                 <span aria-hidden className="absolute left-[15px] top-9 bottom-1 w-px bg-line-soft" />
               )}
-              <span className="cx-chip relative z-10 flex h-8 w-8 shrink-0 items-center justify-center bg-navy text-[13.5px] font-extrabold text-white">
+              <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center bg-navy text-[13.5px] font-extrabold text-white shadow-[3px_3px_0_hsl(var(--brand))]">
                 {i + 1}
               </span>
               <div className="min-w-0 pt-0.5">
-                <p className="text-[15.5px] font-bold text-ink">{it.title}</p>
+                <p className="text-[15.5px] font-extrabold text-navy">{it.title}</p>
                 {it.body && <p className="mt-1 text-[14.5px] leading-relaxed text-body">{it.body}</p>}
               </div>
             </li>
@@ -218,8 +222,15 @@ export const CxAuthAside = ({
       )}
     </div>
 
-    <div className="relative z-10 mt-10 font-handwritten text-[22px] leading-relaxed text-muted-foreground">
-      {note ?? "Inspired by illness."}
+    <div className="relative z-10 mt-auto flex items-end justify-between gap-4 pt-10">
+      {note ? (
+        <div className="text-[16px] font-bold leading-relaxed text-navy">{note}</div>
+      ) : (
+        <TapeLabel tone="navy" tilt={-3} className="mb-4">
+          Inspired by illness.
+        </TapeLabel>
+      )}
+      {art && <img src={art} alt="" className="pointer-events-none -mb-12 h-[220px] object-contain" />}
     </div>
   </>
   );

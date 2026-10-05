@@ -232,7 +232,7 @@ export const CxSection = ({
 }) => (
   <section className={cn("flex flex-col gap-4", className)}>
     {(title || eyebrow || actions) && (
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="cx-section-head flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           {eyebrow && <CxEyebrow className="mb-1.5">{eyebrow}</CxEyebrow>}
           {title && <h2 className="cx-heading text-[19px] text-ink">{title}</h2>}

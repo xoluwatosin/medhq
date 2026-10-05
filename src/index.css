@@ -406,6 +406,28 @@ All colors MUST be HSL.
   .cx-join select.cx-chip:focus,
   .cx-join textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
 
+  /* The signed-in candidate portal in the house style: square paper, quiet
+     hairlines on everyday cards, a hard offset only where the next action is,
+     bold navy headings, firm fields and controls. Scoped to .cx-portal so the
+     admin screens that share these primitives are untouched. */
+  .cx-portal .cx-card { border-radius: 0; border: 2px solid hsl(var(--navy) / 0.12); }
+  .cx-portal .cx-card-emph { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  .cx-portal .cx-card-emph.bg-navy { border: 0; box-shadow: 6px 6px 0 hsl(var(--brand)); }
+  .cx-portal .cx-card-warn { border-radius: 0; border-width: 2px; box-shadow: 6px 6px 0 hsl(var(--warn-line)); }
+  .cx-portal .cx-heading { font-weight: 800; letter-spacing: -0.04em; }
+  .cx-portal .cx-chip { border-radius: 0; }
+  .cx-portal input.cx-chip,
+  .cx-portal select.cx-chip,
+  .cx-portal textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 48px; font-size: 15.5px; background: #fff; }
+  .cx-portal input.cx-chip:focus,
+  .cx-portal select.cx-chip:focus,
+  .cx-portal textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
+  .cx-portal .cx-control.bg-navy { box-shadow: 4px 4px 0 hsl(var(--brand)); font-weight: 800; }
+  .cx-portal .cx-control.bg-navy:disabled { box-shadow: none; }
+  .cx-portal .cx-section-head h2.cx-heading { font-size: 24px; line-height: 1.1; color: hsl(var(--navy)); }
+  .cx-portal .cx-section-head { border-top: 4px solid hsl(var(--navy)); padding-top: 18px; margin-top: 10px; }
+  @media (min-width: 768px) { .cx-portal .cx-section-head h2.cx-heading { font-size: 28px; } }
+
   .surface-quiet {
     border: 1px solid hsl(var(--line));
     border-radius: 16px;
