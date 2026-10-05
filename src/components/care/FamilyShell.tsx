@@ -44,7 +44,7 @@ export const FamilyShell = ({ eyebrow, title, lead, action, path, children }: Fa
         {lead && <p className="mt-2 max-w-xl text-[15.5px] leading-relaxed text-[#C6CBF0]">{lead}</p>}
       </div>
     </header>
-    <main className="flex-1 px-4 pb-[max(28px,env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pt-8">
+    <main className="flex-1 px-4 pb-[max(112px,calc(env(safe-area-inset-bottom)+96px))] pt-5 sm:px-8 sm:pt-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">{children}</div>
     </main>
   </div>
