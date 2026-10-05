@@ -206,4 +206,4 @@ Console-to-Mu consolidation, `MuStats` retirement, design-token hygiene, care-to
 
 ## 9. Current implementation position
 
-Planning complete. Documents ratified 12 September 2026. No tranche started.
+Updated 5 October 2026. Tranches 1 to 7 and Pass 7.5A to 7.5C are built (Drizzle migrations 0010 to 0069 and 0107 to 0113); several await populated and device acceptance, tracked in `roadmap.md`. Tranche 8 has not started. The whole-platform view and data roadmap are in `docs/platform-architecture.md`.
