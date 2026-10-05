@@ -236,20 +236,27 @@ const MatchUniverseVerification = () => {
     const chosen = filtered.filter((r) => picked.includes(r.document_id));
     if (!chosen.length) return;
     setBusy("bulk");
+    const done: string[] = [];
+    const failed: string[] = [];
     for (const row of chosen) {
-      await (adminDb() as any).rpc("mu_review_document", {
+      const { error } = await (adminDb() as any).rpc("mu_review_document", {
         _document_id: row.document_id,
         _outcome: "accepted",
         _reason: null,
         _expires_at: row.expires_at || null,
       });
       // An acceptance asks nothing of the candidate, so no email is sent.
-
+      (error ? failed : done).push(row.document_id);
     }
     setBusy(null);
-    toast({ title: `${chosen.length} document${chosen.length === 1 ? "" : "s"} accepted` });
-    setRows((prev) => prev.filter((r) => !picked.includes(r.document_id)));
-    setBacklog((n) => Math.max(0, n - chosen.length));
+    toast(
+      failed.length
+        ? { title: `${done.length} accepted, ${failed.length} could not be`, description: "Those are still in the queue and still ticked. Try them one at a time.", variant: "destructive" }
+        : { title: `${done.length} document${done.length === 1 ? "" : "s"} accepted` },
+    );
+    setRows((prev) => prev.filter((r) => !done.includes(r.document_id)));
+    setPicked(failed);
+    setBacklog((n) => Math.max(0, n - done.length));
     setPicked([]);
 
   };

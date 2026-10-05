@@ -117,7 +117,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
       slug: safeSlug,
       document_fields: merged.document_fields.filter((d) => d.label.trim()),
       questions: merged.questions.filter((q) => q.label.trim()),
-      closed_at: merged.status === "closed" ? new Date().toISOString() : null,
+      // Keep the date it actually closed; only stamp it when it first closes.
+      closed_at: merged.status === "closed" ? ((merged as any).closed_at || new Date().toISOString()) : null,
     };
     const { error } = await adminDb().from("matchmaker_opportunities").update(payload).eq("id", op.id);
     if (error) throw error;

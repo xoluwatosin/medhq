@@ -47,7 +47,14 @@ const Campaigns = () => {
   };
 
   const duplicate = async (c: Campaign) => {
-    const { error } = await adminDb().from("campaigns").insert({ title: `${c.title} (copy)`, subject: c.subject, audience_type: c.audience_type, content: c.content, template: c.template || "plain", template_data: c.template_data || {}, manual_recipients: c.manual_recipients || [] }).select().single();
+    // A copy keeps the whole email: its blocks, preheader and kind, not just the text.
+    const src = c as Campaign & { blocks?: unknown; preheader?: string | null; kind?: string | null; tracking_enabled?: boolean | null };
+    const { error } = await adminDb().from("campaigns").insert({
+      title: `${c.title} (copy)`, subject: c.subject, audience_type: c.audience_type, content: c.content,
+      template: c.template || "plain", template_data: c.template_data || {}, manual_recipients: c.manual_recipients || [],
+      blocks: src.blocks ?? null, preheader: src.preheader ?? null, kind: src.kind ?? "marketing",
+      ...(src.tracking_enabled !== undefined && src.tracking_enabled !== null ? { tracking_enabled: src.tracking_enabled } : {}),
+    }).select().single();
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: "Campaign duplicated" }); fetchCampaigns(); }
   };

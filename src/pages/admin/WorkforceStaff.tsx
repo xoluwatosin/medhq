@@ -6,7 +6,7 @@
 // arranged in that order so nobody can invite somebody into the admin centre
 // on a handshake.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Ban, Briefcase, CalendarDays, FileSignature, KeyRound, Loader2, Mail, MapPin,
@@ -603,8 +603,10 @@ const WorkforceStaff = () => {
                           </Button>
                         )}
                         {c.status === "signed" && (
-                          <Button size="sm" onClick={() => runContractAction(() => setContractStatus(c.id, "active"), "Contract active")}>
-                            <ShieldCheck className="mr-2 h-4 w-4" />Mark active
+                          <Button size="sm" asChild>
+                            <Link to={`/admin/contracts/${c.id}`}>
+                              <ShieldCheck className="mr-2 h-4 w-4" />Countersign
+                            </Link>
                           </Button>
                         )}
                         {["draft", "issued"].includes(c.status) && (

@@ -520,9 +520,6 @@ export default function Intelligence() {
               {queuePendingCount} pending nudge{queuePendingCount === 1 ? "" : "s"} queued.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setQueue([])} disabled>
-                Auto-send at 09:00 UTC
-              </Button>
               <Button size="sm" onClick={() => sendNudges()} disabled={!queuePendingCount}>
                 <Send className="h-4 w-4 mr-1" /> Send all pending
               </Button>

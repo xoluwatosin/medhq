@@ -28,12 +28,14 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
   const [running, setRunning] = useState(false);
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [stages, setStages] = useState<Record<string, string>>({});
   const [rationales, setRationales] = useState<Record<string, string>>({});
   const [rationaleBusy, setRationaleBusy] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: sl } = await adminDb().from("mu_shortlists").select("opportunity_id").eq("person_id", personId);
+    const { data: sl } = await adminDb().from("mu_shortlists").select("opportunity_id, status").eq("person_id", personId);
     setShortlisted(new Set((sl || []).map((r: any) => r.opportunity_id)));
+    setStages(Object.fromEntries((sl || []).map((r: any) => [r.opportunity_id, r.status ?? "shortlisted"])));
   };
 
   const run = async (blocked = includeBlocked) => {
@@ -58,7 +60,21 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
 
   const toggleShortlist = async (row: OppMatch) => {
     if (shortlisted.has(row.opportunity_id)) {
-      await adminDb().from("mu_shortlists").delete().eq("opportunity_id", row.opportunity_id).eq("person_id", personId);
+      // Once someone has been put forward or placed, the shortlist row is the
+      // record of that. Unticking here must not erase it.
+      const stage = stages[row.opportunity_id] ?? "shortlisted";
+      if (stage !== "shortlisted") {
+        toast({
+          title: "This shortlist has moved on",
+          description: `They are at "${stage.replace(/_/g, " ")}". Change or withdraw it from the role's Matches tab, where the stage is managed.`,
+        });
+        return;
+      }
+      const { error: delError } = await adminDb().from("mu_shortlists").delete().eq("opportunity_id", row.opportunity_id).eq("person_id", personId);
+      if (delError) {
+        toast({ title: "Could not remove the shortlist", description: delError.message, variant: "destructive" });
+        return;
+      }
       setShortlisted((prev) => {
         const next = new Set(prev);
         next.delete(row.opportunity_id);
@@ -80,6 +96,7 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
       return;
     }
     setShortlisted((prev) => new Set(prev).add(row.opportunity_id));
+    setStages((prev) => ({ ...prev, [row.opportunity_id]: "shortlisted" }));
     await adminDb().from("mu_activity").insert({
       person_id: personId,
       action: "shortlisted_to_opportunity",

@@ -150,7 +150,7 @@ const MatchUniverseAvailability = () => {
         description="Search candidates by date range and shift. Unknown means the candidate has not confirmed, not that they are unavailable."
         actions={
           <Button variant="outline" asChild>
-            <Link to="/admin/match-universe/workforce">Workforce</Link>
+            <Link to="/admin/workforce">Workforce</Link>
           </Button>
         }
       />
@@ -233,7 +233,7 @@ const MatchUniverseAvailability = () => {
                   <li key={n.person_id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                     <div className="min-w-0">
                       <Link
-                        to={`/admin/match-universe/${n.person_id}?tab=work`}
+                        to={`/admin/match-universe/${n.person_id}?tab=hiring`}
                         className="text-sm font-medium hover:underline"
                       >
                         {n.full_name}
@@ -318,7 +318,7 @@ const MatchUniverseAvailability = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" asChild>
-                        <Link to={`/admin/match-universe/${r.person_id}?tab=work`}>Offer work</Link>
+                        <Link to={`/admin/match-universe/${r.person_id}?tab=hiring`}>Offer work</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -353,7 +353,7 @@ const MatchUniverseAvailability = () => {
                 `${r.free_days} day${r.free_days === 1 ? "" : "s"} free`,
               ].join(" · "),
               status: <Badge variant="outline">{freshnessLabel(r.last_availability_update)}</Badge>,
-              to: `/admin/match-universe/${r.person_id}?tab=work`,
+              to: `/admin/match-universe/${r.person_id}?tab=hiring`,
             }))}
           />
         )}
@@ -371,7 +371,7 @@ const MatchUniverseAvailability = () => {
             {stale.slice(0, 40).map((s) => (
               <li key={s.person_id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                 <div className="min-w-0">
-                  <Link to={`/admin/match-universe/${s.person_id}?tab=work`} className="text-sm font-medium hover:underline">
+                  <Link to={`/admin/match-universe/${s.person_id}?tab=hiring`} className="text-sm font-medium hover:underline">
                     {s.full_name}
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">

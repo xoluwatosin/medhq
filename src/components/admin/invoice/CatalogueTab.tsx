@@ -105,13 +105,23 @@ export function CatalogueTab() {
             <Plus className="h-4 w-4 mr-1" /> Add Category
           </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleResetDefaults}
-          disabled={seedDefaults.isPending}
-        >
-          <RotateCcw className="h-4 w-4 mr-1" /> Reset to Defaults
-        </Button>
+        <ConfirmAction
+          title="Reset the catalogue to the defaults?"
+          description={
+            <>
+              <p>Every category and service here is deleted, including any prices you have changed, and the default catalogue is loaded in their place.</p>
+              <p>Invoices already sent are not changed. This cannot be undone.</p>
+            </>
+          }
+          confirmLabel="Reset catalogue"
+          destructive
+          onConfirm={handleResetDefaults}
+          trigger={
+            <Button variant="outline" disabled={seedDefaults.isPending}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Reset to defaults
+            </Button>
+          }
+        />
       </div>
 
       {/* Category cards */}

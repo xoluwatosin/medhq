@@ -5,7 +5,7 @@
 // the offer they accepted. Nothing is retyped, and the whole history stays on
 // the person rather than in a separate authoring screen.
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Ban, Briefcase, CalendarDays, FileSignature, FileStack, Loader2, MapPin, Plus, RotateCcw, Send,
@@ -233,8 +233,10 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
                       </Button>
                     )}
                     {c.status === "signed" && (
-                      <Button size="sm" onClick={() => runContractAction(() => setContractStatus(c.id, "active"), "Contract active")}>
-                        <ShieldCheck className="mr-2 h-4 w-4" />Mark active
+                      <Button size="sm" asChild>
+                        <Link to={`/admin/contracts/${c.id}`}>
+                          <ShieldCheck className="mr-2 h-4 w-4" />Countersign
+                        </Link>
                       </Button>
                     )}
                     {["draft", "issued"].includes(c.status) && (
