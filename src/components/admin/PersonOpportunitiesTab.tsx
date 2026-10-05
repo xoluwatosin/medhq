@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { FACET_TYPE_LABELS, facetLabel } from "@/lib/match-taxonomy";
+import { ShortlistControl, shortlistStageLabel } from "@/components/admin/mu/ShortlistControl";
 
 interface OppMatch {
   opportunity_id: string;
@@ -30,13 +31,15 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
   const [stages, setStages] = useState<Record<string, string>>({});
+  const [shortlistIds, setShortlistIds] = useState<Record<string, string>>({});
   const [rationales, setRationales] = useState<Record<string, string>>({});
   const [rationaleBusy, setRationaleBusy] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: sl } = await adminDb().from("mu_shortlists").select("opportunity_id, status").eq("person_id", personId);
+    const { data: sl } = await adminDb().from("mu_shortlists").select("id, opportunity_id, status").eq("person_id", personId);
     setShortlisted(new Set((sl || []).map((r: any) => r.opportunity_id)));
     setStages(Object.fromEntries((sl || []).map((r: any) => [r.opportunity_id, r.status ?? "shortlisted"])));
+    setShortlistIds(Object.fromEntries((sl || []).map((r: any) => [r.opportunity_id, r.id])));
   };
 
   const run = async (blocked = includeBlocked) => {
@@ -98,6 +101,7 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
     }
     setShortlisted((prev) => new Set(prev).add(row.opportunity_id));
     setStages((prev) => ({ ...prev, [row.opportunity_id]: "shortlisted" }));
+    void load();
     await adminDb().from("mu_activity").insert({
       person_id: personId,
       action: "shortlisted_to_opportunity",
@@ -105,6 +109,19 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
       actor_name: userData?.user?.email ?? null,
       detail: { opportunity_id: row.opportunity_id, score: row.score },
     });
+  };
+
+  // The same stage control as the role's Matches tab.
+  const setStage = async (row: OppMatch, status: string) => {
+    const id = shortlistIds[row.opportunity_id];
+    if (!id) { await load(); return; }
+    const { error } = await (adminDb() as any).rpc("mu_shortlist_set_stage", { _id: id, _status: status, _note: null });
+    if (error) {
+      toast({ title: "Could not move the stage", description: error.message, variant: "destructive" });
+      return;
+    }
+    setStages((prev) => ({ ...prev, [row.opportunity_id]: status }));
+    toast({ title: `Moved to ${shortlistStageLabel(status)}` });
   };
 
   const explain = async (row: OppMatch, refresh = false) => {
@@ -170,14 +187,12 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
               </div>
               <div className="flex items-center gap-2">
                 <MuStatus className="tabular-nums" label={Number(m.score).toFixed(0)} />
-                <Button
-                  variant={shortlisted.has(m.opportunity_id) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleShortlist(m)}
-                >
-                  <Star className="mr-2 h-4 w-4" />
-                  {shortlisted.has(m.opportunity_id) ? "Shortlisted" : "Shortlist"}
-                </Button>
+                <ShortlistControl
+                  stage={shortlisted.has(m.opportunity_id) ? stages[m.opportunity_id] ?? "shortlisted" : null}
+                  onAdd={() => void toggleShortlist(m)}
+                  onRemove={() => void toggleShortlist(m)}
+                  onStage={(v) => void setStage(m, v)}
+                />
                 <Button variant="ghost" size="sm" onClick={() => explain(m, Boolean(rationales[m.opportunity_id]))} disabled={rationaleBusy === m.opportunity_id}>
                   {rationaleBusy === m.opportunity_id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquareText className="mr-2 h-4 w-4" />}
                   Why

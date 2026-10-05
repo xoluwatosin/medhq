@@ -36,6 +36,7 @@ import { EVIDENCE_TIERS, TIER_LABELS } from "@/lib/credentials";
 import { StateMultiSelect, LgaMultiSelect } from "@/components/LocationSelect";
 import { getLGAsForState } from "@/lib/nigeria-locations";
 import { CARE_TYPES, CARE_TYPE_LABEL, SHIFT_PATTERNS } from "@/lib/work-preferences";
+import { ShortlistControl, shortlistStageLabel } from "@/components/admin/mu/ShortlistControl";
 
 interface Opportunity {
   id: string;
@@ -78,15 +79,6 @@ const LIVE_IN_REQUIREMENT = [
 ];
 
 
-// A shortlist is a journey, not a flag. These are the only stages the
-// database will accept, in the order they normally happen.
-const SHORTLIST_STAGES = [
-  { value: "shortlisted", label: "Shortlisted" },
-  { value: "put_forward", label: "Put forward" },
-  { value: "client_interviewing", label: "Client interviewing" },
-  { value: "placed", label: "Placed" },
-  { value: "withdrawn", label: "Withdrawn" },
-];
 
 // Times of day for the coverage strip, matching the availability board.
 const COVERAGE_BLOCKS = [
@@ -410,7 +402,7 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
       return;
     }
     setShortlisted((prev) => ({ ...prev, [personId]: { ...entry, status } }));
-    toast({ title: `Moved to ${SHORTLIST_STAGES.find((s) => s.value === status)?.label ?? status}` });
+    toast({ title: `Moved to ${shortlistStageLabel(status)}` });
   };
 
   const explain = async (row: MatchRow, refresh = false) => {
@@ -873,26 +865,13 @@ export default function MatchmakerMatches({ embedded, onSaved }: { embedded?: bo
                   )}
                   <MuStatus className="tabular-nums" label={Number(m.score).toFixed(0)} />
 
-                  {shortlisted[m.person_id] ? (
-                    <Select
-                      value={shortlisted[m.person_id].status}
-                      onValueChange={(v) => (v === "__remove" ? toggleShortlist(m) : setStage(m.person_id, v))}
-                    >
-                      <SelectTrigger className="h-9 w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SHORTLIST_STAGES.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                        ))}
-                        <SelectItem value="__remove">Remove from shortlist</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={() => toggleShortlist(m)}>
-                      <Star className="mr-2 h-4 w-4" />
-                      Shortlist
-                    </Button>
+                  {(
+                    <ShortlistControl
+                      stage={shortlisted[m.person_id]?.status ?? null}
+                      onAdd={() => void toggleShortlist(m)}
+                      onRemove={() => void toggleShortlist(m)}
+                      onStage={(v) => void setStage(m.person_id, v)}
+                    />
                   )}
                   <Button variant="ghost" size="sm" onClick={() => explain(m, Boolean(rationales[m.person_id]))} disabled={rationaleBusy === m.person_id}>
                     {rationaleBusy === m.person_id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquareText className="mr-2 h-4 w-4" />}
