@@ -64,13 +64,14 @@ export const FamilyShell = ({ eyebrow, title, accent = [], lead, action, art, pa
         )}
       </div>
     </header>
-    <main className={cn(CONTAINER, "flex-1 py-10 sm:py-16")}>
+    <main className={cn(CONTAINER, "flex-1 pb-[max(112px,calc(env(safe-area-inset-bottom)+96px))] pt-10 sm:pt-16 md:pb-16")}>
       <div className={cn("grid gap-10", aside && "lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-14")}>
         <div className="flex min-w-0 flex-col gap-8">{children}</div>
         {aside && <aside className="flex min-w-0 flex-col gap-6">{aside}</aside>}
       </div>
     </main>
-    <Footer />
+    {/* The site footer on wide screens only; on a phone the portal ends with its content. */}
+    <div className="hidden md:block"><Footer /></div>
   </div>
 );
 
