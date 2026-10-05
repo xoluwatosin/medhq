@@ -256,7 +256,7 @@ const ControlCentre = () => {
   return (
     <MuPage>
       <MuPageHeader
-        title="Admin access"
+        title="People and access"
         description="Who can reach the Admin Centre, and which areas each person holds."
         actions={canManage ? (
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>

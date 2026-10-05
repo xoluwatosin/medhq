@@ -58,7 +58,7 @@ const Settings = () => {
 
   return (
     <MuPage>
-      <MuPageHeader title="Settings" description="Admin preferences for the Medic Connect inbox." />
+      <MuPageHeader title="Notifications" description="Which form submissions email the admin inbox." />
       <MuSection
         title="Email notifications"
         description="Control which form submissions trigger an email notification to the admin inbox."

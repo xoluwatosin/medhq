@@ -166,13 +166,14 @@ export const adminDomains: AdminDomain[] = [
     key: "administration",
     label: "Administration",
     icon: Shield,
-    url: "/admin/settings",
+    url: "/admin/control-centre",
+    // One Administration page: its three parts are tabs on the domain rail.
     items: [
-      { title: "Settings", url: "/admin/settings", icon: Settings, perm: "settings", keywords: "configuration notifications" },
-      { title: "Admin access", url: "/admin/control-centre", icon: Shield, perm: "admin_access", keywords: "Access control admins permissions Control Centre" },
+      { title: "People and access", url: "/admin/control-centre", icon: Shield, perm: "admin_access", keywords: "Access control admins permissions Control Centre" },
+      { title: "Notifications", url: "/admin/settings", icon: Settings, perm: "settings", keywords: "settings configuration notifications emails" },
+      { title: "Alert keys", url: "/admin/alert-keys", icon: KeyRound, perm: "settings", keywords: "secrets run key rotate admin alert test audit job keys" },
     ],
     aside: [
-      { title: "Alert keys", url: "/admin/alert-keys", icon: KeyRound, perm: "settings", keywords: "secrets run key rotate admin alert test audit" },
       { title: "Archive", url: "/admin/archives", icon: Archive, perm: "archives", keywords: "archives archived deleted" },
       { title: "Approvals", url: "/admin/approvals", icon: CheckCircle, superAdmin: true, keywords: "pending review publish" },
     ],
