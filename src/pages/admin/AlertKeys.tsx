@@ -153,9 +153,10 @@ export default function AlertKeys() {
         description="Raises, sends and closes a test alert to hello@medicconnect.co."
       >
         <div className="space-y-3">
-          <Button onClick={runTest} disabled={testing || !alertKey?.present} title={!alertKey?.present ? "Generate the alert key in the register below first" : undefined}>
+          {/* Without a key the button says what to do, so nobody has to hover. */}
+          <Button onClick={runTest} disabled={testing || !alertKey?.present}>
             {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Send a test alert
+            {alertKey?.present ? "Send a test alert" : "Generate the alert key below first"}
           </Button>
           {lastTest && (
             <div
