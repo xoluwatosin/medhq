@@ -101,7 +101,6 @@ import ContractTemplateEditor from "./pages/admin/ContractTemplateEditor";
 import AnnexLibrary from "./pages/admin/AnnexLibrary";
 import Clients from "./pages/admin/Clients";
 import ClientRecord from "./pages/admin/ClientRecord";
-import CareRequests from "./pages/admin/CareRequests";
 import CareDuplicates from "./pages/admin/CareDuplicates";
 import Programmes from "./pages/admin/Programmes";
 
@@ -259,7 +258,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="care/requests" element={<CareRequests />} />
+              <Route path="care/requests" element={<Navigate to="/admin/clients?view=requests" replace />} />
               <Route path="care/duplicates" element={<CareDuplicates />} />
               <Route path="clients" element={<Clients />} />
               <Route path="clients/:id" element={<ClientRecord />} />
@@ -315,7 +314,7 @@ const App = () => (
               {/* Domain landings. Every historic URL above still resolves; these
                   only give each business domain a front door of its own. */}
               <Route path="programmes" element={<Programmes />} />
-              <Route path="care" element={<Navigate to="/admin/care/requests" replace />} />
+              <Route path="care" element={<Navigate to="/admin/clients" replace />} />
               <Route path="talent" element={<Navigate to="/admin/match-universe" replace />} />
               <Route path="communications" element={<Navigate to="/admin/campaigns" replace />} />
               <Route path="finance" element={<Navigate to="/admin/invoices" replace />} />

@@ -31,6 +31,7 @@ import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import ConsoleTable, { ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
+import CareRequests from "@/pages/admin/CareRequests";
 
 interface ClientRow {
   id: string;
@@ -57,12 +58,17 @@ interface ServiceRow {
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
+// One Care list: the people, and the requests still being prepared, as views
+// of the same list rather than two pages with two meanings of "attention".
 const FILTERS = [
   { id: "attention", label: "Needs attention" },
+  { id: "requests", label: "Requests" },
   { id: "awaiting", label: "Awaiting responses" },
   { id: "returned", label: "Responses returned" },
   { id: "booked", label: "Assessment booked" },
   { id: "running", label: "Care running" },
+  { id: "paused", label: "Paused" },
+  { id: "closed", label: "Closed" },
   { id: "all", label: "All" },
   { id: "archived", label: "Archive" },
 ] as const;
@@ -92,6 +98,9 @@ const matchesFilter = (client: ClientRow, filter: FilterId) => {
   if (filter === "awaiting") return client.stage === "awaiting_pre_assessment";
   if (filter === "returned") return client.stage === "pre_assessment_received";
   if (filter === "booked") return client.stage === "assessment_booked";
+  if (filter === "paused") return client.stage === "paused";
+  if (filter === "closed") return client.stage === "closed";
+  if (filter === "requests") return false;
   return client.stage === "care_running";
 };
 
@@ -164,7 +173,7 @@ const Clients = () => {
   );
 
   const tabs = useMemo(
-    () => FILTERS.map((f) => ({ ...f, count: clients.filter((c) => matchesFilter(c, f.id)).length })),
+    () => FILTERS.map((f) => ({ ...f, count: f.id === "requests" ? undefined : clients.filter((c) => matchesFilter(c, f.id)).length })),
     [clients],
   );
 
@@ -277,8 +286,8 @@ const Clients = () => {
     <section className="mx-auto w-full max-w-[1080px]" aria-labelledby="clients-heading">
       <ConsolePageHeader
         id="clients-heading"
-        title="Clients"
-        description="Care clients, enquiries and assessments."
+        title="Care"
+        description="Everyone in care, and the requests still being prepared."
         action={
           <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" className="h-11" onClick={() => setSweepOpen(true)}>
@@ -451,7 +460,9 @@ const Clients = () => {
       />
 
       <div id="client-records">
-        {loading ? (
+        {activeFilter === "requests" ? (
+          <CareRequests embedded />
+        ) : loading ? (
           <p className="py-10 text-center text-sm text-muted-copy">Loading clients</p>
         ) : loadFailed ? (
           <p className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-copy">Clients could not be loaded. Refresh to try again.</p>

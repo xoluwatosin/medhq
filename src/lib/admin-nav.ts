@@ -62,10 +62,9 @@ export const adminDomains: AdminDomain[] = [
     key: "care",
     label: "Care",
     icon: HeartPulse,
-    url: "/admin/care/requests",
+    url: "/admin/clients",
     items: [
-      { title: "Requests", url: "/admin/care/requests", icon: ClipboardList, perm: "dashboard", exact: true, keywords: "care requests families groups recipients enquirer preparation" },
-      { title: "Clients", url: "/admin/clients", icon: HeartPulse, perm: "dashboard", keywords: "care clients recipients assessments" },
+      { title: "Care list", url: "/admin/clients", icon: HeartPulse, perm: "dashboard", keywords: "care clients recipients assessments requests families groups enquirer preparation paused closed" },
       { title: "Duplicates", url: "/admin/care/duplicates", icon: Copy, perm: "dashboard", keywords: "care duplicates same person merge entered twice families" },
     ],
   },

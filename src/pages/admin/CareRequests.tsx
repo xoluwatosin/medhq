@@ -7,7 +7,7 @@ import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { MuEmpty } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { adminDb } from "@/lib/admin-utils";
@@ -96,7 +96,7 @@ const nextActionText = (row: CareRequestRow) => {
   return "No outstanding work";
 };
 
-const CareRequests = () => {
+const CareRequests = ({ embedded = false }: { embedded?: boolean }) => {
   const [rows, setRows] = useState<CareRequestRow[]>([]);
   const [filter, setFilter] = useState<FilterId>("attention");
   const [loading, setLoading] = useState(true);
@@ -145,13 +145,28 @@ const CareRequests = () => {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1120px]" aria-labelledby="care-requests-heading">
-      <ConsolePageHeader
-        id="care-requests-heading"
-        title="Care requests"
-        description="Requests for care, their recipients, intended services and preparation state."
-      />
-      <ConsoleTabs tabs={tabs} active={filter} onChange={(id) => setFilter(id as FilterId)} label="Filter care requests" controls="care-request-records" />
+    <section className={embedded ? "" : "mx-auto w-full max-w-[1120px]"} aria-labelledby={embedded ? undefined : "care-requests-heading"} aria-label={embedded ? "Care requests" : undefined}>
+      {!embedded && (
+        <ConsolePageHeader
+          id="care-requests-heading"
+          title="Care requests"
+          description="Requests for care, their recipients, intended services and preparation state."
+        />
+      )}
+      {embedded ? (
+        // Inside the Care list, a second tab row would read as a second page.
+        <div className="mb-4 max-w-[260px]">
+          <SelectField
+            label="Show"
+            value={filter}
+            onChange={(v) => setFilter((v || "attention") as FilterId)}
+            placeholder={false}
+            options={tabs.map((t) => ({ value: t.id, label: `${t.label} (${t.count})` }))}
+          />
+        </div>
+      ) : (
+        <ConsoleTabs tabs={tabs} active={filter} onChange={(id) => setFilter(id as FilterId)} label="Filter care requests" controls="care-request-records" />
+      )}
 
       <div id="care-request-records">
         {loading ? (

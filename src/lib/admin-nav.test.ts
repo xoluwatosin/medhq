@@ -15,7 +15,7 @@ describe("Admin navigation", () => {
 
   it("keeps care and staffing requests distinct", () => {
     const items = adminDomains.flatMap(domainDestinations);
-    expect(items.find((item) => item.title === "Requests")?.url).toBe("/admin/care/requests");
+    expect(items.find((item) => item.title === "Care list")?.url).toBe("/admin/clients");
     expect(items.find((item) => item.title === "Staffing requests")?.url).toBe("/admin/match-universe/requests");
   });
 
@@ -54,7 +54,7 @@ describe("Admin navigation", () => {
     expect(person.domain?.key).toBe("talent");
     expect(person.deeper).toBe(true);
     expect(person.backUrl).toBe("/admin/match-universe");
-    expect(locateRoute(domains, "/admin/care/requests").domain?.key).toBe("care");
+    expect(locateRoute(domains, "/admin/care/duplicates").domain?.key).toBe("care");
     expect(locateRoute(domains, "/admin/seo/claims").domain?.key).toBe("content");
     expect(locateRoute(domains, "/admin/seo/pages/abc").domain?.key).toBe("content");
   });
@@ -66,7 +66,7 @@ describe("Admin navigation", () => {
 
   it("does not let the Overview route absorb child routes", () => {
     expect(isNavItemActive("/admin", "/admin", true)).toBe(true);
-    expect(isNavItemActive("/admin/care/requests", "/admin", true)).toBe(false);
+    expect(isNavItemActive("/admin/care/duplicates", "/admin", true)).toBe(false);
     expect(isNavItemActive("/admin/clients/123", "/admin/clients")).toBe(true);
   });
 });
