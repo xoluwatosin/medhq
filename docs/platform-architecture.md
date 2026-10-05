@@ -13,13 +13,13 @@ Everything marked "verified" was checked against the live database
 
 ## 1. The platform at a glance
 
-Medic Connect runs four businesses on one system:
+Medic Connect runs three businesses on one system:
 
 | Business | What it does | Who uses it |
 |---|---|---|
 | Care at home | Enquiry to assessment to agreed care, then delivering that care | Families, clients, assessors, carers, nurses, care office |
 | Staffing and talent | Recruiting nurses, carers and doctors; placing them with facilities and families | Candidates, staff, facilities, recruitment office |
-| Programmes | Heard (volunteers and stories), Creator | Volunteers, creators, programme leads |
+| Programmes | Creator | Creators, programme leads |
 | Public presence | Website, The Bridge, SEO pages, campaigns | The public, marketing |
 
 **One database, four front doors.**
@@ -44,7 +44,9 @@ Medic Connect runs four businesses on one system:
   is the part that is packaged as a native app later.
 - **Family portal** is the `/care` area of the website, scoped by access
   grants.
-- **Heard** keeps its own portal on the same database and sign-in.
+- **Heard** has moved to its own project and is outside this
+  architecture. Its leftover code and tables here are listed for removal in
+  section 7.
 
 ---
 
@@ -65,7 +67,7 @@ Medic Connect runs four businesses on one system:
 | Care package, roster, visits, observations | Not built. Designed in `docs/care-platform/delivery-architecture.md`. |
 | Family portal | Proposal view and invitation only. |
 | Finance | Paystack invoices (3), invoice catalogue, care quotes and commercial terms. No recurring billing, no reconciliation, no worker pay. |
-| Heard | Product foundation and volunteer portal built. |
+| Heard | Moved to its own project. Leftovers remain here: routes, admin screens, 2 server functions, 10 tables, access keys. |
 | Scheduled jobs | **All 12 paused** since the move off Lovable Cloud (migration `recreate_cron_jobs_paused`, 3 October). |
 | Schema history | **Two migration trails**: `supabase/migrations` (173 files) and `drizzle/migrations` (117 applied). |
 
@@ -81,7 +83,7 @@ go wrong, how we prove it holds, and the verdict.
 
 ### D1. One database for everything
 
-**Decision.** Care, talent, workforce, finance, content and Heard share one
+**Decision.** Care, talent, workforce, finance and content share one
 Postgres database and one sign-in pool.
 
 **Considered.** A separate care database with sync; buying a care-delivery
@@ -110,7 +112,7 @@ copying people, clients, plans, staff and prices both ways, forever.
 `supabase/migrations`. Every new change goes there, through the Supabase
 CLI.
 
-**Why.** Today the schema is split: care and Heard tables live only in the
+**Why.** Today the schema is split: care tables (and the Heard leftovers) live only in the
 Drizzle trail, talent tables only in the Supabase trail, and the two are
 run by different tools. Dashboard and MCP tooling write to the Supabase
 trail, so it keeps growing while the Drizzle trail stays separate. Nobody
@@ -273,7 +275,6 @@ never joined by email:
   capabilities (`mu_capabilities`: assessor, care worker).
 - `care_people`: a human on the care side (client, relative, payer).
 - `auth.users`: the sign-in, linked to either or both.
-- `heard_volunteer_profiles`: a Heard volunteer.
 
 **Care.** `care_groups` (a household) → `care_requests` →
 `care_request_recipients` → `clients` (each person receiving care) →
@@ -402,6 +403,7 @@ later: apps/people/   Capacitor shell with native adapters
 | Contracts issued from three places are not emailed or checked | Staff never receive their contract | Admin fix, see `admin-ux-inventory.md` |
 | Email Library unused, system emails read templates with no editor | Staff can't change what is sent | D10 |
 | Raw care tokens in session storage | Token exposure on shared devices | Roadmap "required before scale" |
+| Heard leftovers | Two copies of Heard if this deployment still serves it; stale tables and access keys | Confirm the Heard domain no longer points here, export the 8 Heard rows, then remove the code, functions, tables and keys |
 | Data protection | Health data under the Nigeria Data Protection Act 2023 | A data map, retention rules and a data protection impact assessment before family portal launch. Take legal advice. |
 
 ---
@@ -455,6 +457,7 @@ runs alongside phases 0 to 2 and does not block them.
 - [ ] Update the position in `docs/care-platform/implementation-plan.md`
 - [ ] Create `src/core/` with the lint boundary and its first tests
 - [ ] Add the minimum supported app version table
+- [ ] Remove the Heard leftovers once the Heard domain is confirmed off this deployment
 
 ### Phase 1: pre-agreement care
 - [ ] Pre-assessment v5 catalogue and coordinated session

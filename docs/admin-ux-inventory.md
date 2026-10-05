@@ -109,7 +109,6 @@ From 6 views plus 18 filters to 5 views plus 4 everyday filters plus
 | Duplicating a campaign | Loses the block layout and the preheader. |
 | Email Library | Saved emails are used by nothing. Campaigns start only from built-in recipes. System emails read old templates that have no editor. |
 | Overview counts | "Care requests" and "Enquiries" count different things from the pages they open. |
-| Programmes Heard count | Counts the legacy interest table, not Heard applications. |
 | Invoice catalogue "Reset to defaults" | Deletes every service and category with no confirmation. |
 | Contract template "Issue" | Uses the last saved version, ignoring unsaved edits, with no warning. |
 | Annex library | Picking another annex throws away unsaved edits. Renaming an annex code breaks "Refresh from library" on templates. |
@@ -122,7 +121,7 @@ From 6 views plus 18 filters to 5 views plus 4 everyday filters plus
 | Merge | Why |
 |---|---|
 | **Applications (join) into Talent Pool and Intake** | Every join application already creates a person. The old screen has its own statuses, no notes, no link to the person and no way to see archived rows. Agreed earlier. |
-| **Creator and Heard into Programmes** | Programmes is a page of two counters. Make it the screen: one list per programme, same status set, same archive. Agreed earlier. |
+| **Creator into Programmes** | Programmes is a page of counters. Make it the Creator screen. Heard has moved to its own project, so its admin screen leaves this one. |
 | **Care requests and Clients into one Care list** | Same next-action engine, same destination (the client record), two different meanings of "Needs attention". One list with views: Needs attention, Awaiting responses, Assessment, Care running, Paused, Closed, Archived. |
 | **Route to Care onto the enquiry** | Today an enquiry can only be sent to Care from a dialog on the Clients page, which also lists facility enquiries. Put "Route to Care" on the enquiry itself and show the client link once it is routed. |
 | **One contract list** | The candidate's Offers tab and the staff record each show contracts with different actions. One shared list, and one issue path with checks and email. Add an "All contracts" register: issued and awaiting signature, across everyone. |
@@ -133,7 +132,7 @@ From 6 views plus 18 filters to 5 views plus 4 everyday filters plus
 | **Availability shown once on the person record** | Today it appears in three tabs. |
 | **Administration into one page** | Settings (three switches), Alert keys and Admin access are three pages with three separate audit trails. One page with tabs: People and access, Notifications, Job keys, Audit. |
 | **Audience groups managed in one place** | Groups are created in three places with different duplicate rules, and none can be renamed or deleted. |
-| **Archive** | Either the central Archive covers everything (it misses clients, Heard and postings), or each list gets an Archived view and the central page goes. The second is simpler. |
+| **Archive** | Either the central Archive covers everything (it misses clients and postings), or each list gets an Archived view and the central page goes. The second is simpler. |
 
 ## 4. Redundant or retire
 
@@ -145,7 +144,7 @@ From 6 views plus 18 filters to 5 views plus 4 everyday filters plus
   repeat the tabs above them.
 - The third way to archive a posting, via the status dropdown.
 - The Specialty or Profession filter (keep one).
-- Legacy Heard interest table view, once its few rows are moved.
+- The Heard admin screen and its access keys, now that Heard has moved to its own project.
 - Old routes kept as redirects (`/admin/matchmakers`, `/admin/talent`,
   `/admin/match-universe/workforce`) can stay; they cost nothing.
 
@@ -156,7 +155,7 @@ From 6 views plus 18 filters to 5 views plus 4 everyday filters plus
 - Record search in the command palette. It finds pages, not people,
   clients, posts or invoices.
 - Notes with history. Notes today are one overwritable box per record;
-  join applications, creator and Heard applications have none.
+  join applications and creator applications have none.
 
 **Talent**
 - Link from a posting application and a join application to the person.
