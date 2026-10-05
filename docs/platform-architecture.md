@@ -68,7 +68,8 @@ Medic Connect runs three businesses on one system:
 | Family portal | Proposal view and invitation only. |
 | Finance | Paystack invoices (3), invoice catalogue, care quotes and commercial terms. No recurring billing, no reconciliation, no worker pay. |
 | Heard | Moved to its own project. Leftovers remain here: routes, admin screens, 2 server functions, 10 tables, access keys. |
-| Scheduled jobs | **All 12 paused** since the move off Lovable Cloud (migration `recreate_cron_jobs_paused`, 3 October). |
+| Hosting cutover | **Not done.** medicconnect.co still runs on Lovable Cloud and its old database. The new project holds a copy from 3 October that the cutover resets and restores again (`scripts/migration/CUTOVER.md`). Counts in this document come from that copy. |
+| Scheduled jobs | All 12 paused on the new project, on purpose until cutover; turning them on earlier would double-send. |
 | Schema history | **Two migration trails**: `supabase/migrations` (173 files) and `drizzle/migrations` (117 applied). |
 
 `docs/care-platform/implementation-plan.md` still says "No tranche started".
@@ -108,7 +109,7 @@ copying people, clients, plans, staff and prices both ways, forever.
 
 ### D2. One migration trail, rebuildable from the repo
 
-**Decision.** Freeze both trails. Take a baseline of the live schema into
+**Decision.** After cutover, freeze both trails. Take a baseline of the live schema into
 `supabase/migrations`. Every new change goes there, through the Supabase
 CLI.
 
@@ -245,14 +246,16 @@ templates that have no editor, and the Email Library is used by nothing.
 
 ### D11. Scheduled jobs are visible
 
-**Decision.** Re-enable the paused jobs one at a time, each writing a run
-record. Add last-success timestamps and missed-run alerts (roadmap Tranche
-12 item, brought forward).
+**Decision.** At cutover, re-enable the paused jobs one at a time (not all
+at once as the runbook currently says), each writing a run record. Add
+last-success timestamps and missed-run alerts (roadmap Tranche 12 item,
+brought forward). Before cutover they must stay paused, or both projects
+send the same emails.
 
 **QA.** *Risk: switching all 12 back on at once floods email or reparses
 everything.* Turn on in order: publish scheduled posts, document expiry,
 orphan account linking, parse sweeps, duplicate scan, analytics, then
-follow-up nudges last, after checking the queue. **Verdict: hold, urgent.**
+follow-up nudges last, after checking the queue. **Verdict: hold, at cutover.**
 
 ### D12. Sign-in by code for the People app
 
@@ -394,7 +397,7 @@ later: apps/people/   Capacitor shell with native adapters
 
 | Risk | Effect | Fix |
 |---|---|---|
-| Scheduled jobs all paused | Scheduled posts don't publish, documents don't expire, CV parsing and nudges don't run | D11, now |
+| Cutover not done | The new database is a 3 October copy; changes applied to it directly (merge function, approval notes, Heard removal) are wiped by the restore | Re-apply step 6a in `CUTOVER.md`; then baseline (D2) |
 | Two migration trails | No proof the repo can rebuild the database; two tools to run | D2, now |
 | Implementation plan says nothing started | New work may duplicate built work | Update its position section |
 | Two acceptance records | No single moment care is agreed | D8 |
@@ -433,7 +436,7 @@ Each phase ends at a checkpoint that proves the data works end to end.
 
 | Phase | Data built | Checkpoint |
 |---|---|---|
-| 0. Foundations | One migration trail; jobs back on with run records; `src/core`; minimum app version table | A fresh database built from the repo matches live; every job shows a last success |
+| 0. Foundations | Cutover to the new project; one migration trail; jobs back on with run records; `src/core`; minimum app version table | A fresh database built from the repo matches live; every job shows a last success |
 | 1. Finish pre-agreement care | Pre-assessment v5, assessment v3, populated acceptance of review, plan and proposal | **C**: enquiry to accepted assessment to drafted plan, on a real record |
 | 2. Agreement and service user | Care package and the agreement function (D8); one price catalogue (D9) | A family accepts; one agreed package exists; stage reads "care running" once staffed |
 | 3. Delivery data model | Monitoring plans (7.5D); observations, interventions, goal evidence (7.5E) | Security tests for every new table pass |
@@ -451,6 +454,7 @@ runs alongside phases 0 to 2 and does not block them.
 ## 10. Checklist
 
 ### Phase 0: foundations
+- [ ] Cutover from Lovable Cloud, including re-applying the post-snapshot migrations (`CUTOVER.md` step 6a)
 - [ ] Baseline the live schema into `supabase/migrations`; freeze the Drizzle trail
 - [ ] Prove a fresh build from the repo matches live
 - [ ] Re-enable scheduled jobs in order, each writing a run record

@@ -22,6 +22,13 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
 4. Reset the new database (Dashboard → Database → Settings → Reset, or a fresh project). The restore script expects an empty database.
 5. `restore.sh` then `apply-acls.sh` with the new export.
 6. `post-restore.sql`.
+6a. Re-apply every repo migration written after the 3 October snapshot, in filename order. The restore wipes them. Each is safe to run twice.
+    - `supabase/migrations/20261004180000_add_clinical_research_enquiry_line.sql` (never applied anywhere yet)
+    - `supabase/migrations/20261005090000_mu_merge_people.sql` (the Duplicates merge; Merge fails without it)
+    - `supabase/migrations/20261005090500_approval_notes.sql` (send-back reasons on Approvals)
+    - `supabase/migrations/20261005120000_remove_heard.sql` (Heard has moved; the export brings its tables back)
+    - any later file in `supabase/migrations/` dated after 20261003231023
+    Check with: `select proname from pg_proc where proname = 'mu_merge_people';` (one row) and `select count(*) from information_schema.tables where table_name ilike 'heard%';` (0).
 7. Set the edge function secrets from the newly generated values (the `format(...)` query from the migration notes), then confirm the digests match the fingerprints in `private.job_keys`.
 8. Copy storage files from the old buckets (`applications`, `care-uploads`, `blog-images`, `creator-uploads`). Delete the `database_export_*` bucket.
 9. Point DNS for medicconnect.co at the new host.
@@ -29,5 +36,8 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
 11. Smoke test: contact form email, candidate sign-in, pre-assessment link, contract signing, an invoice.
 
 ## After cutover
+
+- Set `project_id` in `supabase/config.toml` to `zeqiewxlqcmbgvytnahl` (it still names the old project).
+- Take the schema baseline for the single migration trail (`docs/platform-architecture.md`, D2). Not before: the restore replaces the schema.
 
 Held until the cutover is verified: Heard on its own domain and Supabase project, and the account-model addendum for one sign-in across roles.
