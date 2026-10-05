@@ -15,6 +15,9 @@ export const CxPortalPage = ({
   title,
   eyebrow,
   intro,
+  heroTitle,
+  hero,
+  art,
   back,
   headerAction,
   footer,
@@ -26,6 +29,9 @@ export const CxPortalPage = ({
   title: string;
   eyebrow?: string;
   intro?: string;
+  heroTitle?: string;
+  hero?: ReactNode;
+  art?: string;
   back?: string;
   headerAction?: ReactNode;
   footer?: ReactNode;
@@ -62,10 +68,19 @@ export const CxPortalPage = ({
   return (
     <>
       <SEO title={`${title} | Medic Connect`} description="Your Medic Connect candidate profile." path="/portal" noindex />
-      <CxShell title={title} eyebrow={eyebrow} back={back} nav={nav} headerAction={headerAction} footer={footer}>
-        {intro && (
-          <p className="hidden cx-measure text-[17px] leading-[1.6] text-body md:-mt-2 md:block">{intro}</p>
-        )}
+      <CxShell
+        title={title}
+        eyebrow={eyebrow}
+        intro={intro}
+        heroTitle={heroTitle}
+        hero={hero}
+        art={art}
+        back={back}
+        nav={nav}
+        headerAction={headerAction}
+        footer={footer}
+      >
+        {intro && !hero && <p className="cx-measure -mb-2 text-[15.5px] leading-[1.6] text-body md:hidden">{intro}</p>}
         {children}
       </CxShell>
     </>
