@@ -15,16 +15,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { adminDb } from "@/lib/admin-utils";
 import { CLIENT_GROUPS, createCarePerson, workKindLabel } from "@/lib/care";
 import { careStageLabel, careStageTone } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, STATE_TERMS, ageText, lgaTerms, stateLabel, lgaLabel,
 } from "@/lib/care-vocabularies";
-import { DateField, PhoneField, SearchableSelect, Status } from "@/components/field";
+import { DateField, PhoneField, SearchableSelect, SelectField, Status } from "@/components/field";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { dueText, nextActions, needsAttention, workTone, type NextAction } from "@/lib/care-work";
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import PromoteEnquiries from "@/components/admin/care/PromoteEnquiries";
@@ -112,6 +111,7 @@ const Clients = () => {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [open, setOpen] = useState(false);
   const [sweepOpen, setSweepOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -141,6 +141,7 @@ const Clients = () => {
     ]);
 
     if (clientsRes.error) toast.error("Could not load clients");
+    setLoadFailed(Boolean(clientsRes.error));
 
     const actionByClient = new Map((actionsRes ?? []).map((a) => [a.client_id, a]));
 
@@ -258,14 +259,14 @@ const Clients = () => {
     client.action ? (
       <>
         <Status
-          label={`${workKindLabel(client.action.kind)} · ${client.action.rank_reason}`}
+          label={`${workKindLabel(client.action.kind)}: ${client.action.rank_reason}`}
           tone={workTone(client.action)}
         />
         <span className="mt-1 block text-sm font-semibold text-ink">{client.action.title}</span>
         <span className="mt-0.5 block text-xs text-muted-copy">
           {[dueText(client.action.due_at), client.action.team ? `Owner: ${client.action.team}` : null]
             .filter(Boolean)
-            .join(" · ")}
+            .join(", ")}
         </span>
       </>
     ) : (
@@ -293,8 +294,8 @@ const Clients = () => {
                 <DialogDescription>{createMode === "link" ? "The person completes their details and continues directly to pre-assessment." : createMode === "manual" ? "Enter the person receiving care and the primary contact." : "Choose how the client record should begin."}</DialogDescription>
               </DialogHeader>
               {createMode === "choose" && <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => setCreateMode("manual")} className="rounded-2xl border border-line-soft bg-card p-5 text-left shadow-soft hover:bg-tint/30"><UserRoundPlus className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Create manually</span><span className="mt-1 block text-sm text-muted-copy">Enter the person and contact details now.</span></button>
-                <button type="button" onClick={() => setCreateMode("link")} className="rounded-2xl border border-line-soft bg-card p-5 text-left shadow-soft hover:bg-tint/30"><Link2 className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Generate link</span><span className="mt-1 block text-sm text-muted-copy">Collect their details, then open pre-assessment.</span></button>
+                <button type="button" onClick={() => setCreateMode("manual")} className="border border-line bg-card p-5 text-left hover:bg-tint/30"><UserRoundPlus className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Create manually</span><span className="mt-1 block text-sm text-muted-copy">Enter the person and contact details now.</span></button>
+                <button type="button" onClick={() => setCreateMode("link")} className="border border-line bg-card p-5 text-left hover:bg-tint/30"><Link2 className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Generate link</span><span className="mt-1 block text-sm text-muted-copy">Collect their details, then open pre-assessment.</span></button>
               </div>}
               {createMode === "manual" && <div className="grid gap-4">
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -357,38 +358,27 @@ const Clients = () => {
                   />
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label>Client group</Label>
-                    <Select value={form.client_group} onValueChange={set("client_group")}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CLIENT_GROUPS.map((g) => (
-                          <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Service</Label>
-                    <Select
-                      value={form.service_id}
-                      onValueChange={(v) => {
-                        const picked = services.find((s) => s.id === v);
-                        setForm((f) => ({
-                          ...f,
-                          service_id: v,
-                          client_group: picked?.client_group ?? picked?.client_groups?.[0] ?? f.client_group,
-                        }));
-                      }}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Choose a service" /></SelectTrigger>
-                      <SelectContent>
-                        {services.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <SelectField
+                    label="Client group"
+                    value={form.client_group}
+                    onChange={(v) => { if (v) set("client_group")(v); }}
+                    options={CLIENT_GROUPS.map((g) => ({ value: g.value, label: g.label }))}
+                  />
+                  <SelectField
+                    label="Service"
+                    value={form.service_id}
+                    placeholder="Choose a service"
+                    onChange={(v) => {
+                      if (!v) return;
+                      const picked = services.find((s) => s.id === v);
+                      setForm((f) => ({
+                        ...f,
+                        service_id: v,
+                        client_group: picked?.client_group ?? picked?.client_groups?.[0] ?? f.client_group,
+                      }));
+                    }}
+                    options={services.map((s) => ({ value: s.id, label: s.name }))}
+                  />
                 </div>
                 <div className="border-t border-line-soft pt-4 grid gap-4">
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -431,7 +421,7 @@ const Clients = () => {
                 </div>
               </div>}
               {createMode === "link" && <div className="grid gap-4">
-                {!onboardingLink ? <div className="rounded-2xl border border-line-soft bg-tint/30 p-5"><p className="text-sm leading-relaxed text-ink">No client or placeholder record is created now. Records are created only after the recipient confirms their details.</p><p className="mt-2 text-sm text-muted-copy">The link expires after 30 days and does not grant family portal access.</p></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
+                {!onboardingLink ? <div className="border border-line bg-tint/30 p-5"><p className="text-sm leading-relaxed text-ink">No client or placeholder record is created now. Records are created only after the recipient confirms their details.</p><p className="mt-2 text-sm text-muted-copy">The link expires after 30 days and does not grant family portal access.</p></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
               </div>}
               <DialogFooter className="gap-2">
                 {createMode !== "choose" && <Button type="button" variant="outline" className="h-11" onClick={() => setCreateMode("choose")}>Back</Button>}
@@ -463,8 +453,16 @@ const Clients = () => {
       <div id="client-records">
         {loading ? (
           <p className="py-10 text-center text-sm text-muted-copy">Loading clients</p>
+        ) : loadFailed ? (
+          <p className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-copy">Clients could not be loaded. Refresh to try again.</p>
         ) : visibleClients.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-copy">No clients</p>
+          <div className="border border-line bg-card">
+            <MuEmpty
+              art={art.objCarePlan}
+              title={activeFilter === "attention" ? "Nothing needs attention" : "No clients here"}
+              description={activeFilter === "all" ? "Add a client or route care requests to start a record." : "Nothing in this view right now. Try another filter."}
+            />
+          </div>
         ) : (
           <>
             <ConsoleTable
@@ -499,7 +497,7 @@ const Clients = () => {
               rows={visibleClients.map((client) => ({
                 key: client.id,
                 title: client.full_name,
-                state: `${client.service} · ${placeOf(client) || "Details not set"} · ${elapsedLabel(client.created_at)}`,
+                state: [client.service, placeOf(client) || "Details not set", elapsedLabel(client.created_at)].join(", "),
                 status: <Status label={careStageLabel(client.stage)} tone={careStageTone(client.stage)} />,
                 to: `/admin/clients/${client.id}`,
               }))}

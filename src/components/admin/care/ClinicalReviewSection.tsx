@@ -14,6 +14,7 @@ import { cxInputClass } from "@/components/candidate/primitives";
 import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { MuEmpty, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Status } from "@/components/field";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -160,7 +161,7 @@ const ClinicalReviewSection = ({
   if (!work || !record) {
     return (
       <MuSection title="Clinical review">
-        <MuEmpty title="No assessment to review" description="A review opens once an assessor sends an assessment." />
+        <MuEmpty art={art.objClipboardChecks} title="No assessment to review" description="A review opens once an assessor sends an assessment." />
       </MuSection>
     );
   }
@@ -290,7 +291,7 @@ const ClinicalReviewSection = ({
               <div key={row.id} className="px-5 py-4">
                 <p className="text-[14px] font-bold text-ink">
                   {row.status === "accepted" ? "Accepted" : row.status === "returned" ? "Returned" : "Open"}
-                  {row.completed_at ? ` · ${formatDateTime(row.completed_at)}` : ""}
+                  {row.completed_at ? ` on ${formatDateTime(row.completed_at)}` : ""}
                 </p>
                 {row.decision_reason && (
                   <p className="mt-1 whitespace-pre-wrap text-[13.5px] text-body">{row.decision_reason}</p>
@@ -298,7 +299,7 @@ const ClinicalReviewSection = ({
                 {row.return_category && (
                   <p className="mt-1 text-[13px] text-body">
                     {categoryLabel(row.return_category)}
-                    {row.return_priority ? ` · ${priorityLabel(row.return_priority)}` : ""}
+                    {row.return_priority ? `, ${priorityLabel(row.return_priority)}` : ""}
                   </p>
                 )}
                 {row.return_instructions && (

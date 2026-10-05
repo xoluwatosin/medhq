@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useCatalogue } from "@/hooks/useCatalogue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,6 +13,10 @@ import {
 import { toast } from "sonner";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Plus, Trash2, RotateCcw, Pencil, Check, X } from "lucide-react";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+
+const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
 
 export function CatalogueTab() {
   const {
@@ -87,7 +90,7 @@ export function CatalogueTab() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12 text-muted-foreground">Loading catalogue...</div>;
+    return <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading catalogue.</div>;
   }
 
   return (
@@ -96,13 +99,13 @@ export function CatalogueTab() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-2 flex-1 min-w-[200px]">
           <Input
-            placeholder="New category name..."
+            placeholder="New category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
           />
           <Button onClick={handleAddCategory} disabled={addCategory.isPending}>
-            <Plus className="h-4 w-4 mr-1" /> Add Category
+            <Plus className="h-4 w-4 mr-1" /> Add category
           </Button>
         </div>
         <ConfirmAction
@@ -130,8 +133,8 @@ export function CatalogueTab() {
         const svcInput = newServiceData[cat.id] ?? { name: "", price: "" };
 
         return (
-          <Card key={cat.id}>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <section key={cat.id} className="border border-line bg-card">
+            <div className="flex flex-row items-center justify-between gap-3 border-b border-line-soft px-5 py-3">
               {editingCatId === cat.id ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -149,8 +152,8 @@ export function CatalogueTab() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-base">{cat.name}</CardTitle>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditCategory(cat.id, cat.name)}>
+                  <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">{cat.name}</h2>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Rename ${cat.name}`} onClick={() => startEditCategory(cat.id, cat.name)}>
                     <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 </div>
@@ -172,13 +175,13 @@ export function CatalogueTab() {
                   </Button>
                 }
               />
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div className="px-5 py-3">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Service Name</TableHead>
-                    <TableHead className="w-32">Price (₦)</TableHead>
+                    <TableHead className={HEAD}>Service name</TableHead>
+                    <TableHead className={`w-32 ${HEAD}`}>Price (₦)</TableHead>
                     <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -232,7 +235,7 @@ export function CatalogueTab() {
                   <TableRow>
                     <TableCell>
                       <Input
-                        placeholder="New service name..."
+                        placeholder="New service name"
                         value={svcInput.name}
                         onChange={(e) =>
                           setNewServiceData((prev) => ({
@@ -272,17 +275,23 @@ export function CatalogueTab() {
                   </TableRow>
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         );
       })}
 
       {categories.length === 0 && (
-        <div className="text-center py-12 space-y-3">
-          <p className="text-muted-foreground">No service categories yet.</p>
-          <Button onClick={handleResetDefaults} disabled={seedDefaults.isPending}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Load Default Catalogue
-          </Button>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objPriceTagNaira}
+            title="No service categories yet"
+            description="Add a category above, or load the default catalogue to start."
+            action={
+              <Button onClick={handleResetDefaults} disabled={seedDefaults.isPending}>
+                <RotateCcw className="h-4 w-4 mr-1" /> Load default catalogue
+              </Button>
+            }
+          />
         </div>
       )}
     </div>

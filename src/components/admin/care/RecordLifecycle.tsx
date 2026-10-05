@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { careErrorMessage } from "@/lib/care-errors";
@@ -119,19 +123,21 @@ const RecordLifecycle = ({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        {actions.map((action) => (
-          <Button
-            key={action}
-            type="button"
-            variant="outline"
-            className="h-10"
-            onClick={() => open(action)}
-          >
-            {PROMPTS[action].confirm}
+      {/* The record header keeps two visible actions; the file's state changes sit under More. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="outline" className="h-10">
+            More <ChevronDown className="ml-1.5 h-4 w-4" aria-hidden />
           </Button>
-        ))}
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {actions.map((action) => (
+            <DropdownMenuItem key={action} onSelect={() => open(action)}>
+              {PROMPTS[action].confirm}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Dialog open={Boolean(prompt)} onOpenChange={(next) => { if (!next) setPrompt(null); }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">

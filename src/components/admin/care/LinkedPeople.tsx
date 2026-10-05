@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
-import { MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
 import { careErrorMessage } from "@/lib/care-errors";
 import { clientLinks, roleText, type ClientLinks } from "@/lib/care-records";
 
@@ -45,9 +45,7 @@ const LinkedPeople = ({ clientId }: { clientId: string }) => {
       description="The family this file belongs to and everyone recorded in it."
     >
       {others.length === 0 ? (
-        <p className="text-[14.5px] text-muted-foreground">
-          No other people are recorded in this family.
-        </p>
+        <MuEmpty title="No one else in this family" description="No other people are recorded in this family yet." />
       ) : (
         <ul className="flex flex-col divide-y divide-line-soft">
           {others.map((person) => {

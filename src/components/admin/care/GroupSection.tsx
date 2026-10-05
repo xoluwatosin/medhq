@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cxInputClass } from "@/components/candidate/primitives";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
 import { DateField, DateTimeField, SelectField, Status } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
@@ -259,7 +260,7 @@ const GroupSection = ({
   if (!overview) {
     return (
       <MuSection title="Family">
-        <MuEmpty icon={Users} title="No family recorded" />
+        <MuEmpty art={art.objHandsHeart} title="No family recorded" description="The family appears here once a care request links people to this client." />
       </MuSection>
     );
   }
@@ -356,7 +357,7 @@ const GroupSection = ({
             {overview.relationships.map((rel) => (
               <MuRow
                 key={rel.id}
-                title={`${personName(rel.from_person_id) ?? "Someone"} — ${
+                title={`${personName(rel.from_person_id) ?? "Someone"}: ${
                   terms.find((t) => t.code === rel.relationship_code)?.label ?? rel.relationship_code
                 } ${personName(rel.to_person_id) ?? "someone"}`}
                 state={rel.other_label ?? undefined}
@@ -402,7 +403,7 @@ const GroupSection = ({
           .map((r) => (
             <div
               key={r.request_recipient_id}
-              className="mb-3 flex flex-col gap-3 rounded-2xl border border-tint-border bg-tint/45 p-4 shadow-[var(--shadow-surface)] sm:flex-row sm:items-center sm:justify-between"
+              className="mb-3 flex flex-col gap-3 border border-l-4 border-line border-l-brand bg-tint/45 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="text-sm font-semibold text-ink">

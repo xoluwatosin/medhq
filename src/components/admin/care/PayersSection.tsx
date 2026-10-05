@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cxInputClass } from "@/components/candidate/primitives";
 import { MuEmpty, MuRow, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
 import { SearchableSelect } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
@@ -110,7 +111,7 @@ const PayersSection = ({ clientId }: { clientId: string }) => {
       }
     >
       {data.payers.length === 0 ? (
-        <MuEmpty title="No payer recorded" />
+        <MuEmpty art={art.objBankCard} title="No payer recorded" description="Record who pays for this care, a person or an organisation." />
       ) : (
         <div className="divide-y divide-line-soft">
           {data.payers.map((p) => (

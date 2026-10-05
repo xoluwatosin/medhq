@@ -4,19 +4,28 @@ import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { INVOICE_STATUS_LABELS, naira } from "@/lib/invoice-totals";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { MuEmpty, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Copy, Loader2, Mail, MessageCircle, RefreshCw, XCircle } from "lucide-react";
 import { selectAll } from "@/lib/select-all";
+
+const STATUS_TONE: Record<string, MuTone> = {
+  draft: "neutral",
+  sent: "info",
+  paid: "good",
+  part_paid: "warning",
+  expired: "warning",
+  cancelled: "neutral",
+};
 
 export function InvoiceList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
 
-  const { data: invoices = [], isLoading } = useQuery({
+  const { data: invoices = [], isLoading, isError } = useQuery({
     queryKey: ["paystack-invoices"],
     queryFn: async () => {
       // Every invoice, not only the latest 200.
@@ -80,20 +89,27 @@ export function InvoiceList() {
   };
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading invoices.</p>;
-  if (invoices.length === 0) return <p className="text-sm text-muted-foreground">No invoices.</p>;
+  if (isError) return <p className="text-sm text-muted-foreground">Invoices could not be loaded. Refresh to try again.</p>;
+  if (invoices.length === 0) {
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty art={art.objPriceTagNaira} title="No invoices yet" description="Invoices you create appear here with their payment status." />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-line-soft border border-line bg-card">
       {invoices.map((invoice) => (
-        <Card key={invoice.id}>
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div key={invoice.id}>
+          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{invoice.invoice_number}</span>
-                <Badge variant="secondary">{INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status}</Badge>
+                <span className="font-bold text-navy">{invoice.invoice_number}</span>
+                <MuStatus label={INVOICE_STATUS_LABELS[invoice.status] ?? invoice.status} tone={STATUS_TONE[invoice.status] ?? "neutral"} />
               </div>
               <p className="truncate text-sm text-muted-foreground">
-                {invoice.client_name} · {invoice.client_email}
+                {[invoice.client_name, invoice.client_email].filter(Boolean).join(", ")}
               </p>
               <p className="text-sm font-medium tabular-nums">{naira(invoice.total)}</p>
             </div>
@@ -140,8 +156,8 @@ export function InvoiceList() {
                 />
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );

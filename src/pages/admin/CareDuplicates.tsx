@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
 import ConfirmAction from "@/components/admin/ConfirmAction";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { careErrorMessage } from "@/lib/care-errors";
 import { formatDate } from "@/lib/format";
 import {
@@ -68,6 +70,7 @@ const CareDuplicates = () => {
   const [params] = useSearchParams();
   const clientId = params.get("client") ?? undefined;
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [matches, setMatches] = useState<PersonMatch[]>([]);
   const [keep, setKeep] = useState<Record<string, string>>({});
   const [combine, setCombine] = useState<Record<string, boolean>>({});
@@ -76,7 +79,9 @@ const CareDuplicates = () => {
   const load = useCallback(async () => {
     try {
       setMatches(await personMatches(clientId));
+      setLoadFailed(false);
     } catch (error) {
+      setLoadFailed(true);
       toast.error(careErrorMessage(error, "Could not load possible duplicates"));
     } finally {
       setLoading(false);
@@ -136,8 +141,16 @@ const CareDuplicates = () => {
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : loadFailed && matches.length === 0 ? (
+        <p className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-copy">Possible duplicates could not be loaded. Refresh to try again.</p>
       ) : matches.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-copy">No possible duplicates</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objMagnifier}
+            title="No possible duplicates"
+            description="Nobody on the care side looks like they were entered twice."
+          />
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           {matches.map((m) => {

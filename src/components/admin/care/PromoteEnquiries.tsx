@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { adminDb } from "@/lib/admin-utils";
 import { CLIENT_GROUPS } from "@/lib/care";
 import { careErrorMessage } from "@/lib/care-errors";
@@ -154,9 +154,11 @@ export const PromoteEnquiries = ({
         {loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Loading care requests</p>
         ) : enquiries.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No care requests are waiting for a care record.
-          </p>
+          <MuEmpty
+            art={art.objCarePlan}
+            title="Nothing to route"
+            description="No care requests are waiting for a care record."
+          />
         ) : (
           <ul className="flex flex-col divide-y divide-line-soft">
             {enquiries.map((e) => {
@@ -185,35 +187,38 @@ export const PromoteEnquiries = ({
                   {choice.picked && (
                     <div className="grid gap-3 pl-7">
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Select value={choice.serviceId} onValueChange={(v) => update(e.id, { serviceId: v })}>
-                          <SelectTrigger className="h-11"><SelectValue placeholder="Choose a service" /></SelectTrigger>
-                          <SelectContent>
-                            {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <Select value={choice.clientGroup} onValueChange={(v) => update(e.id, { clientGroup: v })}>
-                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {CLIENT_GROUPS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <SelectField
+                          label="Service"
+                          hideLabel
+                          value={choice.serviceId}
+                          placeholder="Choose a service"
+                          onChange={(v) => { if (v) update(e.id, { serviceId: v }); }}
+                          options={services.map((s) => ({ value: s.id, label: s.name }))}
+                        />
+                        <SelectField
+                          label="Client group"
+                          hideLabel
+                          value={choice.clientGroup}
+                          onChange={(v) => { if (v) update(e.id, { clientGroup: v }); }}
+                          options={CLIENT_GROUPS.map((g) => ({ value: g.value, label: g.label }))}
+                        />
                       </div>
                       {found.length > 0 && (
                         <div className="grid gap-2">
                           <span className="text-[13px] font-semibold text-foreground">
                             Matching people already on record
                           </span>
-                          <Select value={choice.attachTo || "new"} onValueChange={(v) => update(e.id, { attachTo: v === "new" ? "" : v })}>
-                            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new">Create a new household</SelectItem>
-                              {found.map((m) => (
-                                <SelectItem key={m.person_id} value={m.person_id}>
-                                  {`${m.full_name} · matched on ${m.matched_on === "email" ? "email" : "phone"}${m.group_name ? ` · ${m.group_name}` : ""}`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <SelectField
+                            label="Matching people already on record"
+                            hideLabel
+                            value={choice.attachTo}
+                            placeholder="Create a new household"
+                            onChange={(v) => update(e.id, { attachTo: v })}
+                            options={found.map((m) => ({
+                              value: m.person_id,
+                              label: `${m.full_name}, matched on ${m.matched_on === "email" ? "email" : "phone"}${m.group_name ? `, ${m.group_name}` : ""}`,
+                            }))}
+                          />
                         </div>
                       )}
                     </div>

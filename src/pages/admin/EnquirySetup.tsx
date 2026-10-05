@@ -6,16 +6,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
+import { FileText, Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
 import {
   brochureLink, deleteQuestion, loadQuestions, loadServiceLines, saveQuestion,
   saveServiceLine, uploadBrochure,
@@ -135,28 +135,27 @@ const EnquirySetup = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-          <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
-            <Link to="/admin/enquiries"><ArrowLeft className="h-4 w-4 mr-2" />Back to the desk</Link>
-          </Button>
-          <h1 className="text-2xl font-serif font-bold">Enquiry setup</h1>
-          <p className="text-sm text-muted-foreground">
-            What each service line asks, and what we send back when somebody asks for care.
-          </p>
-        </div>
-        <Button
-          onClick={() => setEditing({ field_key: "", label: "", help: "", input_type: "choice", options: [], required: false, sort_order: (shown.length ? shown[shown.length - 1].sort_order : 0) + 10, active: true })}
-        >
-          <Plus className="h-4 w-4 mr-2" />Add a question
-        </Button>
+      <div className="mb-6">
+        <MuPageHeader
+          title="Enquiry setup"
+          description="What each service line asks, and what we send back when somebody asks for care."
+          backTo="/admin/enquiries"
+          backLabel="Back to enquiries"
+          actions={
+            <Button
+              onClick={() => setEditing({ field_key: "", label: "", help: "", input_type: "choice", options: [], required: false, sort_order: (shown.length ? shown[shown.length - 1].sort_order : 0) + 10, active: true })}
+            >
+              <Plus className="h-4 w-4 mr-2" />Add a question
+            </Button>
+          }
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         <nav className="space-y-1">
           <button
             onClick={() => setActiveKey("__shared")}
-            className={`w-full text-left px-3 py-2 text-sm rounded-md ${activeKey === "__shared" ? "bg-muted font-semibold" : "hover:bg-muted/60"}`}
+            className={`w-full text-left px-3 py-2 text-sm ${activeKey === "__shared" ? "bg-tint font-semibold text-navy" : "hover:bg-tint/50"}`}
           >
             Asked of everybody
           </button>
@@ -164,18 +163,18 @@ const EnquirySetup = () => {
             <button
               key={l.key}
               onClick={() => setActiveKey(l.key)}
-              className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-md ${activeKey === l.key ? "bg-muted font-semibold" : "hover:bg-muted/60"}`}
+              className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm ${activeKey === l.key ? "bg-tint font-semibold text-navy" : "hover:bg-tint/50"}`}
             >
               <span className="truncate">{l.name}</span>
-              {!l.brochure_path && <Badge variant="outline" className="shrink-0">No guide</Badge>}
+              {!l.brochure_path && <MuStatus label="No guide" tone="warning" />}
             </button>
           ))}
         </nav>
 
         <div className="space-y-6">
           {line && (
-            <section className="border rounded-lg p-5 space-y-4">
-              <h2 className="font-semibold">The reply for {line.name.toLowerCase()}</h2>
+            <MuSection title={`The reply for ${line.name.toLowerCase()}`}>
+              <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Subject line</Label>
@@ -195,7 +194,7 @@ const EnquirySetup = () => {
                 <Textarea rows={2} value={line.reply_outro} onChange={(e) => patchLine({ reply_outro: e.target.value })} />
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+              <div className="flex flex-wrap items-center gap-3 border-t border-line-soft pt-4">
                 <input
                   ref={fileRef}
                   type="file"
@@ -210,7 +209,7 @@ const EnquirySetup = () => {
                   <button onClick={openBrochure} className="inline-flex items-center gap-2 text-sm text-primary underline">
                     <FileText className="h-4 w-4" />
                     {line.brochure_name}
-                    {line.brochure_updated_at ? ` · ${format(new Date(line.brochure_updated_at), "dd MMM yyyy")}` : ""}
+                    {line.brochure_updated_at ? `, updated ${format(new Date(line.brochure_updated_at), "dd MMM yyyy")}` : ""}
                   </button>
                 ) : (
                   <span className="text-sm text-muted-foreground">No guide is attached to this line yet, so replies go out without one.</span>
@@ -225,30 +224,40 @@ const EnquirySetup = () => {
                   </Button>
                 </div>
               </div>
-            </section>
+              </div>
+            </MuSection>
           )}
 
-          <section className="border rounded-lg divide-y">
-            <div className="p-4 font-semibold">
-              {line ? `Questions only ${line.name.toLowerCase()} asks` : "Questions asked of everybody"}
-            </div>
+          <MuSection
+            title={line ? `Questions only ${line.name.toLowerCase()} asks` : "Questions asked of everybody"}
+            padded={false}
+          >
+            <div className="divide-y divide-line-soft">
             {shown.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p>
+              <MuEmpty
+                art={art.objClipboardChecks}
+                title="No questions here yet"
+                description="Add a question and it appears on the public form for this line."
+              />
             ) : shown.map((q) => (
               <div key={q.id} className="p-4 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="font-medium">{q.label} {q.required && <span className="text-destructive">*</span>}</div>
                   <div className="text-xs text-muted-foreground">
-                    {TYPES.find((t) => t.key === q.input_type)?.label} · saved as {q.field_key}
-                    {q.options.length ? ` · ${q.options.length} options` : ""}
-                    {!q.active ? " · hidden" : ""}
+                    {[
+                      TYPES.find((t) => t.key === q.input_type)?.label,
+                      `saved as ${q.field_key}`,
+                      q.options.length ? `${q.options.length} options` : null,
+                      !q.active ? "hidden" : null,
+                    ].filter(Boolean).join(", ")}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setEditing(q)}>Edit</Button>
-                <Button variant="ghost" size="icon" onClick={() => removeQuestion(q.id)}><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" aria-label="Delete question" onClick={() => removeQuestion(q.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             ))}
-          </section>
+            </div>
+          </MuSection>
         </div>
       </div>
 
@@ -273,15 +282,12 @@ const EnquirySetup = () => {
                 <Input value={editing.help ?? ""} onChange={(e) => setEditing({ ...editing, help: e.target.value })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Answer type</Label>
-                  <Select value={editing.input_type ?? "choice"} onValueChange={(v) => setEditing({ ...editing, input_type: v as QuestionType })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {TYPES.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <SelectField
+                  label="Answer type"
+                  value={editing.input_type ?? "choice"}
+                  onChange={(v) => { if (v) setEditing({ ...editing, input_type: v as QuestionType }); }}
+                  options={TYPES.map((t) => ({ value: t.key, label: t.label }))}
+                />
                 <div className="space-y-1.5">
                   <Label>Order</Label>
                   <Input

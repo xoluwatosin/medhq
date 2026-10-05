@@ -12,15 +12,16 @@ import { FilterChips } from "@/components/admin/FilterChips";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { MuEmpty, MuPageHeader, MuStatus } from "@/components/admin/mu/MuShell";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import { Loader2, Archive, Search, Send, Settings2, Clock, Mail, HeartPulse } from "lucide-react";
+
+const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
 import { useNavigate } from "react-router-dom";
 
 import { adminDb } from "@/lib/admin-utils";
@@ -39,6 +40,7 @@ const Enquiries = () => {
   const [items, setItems] = useState<Enquiry[]>([]);
   const [lines, setLines] = useState<ServiceLine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   // Filters live in the address bar and the desk remembers the last set used.
   useRestoreListParams();
   const clearParams = useClearListParams();
@@ -61,6 +63,7 @@ const Enquiries = () => {
       setItems(rows);
       setLines(ls);
     } catch (err) {
+      setLoadFailed(true);
       toast({
         title: "Could not load enquiries",
         description: err instanceof Error ? err.message : "Unknown error",
@@ -176,24 +179,24 @@ const Enquiries = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-        <div>
-          <h1 className="text-2xl font-serif font-bold">Enquiries</h1>
-          <p className="text-sm text-muted-foreground">
-            {counts.owed === 0
-              ? "No unanswered enquiries."
-              : counts.owed === 1
-                ? "One enquiry is unanswered."
-                : `${counts.owed} enquiries are unanswered.`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/admin/enquiries/setup"><Settings2 className="h-4 w-4 mr-2" />Enquiry setup</Link>
-          </Button>
-          <ExportDropdown data={filtered} filename="enquiries" />
-        </div>
-      </div>
+      <MuPageHeader
+        title="Enquiries"
+        description={
+          counts.owed === 0
+            ? "No unanswered enquiries."
+            : counts.owed === 1
+              ? "One enquiry is unanswered."
+              : `${counts.owed} enquiries are unanswered.`
+        }
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <Link to="/admin/enquiries/setup"><Settings2 className="h-4 w-4 mr-2" />Enquiry setup</Link>
+            </Button>
+            <ExportDropdown data={filtered} filename="enquiries" />
+          </>
+        }
+      />
 
       <Tabs value={view} onValueChange={(v) => { setView(v); setPage(0); }} className="mt-4">
         <TabsList>
@@ -208,19 +211,21 @@ const Enquiries = () => {
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search name, email, town…"
+            placeholder="Search name, email or town"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="pl-9"
           />
         </div>
-        <Select value={lineFilter} onValueChange={(v) => { setLineFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Every service line</SelectItem>
-            {lines.map((l) => <SelectItem key={l.key} value={l.key}>{l.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SelectField
+          label="Service line"
+          hideLabel
+          className="w-56"
+          value={lineFilter === "all" ? "" : lineFilter}
+          placeholder="Every service line"
+          onChange={(v) => { setLineFilter(v || "all"); setPage(0); }}
+          options={lines.map((l) => ({ value: l.key, label: l.name }))}
+        />
       </div>
       <div className="mb-4">
         <FilterChips
@@ -234,33 +239,41 @@ const Enquiries = () => {
         />
       </div>
 
-      <div className="hidden md:block overflow-x-auto border rounded-lg">
+      {loadFailed ? (
+        <div className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-foreground">
+          Enquiries could not be loaded. Refresh to try again.
+        </div>
+      ) : paged.length === 0 ? (
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={search || lineFilter !== "all" ? art.objMagnifier : art.objEnvelope}
+            title={search || lineFilter !== "all" ? "No matching enquiries" : "No enquiries here"}
+            description={search || lineFilter !== "all" ? "Try a different search or service line." : "Enquiries in this view appear here as they arrive."}
+          />
+        </div>
+      ) : (
+      <>
+      <div className="hidden md:block overflow-x-auto border border-line bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Person</TableHead>
-              <TableHead>Service line</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>Reply</TableHead>
-              <TableHead>Waiting</TableHead>
+              <TableHead className={HEAD}>Person</TableHead>
+              <TableHead className={HEAD}>Service line</TableHead>
+              <TableHead className={HEAD}>Stage</TableHead>
+              <TableHead className={HEAD}>Reply</TableHead>
+              <TableHead className={HEAD}>Waiting</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No enquiries.
-                </TableCell>
-              </TableRow>
-            ) : paged.map((item) => (
+            {paged.map((item) => (
               <TableRow key={item.id} className="cursor-pointer" onClick={() => openEnquiry(item)}>
                 <TableCell>
                   <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">{item.email}{item.city ? ` · ${item.city}` : ""}</div>
+                  <div className="text-xs text-muted-foreground">{[item.email, item.city].filter(Boolean).join(", ")}</div>
                 </TableCell>
                 <TableCell className="text-sm">{lineName(item.service_line)}</TableCell>
-                <TableCell><Badge variant="secondary">{stageLabel(item.stage)}</Badge></TableCell>
+                <TableCell><MuStatus label={stageLabel(item.stage)} /></TableCell>
                 <TableCell className="text-sm">
                   {item.last_sent_at
                     ? <span className="text-muted-foreground">Sent {format(new Date(item.last_sent_at), "dd MMM")}</span>
@@ -270,7 +283,7 @@ const Enquiries = () => {
                   {formatDistanceToNowStrict(new Date(item.created_at))}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
+                  <Button variant="ghost" size="icon" aria-label="Archive enquiry" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
                     <Archive className="h-4 w-4" />
                   </Button>
                 </TableCell>
@@ -281,15 +294,17 @@ const Enquiries = () => {
       </div>
 
       <ConsoleMobileList
-        emptyLabel="No enquiries."
+        emptyLabel="No enquiries here."
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
-          state: `${lineName(item.service_line)} · ${formatDistanceToNowStrict(new Date(item.created_at))} waiting`,
-          status: <Badge variant="secondary">{stageLabel(item.stage)}</Badge>,
+          state: `${lineName(item.service_line)}, waiting ${formatDistanceToNowStrict(new Date(item.created_at))}`,
+          status: <MuStatus label={stageLabel(item.stage)} />,
           onOpen: () => openEnquiry(item),
         }))}
       />
+      </>
+      )}
 
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-4">
@@ -316,7 +331,7 @@ const Enquiries = () => {
               {Object.keys(selected.answers).length > 0 && (
                 <div>
                   <div className="font-semibold mb-2">Enquiry details</div>
-                  <div className="border rounded-md divide-y">
+                  <div className="border border-line divide-y divide-line-soft">
                     {Object.entries(selected.answers).map(([k, v]) => (
                       <div key={k} className="flex gap-3 px-3 py-2">
                         <div className="w-44 shrink-0 text-muted-foreground capitalize">{k.replace(/_/g, " ")}</div>
@@ -337,12 +352,13 @@ const Enquiries = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <div className="text-muted-foreground mb-1">Stage</div>
-                  <Select value={selected.stage} onValueChange={(v) => changeStage(selected.id, v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {ENQUIRY_STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SelectField
+                    label="Stage"
+                    hideLabel
+                    value={selected.stage}
+                    onChange={(v) => { if (v) changeStage(selected.id, v); }}
+                    options={ENQUIRY_STAGES.map((s) => ({ value: s.key, label: s.label }))}
+                  />
                 </div>
                 <div>
                   <div className="text-muted-foreground mb-1">Owner</div>
@@ -355,7 +371,7 @@ const Enquiries = () => {
               </div>
 
 
-              <div className="border rounded-md p-3 space-y-3">
+              <div className="border border-line p-3 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 font-semibold"><Mail className="h-4 w-4" />Reply and brochure</div>
                   <Button size="sm" disabled={sending} onClick={() => resend(selected, !!selected.last_sent_at)}>
@@ -371,9 +387,12 @@ const Enquiries = () => {
                       <li key={s.id} className="flex items-start gap-2 text-muted-foreground">
                         <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                         <span>
-                          {format(new Date(s.sent_at), "dd MMM yyyy, HH:mm")} · {s.subject}
-                          {s.brochure_name ? ` · ${s.brochure_name}` : ""}
-                          {s.status !== "sent" ? ` · failed` : ""}
+                          {[
+                            format(new Date(s.sent_at), "dd MMM yyyy, HH:mm"),
+                            s.subject,
+                            s.brochure_name,
+                            s.status !== "sent" ? "failed" : null,
+                          ].filter(Boolean).join(", ")}
                         </span>
                       </li>
                     ))}

@@ -9,6 +9,7 @@ import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { DateTimeField, SearchableSelect, SelectField, Status } from "@/components/field";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { formatDateTime } from "@/lib/format";
 import {
   assessmentStatusLabel, assessmentStatusTone, assessorOptions, clientAssessments,
@@ -182,6 +183,7 @@ const AssessmentSection = ({
       >
         {!live ? (
           <MuEmpty
+            art={art.objCalendar}
             title="No assessment arranged"
             description={preAssessmentReturned
               ? "Arrange the visit and assign an assessor."

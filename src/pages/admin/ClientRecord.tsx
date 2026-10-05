@@ -12,9 +12,6 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cxInputClass } from "@/components/candidate/primitives";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +29,8 @@ import {
 import {
   MuEmpty, MuHero, MuHeroStrip, MuPage, MuRecordNav, MuRow, MuSection, MuTable,
 } from "@/components/admin/mu/MuShell";
-import { PhoneField, Status } from "@/components/field";
+import { PhoneField, SelectField, Status } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { careFlagTone, careStageLabel, careStageTone } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, SEX_TERMS, STATE_TERMS, ageText, lgaTerms, lgaLabel, relationshipLabel,
@@ -142,6 +140,7 @@ const ClientRecord = () => {
   const [params, setParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [client, setClient] = useState<Record<string, unknown> | null>(null);
   const [service, setService] = useState<{ name: string; questionnaire_section: string | null } | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -199,6 +198,7 @@ const ClientRecord = () => {
     const row = clientRes.data as
       (Record<string, unknown> & { services?: { name: string; questionnaire_section: string | null } | null }) | null;
     setClient(row);
+    setLoadFailed(Boolean(clientRes.error));
     setService(row?.services ?? null);
     setContacts((contactRes.data ?? []) as unknown as Contact[]);
     const document = (docRes.data ?? null) as unknown as CareDoc | null;
@@ -614,7 +614,21 @@ const ClientRecord = () => {
   };
 
   if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading client</p>;
-  if (!client) return <p className="py-10 text-center text-sm text-muted-foreground">Client not found</p>;
+  if (!client && loadFailed) {
+    return <p className="py-10 text-center text-sm text-muted-foreground">This client could not be loaded. Refresh to try again.</p>;
+  }
+  if (!client) {
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Client not found"
+          description="This record may have been merged or removed."
+          action={<Button asChild variant="outline"><Link to="/admin/clients">Back to clients</Link></Button>}
+        />
+      </div>
+    );
+  }
 
   const stage = String(client.stage ?? "");
   const stateCode = (client.state_code as string | null) ?? null;
@@ -828,7 +842,7 @@ const ClientRecord = () => {
 
             {!doc ? (
               <MuSection padded={false}>
-                <MuEmpty title="Nothing answered yet" description="Send the pre-assessment link from the Pre-assessment link tab." />
+                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Send the pre-assessment link from the Pre-assessment link tab." />
               </MuSection>
             ) : (
               answerGroups.map((group) => {
@@ -842,7 +856,7 @@ const ClientRecord = () => {
                 return (
                   <div key={group.key} className="flex flex-col gap-4">
                     {group.name && (
-                      <h3 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                         {group.name}
                       </h3>
                     )}
@@ -887,7 +901,7 @@ const ClientRecord = () => {
               <MuSection title="Revision history" description="The original submission and every later change remain on the record." padded={false}>
                 <div className="divide-y divide-line-soft">
                   {revisionEvents.map((event) => (
-                    <MuRow key={event.id} title={event.event === "submitted" ? "Form submitted" : event.event === "reopened" ? "Form reopened" : event.event === "revision_submitted" ? "Changes submitted" : "Delivery retried"} state={<div className="space-y-1"><p>{`${event.actor_name ?? (event.actor_kind === "family" ? "Family" : "System")} on ${dateOf(event.created_at)}${event.reason ? ` · ${event.reason}` : ""}`}</p>{event.changed_fields?.map((change) => <p key={`${event.id}-${change.field_id}`} className="text-foreground"><span className="font-semibold">{revisionFieldLabel(change.field_id)}:</span> {String(change.previous_value ?? "Not answered")} → {String(change.new_value ?? "Not answered")}</p>)}</div>} />
+                    <MuRow key={event.id} title={event.event === "submitted" ? "Form submitted" : event.event === "reopened" ? "Form reopened" : event.event === "revision_submitted" ? "Changes submitted" : "Delivery retried"} state={<div className="space-y-1"><p>{`${event.actor_name ?? (event.actor_kind === "family" ? "Family" : "System")} on ${dateOf(event.created_at)}${event.reason ? `. Reason: ${event.reason}` : ""}`}</p>{event.changed_fields?.map((change) => <p key={`${event.id}-${change.field_id}`} className="text-foreground"><span className="font-semibold">{revisionFieldLabel(change.field_id)}:</span> {String(change.previous_value ?? "Not answered")} → {String(change.new_value ?? "Not answered")}</p>)}</div>} />
                   ))}
                 </div>
               </MuSection>
@@ -917,7 +931,7 @@ const ClientRecord = () => {
             padded={false}
           >
             {contacts.length === 0 ? (
-              <MuEmpty title="No contacts" description="Add the person we speak to about this client." />
+              <MuEmpty art={art.objPhoneChat} title="No contacts yet" description="Add the person we speak to about this client." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {contacts.map((c) => (
@@ -1023,32 +1037,19 @@ const ClientRecord = () => {
           <>
           <MuSection title="Commercial details" description="Only coordinators can see or change this.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[13.5px] font-medium text-muted-foreground">Budget band</span>
-                <Select
-                  value={String(commercial?.budget_band_id ?? "")}
-                  onValueChange={(v) => saveCommercial({ budget_band_id: v })}
-                >
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Not set" /></SelectTrigger>
-                  <SelectContent>
-                    {bands.map((b) => <SelectItem key={b.id} value={b.id}>{b.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[13.5px] font-medium text-muted-foreground">Assessment fee</span>
-                <Select
-                  value={String(commercial?.assessment_fee_state ?? "unpaid")}
-                  onValueChange={(v) => saveCommercial({ assessment_fee_state: v })}
-                >
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["unpaid", "paid", "waived"].map((s) => (
-                      <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
+              <SelectField
+                label="Budget band"
+                value={String(commercial?.budget_band_id ?? "")}
+                placeholder="Not set"
+                onChange={(v) => { if (v) saveCommercial({ budget_band_id: v }); }}
+                options={bands.map((b) => ({ value: b.id, label: b.label }))}
+              />
+              <SelectField
+                label="Assessment fee"
+                value={String(commercial?.assessment_fee_state ?? "unpaid")}
+                onChange={(v) => { if (v) saveCommercial({ assessment_fee_state: v }); }}
+                options={["unpaid", "paid", "waived"].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
+              />
             </div>
             <p className="mt-4 flex items-center gap-2 text-[13.5px] text-muted-foreground">
               <Wallet className="h-4 w-4" /> Nothing here is shown on the pre-assessment or to a clinical reviewer.
@@ -1062,7 +1063,7 @@ const ClientRecord = () => {
         {tab === "activity" && (
           <MuSection title="Activity" padded={false}>
             {activity.length === 0 ? (
-              <MuEmpty title="No activity" description="Anything done on this record is listed here." />
+              <MuEmpty art={art.objClipboardChecks} title="No activity yet" description="Anything done on this record is listed here." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {activity.map((a) => (
