@@ -170,11 +170,11 @@ const CareProposalView = () => {
 
   return (
     <FamilyShell
-      eyebrow="Care proposal"
-      title={person ? `Proposed care for ${person.display_name}` : "Proposed care and support"}
-      accent={[1]}
+      eyebrow="Care plan"
+      title={person ? `Proposed care plan for ${person.display_name}` : "Proposed care plan"}
+      accent={[2]}
       art={art.charDoctor}
-      lead="This is what we propose after the assessment. It is not the final care plan, and nothing starts until we have spoken with you."
+      lead="The care plan we propose after the assessment. Nothing starts until you have read it and we have spoken with you."
       path="/care/proposal"
       aside={aside}
       action={<Link to="/care" className={familyOnNavy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Your care</Link>}

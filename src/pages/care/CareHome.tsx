@@ -234,7 +234,7 @@ const CareHome = () => {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Part
                 src={art.objCarePlan}
-                title="Care proposal and plan"
+                title="Proposed care plan"
                 open={record.scopes.clinical}
                 to={record.client_id ? `/care/proposal?client=${record.client_id}` : "/care/proposal"}
               />
