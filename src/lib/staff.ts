@@ -6,7 +6,7 @@
 // employment layer that sits on top of that record: job title, contract, and
 // the compliance paperwork we are obliged to hold.
 import { supabase } from "@/integrations/supabase/client";
-import { issueContractDocument } from "@/lib/contracts";
+import { issueAndSendContract, issuedMessage } from "@/lib/contract-issue";
 
 const db = () => supabase as any;
 
@@ -146,8 +146,9 @@ export async function createContract(personId: string, payload: Record<string, u
   return data as string;
 }
 
+/** Issue a contract: checks, freeze, and the signing email. Returns the line to show. */
 export async function issueContract(id: string, actorName?: string | null) {
-  await issueContractDocument(id, actorName);
+  return issuedMessage(await issueAndSendContract(id, actorName));
 }
 
 export async function setContractStatus(id: string, status: ContractStatus, note?: string) {

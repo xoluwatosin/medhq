@@ -242,10 +242,10 @@ const WorkforceStaff = () => {
     }
   };
 
-  const runContractAction = async (fn: () => Promise<void>, done: string) => {
+  const runContractAction = async (fn: () => Promise<void | string>, done: string) => {
     try {
-      await fn();
-      toast({ title: done });
+      const said = await fn();
+      toast({ title: typeof said === "string" && said ? said : done });
       load();
     } catch (err: any) {
       toast({ title: "That did not go through", description: err.message, variant: "destructive" });
@@ -598,7 +598,7 @@ const WorkforceStaff = () => {
                           <FileSignature className="mr-2 h-4 w-4" />Open the document
                         </Button>
                         {c.status === "draft" && (
-                           <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued for candidate signature")}>
+                           <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued")}>
                             <Send className="mr-2 h-4 w-4" />Issue for signature
                           </Button>
                         )}

@@ -39,10 +39,11 @@ import JSZip from "jszip";
 import { blobToBase64, downloadBlob } from "@/lib/contract-pdf";
 import { buildContractPack } from "@/lib/contract-pack-pdf";
 import { hasBlockingChecks, runContractChecks } from "@/lib/contract-checks";
+import { issueAndSendContract } from "@/lib/contract-issue";
 
 import {
   ContractAnnex, ContractClause, ContractEvent, ContractRecord, DEFAULT_ANNEXES,
-  countersignContract, effectiveClauses, effectiveFields, issueContractDocument,
+  countersignContract, effectiveClauses, effectiveFields,
   loadContract, loadContractEvents, personHomeAddress, saveContractDraft, signingLink, uploadAnnexFile, voidContract,
 } from "@/lib/contracts";
 import { AnnexLibraryItem, ContractTemplate, annexFromLibrary, loadAnnexLibrary, loadTemplates } from "@/lib/contract-templates";
@@ -248,19 +249,17 @@ const ContractEditor = () => {
     setBusy(true);
     try {
       await saveContractDraft(contract.id, { fields, clauses, annexes, is_clinical: isClinical, actor_name: adminDisplayName });
-      const token = await issueContractDocument(contract.id, adminDisplayName);
-      await supabase.functions.invoke("send-contract-email", {
-        body: { contract_id: contract.id, kind: "issue" },
-      });
+      const result = await issueAndSendContract(contract.id, adminDisplayName);
       try {
-        await navigator.clipboard?.writeText(signingLink(token));
+        await navigator.clipboard?.writeText(signingLink(result.token));
       } catch {
         /* a blocked clipboard must never look like a failed issue */
       }
-      toast({
-        title: "Issued",
-        description: "The wording is frozen, the signing link has been emailed and copied to your clipboard.",
-      });
+      toast(
+        result.emailed
+          ? { title: "Issued", description: "The wording is frozen, the signing link has been emailed and copied to your clipboard." }
+          : { title: "Issued, but the email did not send", description: `${result.emailError ?? "Unknown error"}. The link is on your clipboard; use Chase to resend.`, variant: "destructive" },
+      );
       load();
     } catch (err: any) {
       toast({ title: "Could not issue", description: err.message, variant: "destructive" });

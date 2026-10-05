@@ -23,7 +23,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ContractDocument from "@/components/contracts/ContractDocument";
-import { CONTRACT_FIELDS, ContractAnnex, ContractClause, issueContractDocument } from "@/lib/contracts";
+import { CONTRACT_FIELDS, ContractAnnex, ContractClause } from "@/lib/contracts";
+import { issueAndSendContract } from "@/lib/contract-issue";
 import {
   AnnexLibraryItem, CandidateRow, ContractTemplate, FIELD_RULE_LABELS, FieldRule, annexFromLibrary,
   createContractFromTemplate, deleteTemplate, loadAcceptedCandidates, loadAnnexLibrary,
@@ -187,8 +188,12 @@ const ContractTemplateEditor = () => {
           location: merged.primary_place_of_work,
           created_by_name: adminDisplayName,
         });
-        if (issueToo) await issueContractDocument(contractId, adminDisplayName);
-        done.push({ ...row, contractId, state: issueToo ? "issued" : "drafted", error: undefined });
+        let note: string | undefined;
+        if (issueToo) {
+          const result = await issueAndSendContract(contractId, adminDisplayName);
+          if (!result.emailed) note = "Issued, email not sent";
+        }
+        done.push({ ...row, contractId, state: issueToo ? "issued" : "drafted", error: note });
       } catch (err: any) {
         done.push({ ...row, state: "failed", error: err.message });
       }
@@ -534,7 +539,7 @@ const ContractTemplateEditor = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {row.state === "issued" && <MuStatus tone="good" label="Issued" />}
+                        {row.state === "issued" && <MuStatus tone={row.error ? "warning" : "good"} label={row.error || "Issued and emailed"} />}
                         {row.state === "drafted" && <MuStatus tone="info" label="Draft created" />}
                         {row.state === "failed" && <MuStatus tone="bad" label={row.error || "Failed"} />}
                         {row.contractId && (
