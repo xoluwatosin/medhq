@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       kitSubhead("What happens next"),
       kitSteps([
         { title: "We'll be in touch", detail: "A care coordinator calls or messages you on WhatsApp, usually the same working day." },
-        { title: "Care needs", detail: "A paid assessment may be required. If it is, a nurse visits the home for about ninety minutes, and it costs **₦35,000**." },
+        { title: "Care needs", detail: "A paid **₦35,000** assessment may be required. If it is, a nurse visits the home for about ninety minutes." },
         { title: "A match", detail: "A carer chosen for the plan and the person. You see their profile before care begins." },
         { title: "Care begins", detail: "On the days you agree, with your coordinator alongside." },
       ]),
