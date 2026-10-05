@@ -103,11 +103,11 @@ export const adminDomains: AdminDomain[] = [
     key: "programmes",
     label: "Programmes",
     icon: Layers,
-    url: "/admin/programmes",
+    // Creator is the one programme today, so it is the Programmes page. When a
+    // second programme arrives, it becomes a second tab here.
+    url: "/admin/creator-applications",
     items: [
-      { title: "All programmes", url: "/admin/programmes", icon: Layers, exact: true, keywords: "programmes register Creator" },
-
-      { title: "Creator", url: "/admin/creator-applications", icon: Palette, perm: "creator_applications", keywords: "Creator applications content partners" },
+      { title: "Creator", url: "/admin/creator-applications", icon: Palette, perm: "creator_applications", keywords: "Creator applications content partners programmes register" },
     ],
   },
   {

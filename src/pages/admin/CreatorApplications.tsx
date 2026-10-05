@@ -108,7 +108,7 @@ const CreatorApplications = () => {
   return (
     <MuPage>
       <MuPageHeader
-        title="Creator applications"
+        title="Creator programme"
         description="People who asked to make content with Medic Connect."
         actions={<ExportDropdown data={filtered} filename="creator-applications" />}
       />

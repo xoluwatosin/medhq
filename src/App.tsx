@@ -102,7 +102,6 @@ import AnnexLibrary from "./pages/admin/AnnexLibrary";
 import Clients from "./pages/admin/Clients";
 import ClientRecord from "./pages/admin/ClientRecord";
 import CareDuplicates from "./pages/admin/CareDuplicates";
-import Programmes from "./pages/admin/Programmes";
 
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalSetPassword from "./pages/portal/PortalSetPassword";
@@ -313,7 +312,7 @@ const App = () => (
 
               {/* Domain landings. Every historic URL above still resolves; these
                   only give each business domain a front door of its own. */}
-              <Route path="programmes" element={<Programmes />} />
+              <Route path="programmes" element={<Navigate to="/admin/creator-applications" replace />} />
               <Route path="care" element={<Navigate to="/admin/clients" replace />} />
               <Route path="talent" element={<Navigate to="/admin/match-universe" replace />} />
               <Route path="communications" element={<Navigate to="/admin/campaigns" replace />} />
