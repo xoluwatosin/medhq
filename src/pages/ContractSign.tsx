@@ -41,7 +41,7 @@ const Cap = ({ eyebrow, title }: { eyebrow: string; title: string }) => (
     <div className="absolute right-[-30px] top-[-60px] h-44 w-44 rounded-full border-[26px] border-primary-foreground/10" aria-hidden="true" />
     <div className="relative mx-auto w-full max-w-[210mm]">
       <img src={logoWhite} alt="Medic Connect" className="h-8 w-auto" />
-      <p className="label-caps mt-5 text-[11px] !text-[#A8B0E8]">{eyebrow}</p>
+      <p className="label-caps mt-5 text-[11px] text-muted-navy">{eyebrow}</p>
       <h1 className="mt-1.5 text-[26px] font-medium tracking-[-0.025em] text-primary-foreground sm:text-[32px]">{title}</h1>
     </div>
   </header>

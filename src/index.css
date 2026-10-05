@@ -153,7 +153,9 @@ All colors MUST be HSL.
     --surface-overlay: 231 48% 12%;
     --shadow-soft: 225 28% 14%;
     --shadow-surface: 6px 6px 0 hsl(var(--navy));
-    --shadow-dialog: 8px 8px 0 hsl(var(--brand));
+    /* Pop-ups and sheets: the soft navy-tinted shadow of the Request care
+       reference, which replaced the offset block shadow on application surfaces. */
+    --shadow-dialog: 0 24px 64px hsl(232 48% 28% / 0.26), 0 2px 8px hsl(232 48% 28% / 0.12);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --chart-1: 217 10% 64%;
@@ -525,15 +527,19 @@ All colors MUST be HSL.
   }
 
   /* Eyebrow and label, the only uppercase type in the system. */
+  /* Their default colours have no specificity, so a colour set on the element
+     (pale blue on navy, for example) always wins. */
   .eyebrow {
-    @apply uppercase font-extrabold text-[13px] text-[hsl(var(--brand))];
+    @apply uppercase font-extrabold text-[13px];
     letter-spacing: 0.2em;
   }
+  :where(.eyebrow) { color: hsl(var(--brand)); }
 
   .label-caps {
-    @apply uppercase font-extrabold text-[11px] text-[hsl(var(--label))];
+    @apply uppercase font-extrabold text-[11px];
     letter-spacing: 0.16em;
   }
+  :where(.label-caps) { color: hsl(var(--label)); }
 
   /* Price type only, never on navy. */
   .price {

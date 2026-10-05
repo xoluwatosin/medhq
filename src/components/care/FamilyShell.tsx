@@ -37,7 +37,7 @@ export const FamilyShell = ({ eyebrow, title, lead, action, path, children }: Fa
         {action}
       </div>
       <div className="relative mx-auto mt-6 w-full max-w-2xl">
-        <span className="label-caps text-[11px] !text-[#A8B0E8]">{eyebrow}</span>
+        <span className="label-caps text-[11px] text-muted-navy">{eyebrow}</span>
         <h1 className="mt-2 text-[28px] font-medium leading-[1.15] tracking-[-0.025em] text-primary-foreground sm:text-[34px]">
           {title}
         </h1>

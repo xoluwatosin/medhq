@@ -2,7 +2,8 @@
 //
 // Structure, not just colour: navy masthead band with the white wordmark and a
 // letter-spaced eyebrow, a warm-white page, a white content card with the
-// asymmetric half-curve corners, hairline rules, and a navy footer band.
+// soft symmetric corners (clients that ignore them show square ones), hairline
+// rules, and a quiet footer with who sent it.
 // Every transactional send uses this so the security code, the invite and the
 // contract covering note read as one family.
 
@@ -19,8 +20,8 @@ export const KIT = {
   hairline: "#E4E1DA",
   tint: "#EEF1FF",
   font: "'Figtree','Segoe UI',Helvetica,Arial,sans-serif",
-  curve: "0",
-  curveSm: "0",
+  curve: "16px",
+  curveSm: "10px",
 
   logoWhite: `${SITE}/email-kit/medicconnect-logo-white.png`,
 };
@@ -48,7 +49,7 @@ export interface KitEmailOptions {
 export function kitCodePanel(code: string, caption?: string): string {
   return `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 8px;">
-    <tr><td style="background:${KIT.tint};border-left:4px solid ${KIT.brand};border-radius:${KIT.curve};padding:34px 20px;text-align:center;">
+    <tr><td style="background:${KIT.tint};border-left:4px solid ${KIT.brand};border-radius:0 ${KIT.curveSm} ${KIT.curveSm} 0;padding:34px 20px;text-align:center;">
       <div style="font-family:${KIT.font};font-size:52px;font-weight:800;letter-spacing:0.4em;color:${KIT.navy};line-height:1.05;">${esc(code)}</div>
       ${caption ? `<div style="font-family:${KIT.font};font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:${KIT.muted};margin-top:14px;">${esc(caption)}</div>` : ""}
     </td></tr>
@@ -61,7 +62,7 @@ export function kitParagraph(text: string): string {
 }
 
 export function kitButton(label: string, url: string): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 6px;"><tr>
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 24px;"><tr>
     <td style="background:${KIT.brand};border-radius:${KIT.curveSm};">
       <a href="${url}" style="display:inline-block;padding:14px 30px;font-family:${KIT.font};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">${esc(label)}</a>
     </td></tr></table>`;
@@ -198,7 +199,7 @@ ${preheader}
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;">
 
     <!-- masthead -->
-    <tr><td class="mc-band" style="background:${KIT.navy};border-radius:${KIT.curve};padding:26px 30px;">
+    <tr><td class="mc-band" style="background:${KIT.navy};border-radius:${KIT.curve} ${KIT.curve} 0 0;padding:26px 30px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
         <td class="mc-mcol" style="vertical-align:middle;padding-right:16px;"><img class="mc-logo" src="${KIT.logoWhite}" alt="Medic Connect" width="150" style="display:block;width:150px;max-width:60%;height:auto;border:0;" /></td>
         ${o.eyebrow ? `<td class="mc-mcol mc-eyebrow" style="text-align:right;vertical-align:middle;font-family:${KIT.font};font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;line-height:1.5;color:rgba(255,255,255,0.6);white-space:nowrap;">${esc(o.eyebrow)}</td>` : ""}
@@ -206,11 +207,17 @@ ${preheader}
     </td></tr>
 
     <!-- card -->
-    <tr><td class="mc-card" style="background:${KIT.card};border:1px solid ${KIT.hairline};border-top:0;border-radius:${KIT.curve};padding:36px 34px 34px;">
+    <tr><td class="mc-card" style="background:${KIT.card};border:1px solid ${KIT.hairline};border-top:0;border-radius:0 0 ${KIT.curve} ${KIT.curve};padding:36px 34px 34px;">
       ${o.title ? `<h1 class="mc-title" style="margin:0 0 10px;font-family:${KIT.font};font-size:30px;line-height:1.15;font-weight:600;letter-spacing:-0.02em;color:${KIT.navy};">${esc(o.title)}</h1>` : ""}
       ${o.standfirst ? `<p style="margin:0 0 22px;font-family:${KIT.font};font-size:15px;line-height:1.7;color:${KIT.muted};">${esc(o.standfirst)}</p>` : ""}
       ${o.title ? `<div style="height:1px;background:${KIT.hairline};margin:0 0 24px;"></div>` : ""}
       ${o.bodyHtml}
+    </td></tr>
+
+    <!-- footer: who sent this, on every email -->
+    <tr><td style="padding:20px 30px 0;text-align:center;font-family:${KIT.font};font-size:12px;line-height:1.6;color:${KIT.muted};">
+      ${esc(o.footnote || "Medic Connect Limited, 145 Igbosere Road, Lagos Island, Nigeria.")}<br />
+      <a href="${SITE}" style="color:${KIT.muted};text-decoration:underline;">medicconnect.co</a>
     </td></tr>
 
   </table>

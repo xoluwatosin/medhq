@@ -127,6 +127,7 @@ const WelcomeIntake = ({ forceOpen = false, onClose }: WelcomeIntakeProps) => {
         onOpenChange={setRequestOpen}
         serviceLineKey={chosen?.line}
         source="welcome_intake"
+        preconfirmed={!!chosen}
       />
     </>
   );

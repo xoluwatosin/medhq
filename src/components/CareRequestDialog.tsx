@@ -52,6 +52,8 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   /** Answers carried in from another door, such as the welcome pop-up. */
   prefill?: CarePrefill;
+  /** The person has just chosen this service elsewhere, so it is not asked again. */
+  preconfirmed?: boolean;
 }
 
 /** Names are always held as two parts. A stored single name is split once. */
@@ -65,7 +67,7 @@ type StepKey = "confirm" | "recap" | "name" | "phone" | "email" | "consent" | "f
 
 const CareRequestDialog = ({
   serviceLineKey, trigger, source = "request_care",
-  open: openProp, onOpenChange: onOpenChangeProp, prefill,
+  open: openProp, onOpenChange: onOpenChangeProp, prefill, preconfirmed = false,
 }: Props) => {
   const { toast } = useToast();
   const [openState, setOpenState] = useState(false);
@@ -95,7 +97,7 @@ const CareRequestDialog = ({
   const [email, setEmail] = useState(prefill?.email ?? visitor.email);
   const [consent, setConsent] = useState(prefill?.consent ?? visitor.consent);
 
-  const [confirmed, setConfirmed] = useState<"" | "yes" | "no">("");
+  const [confirmed, setConfirmed] = useState<"" | "yes" | "no">(preconfirmed ? "yes" : "");
   const [forWhom, setForWhom] = useState<"" | "me" | "else">("");
   const [who, setWho] = useState<Who | "">("");
   const [kind, setKind] = useState<CareKind | null>(pageKind);
@@ -106,13 +108,13 @@ const CareRequestDialog = ({
 
   const steps: StepKey[] = useMemo(() => {
     const s: StepKey[] = [];
-    if (pageKind) s.push("confirm");
+    if (pageKind && !preconfirmed) s.push("confirm");
     if (contactKnown) s.push("recap");
     else s.push("name", "phone", "email", "consent");
     if (!(pageKind && confirmed === "yes")) s.push("forWhom", "who", "kind");
     s.push("soon");
     return s;
-  }, [pageKind, contactKnown, confirmed]);
+  }, [pageKind, contactKnown, confirmed, preconfirmed]);
 
   const stepKey = steps[Math.min(index, steps.length - 1)];
   const stepNo = Math.min(index, steps.length - 1);
@@ -146,7 +148,7 @@ const CareRequestDialog = ({
     setPhone(prefill?.phone ?? v.phone);
     setEmail(prefill?.email ?? v.email);
     setConsent(prefill?.consent ?? v.consent);
-    setConfirmed(""); setForWhom(""); setWho("");
+    setConfirmed(preconfirmed ? "yes" : ""); setForWhom(""); setWho("");
     setKind(pageKind);
     setSoon("");
   };
@@ -304,7 +306,7 @@ const CareRequestDialog = ({
         total={done ? 0 : steps.length}
         chip={kind?.label ?? null}
         scrollRef={journeyRef}
-        footer={done ? undefined : (
+        footer={done || !(stepNo > 0 || showContinue || stepKey === "soon") ? undefined : (
           <>
             {stepNo > 0 ? (
               <Button variant="ghost" className="rounded-xl text-body" onClick={back}>
@@ -382,7 +384,7 @@ const CareRequestDialog = ({
                 <Button
                   variant="outline"
                   className="w-full rounded-xl border-hairline-warm"
-                  onClick={() => { setEditContact(true); setIndex(pageKind ? 1 : 0); }}
+                  onClick={() => { setEditContact(true); setIndex(pageKind && !preconfirmed ? 1 : 0); }}
                 >
                   <Pencil className="mr-2 h-4 w-4" /> Change my details
                 </Button>
