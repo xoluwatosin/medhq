@@ -413,7 +413,14 @@ All colors MUST be HSL.
   .cx-portal .cx-card { border-radius: 0; border: 2px solid hsl(var(--navy) / 0.12); }
   .cx-portal .cx-card-emph { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
   .cx-portal .cx-card-emph.bg-navy { border: 0; box-shadow: 6px 6px 0 hsl(var(--brand)); }
-  .cx-portal .cx-card-warn { border-radius: 0; border-width: 2px; box-shadow: 6px 6px 0 hsl(var(--warn-line)); }
+  .cx-portal .cx-card.cx-card-warn { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  /* No amber on candidate pages: anything that needs the candidate uses the
+     brand palette. Notes sit on tint, and the "needs you" pill is price red. */
+  .cx-portal .bg-warn-bg, .cx-portal .bg-warn-wash,
+  .cx-join .bg-warn-bg, .cx-join .bg-warn-wash { background-color: hsl(var(--tint)); }
+  .cx-portal .border-warn-line, .cx-join .border-warn-line { border-color: hsl(var(--brand) / 0.35); }
+  .cx-portal .text-warn-ink, .cx-join .text-warn-ink { color: hsl(var(--navy)); }
+  .cx-portal .cx-pill.bg-warn-bg, .cx-join .cx-pill.bg-warn-bg { background-color: hsl(var(--price)); color: #fff; }
   .cx-portal .cx-heading { font-weight: 800; letter-spacing: -0.04em; }
   .cx-portal .cx-chip { border-radius: 0; }
   .cx-portal input.cx-chip,
