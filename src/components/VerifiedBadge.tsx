@@ -5,7 +5,8 @@
 //
 // A person can be verified while the NYSC certificate is still owed. That is a
 // deliberate state, not a fudge, so it is said on the badge rather than hidden.
-import { BadgeCheck, ShieldCheck } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
+import { art } from "@/components/mc/art";
 import type { DocumentRequirement } from "@/lib/documents";
 
 /** True when NYSC is asked of this person and we do not hold an accepted copy. */
@@ -36,13 +37,7 @@ const VerifiedBadge = ({ state, reqs = [], size = "sm", onNavy = false, classNam
             : "border-brand/25 bg-tint text-navy"
         } ${className}`}
       >
-        <span
-          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center ${
-            onNavy ? "bg-white text-navy" : "bg-brand text-white"
-          }`}
-        >
-          <ShieldCheck className="h-5 w-5" />
-        </span>
+        <img src={art.objShieldCheck} alt="" className="h-12 w-12 shrink-0 object-contain" />
         <span className="min-w-0">
           <span className="block text-[15px] font-bold leading-tight">
             Verified by Medic Connect
