@@ -12,7 +12,7 @@ import { FilterChips } from "@/components/admin/FilterChips";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MuEmpty, MuPageHeader, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
 import { SelectField } from "@/components/field";
 import { art } from "@/components/mc/art";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -255,13 +255,7 @@ const Enquiries = () => {
     <div>
       <MuPageHeader
         title="Enquiries"
-        description={
-          counts.owed === 0
-            ? "No unanswered enquiries."
-            : counts.owed === 1
-              ? "One enquiry is unanswered."
-              : `${counts.owed} enquiries are unanswered.`
-        }
+        description="Website enquiries, replies and routing into care."
         actions={
           <>
             <Button variant="outline" asChild>
@@ -282,7 +276,8 @@ const Enquiries = () => {
         </TabsList>
       </Tabs>
 
-      <div className="flex flex-wrap gap-3 my-4">
+      <div className="my-4">
+      <MuToolbar>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -301,6 +296,7 @@ const Enquiries = () => {
           onChange={(v) => { setLineFilter(v || "all"); setPage(0); }}
           options={lines.map((l) => ({ value: l.key, label: l.name }))}
         />
+      </MuToolbar>
       </div>
       <div className="mb-4">
         <FilterChips
@@ -410,7 +406,7 @@ const Enquiries = () => {
           <DialogHeader><DialogTitle>{selected?.name}</DialogTitle></DialogHeader>
           {selected && (
             <div className="space-y-5 text-sm break-words">
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 border border-line p-3 sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Email</span><div>{selected.email}</div></div>
                 <div><span className="text-muted-foreground">Phone</span><div>{selected.phone || "Not given"}</div></div>
                 <div><span className="text-muted-foreground">Service line</span><div>{lineName(selected.service_line)}</div></div>
@@ -434,15 +430,15 @@ const Enquiries = () => {
               )}
 
               {selected.message && (
-                <div>
+                <div className="border border-line p-3">
                   <div className="font-semibold mb-1">Message</div>
                   <p className="whitespace-pre-wrap text-muted-foreground">{selected.message}</p>
                 </div>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 border-2 border-navy bg-tint/40 p-3 sm:grid-cols-2">
                 <div>
-                  <div className="text-muted-foreground mb-1">Stage</div>
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label mb-1">Stage</div>
                   <SelectField
                     label="Stage"
                     hideLabel
@@ -452,7 +448,7 @@ const Enquiries = () => {
                   />
                 </div>
                 <div>
-                  <div className="text-muted-foreground mb-1">Owner</div>
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label mb-1">Owner</div>
                   <Input
                     defaultValue={selected.owner ?? ""}
                     placeholder="Name"
@@ -466,7 +462,7 @@ const Enquiries = () => {
                 <div>
                   <div className="font-extrabold text-navy">Care</div>
                   <div className="text-muted-foreground">
-                    {selected.care_client_id ? "This enquiry has a care record." : "Not routed into Care yet."}
+                    {selected.care_client_id ? "Has a care record" : "Not routed yet"}
                   </div>
                 </div>
                 {selected.care_client_id ? (

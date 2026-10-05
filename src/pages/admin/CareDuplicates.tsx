@@ -135,7 +135,7 @@ const CareDuplicates = () => {
       <ConsolePageHeader
         id="care-duplicates-heading"
         title="Possible duplicates"
-        description="People on the care side who may have been entered twice. Families often share an email or phone, so nothing merges until you decide."
+        description="People on the care side who may have been entered twice."
         action={clientId ? <Button asChild variant="outline" size="sm"><Link to="/admin/care/duplicates">Show all</Link></Button> : undefined}
       />
 
@@ -170,7 +170,7 @@ const CareDuplicates = () => {
                       checked={!!combine[key]}
                       onCheckedChange={(v) => setCombine({ ...combine, [key]: v === true })}
                     />
-                    They are in separate families. Combine the families too, so this family has one history.
+                    Also combine their separate families
                   </label>
                 )}
                 <div className="flex flex-wrap justify-end gap-2">

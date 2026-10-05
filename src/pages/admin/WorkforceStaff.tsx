@@ -44,7 +44,7 @@ import {
 import AccessAreas from "@/components/admin/AccessAreas";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { returnToTalent } from "@/lib/lifecycle";
-import { ACCESS_DELEGATE_PERMISSION, namedAreas } from "@/lib/admin-access";
+import { ACCESS_DELEGATE_PERMISSION } from "@/lib/admin-access";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -388,7 +388,7 @@ const WorkforceStaff = () => {
         <TabsContent value="overview" className="mt-4 space-y-6">
           <MuSection
             title="Employment details"
-            description="What we hold about their role here. Personal details and credentials stay on their candidate profile."
+            description="Personal details and credentials stay on their candidate profile."
             actions={
               <Button size="sm" onClick={saveProfile} disabled={savingProfile}>
                 {savingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -459,10 +459,8 @@ const WorkforceStaff = () => {
             </div>
           </MuSection>
 
-          <MuSection
-            title="Clinical assessor"
-            description="Assessment visits can only be assigned to an active clinical assessor with a sign-in."
-          >
+          <MuSection title="Clinical assessor">
+            <div className="space-y-4">
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[220px] flex-1 space-y-1.5">
                 <Label>Reason</Label>
@@ -484,35 +482,28 @@ const WorkforceStaff = () => {
                 label={capability?.active ? "Clinical assessor" : "Not an assessor"}
                 tone={capability?.active ? "good" : "neutral"}
               />
-              {capability?.active && (capability.live_assessments ?? 0) > 0 && (
-                <MuStatus
-                  label={`${capability.live_assessments} active assessment${capability.live_assessments === 1 ? "" : "s"} assigned`}
-                  tone="warning"
-                />
-              )}
             </div>
             {capability?.active && (capability.live_assessments ?? 0) > 0 && (
               <MuNote title="Reassign their visits first" tone="warning">
-                The clinical assessor role cannot be removed while assessments are still assigned to them. Move those visits
-                to another assessor, then remove the capability.
+                {capability.live_assessments} assessment{capability.live_assessments === 1 ? " is" : "s are"} still assigned. Move them to another assessor first.
               </MuNote>
             )}
             {capability?.active && !capability.eligible && (
               <MuNote title="Cannot be assigned yet" tone="warning">
-                They hold this capability but cannot be assigned a visit until they are active Workforce with a
-                sign-in.
+                Visits need active staff status and a sign-in.
               </MuNote>
             )}
             {!capability?.active && !(capability?.has_account && capability?.staff_active) && (
               <MuNote title="Not eligible yet">
-                Set their staff status to active and invite them to sign in before making them an assessor.
+                Set their staff status to active and invite them to sign in first.
               </MuNote>
             )}
+            </div>
           </MuSection>
 
           <MuSection
             title="Emergency contacts"
-            description="Who we call if something happens at work. The first one recorded is treated as next of kin."
+            description="The first one recorded is next of kin."
             padded={false}
           >
             {contacts.length === 0 ? (
@@ -536,7 +527,9 @@ const WorkforceStaff = () => {
                 ))}
               </div>
             )}
-            <div className="grid gap-3 border-t border-line-soft p-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="border-t border-line-soft p-5">
+            <div className="grid gap-3 border-2 border-navy bg-tint/40 p-3 sm:grid-cols-2 xl:grid-cols-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label sm:col-span-2 xl:col-span-3">Add a contact</p>
               <Input placeholder="Name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} />
               <Input placeholder="Relationship" value={contact.relationship} onChange={(e) => setContact({ ...contact, relationship: e.target.value })} />
               <Input placeholder="Phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
@@ -545,6 +538,7 @@ const WorkforceStaff = () => {
               <Button size="sm" variant="outline" onClick={addContact} disabled={!contact.name.trim()}>
                 <Plus className="mr-2 h-4 w-4" />Add contact
               </Button>
+            </div>
             </div>
           </MuSection>
         </TabsContent>
@@ -564,7 +558,7 @@ const WorkforceStaff = () => {
         <TabsContent value="contract" className="mt-4 space-y-6">
           <MuSection
             title="Contracts"
-            description="Draft the contract, issue it for signature, then it becomes active. Renewals and amendments stack here rather than overwriting the last one."
+            description="Renewals and amendments stack here."
             padded={false}
             actions={
               <Button size="sm" variant="outline" onClick={() => navigate(`/admin/match-universe/${id}?tab=hiring`)}>
@@ -577,7 +571,7 @@ const WorkforceStaff = () => {
               <MuEmpty
                 art={art.objSignedContract}
                 title="No contract on file"
-                description="Nobody can be invited into the system until a contract has been signed."
+                description="Draft one from their profile."
               />
             ) : (
               <div className="divide-y divide-line-soft">
@@ -660,13 +654,12 @@ const WorkforceStaff = () => {
           {!access ? (
             <MuSection
               title="System access"
-              description="One person, one sign-in. If they already sign in, that same account gains the areas you choose; otherwise an invitation is sent."
+              description="One person, one sign-in."
             >
               <div className="space-y-4">
                 {!signed && (
                   <MuNote title="Not ready to grant access" tone="warning" icon={FileSignature}>
-                    A contract has to be signed before this person can be given access. Draft and issue one on the
-                    Contract tab first.
+                    Needs a signed contract. Draft and issue one on the Contract tab.
                   </MuNote>
                 )}
                 <Button disabled={!signed} onClick={() => setInviteOpen(true)}>
@@ -677,7 +670,7 @@ const WorkforceStaff = () => {
           ) : (
             <MuSection
               title="System access"
-              description="What this person can reach in the admin centre. Tick nothing but 'Own profile only' and they see their own record and nothing else."
+              description="Full withdrawal, password resets and sign-outs are on Admin access."
             >
               <div className="space-y-4">
                 <MuFieldGrid columns={3}>
@@ -688,21 +681,11 @@ const WorkforceStaff = () => {
                     value={access?.is_active === false ? "Withdrawn" : "Active"}
                   />
                 </MuFieldGrid>
-                {namedAreas(access?.permissions).length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {namedAreas(access?.permissions).map((label) => (
-                      <MuStatus key={label} label={label} tone="neutral" />
-                    ))}
-                  </div>
-                )}
                 <AccessAreas
                   value={access?.permissions || []}
                   lockedKeys={isSuperAdmin ? [] : [ACCESS_DELEGATE_PERMISSION]}
                   onChange={(next) => savePerms(next)}
                 />
-                <p className="text-sm text-muted-foreground">
-                  Withdrawing access entirely, resetting passwords and signing somebody out everywhere stay on Admin access.
-                </p>
               </div>
             </MuSection>
           )}
@@ -710,7 +693,7 @@ const WorkforceStaff = () => {
 
         {/* ------------------------------------------------------------- */}
         <TabsContent value="activity" className="mt-4">
-          <MuSection title="Activity" description="Every recorded change on this person, most recent first." padded={false}>
+          <MuSection title="Activity" padded={false}>
             {activity.length === 0 ? (
               <MuEmpty art={art.objClipboard} title="Nothing recorded yet" description="Changes to this record will be listed here." />
             ) : (
@@ -738,7 +721,7 @@ const WorkforceStaff = () => {
           <DialogHeader>
             <DialogTitle>New contract</DialogTitle>
             <DialogDescription>
-              Record the terms and attach the document. It starts as a draft and is only binding once issued and signed.
+              Starts as a draft. Binding only once issued and signed.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">

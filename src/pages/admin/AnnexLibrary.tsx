@@ -178,7 +178,7 @@ const AnnexLibrary = () => {
       />
       <MuPageHeader
         title="Annex library"
-        description="The documents a contract refers to. Written once here, carried by every contract that includes them."
+        description="The documents a contract refers to, written once."
         backTo="/admin/workforce"
         backLabel="Back to workforce"
         actions={
@@ -264,29 +264,29 @@ const AnnexLibrary = () => {
                   <Input value={draft.note || ""} onChange={(e) => set({ note: e.target.value })} />
                 </div>
 
+                <div className="border-2 border-navy bg-tint/40 p-3">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
                     { label: "Asked to sign it", hint: "The person signs this annex alongside the letter.", key: "requires_signature" as const },
                     { label: "Clinical roles only", hint: "Left off contracts that are not clinical.", key: "clinical_only" as const },
                     { label: "In use", hint: "Turn off to retire it without deleting it.", key: "active" as const },
                   ].map((t) => (
-                    <div key={t.key} className="flex items-start justify-between gap-3 border border-line p-3">
-                      <div>
-                        <p className="text-[13px] font-medium">{t.label}</p>
-                        <p className="text-xs text-muted-foreground">{t.hint}</p>
-                      </div>
+                    <label key={t.key} title={t.hint} className="flex items-center justify-between gap-3">
+                      <span className="text-[13px] font-medium">{t.label}</span>
                       <Switch
                         checked={!!draft[t.key]}
                         onCheckedChange={(v) => set({ [t.key]: v } as Partial<AnnexLibraryItem>)}
                       />
-                    </div>
+                    </label>
                   ))}
+                </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border border-line p-3">
                   <Paperclip className="h-4 w-4 text-muted-foreground" />
                   <p className="text-[13px]">
-                    {draft.file_name ? `Attached: ${draft.file_name}` : "No file attached. A document written below prints with the contract."}
+                    {draft.file_name ? `Attached: ${draft.file_name}` : "No file attached"}
                   </p>
                   <div className="ml-auto flex gap-2">
                     {draft.file_path && (
@@ -307,9 +307,6 @@ const AnnexLibrary = () => {
 
                 <div className="space-y-1.5">
                   <Label>The wording</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Fields written as tokens, for example {"{{employee_name}}"}, fill in from the contract.
-                  </p>
                   {preview ? (
                     <div
                       className="prose prose-sm max-w-none border border-line p-4"
@@ -319,7 +316,7 @@ const AnnexLibrary = () => {
                     <ContractRichTextEditor
                       value={draft.body}
                       minHeight="360px"
-                      placeholder="Write the annex document here."
+                      placeholder="Write the annex here. Tokens like {{employee_name}} fill in from the contract."
                       onChange={(html) => set({ body: html })}
                     />
                   )}

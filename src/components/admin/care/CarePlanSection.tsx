@@ -198,7 +198,7 @@ const CarePlanSection = ({
       <MuSection
         title="Working plan"
         description={isDraft
-          ? "A draft is written section by section. It is issued later, once the package is agreed and staffing is arranged."
+          ? "Written section by section. Issued once the package and staffing are agreed."
           : "This version has been issued. A change starts a new version."}
         actions={<div className="flex flex-wrap items-center gap-2">
           <Status label={approved ? "Approved" : planStatusLabel(plan.status)} tone={approved || plan.status === "submitted" ? "good" : "progress"} />
@@ -279,7 +279,7 @@ const CarePlanSection = ({
       })}
 
       {plans.length > 1 && (
-        <MuSection title="Earlier versions" description="Every issued version stays on the record.">
+        <MuSection title="Earlier versions">
           <MuTable
             rows={plans.filter((p) => p.id !== plan.id).map((p) => ({
               label: planVersionLabel(p),

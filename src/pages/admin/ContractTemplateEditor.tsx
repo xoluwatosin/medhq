@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Loader2, Plus, Save, Search, Send,
+  ArrowDown, ArrowUp, ExternalLink, Loader2, Plus, Save, Search, Send,
   Trash2, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -300,26 +300,25 @@ const ContractTemplateEditor = () => {
                 <Label>What this template is for</Label>
                 <Input value={meta.description} onChange={(e) => setMeta({ ...meta, description: e.target.value })} />
               </div>
-              <div className="flex items-center justify-between border border-line p-3">
-                <div>
-                  <p className="text-[13px] font-medium">Clinical role</p>
-                  <p className="text-xs text-muted-foreground">Carries the scope of practice annex.</p>
+              <div className="border-2 border-navy bg-tint/40 p-3 sm:col-span-2">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label title="Carries the scope of practice annex" className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium">Clinical role</span>
+                    <Switch checked={meta.is_clinical} onCheckedChange={(v) => setMeta({ ...meta, is_clinical: v })} />
+                  </label>
+                  <label title="Turn off to retire the template" className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium">In use</span>
+                    <Switch checked={meta.active} onCheckedChange={(v) => setMeta({ ...meta, active: v })} />
+                  </label>
                 </div>
-                <Switch checked={meta.is_clinical} onCheckedChange={(v) => setMeta({ ...meta, is_clinical: v })} />
-              </div>
-              <div className="flex items-center justify-between border border-line p-3">
-                <div>
-                  <p className="text-[13px] font-medium">In use</p>
-                  <p className="text-xs text-muted-foreground">Turn off to retire the template.</p>
-                </div>
-                <Switch checked={meta.active} onCheckedChange={(v) => setMeta({ ...meta, active: v })} />
               </div>
             </div>
           </MuSection>
 
           <MuSection
             title="The terms"
-            description="Say how each term behaves. Same for everybody is written here once. Suggested is prefilled and editable per person. Ask each time must be answered before that person's contract can go out."
+            description="Choose how each term behaves per person."
           >
             <div className="space-y-4">
               {CONTRACT_FIELDS.map((f) => {
@@ -330,7 +329,7 @@ const ContractTemplateEditor = () => {
                       <Label className="text-sm">{f.label}</Label>
                       {f.help && <p className="text-xs text-muted-foreground">{f.help}</p>}
                       {rule === "ask" ? (
-                        <p className="text-[13px] italic text-muted-foreground">Answered per person on the issue table.</p>
+                        <Input disabled placeholder="Answered per person on the issue table" />
                       ) : f.type === "textarea" ? (
                         <Textarea
                           rows={3}
@@ -371,7 +370,6 @@ const ContractTemplateEditor = () => {
           <div className="grid gap-5 xl:grid-cols-2">
             <MuSection
               title="Clauses"
-              description="The wording every contract from this template carries."
               actions={
                 <Button
                   size="sm"
@@ -418,7 +416,7 @@ const ContractTemplateEditor = () => {
               </div>
             </MuSection>
 
-            <MuSection title="How it reads" description="The document as anybody on this template will receive it.">
+            <MuSection title="How it reads">
               <div className="max-h-[70vh] overflow-auto">
                 <ContractDocument
                   fields={previewFields}
@@ -435,7 +433,7 @@ const ContractTemplateEditor = () => {
         <TabsContent value="annexes" className="mt-4 space-y-5">
           <MuSection
             title="The pack this role carries"
-            description="Toggle what travels with the contract. The wording lives in the annex library."
+            description="The wording lives in the annex library."
             actions={
               <Button size="sm" variant="outline" onClick={refreshAnnexWording}>Refresh from the library</Button>
             }
@@ -499,13 +497,13 @@ const ContractTemplateEditor = () => {
               <div className="mt-2"><Button size="sm" onClick={save} disabled={saving}>Save template</Button></div>
             </MuNote>
           )}
-          <MuSection title="Who is getting this contract" description="People who accepted an offer come first. Anybody else can be searched for.">
+          <MuSection title="Who is getting this contract">
             <div className="space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="pl-9"
-                  placeholder="Search by name or email"
+                  placeholder="Search anybody by name or email"
                   value={term}
                   onChange={(e) => search(e.target.value)}
                 />
@@ -518,7 +516,7 @@ const ContractTemplateEditor = () => {
                   </Button>
                 ))}
                 {term.trim().length < 2 && accepted.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nobody has accepted an offer yet. Search for a person instead.</p>
+                  <p className="text-sm text-muted-foreground">Nobody has accepted an offer yet</p>
                 )}
               </div>
             </div>
@@ -529,7 +527,7 @@ const ContractTemplateEditor = () => {
             description={
               asked.length
                 ? `Each person needs: ${asked.map((k) => CONTRACT_FIELDS.find((f) => f.key === k)?.label || k).join(", ")}.`
-                : "Every term on this template is the same for everybody, so there is nothing left to fill in."
+                : "Every term is the same for everybody."
             }
             padded={false}
             actions={
@@ -607,7 +605,7 @@ const ContractTemplateEditor = () => {
 
                     {rowIncomplete(row) && (
                       <p className="text-xs text-destructive">
-                        Something asked of this person is still blank, so their contract cannot go out yet.
+                        Fill the blank terms before issuing.
                       </p>
                     )}
                   </div>
@@ -616,12 +614,6 @@ const ContractTemplateEditor = () => {
             )}
           </MuSection>
 
-          {rows.some((r) => r.state === "issued") && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4" />
-              Each contract carries its own frozen copy of this wording. Changing the template later leaves them untouched.
-            </p>
-          )}
         </TabsContent>
       </Tabs>
     </MuPage>

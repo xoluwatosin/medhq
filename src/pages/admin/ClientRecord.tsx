@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  ChevronLeft, Copy, Mail, MessageCircle, Pencil, Plus, ShieldAlert, Wallet,
+  ChevronLeft, Copy, Mail, MessageCircle, Pencil, Plus, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -700,18 +700,6 @@ const ClientRecord = () => {
                     ? "Started, not sent back yet."
                     : "Not answered yet.",
               },
-              {
-                label: "Outstanding",
-                sentence: outstanding.length
-                  ? `${outstanding.length} question${outstanding.length === 1 ? "" : "s"} left unanswered.`
-                  : "Nothing left unanswered.",
-              },
-              {
-                label: "Flags",
-                sentence: openFlags.length
-                  ? `${openFlags.length} flag${openFlags.length === 1 ? "" : "s"} still open.`
-                  : "No open flags.",
-              },
             ]}
           />
         }
@@ -820,7 +808,6 @@ const ClientRecord = () => {
 
                 { label: "Area", value: area },
                 { label: "Address", value: (client.address_line as string | null) ?? "" },
-                { label: "Stage", value: careStageLabel(stage) },
                 { label: "Created", value: dateOf(client.created_at as string) ?? "" },
               ]}
               emptyLabel="Not answered"
@@ -831,7 +818,7 @@ const ClientRecord = () => {
         {tab === "responses" && (
           <>
             {outstanding.length > 0 && (
-              <MuSection title="Still unanswered" description="Required is a flag, not a block. These came back empty.">
+              <MuSection title="Still unanswered">
                 <ul className="flex flex-col gap-1.5">
                   {outstanding.map((item) => (
                     <li key={item.id} className="text-[14.5px] text-foreground">{item.record}</li>
@@ -898,7 +885,7 @@ const ClientRecord = () => {
 
             )}
             {revisionEvents.length > 0 && (
-              <MuSection title="Revision history" description="The original submission and every later change remain on the record." padded={false}>
+              <MuSection title="Revision history" padded={false}>
                 <div className="divide-y divide-line-soft">
                   {revisionEvents.map((event) => (
                     <MuRow key={event.id} title={event.event === "submitted" ? "Form submitted" : event.event === "reopened" ? "Form reopened" : event.event === "revision_submitted" ? "Changes submitted" : "Delivery retried"} state={<div className="space-y-1"><p>{`${event.actor_name ?? (event.actor_kind === "family" ? "Family" : "System")} on ${dateOf(event.created_at)}${event.reason ? `. Reason: ${event.reason}` : ""}`}</p>{event.changed_fields?.map((change) => <p key={`${event.id}-${change.field_id}`} className="text-foreground"><span className="font-semibold">{revisionFieldLabel(change.field_id)}:</span> {String(change.previous_value ?? "Not answered")} → {String(change.new_value ?? "Not answered")}</p>)}</div>} />
@@ -963,18 +950,24 @@ const ClientRecord = () => {
         )}
 
         {tab === "link" && (
-          <MuSection title="Pre-assessment link" description={`Links read ${reference}-XXXX and expire after 90 days.`}>
+          <MuSection title="Pre-assessment link" description={`Links read ${reference}-XXXX.`}>
             {liveToken ? (
               <div className="flex flex-col gap-3">
-                <p className="text-[14.5px] text-foreground">
-                  {liveScope?.sent_to
-                    ? `A ${liveScope.kind === "top_up" ? "follow-up" : "pre-assessment"} link is live for ${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}.`
-                    : `A link is live for ${primary?.full_name ?? "the main contact"}.`}
-                  {liveScope && liveScope.covers.length > 0 && ` It covers ${liveScope.covers.join(", ")}.`}
-                  {" "}It expires {dateOf(liveToken.expires_at)}.
-                  {liveToken.first_opened_at ? " It has been opened." : " It has not been opened yet."}
-                  {liveScope?.gives_portal_access && " Once they send it back, they can follow the request in their portal."}
-                </p>
+                <MuTable
+                  rows={[
+                    { label: "Link", value: liveScope?.kind === "top_up" ? "Follow-up" : "Pre-assessment" },
+                    {
+                      label: "Sent to",
+                      value: liveScope?.sent_to
+                        ? `${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}`
+                        : primary?.full_name ?? "The main contact",
+                    },
+                    ...(liveScope && liveScope.covers.length > 0 ? [{ label: "Covers", value: liveScope.covers.join(", ") }] : []),
+                    { label: "Expires", value: dateOf(liveToken.expires_at) },
+                    { label: "Opened", value: liveToken.first_opened_at ? "Yes" : "Not yet" },
+                    ...(liveScope?.gives_portal_access ? [{ label: "Portal", value: "Can follow the request once sent back" }] : []),
+                  ]}
+                />
                 {link && (
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input readOnly value={link} className="min-w-0 flex-1 border border-line-soft bg-muted px-3 py-2 text-xs" />
@@ -1035,7 +1028,7 @@ const ClientRecord = () => {
 
         {tab === "commercial" && isCoordinator && (
           <>
-          <MuSection title="Commercial details" description="Only coordinators can see or change this.">
+          <MuSection title="Commercial details" description="Coordinators only. Not shown on the pre-assessment or to clinical reviewers.">
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectField
                 label="Budget band"
@@ -1051,9 +1044,6 @@ const ClientRecord = () => {
                 options={["unpaid", "paid", "waived"].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
               />
             </div>
-            <p className="mt-4 flex items-center gap-2 text-[13.5px] text-muted-foreground">
-              <Wallet className="h-4 w-4" /> Nothing here is shown on the pre-assessment or to a clinical reviewer.
-            </p>
           </MuSection>
           <PayersSection clientId={String(id)} />
           <CareFinanceSection clientId={String(id)} contacts={contacts} />
@@ -1089,11 +1079,12 @@ const ClientRecord = () => {
         onSave={saveClient}
       >
         {home && home.housemates.length > 0 && (
-          <p className="text-[13.5px] text-body">
-            {home.housemates.map((m) => m.full_name).join(", ")} {home.housemates.length === 1 ? "lives" : "live"} here
-            too. A new address is saved for them as well. If {String(client?.full_name ?? "this client")} has moved,
-            use Lives somewhere else on the overview first.
-          </p>
+          <div className="border-2 border-navy bg-tint/40 p-3">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Shared address</p>
+            <p className="mt-1 text-[13.5px] text-body">
+              A new address also applies to {home.housemates.map((m) => m.full_name).join(", ")}. If only this client moved, use Lives somewhere else first.
+            </p>
+          </div>
         )}
         {[
           { key: "first_name", label: "First name" },

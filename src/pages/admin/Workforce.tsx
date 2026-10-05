@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  FileSignature, FileWarning, Loader2, MoreHorizontal, Plus, Search, ShieldCheck, UserPlus, Users,
+  FileSignature, FileWarning, Loader2, MoreHorizontal, Plus, Search, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { StateSelect, LgaSelect } from "@/components/LocationSelect";
 import {
-  MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar, MuTone,
+  MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus, MuToolbar, MuTone,
 } from "@/components/admin/mu/MuShell";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import {
@@ -129,30 +129,6 @@ const Workforce = () => {
     ];
   }, [rows]);
 
-  const stats = useMemo(() => {
-    const active = rows.filter((r) => r.staff_status === "active").length;
-    const noContract = rows.filter((r) => !r.contract_status || !["signed", "active"].includes(r.contract_status)).length;
-    const docGaps = rows.filter((r) => r.docs_missing > 0).length;
-    return [
-      { label: "On the register", value: rows.length, icon: Users, hint: "People employed or engaged by us" },
-      { label: "Active", value: active, icon: ShieldCheck, hint: "Currently working" },
-      {
-        label: "Contract outstanding",
-        value: noContract,
-        icon: FileSignature,
-        hint: "No signed contract on file",
-        tone: (noContract > 0 ? "attention" : "default") as "attention" | "default",
-      },
-      {
-        label: "Compliance documents outstanding",
-        value: docGaps,
-        icon: FileWarning,
-        hint: "Required documents not accepted",
-        tone: (docGaps > 0 ? "attention" : "default") as "attention" | "default",
-      },
-    ];
-  }, [rows]);
-
   const addStaff = async () => {
     if (!form.full_name.trim()) {
       toast({ title: "A name is needed", description: "Enter the person's full name.", variant: "destructive" });
@@ -239,8 +215,7 @@ const Workforce = () => {
           <DialogHeader>
             <DialogTitle>Add a staff member</DialogTitle>
             <DialogDescription>
-              Creates the employment record only. Their sign-in comes later, once a contract has been signed
-              and you send the invitation.
+              Creates the employment record. The sign-in invitation follows a signed contract.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -299,8 +274,6 @@ const Workforce = () => {
         </DialogContent>
       </Dialog>
 
-
-      <MuStats stats={stats} columns={4} />
 
       <ConsoleTabs tabs={viewTabs} active={view} onChange={(id) => setView(id as ViewId)} label="Workforce views" controls="workforce-register" />
 

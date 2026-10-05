@@ -99,7 +99,7 @@ const ContractsRegister = () => {
     <MuPage>
       <MuPageHeader
         title="Contracts"
-        description="Every contract across the talent pool and staff. Contracts are made and issued from the person's record."
+        description="Every contract across the talent pool and staff."
       />
       <ConsoleTabs tabs={tabs} active={view} onChange={(id) => setView(id as ViewId)} label="Contract views" controls="contract-rows" />
       <div id="contract-rows">

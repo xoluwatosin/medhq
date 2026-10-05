@@ -561,7 +561,7 @@ const ContractEditor = () => {
     <MuPage>
       <MuPageHeader
         title={fields.employee_name ? `Contract, ${fields.employee_name}` : "Contract"}
-        description="Pick a document on the left, write in the middle, mind the checks on the right."
+        description="The offer letter and its annex pack."
         backTo={`/admin/workforce/${contract.person_id}`}
         backLabel="Back to the staff record"
         actions={
@@ -695,12 +695,7 @@ const ContractEditor = () => {
           ) : activeDoc === "letter" ? (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-base font-semibold">Offer letter</h2>
-                  <p className="text-xs text-muted-foreground">
-                    The main clauses. Variables in double braces are filled from the details on the right.
-                  </p>
-                </div>
+                <h2 className="text-base font-semibold">Offer letter</h2>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
@@ -774,12 +769,7 @@ const ContractEditor = () => {
             </div>
           ) : activeAnnex && activeAnnexIndex != null ? (
             <div className="space-y-4">
-              <div>
-                <h2 className="text-base font-semibold">{activeAnnex.code}: {activeAnnex.title}</h2>
-                <p className="text-xs text-muted-foreground">
-                  One annex on the stand at a time. Settings above, wording below.
-                </p>
-              </div>
+              <h2 className="text-base font-semibold">{activeAnnex.code}: {activeAnnex.title}</h2>
 
               <section className="space-y-3 border border-line bg-card p-4">
                 <div className="flex items-center gap-2">
@@ -813,6 +803,8 @@ const ContractEditor = () => {
                   onChange={(e) => patchAnnex(activeAnnexIndex, { note: e.target.value })}
                 />
 
+                <div className="border-2 border-navy bg-tint/40 p-3">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center gap-2 text-xs">
                     <Switch
@@ -835,6 +827,7 @@ const ContractEditor = () => {
                     />
                     Clinical roles only
                   </label>
+                </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -985,7 +978,7 @@ const ContractEditor = () => {
           <DialogHeader>
             <DialogTitle>A second read of the wording</DialogTitle>
             <DialogDescription>
-              Comments on the draft as saved: gaps, wording that reads oddly, and terms worth a second look. It advises; you decide.
+              Comments on the saved draft. It advises; you decide.
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto border border-line-soft bg-muted/30 p-4">
@@ -1010,7 +1003,7 @@ const ContractEditor = () => {
           </DialogHeader>
           {annexLibrary.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              The annex library is empty, so there is nothing to pick from yet. Start a blank annex instead.
+              The annex library is empty.
             </p>
           ) : (
             <div className="max-h-72 space-y-2 overflow-y-auto pr-1">

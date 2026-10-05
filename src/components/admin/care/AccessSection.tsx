@@ -289,7 +289,7 @@ export const AccessSection = ({
     <div className="space-y-4">
       <MuSection
         title="Access"
-        description="Who may see this record, and the recorded reason each of them may see it."
+        description="Who may see this record, and why."
         padded={false}
       >
         {people.length === 0 ? (
@@ -359,7 +359,8 @@ export const AccessSection = ({
 
                   {/* Recorded reasons for access. */}
                   {live.length > 0 && (
-                    <div className="space-y-1 px-5 pb-2">
+                    <div className="mx-5 mb-2 space-y-1 border border-line bg-tint/40 p-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Reasons for access</p>
                       {live.map((b) => (
                         <div key={b.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                           <Status label={BASIS_LABEL[b.basis_kind] ?? b.basis_kind} tone="info" />
@@ -381,7 +382,8 @@ export const AccessSection = ({
 
                   {/* Portal invitation and how delivery went. */}
                   {person.grant_state === "active" && (
-                    <div className="flex flex-wrap items-center gap-3 px-5 pb-3 text-[13px] text-muted-foreground">
+                    <div className="mx-5 mb-3 flex flex-wrap items-center gap-3 border border-line bg-tint/40 p-3 text-[13px] text-muted-foreground">
+                      <p className="w-full text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Portal invitation</p>
                       {delivery ? <Status label={delivery.label} tone={delivery.tone} /> : null}
                       <span>
                         {inviteState === "accepted"

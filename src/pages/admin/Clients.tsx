@@ -389,7 +389,8 @@ const Clients = () => {
                     options={services.map((s) => ({ value: s.id, label: s.name }))}
                   />
                 </div>
-                <div className="border-t border-line-soft pt-4 grid gap-4">
+                <div className="grid gap-4 border-2 border-navy bg-tint/40 p-3">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Primary contact</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="grid gap-2">
                       <Label htmlFor="contact_first_name">Contact first name</Label>
@@ -430,7 +431,7 @@ const Clients = () => {
                 </div>
               </div>}
               {createMode === "link" && <div className="grid gap-4">
-                {!onboardingLink ? <div className="border border-line bg-tint/30 p-5"><p className="text-sm leading-relaxed text-ink">No client or placeholder record is created now. Records are created only after the recipient confirms their details.</p><p className="mt-2 text-sm text-muted-copy">The link expires after 30 days and does not grant family portal access.</p></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
+                {!onboardingLink ? <div className="border-2 border-navy bg-tint/40 p-3"><p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">About this link</p><ul className="mt-2 grid gap-1 text-sm text-ink"><li>No record until they confirm their details</li><li>Expires after 30 days</li><li>No family portal access</li></ul></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
               </div>}
               <DialogFooter className="gap-2">
                 {createMode !== "choose" && <Button type="button" variant="outline" className="h-11" onClick={() => setCreateMode("choose")}>Back</Button>}

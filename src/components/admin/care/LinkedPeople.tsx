@@ -42,10 +42,10 @@ const LinkedPeople = ({ clientId }: { clientId: string }) => {
   return (
     <MuSection
       title={links.household.display_name}
-      description="The family this file belongs to and everyone recorded in it."
+      description="The family this file belongs to."
     >
       {others.length === 0 ? (
-        <MuEmpty title="No one else in this family" description="No other people are recorded in this family yet." />
+        <MuEmpty title="No one else in this family" description="Add relatives from the Family tab." />
       ) : (
         <ul className="flex flex-col divide-y divide-line-soft">
           {others.map((person) => {

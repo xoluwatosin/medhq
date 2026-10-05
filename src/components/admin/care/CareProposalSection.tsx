@@ -111,7 +111,7 @@ const CareProposalSection = ({
     <>
       <MuSection
         title="Care proposal"
-        description="This is the version the family reads. Risks and safeguarding notes stay on the operational plan."
+        description="The version the family reads. Risks and safeguarding stay on the working plan."
         actions={current
           ? <Status label={proposalStatusLabel[current.status]} tone={proposalStatusTone(current.status)} />
           : null}
@@ -130,7 +130,6 @@ const CareProposalSection = ({
               { label: "Version", value: `Version ${current.version}` },
               { label: "Prepared", value: formatDateTime(current.created_at) },
               { label: "Sent", value: current.sent_at ? formatDateTime(current.sent_at) : "" },
-              { label: "People sent to", value: String(sends.length) },
             ]}
           />
         )}
@@ -139,6 +138,7 @@ const CareProposalSection = ({
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <button
                type="button" className={carePrimary} disabled={busy || !planApproved}
+              title={!planApproved ? "Approve the working plan first" : undefined}
               onClick={() => void run(() => draftProposal(clientId), "Care proposal prepared")}
             >
               {current ? "Rebuild from the care plan" : "Prepare care proposal"}
@@ -196,7 +196,7 @@ const CareProposalSection = ({
       )}
 
       {current && (
-        <MuSection title="Comments" description="What the family said about this proposal, and the replies.">
+        <MuSection title="Comments">
           {comments.length === 0
             ? <MuEmpty title="No comments yet" description="Comments from the family and your replies appear here." />
             : (
@@ -289,11 +289,12 @@ const CareProposalSection = ({
         open={withdrawing}
         onOpenChange={(open) => { setWithdrawing(open); if (!open) setReason(""); }}
         title="Withdraw the care proposal"
-        description="The family will no longer be able to open it. Say why."
+        description="The family will no longer be able to open it."
       >
         <textarea
           className={cn(cxInputClass(), "min-h-24")}
           aria-label="Reason for withdrawing"
+          placeholder="Why it is being withdrawn"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />

@@ -152,7 +152,8 @@ const EnquirySetup = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <nav className="space-y-1">
+        <nav aria-label="Service lines" className="self-start space-y-1 border-2 border-navy bg-tint/40 p-3">
+          <p className="px-3 pb-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Service lines</p>
           <button
             onClick={() => setActiveKey("__shared")}
             className={`w-full text-left px-3 py-2 text-sm ${activeKey === "__shared" ? "bg-tint font-semibold text-navy" : "hover:bg-tint/50"}`}
@@ -212,7 +213,7 @@ const EnquirySetup = () => {
                     {line.brochure_updated_at ? `, updated ${format(new Date(line.brochure_updated_at), "dd MMM yyyy")}` : ""}
                   </button>
                 ) : (
-                  <span className="text-sm text-muted-foreground">No guide is attached to this line yet, so replies go out without one.</span>
+                  <span className="text-sm text-muted-foreground">No guide attached</span>
                 )}
                 <div className="ml-auto flex items-center gap-3">
                   <label className="flex items-center gap-2 text-sm">
@@ -307,7 +308,9 @@ const EnquirySetup = () => {
                   />
                 </div>
               )}
-              <div className="flex items-center gap-6">
+              <div className="border-2 border-navy bg-tint/40 p-3">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
+                <div className="flex flex-wrap items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={editing.required ?? false} onCheckedChange={(v) => setEditing({ ...editing, required: v })} />
                   Must be answered
@@ -316,6 +319,7 @@ const EnquirySetup = () => {
                   <Switch checked={editing.active ?? true} onCheckedChange={(v) => setEditing({ ...editing, active: v })} />
                   Asked right now
                 </label>
+                </div>
               </div>
             </div>
           )}

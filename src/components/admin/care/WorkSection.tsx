@@ -173,7 +173,7 @@ const WorkSection = ({ clientId, onChanged }: { clientId: string; onChanged?: ()
         {loading ? (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading work</p>
         ) : items.length === 0 ? (
-          <MuEmpty art={art.objCalendar} title="No outstanding work" description="New tasks for this client appear here, most important first." />
+          <MuEmpty art={art.objCalendar} title="No outstanding work" description="New tasks for this client appear here." />
         ) : (
           <>
             <HeadRow columns={OPEN_COLUMNS} labels={["Task", "Due", "Owner", "Team", ""]} />

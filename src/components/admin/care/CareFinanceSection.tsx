@@ -111,7 +111,7 @@ export default function CareFinanceSection({ clientId, contacts }: { clientId: s
   };
 
   return <div className="flex flex-col gap-4">
-    <MuSection title="Quotes" description="Select the recorded contact responsible for each quote." actions={<Button type="button" variant="outline" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Create quote</Button>} padded={false}>
+    <MuSection title="Quotes" actions={<Button type="button" variant="outline" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Create quote</Button>} padded={false}>
       {!quotes.length ? <MuEmpty art={art.objSignedContract} title="No quotes yet" description="Create a quote for a recorded contact with an email address." /> : <div className="divide-y divide-line-soft">{quotes.map((quote) => {
         const version = versionFor(quote); const contact = contacts.find((row) => row.id === quote.recipient_contact_id);
         return <MuRow key={quote.id} title={version ? `${quote.quote_number}, ${naira(version.total)}` : quote.quote_number} state={`${contact?.full_name ?? "Contact"}${version?.valid_until ? `, valid until ${formatDate(version.valid_until)}` : ""}`} status={<MuStatus label={sentenceCase(quote.status)} />} action={<div className="flex gap-2">{quote.status === "draft" && <Button size="sm" onClick={() => void act(quote, "issue")} disabled={busy}><Send className="mr-1.5 h-4 w-4" />Issue</Button>}{quote.status === "issued" && <Button size="sm" onClick={() => void act(quote, "accept")} disabled={busy}><Check className="mr-1.5 h-4 w-4" />Record acceptance</Button>}</div>} />;

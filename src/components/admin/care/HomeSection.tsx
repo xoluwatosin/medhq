@@ -65,7 +65,7 @@ const HomeSection = ({ clientId, clientName, home, canEdit, onChanged }: Props) 
   return (
     <MuSection
       title="Home"
-      description="Where care happens. Care records under one roof share one address."
+      description="Where care happens."
     >
       <div className="flex flex-col gap-4">
         {home.housemates.length > 0 ? (
@@ -77,7 +77,7 @@ const HomeSection = ({ clientId, clientName, home, canEdit, onChanged }: Props) 
                 <Link className="font-bold text-brand" to={`/admin/clients/${m.client_id}`}>{m.full_name}</Link>
               </span>
             ))}
-            . Changing the address here changes it for them too.
+            .
           </p>
         ) : (
           <p className="text-[14.5px] text-muted-foreground">
@@ -86,6 +86,8 @@ const HomeSection = ({ clientId, clientName, home, canEdit, onChanged }: Props) 
         )}
 
         {canEdit && options.length > 0 && (
+          <div className="border-2 border-navy bg-tint/40 p-3">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Move in</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <div className="flex-1">
               <SearchableSelect
@@ -111,6 +113,7 @@ const HomeSection = ({ clientId, clientName, home, canEdit, onChanged }: Props) 
               onConfirm={join}
               disabled={!chosen || busy}
             />
+          </div>
           </div>
         )}
 

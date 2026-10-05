@@ -292,7 +292,7 @@ const GroupSection = ({
         />
       </MuSection>
 
-      <MuSection title="People" description="Everyone recorded in this family.">
+      <MuSection title="People">
         {overview.members.length === 0 ? (
           <MuEmpty icon={Users} title="No people recorded" />
         ) : (
@@ -310,7 +310,7 @@ const GroupSection = ({
 
       <MuSection
         title="Recipients"
-        description="Each recipient keeps their own care record. Clinical information is never shared between them."
+        description="Each keeps their own care record. Clinical information is never shared."
         actions={
           canEdit && request ? (
             <Button type="button" variant="secondary" size="sm" className="h-9" onClick={() => setAddingRecipient(true)}>
@@ -341,7 +341,6 @@ const GroupSection = ({
 
       <MuSection
         title="Relationships"
-        description="Facts about people. A relationship never grants access to anything."
         actions={
           canEdit ? (
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setAddingRelationship(true)}>
@@ -483,7 +482,7 @@ const GroupSection = ({
 
       <MuSection
         title="Assessment visit"
-        description="One visit can cover several recipients. Each recipient still keeps their own assessment."
+        description="One visit can cover several recipients."
         actions={
           canEdit ? (
             <Button type="button" variant="secondary" size="sm" className="h-9" onClick={openVisit}>
@@ -514,7 +513,7 @@ const GroupSection = ({
       <MuSection title="Questionnaire" description="What still has to be true before the questions go out.">
         {outstanding.length === 0 ? (
           <p className="px-5 py-4 text-[14.5px] text-muted-foreground">
-            Everything needed is in place. Use the Pre-assessment link tab for this recipient.
+            Everything needed is in place.
           </p>
         ) : (
           <ul className="flex list-disc flex-col gap-1 px-9 py-4 text-[14.5px] text-muted-foreground">

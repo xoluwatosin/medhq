@@ -273,7 +273,7 @@ const AssessmentSection = ({
       >
         {assessors.length === 0 ? (
           <p className="text-[14.5px] text-body">
-            No approved assessors. Approve a professional as an assessor first.
+            No approved assessors yet.
           </p>
         ) : (
           <SearchableSelect

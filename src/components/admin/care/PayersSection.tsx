@@ -103,7 +103,7 @@ const PayersSection = ({ clientId }: { clientId: string }) => {
   return (
     <MuSection
       title="Payers"
-      description="Who pays, and what share. Paying gives no access; give a billing contact finance access on the Access tab."
+      description="Who pays, and what share. Paying gives no access."
       actions={
         <Button type="button" variant="outline" size="sm" className="h-9" onClick={open}>
           {data.payers.length > 0 ? "Change payers" : "Add a payer"}
@@ -138,7 +138,7 @@ const PayersSection = ({ clientId }: { clientId: string }) => {
         open={editing}
         onOpenChange={setEditing}
         title="Payers"
-        description="Pick each payer and their share. The shares must add up to 100."
+        description="Pick each payer and their share."
         onSave={save}
         saving={saving}
         saveDisabled={!complete}
@@ -190,8 +190,8 @@ const PayersSection = ({ clientId }: { clientId: string }) => {
         </div>
 
         {newOrg && (
-          <div className="flex flex-col gap-3 border border-line-soft p-3">
-            <p className="text-[14px] font-bold text-ink">New organisation</p>
+          <div className="flex flex-col gap-3 border-2 border-navy bg-tint/40 p-3">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">New organisation</p>
             <CareFormRow label="Name">
               <input className={cxInputClass()} value={newOrg.name} onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })} />
             </CareFormRow>

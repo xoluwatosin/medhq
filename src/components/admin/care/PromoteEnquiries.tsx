@@ -158,7 +158,7 @@ export const PromoteEnquiries = ({
         <DialogHeader>
           <DialogTitle>Care requests waiting to be routed</DialogTitle>
           <DialogDescription>
-            These care requests have no care record. Nothing is created until you choose them and confirm.
+            Nothing is created until you choose and confirm.
           </DialogDescription>
         </DialogHeader>
 
@@ -196,7 +196,8 @@ export const PromoteEnquiries = ({
                     </span>
                   </label>
                   {choice.picked && (
-                    <div className="grid gap-3 pl-7">
+                    <div className="ml-7 grid gap-3 border-2 border-navy bg-tint/40 p-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Route as</p>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <SelectField
                           label="Service"

@@ -138,9 +138,6 @@ const AssessmentRecordView = ({ record }: { record: AssessmentRecord }) => {
       <MuSection title="Provenance">
         <MuTable
           rows={[
-            { label: "Assessor", value: record.author ?? "Not recorded" },
-            { label: "Sent", value: record.document.submitted_at ? formatDateTime(record.document.submitted_at) : "" },
-            { label: "Document version", value: record.document.version ? `Version ${record.document.version}` : "" },
             {
               label: "Assessment question set",
               value: record.definition_version ? `Version ${record.definition_version}` : "Not recorded",

@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Plus, Trash2, RotateCcw, Pencil, Check, X } from "lucide-react";
-import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuToolbar } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 
 const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
@@ -96,7 +96,7 @@ export function CatalogueTab() {
   return (
     <div className="space-y-6 no-print">
       {/* Actions bar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <MuToolbar>
         <div className="flex gap-2 flex-1 min-w-[200px]">
           <Input
             placeholder="New category name"
@@ -125,7 +125,7 @@ export function CatalogueTab() {
             </Button>
           }
         />
-      </div>
+      </MuToolbar>
 
       {/* Category cards */}
       {categories.map((cat) => {
