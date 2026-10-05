@@ -462,7 +462,7 @@ runs alongside phases 0 to 2 and does not block them.
 - [ ] Update the position in `docs/care-platform/implementation-plan.md`
 - [ ] Create `src/core/` with the lint boundary and its first tests
 - [ ] Add the minimum supported app version table
-- [ ] Remove the Heard leftovers once the Heard domain is confirmed off this deployment
+- [x] Remove the Heard leftovers (code removed; new database cleaned 5 October; re-applied at cutover by step 6a)
 
 ### Phase 1: pre-agreement care
 - [ ] Pre-assessment v5 catalogue and coordinated session
