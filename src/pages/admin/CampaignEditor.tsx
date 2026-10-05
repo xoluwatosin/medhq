@@ -141,7 +141,10 @@ const CampaignEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isSuperAdmin, adminDisplayName } = useAuth();
+  const { user, isSuperAdmin, adminDisplayName, requiresCampaignApproval } = useAuth();
+  // Only admins who have been asked to seek approval take that path. Everyone
+  // else sends directly, behind the same confirmation.
+  const needsApproval = requiresCampaignApproval && !isSuperAdmin;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -363,7 +366,11 @@ const CampaignEditor = () => {
 
   const submitForApproval = async () => {
     if (!readyToSend()) return;
-    await adminDb().from("campaigns").update({ ...buildPayload(), approval_status: "pending" }).eq("id", id);
+    const { error } = await adminDb().from("campaigns").update({ ...buildPayload(), approval_status: "pending", approval_note: null }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not submit", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Submitted for approval" });
     navigate("/admin/campaigns");
   };
@@ -795,7 +802,7 @@ const CampaignEditor = () => {
               Send test
             </Button>
           </div>
-          {!isSuperAdmin ? (
+          {needsApproval ? (
             <Button onClick={submitForApproval} disabled={saving || sending} className="gap-2">
               <Send className="h-4 w-4" />Submit for approval
             </Button>

@@ -29,8 +29,10 @@ const Dashboard = () => {
         can("enquiries")
           ? db.from("contact_submissions").select("id", { count: "exact", head: true }).eq("archived", false).eq("status", "new")
           : Promise.resolve({ count: 0 }),
-        can("applications")
-          ? db.from("join_applications").select("id", { count: "exact", head: true }).eq("archived", false).in("status", ["new", "reviewed"])
+        // The Intake tile links to Intake, so it counts what Intake counts:
+        // people who arrived in the pool this week.
+        can("match_universe")
+          ? db.rpc("mu_intake_health").then((r: any) => ({ count: Number(r.data?.people_week ?? 0) })).catch(() => ({ count: 0 }))
           : Promise.resolve({ count: 0 }),
         can("dashboard")
           ? db.from("admin_alerts").select("id", { count: "exact", head: true }).is("resolved_at", null)
@@ -57,7 +59,7 @@ const Dashboard = () => {
   const work = useMemo(() => [
     can("dashboard") ? { title: "Care requests", detail: "Care work needing attention", count: counts.care, to: "/admin/care/requests", icon: ClipboardList } : null,
     can("enquiries") ? { title: "Enquiries", detail: "New enquiries to review", count: counts.enquiries, to: "/admin/enquiries", icon: Inbox } : null,
-    can("match_universe") ? { title: "Intake", detail: "New arrivals under review", count: counts.applications, to: "/admin/match-universe/intake", icon: UserPlus } : null,
+    can("match_universe") ? { title: "Intake", detail: "Joined the pool this week", count: counts.applications, to: "/admin/match-universe/intake", icon: UserPlus } : null,
     can("dashboard") ? { title: "Operational alerts", detail: "Unresolved alerts", count: counts.alerts, to: "/admin/intelligence", icon: AlertCircle } : null,
     isSuperAdmin ? { title: "Approvals", detail: "Content awaiting approval", count: counts.approvals, to: "/admin/approvals", icon: ShieldCheck } : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item)), [counts, isSuperAdmin, permissions]);

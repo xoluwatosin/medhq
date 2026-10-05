@@ -56,6 +56,8 @@ const PostEditor = () => {
   const [bodyImages, setBodyImages] = useState<string[]>([]);
   const [bodyCaptions, setBodyCaptions] = useState<string[]>([]);
   const [status, setStatus] = useState("draft");
+  const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
+  const [approvalNote, setApprovalNote] = useState<string | null>(null);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [notifying, setNotifying] = useState(false);
@@ -111,6 +113,8 @@ const PostEditor = () => {
           setBodyImages(Array.isArray(data.body_images) ? (data.body_images as string[]) : []);
           setBodyCaptions(Array.isArray((data as any).body_captions) ? ((data as any).body_captions as string[]) : []);
           setStatus(data.status);
+          setApprovalStatus((data as any).approval_status ?? null);
+          setApprovalNote((data as any).approval_note ?? null);
           setSubscribersNotified((data as any).subscribers_notified || false);
           setDropCapEnabled((data as any).drop_cap_enabled !== false);
           if (data.status === "scheduled" && data.published_at) {
@@ -126,9 +130,14 @@ const PostEditor = () => {
     }
   }, [id, isNew]);
 
+  // Autosave only ever touches a draft that is not waiting on approval. A live
+  // or scheduled story changes when the editor presses Update, not while they
+  // are mid-sentence; a submitted story stays as the approver saw it.
+  const autosaveOn = !isNew && status === "draft" && approvalStatus !== "pending";
+
   // Debounced autosave for existing posts only (skip while saving / before initial load)
   useEffect(() => {
-    if (isNew || !id || !initialLoadDoneRef.current) return;
+    if (!autosaveOn || !id || !initialLoadDoneRef.current) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
       if (saving || autoSaveInFlightRef.current) return;
@@ -158,7 +167,7 @@ const PostEditor = () => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [isNew, id, title, slug, excerpt, content, author, category, heroTemplate, polaroidCaption, bodyTemplate, featuredImageUrl, bodyImages, bodyCaptions, dropCapEnabled, saving, user?.id, adminDisplayName, user?.email]);
+  }, [autosaveOn, id, title, slug, excerpt, content, author, category, heroTemplate, polaroidCaption, bodyTemplate, featuredImageUrl, bodyImages, bodyCaptions, dropCapEnabled, saving, user?.id, adminDisplayName, user?.email]);
 
   // Resize bodyImages/bodyCaptions when template changes
   useEffect(() => {
@@ -276,6 +285,7 @@ const PostEditor = () => {
     if (requiresBlogApproval && !isSuperAdmin && publishStatus === "published") {
       postData.status = "draft";
       postData.approval_status = "pending";
+      postData.approval_note = null;
     }
 
     let error;
@@ -311,9 +321,14 @@ const PostEditor = () => {
             <Switch id="preview-dropcap" checked={dropCapEnabled} onCheckedChange={setDropCapEnabled} />
             <Label htmlFor="preview-dropcap" className="text-xs">Drop cap</Label>
           </div>
-          {lastAutoSavedAt && (
+          {autosaveOn && lastAutoSavedAt && (
             <span className="text-xs text-muted-foreground">
-              Saved · {format(lastAutoSavedAt, "HH:mm")}
+              Saved {format(lastAutoSavedAt, "HH:mm")}
+            </span>
+          )}
+          {!isNew && !autosaveOn && (
+            <span className="text-xs text-muted-foreground">
+              {approvalStatus === "pending" ? "Waiting for approval, autosave is off" : "Live story, changes go out when you press Update"}
             </span>
           )}
         </div>
@@ -490,6 +505,17 @@ const PostEditor = () => {
       </div>
 
       <div className="space-y-6">
+        {approvalStatus === "rejected" && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+            <p className="font-semibold text-destructive">Sent back by the approver</p>
+            <p className="mt-1 text-muted-foreground">{approvalNote || "No reason was given."} Make the changes and submit again.</p>
+          </div>
+        )}
+        {approvalStatus === "pending" && (
+          <div className="rounded-lg border border-dashed bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+            Waiting for approval. Saving again replaces the version the approver sees.
+          </div>
+        )}
         {/* Title & Slug */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">

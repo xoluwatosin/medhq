@@ -24,7 +24,8 @@ const Settings = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await adminDb().from("admin_settings").select("*");
+      const { data, error } = await adminDb().from("admin_settings").select("*");
+      if (error) toast({ title: "Could not load settings", description: error.message, variant: "destructive" });
       setSettings(data || []);
       setLoading(false);
     };
@@ -32,14 +33,17 @@ const Settings = () => {
   }, []);
 
   const toggleSetting = async (key: string, newValue: boolean) => {
-    const { error } = await adminDb()
+    // Upsert on the key: a setting that has never been written gets its row
+    // here instead of an update that matches nothing and looks like success.
+    const { data, error } = await adminDb()
       .from("admin_settings")
-      .update({ value: newValue, updated_at: new Date().toISOString() })
-      .eq("key", key);
+      .upsert({ key, value: newValue, updated_at: new Date().toISOString() }, { onConflict: "key" })
+      .select("id, key, value")
+      .single();
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Could not save that", description: error.message, variant: "destructive" });
     } else {
-      setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value: newValue } : s)));
+      setSettings((prev) => (prev.some((s) => s.key === key) ? prev.map((s) => (s.key === key ? { ...s, value: newValue } : s)) : [...prev, data as Setting]));
       toast({ title: `Notifications ${newValue ? "enabled" : "disabled"}` });
     }
   };

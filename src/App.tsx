@@ -142,6 +142,7 @@ import CareHome from "./pages/care/CareHome";
 
 import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
+import AdminNotFound from "./pages/admin/AdminNotFound";
 import LiveChatButton from "./components/LiveChatButton";
 import AccessibilityPanel from "./components/care/AccessibilityPanel";
 import { Analytics } from "./components/Analytics";
@@ -334,7 +335,7 @@ const App = () => (
               <Route path="talent" element={<Navigate to="/admin/match-universe" replace />} />
               <Route path="communications" element={<Navigate to="/admin/campaigns" replace />} />
               <Route path="finance" element={<Navigate to="/admin/invoices" replace />} />
-
+              <Route path="*" element={<AdminNotFound />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

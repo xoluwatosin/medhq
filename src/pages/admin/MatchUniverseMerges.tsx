@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { MergeCandidate, Person, initialsOf, logActivity } from "@/lib/match-universe";
+import { MergeCandidate, Person, initialsOf } from "@/lib/match-universe";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 
 interface Pair {
   candidate: MergeCandidate;
@@ -89,50 +90,45 @@ const MatchUniverseMerges = () => {
 
   useEffect(() => { load(); }, []);
 
-  const actor = { id: user?.id ?? null, name: (user as any)?.email ?? null };
 
+  // One call, one transaction: the database moves every record that points
+  // at the duplicate (documents, offers, contracts, availability, shortlists,
+  // the lot), fills the survivor's blanks, deletes the duplicate and writes the
+  // trail. Either all of it happens or none of it does.
   const merge = async (pair: Pair) => {
     const keepId = keep[pair.candidate.id] || pair.a.id;
     const dropId = keepId === pair.a.id ? pair.b.id : pair.a.id;
-    const survivor = keepId === pair.a.id ? pair.a : pair.b;
     const merged = keepId === pair.a.id ? pair.b : pair.a;
     setBusy(pair.candidate.id);
-
-    // move every linked record onto the surviving profile
-    await Promise.all([
-      adminDb().from("matchmaker_applications").update({ person_id: keepId }).eq("person_id", dropId),
-      adminDb().from("join_applications").update({ person_id: keepId }).eq("person_id", dropId),
-      adminDb().from("mu_documents").update({ person_id: keepId }).eq("person_id", dropId),
-      adminDb().from("mu_activity").update({ person_id: keepId }).eq("person_id", dropId),
-    ]);
-
-    // fill any gaps on the survivor from the record being merged away
-    const patch: Record<string, any> = {};
-    (["email", "phone", "current_position", "years_experience", "state", "lga",
-      "licensing_body", "license_number", "license_expiry", "admin_notes"] as const).forEach((k) => {
-      if (!(survivor as any)[k] && (merged as any)[k]) patch[k] = (merged as any)[k];
+    const { data, error } = await adminDb().rpc("mu_merge_people", {
+      _keep: keepId,
+      _drop: dropId,
+      _candidate: pair.candidate.id,
     });
-    if (Object.keys(patch).length) await adminDb().from("mu_people").update(patch).eq("id", keepId);
-
-    await adminDb().from("mu_people").delete().eq("id", dropId);
-    await adminDb()
-      .from("mu_merge_candidates")
-      .update({ status: "merged", resolved_by: user?.id ?? null, resolved_at: new Date().toISOString() })
-      .eq("id", pair.candidate.id);
-    await logActivity(keepId, "profiles_merged", { merged_name: merged.full_name, merged_email: merged.email }, actor);
-
     setBusy(null);
-    toast({ title: "Profiles merged" });
+    if (error) {
+      toast({ title: "Nothing was merged", description: error.message, variant: "destructive" });
+      return;
+    }
+    const moved = Number(data?.rows_moved ?? 0);
+    toast({
+      title: "Profiles merged",
+      description: `${merged.full_name} is now part of the kept profile. ${moved} linked ${moved === 1 ? "record" : "records"} moved across.`,
+    });
     load();
   };
 
   const reject = async (pair: Pair) => {
     setBusy(pair.candidate.id);
-    await adminDb()
+    const { error } = await adminDb()
       .from("mu_merge_candidates")
       .update({ status: "rejected", resolved_by: user?.id ?? null, resolved_at: new Date().toISOString() })
       .eq("id", pair.candidate.id);
     setBusy(null);
+    if (error) {
+      toast({ title: "Could not save that", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Marked as different people" });
     load();
   };
@@ -163,6 +159,8 @@ const MatchUniverseMerges = () => {
 
       {pairs.map((pair) => {
         const keepId = keep[pair.candidate.id] || pair.a.id;
+        const kept = keepId === pair.a.id ? pair.a : pair.b;
+        const dropped = keepId === pair.a.id ? pair.b : pair.a;
         return (
           <Card key={pair.candidate.id}>
             <CardContent className="p-5 space-y-4">
@@ -180,12 +178,29 @@ const MatchUniverseMerges = () => {
                 <Button variant="ghost" size="sm" onClick={() => reject(pair)} disabled={busy === pair.candidate.id}>
                   <X className="mr-2 h-4 w-4" />Different people
                 </Button>
-                <Button size="sm" onClick={() => merge(pair)} disabled={busy === pair.candidate.id}>
-                  {busy === pair.candidate.id
-                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    : <GitMerge className="mr-2 h-4 w-4" />}
-                  Merge into selected profile
-                </Button>
+                <ConfirmAction
+                  title="Merge these two profiles?"
+                  description={
+                    <>
+                      <p>
+                        <strong>{dropped.full_name}</strong> will be merged into <strong>{kept.full_name}</strong>. Every document, offer, contract,
+                        shortlist and note moves to the kept profile, and blank details on it are filled from the other.
+                      </p>
+                      <p>The merged profile is deleted. This cannot be undone.</p>
+                    </>
+                  }
+                  confirmLabel="Merge profiles"
+                  destructive
+                  onConfirm={() => merge(pair)}
+                  trigger={
+                    <Button size="sm" disabled={busy === pair.candidate.id}>
+                      {busy === pair.candidate.id
+                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        : <GitMerge className="mr-2 h-4 w-4" />}
+                      Merge into selected profile
+                    </Button>
+                  }
+                />
               </div>
             </CardContent>
           </Card>
