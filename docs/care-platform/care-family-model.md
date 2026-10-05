@@ -188,7 +188,7 @@ can be checked row by row.
 
 | Step | Change | Data work |
 |---|---|---|
-| 1 | Clear the test records | Staff list which records are tests; delete them with their links |
+| 1 | Clear the test records | Done in `supabase/migrations/20261005150000_remove_test_care_records.sql`: 10 marked on 5 October, runs at cutover |
 | 2 | Every care record gets a person | Create the missing person rows from the care record; add `clients.person_id`, then make it required |
 | 3 | One relationship convention | Every form asks the contact's relationship to the service user; flip the intake answers saved the other way round (re-checked by staff); one vocabulary; the household tab reads the contact rows |
 | 4 | Roles per care record | Contact rows stop storing copies of name and phone and read the person; add payer and emergency contact flags; backfill the enquirer on the 6 requests missing it |
