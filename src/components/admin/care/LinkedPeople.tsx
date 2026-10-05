@@ -8,10 +8,7 @@ import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
 import { MuSection } from "@/components/admin/mu/MuShell";
 import { careErrorMessage } from "@/lib/care-errors";
-import { clientLinks, ROLE_LABELS, type ClientLinks } from "@/lib/care-records";
-
-const roleText = (roles: string[]) =>
-  roles.map((role) => ROLE_LABELS[role] ?? role).join(", ");
+import { clientLinks, roleText, type ClientLinks } from "@/lib/care-records";
 
 const LinkedPeople = ({ clientId }: { clientId: string }) => {
   const [links, setLinks] = useState<ClientLinks | null>(null);

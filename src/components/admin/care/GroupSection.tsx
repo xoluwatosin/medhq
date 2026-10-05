@@ -12,6 +12,7 @@ import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShel
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
 import { DateField, DateTimeField, SelectField, Status } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
+import { roleText } from "@/lib/care-records";
 import { assessorOptions, LOCATION_KINDS, locationLabel, type AssessorOption } from "@/lib/care-assessment";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -20,15 +21,6 @@ import {
   requestCoverage, requestReadiness, saveRequest, saveVisit, selectRequest, sendTopUp,
   serviceOptions, setRelationship, setServiceIntention,
 } from "@/lib/care-group";
-
-const ROLE_LABELS: Record<string, string> = {
-  enquirer: "Enquirer",
-  care_recipient: "Care recipient",
-  payer: "Payer",
-  representative: "Representative",
-  contact: "Contact",
-  other: "Other",
-};
 
 const STATE_LABELS: Record<string, string> = {
   proposed: "Proposed",
@@ -308,8 +300,7 @@ const GroupSection = ({
               <MuRow
                 key={m.id}
                 title={m.full_name}
-                state={[m.email, m.phone].filter(Boolean).join(", ") || undefined}
-                status={<Status label={ROLE_LABELS[m.role] ?? m.role} tone="neutral" />}
+                state={[roleText(m.roles), m.email, m.phone].filter(Boolean).join(", ") || undefined}
               />
             ))}
           </div>

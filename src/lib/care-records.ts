@@ -41,11 +41,14 @@ export interface ClientLinks {
 export const ROLE_LABELS: Record<string, string> = {
   enquirer: "Enquirer",
   care_recipient: "Care recipient",
-  payer: "Payer",
-  representative: "Representative",
   contact: "Contact",
-  other: "Other",
+  next_of_kin: "Next of kin",
+  emergency_contact: "Emergency contact",
+  payer: "Payer",
 };
+
+export const roleText = (roles: string[]) =>
+  roles.map((role) => ROLE_LABELS[role] ?? role).join(", ");
 
 /** The household a care record sits in, and everyone linked to it. */
 export const clientLinks = async (clientId: string): Promise<ClientLinks> => {

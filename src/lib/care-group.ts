@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface GroupMember {
   id: string;
-  role: string;
+  /** What the person does in this family, read from the care records. */
+  roles: string[];
   person_id: string;
   full_name: string;
   email: string | null;
@@ -258,9 +259,10 @@ export const linkRecipientPerson = async (recipientId: string, personId: string)
   if (error) throw error;
 };
 
-export const setGroupMember = async (groupId: string, personId: string, role: string) => {
-  const { error } = await adminDb().rpc("care_group_member_set", {
-    _group_id: groupId, _person_id: personId, _role: role,
+/** Membership carries no role: what a person does lives on the care records. */
+export const addGroupMember = async (groupId: string, personId: string, notes?: string | null) => {
+  const { error } = await adminDb().rpc("care_group_member_add", {
+    _group_id: groupId, _person_id: personId, _notes: notes ?? null,
   });
   if (error) throw error;
 };
