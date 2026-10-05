@@ -24,7 +24,7 @@ describe("Admin navigation", () => {
     expect(items.find((item) => item.title === "Talent Pool")?.keywords).toContain("Match Universe");
     expect(items.find((item) => item.title === "Insights")?.keywords).toContain("Intelligence");
     expect(items.find((item) => item.title === "Email Library")?.keywords).toContain("email templates");
-    expect(items.find((item) => item.title === "Admin access")?.keywords).toContain("Access control");
+    expect(items.find((item) => item.title === "People and access")?.keywords).toContain("Access control");
     expect(items.find((item) => item.title === "Intake")?.keywords).toContain("Candidate intake");
   });
 
