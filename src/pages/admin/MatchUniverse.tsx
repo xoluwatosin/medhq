@@ -85,6 +85,7 @@ const MatchUniverse = () => {
   // Filters live in the address bar and the list remembers the last set used.
   useRestoreListParams();
   const clearParams = useClearListParams();
+  const [moreOpen, setMoreOpen] = useState(false);
   const { search: filterSearch } = useLocation();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
@@ -121,7 +122,8 @@ const MatchUniverse = () => {
   // The primary register view. Active talent is the working default; the rest
   // surface a specific operational job (chase readiness, re-engage, invite,
   // stand down).
-  const [view, setView] = useListParam<"active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all">("view", "active");
+  const [rawView, setView] = useListParam<"active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all">("view", "active");
+  const view = rawView === "dormant" ? "all" : rawView;
   // Placement readiness, read from mu_readiness_summary — never recomputed here.
   const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number }>>(new Map());
   const [readinessFilter, setReadinessFilter] = useListParam<"all" | "ready" | "office" | "candidate" | "any">("readiness", "all");
@@ -299,7 +301,7 @@ const MatchUniverse = () => {
   const isExited = (r: Row) => (r.person as any).staff_status === "exited";
   const isUnclaimed = (r: Row) => !r.person.invited_at || (Boolean(r.person.invited_at) && !r.person.claimed_at);
 
-  const matchesView = (r: Row, v: typeof view) => {
+  const matchesView = (r: Row, v: typeof rawView) => {
     const p = r.person;
     switch (v) {
       case "active":
@@ -550,6 +552,9 @@ const MatchUniverse = () => {
   ]
     .filter((f) => f.on)
     .map(({ key, label, clear }) => ({ key, label, onRemove: clear }));
+  // Filters folded under More filters; the summary says how many are set.
+  const MORE_KEYS = ["specialty", "care", "livein", "minyears", "looking", "readiness", "engagement", "availability", "docs", "referees", "verified", "account", "lifecycle", "channel"];
+  const moreSet = activeFilters.filter((f) => MORE_KEYS.includes(f.key)).length;
   const clearAllFilters = () =>
     clearParams(["q", "lifecycle", "profession", "specialty", "route", "care", "livein", "state", "lga", "minyears", "engagement", "availability", "looking", "readiness", "docs", "referees", "verified", "channel", "account"]);
 
@@ -644,379 +649,206 @@ const MatchUniverse = () => {
         tabs={[
           { id: "active", label: "Active talent", count: viewCounts.active },
           { id: "needs_completion", label: "Needs completion", count: viewCounts.needs_completion },
-          { id: "dormant", label: "Dormant", count: viewCounts.dormant },
-          { id: "unclaimed", label: "Unclaimed", count: viewCounts.unclaimed },
-          { id: "unavailable", label: "Unavailable / paused", count: viewCounts.unavailable },
+          { id: "unavailable", label: "Not looking", count: viewCounts.unavailable },
+          { id: "unclaimed", label: "Not signed in", count: viewCounts.unclaimed },
           { id: "all", label: "All", count: viewCounts.all },
         ]}
       />
 
-      <div className="hidden md:block">
-        <MuToolbar>
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, email, phone or profession"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-none bg-background"
-          />
+      {/* One filter area for every screen size: the everyday filters in a row,
+          everything else folded under More filters. */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name, email, phone or profession"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 rounded-none bg-background"
+            />
+          </div>
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            <Select value={professionFilter} onValueChange={setProfessionFilter}>
+              <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any profession</SelectItem>
+                {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
+              <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any state</SelectItem>
+                {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <LgaSelect
+              state={stateFilter === "all" ? "" : stateFilter}
+              value={lgaFilter}
+              onChange={setLgaFilter}
+              allowClear
+              className="rounded-none w-full sm:w-[170px]"
+            />
+            <Select value={trackFilter} onValueChange={setTrackFilter}>
+              <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any route</SelectItem>
+                {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                <SelectItem value="unknown">Route not confirmed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+              <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent activity</SelectItem>
+                <SelectItem value="docs_desc">Most documents</SelectItem>
+                <SelectItem value="name_asc">Name A to Z</SelectItem>
+                <SelectItem value="exp_desc">Most experience</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any specialty</SelectItem>
-              {allSpecialties.map((c) => (
-                <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={trackFilter} onValueChange={setTrackFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any route</SelectItem>
-              {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
-              <SelectItem value="unknown">Route not confirmed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={careFilter} onValueChange={setCareFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any type of care</SelectItem>
-              {CARE_TYPES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={liveInFilter} onValueChange={setLiveInFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Live-in or live-out</SelectItem>
-              <SelectItem value="live_in">Will live in</SelectItem>
-              <SelectItem value="live_out">Will live out</SelectItem>
-              <SelectItem value="unknown">Has not said</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={professionFilter} onValueChange={setProfessionFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any profession</SelectItem>
-              {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any state</SelectItem>
-              {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <LgaSelect
-            state={stateFilter === "all" ? "" : stateFilter}
-            value={lgaFilter}
-            onChange={setLgaFilter}
-            allowClear
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Input
-            type="number"
-            min={0}
-            placeholder="Min. years experience"
-            value={minExpFilter}
-            onChange={(e) => setMinExpFilter(e.target.value)}
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any engagement</SelectItem>
-              <SelectItem value="recent">Recently active</SelectItem>
-              <SelectItem value="dormant">Inactive 90+ days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any availability freshness</SelectItem>
-              <SelectItem value="current">Availability current</SelectItem>
-              <SelectItem value="stale">Availability stale</SelectItem>
-              <SelectItem value="never">Never provided</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={lookingFilter} onValueChange={setLookingFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any looking status</SelectItem>
-              {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any placement readiness</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="office">Office action required</SelectItem>
-              <SelectItem value="candidate">Candidate action required</SelectItem>
-              <SelectItem value="any">Any blocker</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={docFilter} onValueChange={setDocFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any documents</SelectItem>
-              <SelectItem value="any">Has documents</SelectItem>
-              <SelectItem value="none">No documents</SelectItem>
-              {DOC_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {`${DOC_TYPE_LABELS[t]} on file`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={refFilter} onValueChange={setRefFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any referees</SelectItem>
-              <SelectItem value="any">Referees given</SelectItem>
-              <SelectItem value="two">Two or more referees</SelectItem>
-              <SelectItem value="none">No referees yet</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={verifyFilter} onValueChange={setVerifyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any verification</SelectItem>
-              {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All channels</SelectItem>
-              {allSources.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="talent">Talent</SelectItem>
-              <SelectItem value="workforce">On the Workforce</SelectItem>
-              <SelectItem value="all">Everyone</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={accountFilter} onValueChange={setAccountFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any account state</SelectItem>
-              <SelectItem value="claimed">Has signed in</SelectItem>
-              <SelectItem value="invited">Invited, not claimed</SelectItem>
-              <SelectItem value="never">Never invited</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most recent activity</SelectItem>
-              <SelectItem value="docs_desc">Most documents</SelectItem>
-              <SelectItem value="name_asc">Name A to Z</SelectItem>
-              <SelectItem value="exp_desc">Most experience</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-</MuToolbar>
+        <details
+          className="border border-line-soft bg-card"
+          open={moreOpen}
+          onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 py-2.5 text-[13.5px] font-semibold text-navy">
+            More filters
+            {moreSet > 0 && <span className="bg-navy px-2 py-0.5 text-[12px] font-bold text-white">{moreSet} set</span>}
+          </summary>
+          <div className="grid grid-cols-1 gap-2 border-t border-line-soft p-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any specialty</SelectItem>
+                {allSpecialties.map((c) => (
+                  <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={careFilter} onValueChange={setCareFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any type of care</SelectItem>
+                {CARE_TYPES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={liveInFilter} onValueChange={setLiveInFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Live-in or live-out</SelectItem>
+                <SelectItem value="live_in">Will live in</SelectItem>
+                <SelectItem value="live_out">Will live out</SelectItem>
+                <SelectItem value="unknown">Has not said</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              min={0}
+              placeholder="Min. years experience"
+              value={minExpFilter}
+              onChange={(e) => setMinExpFilter(e.target.value)}
+              className="rounded-none w-full"
+            />
+            <Select value={lookingFilter} onValueChange={setLookingFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any looking status</SelectItem>
+                {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any placement readiness</SelectItem>
+                <SelectItem value="ready">Ready</SelectItem>
+                <SelectItem value="office">Office action required</SelectItem>
+                <SelectItem value="candidate">Candidate action required</SelectItem>
+                <SelectItem value="any">Any blocker</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any engagement</SelectItem>
+                <SelectItem value="recent">Active in the last 90 days</SelectItem>
+                <SelectItem value="dormant">Quiet for 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any availability freshness</SelectItem>
+                <SelectItem value="current">Availability current</SelectItem>
+                <SelectItem value="stale">Availability stale</SelectItem>
+                <SelectItem value="never">Never provided</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={docFilter} onValueChange={setDocFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any documents</SelectItem>
+                <SelectItem value="any">Has documents</SelectItem>
+                <SelectItem value="none">No documents</SelectItem>
+                {DOC_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {`${DOC_TYPE_LABELS[t]} on file`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={refFilter} onValueChange={setRefFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any referees</SelectItem>
+                <SelectItem value="any">Referees given</SelectItem>
+                <SelectItem value="two">Two or more referees</SelectItem>
+                <SelectItem value="none">No referees yet</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={verifyFilter} onValueChange={setVerifyFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any verification</SelectItem>
+                {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={accountFilter} onValueChange={setAccountFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any account state</SelectItem>
+                <SelectItem value="claimed">Has signed in</SelectItem>
+                <SelectItem value="invited">Invited, not claimed</SelectItem>
+                <SelectItem value="never">Never invited</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="talent">Talent</SelectItem>
+                <SelectItem value="workforce">On the Workforce</SelectItem>
+                <SelectItem value="all">Everyone</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="rounded-none w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All channels</SelectItem>
+                {allSources.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </details>
       </div>
 
-      <details className="border border-line-soft bg-card md:hidden">
-        <summary className="flex min-h-11 cursor-pointer items-center justify-between px-4 py-3 text-[13.5px] font-semibold text-navy">
-          Filter and search
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line-soft p-3">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, email, phone or profession"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-none bg-background"
-          />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any specialty</SelectItem>
-              {allSpecialties.map((c) => (
-                <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={trackFilter} onValueChange={setTrackFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any route</SelectItem>
-              {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
-              <SelectItem value="unknown">Route not confirmed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={careFilter} onValueChange={setCareFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any type of care</SelectItem>
-              {CARE_TYPES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={liveInFilter} onValueChange={setLiveInFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Live-in or live-out</SelectItem>
-              <SelectItem value="live_in">Will live in</SelectItem>
-              <SelectItem value="live_out">Will live out</SelectItem>
-              <SelectItem value="unknown">Has not said</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={professionFilter} onValueChange={setProfessionFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any profession</SelectItem>
-              {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any state</SelectItem>
-              {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <LgaSelect
-            state={stateFilter === "all" ? "" : stateFilter}
-            value={lgaFilter}
-            onChange={setLgaFilter}
-            allowClear
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Input
-            type="number"
-            min={0}
-            placeholder="Min. years experience"
-            value={minExpFilter}
-            onChange={(e) => setMinExpFilter(e.target.value)}
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any engagement</SelectItem>
-              <SelectItem value="recent">Recently active</SelectItem>
-              <SelectItem value="dormant">Inactive 90+ days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any availability freshness</SelectItem>
-              <SelectItem value="current">Availability current</SelectItem>
-              <SelectItem value="stale">Availability stale</SelectItem>
-              <SelectItem value="never">Never provided</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={lookingFilter} onValueChange={setLookingFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any looking status</SelectItem>
-              {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any placement readiness</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="office">Office action required</SelectItem>
-              <SelectItem value="candidate">Candidate action required</SelectItem>
-              <SelectItem value="any">Any blocker</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={docFilter} onValueChange={setDocFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any documents</SelectItem>
-              <SelectItem value="any">Has documents</SelectItem>
-              <SelectItem value="none">No documents</SelectItem>
-              {DOC_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {`${DOC_TYPE_LABELS[t]} on file`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={refFilter} onValueChange={setRefFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any referees</SelectItem>
-              <SelectItem value="any">Referees given</SelectItem>
-              <SelectItem value="two">Two or more referees</SelectItem>
-              <SelectItem value="none">No referees yet</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={verifyFilter} onValueChange={setVerifyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any verification</SelectItem>
-              {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All channels</SelectItem>
-              {allSources.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="talent">Talent</SelectItem>
-              <SelectItem value="workforce">On the Workforce</SelectItem>
-              <SelectItem value="all">Everyone</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={accountFilter} onValueChange={setAccountFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any account state</SelectItem>
-              <SelectItem value="claimed">Has signed in</SelectItem>
-              <SelectItem value="invited">Invited, not claimed</SelectItem>
-              <SelectItem value="never">Never invited</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most recent activity</SelectItem>
-              <SelectItem value="docs_desc">Most documents</SelectItem>
-              <SelectItem value="name_asc">Name A to Z</SelectItem>
-              <SelectItem value="exp_desc">Most experience</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-</div>
-      </details>
 
 
       <FilterChips filters={activeFilters} onClearAll={clearAllFilters} />
