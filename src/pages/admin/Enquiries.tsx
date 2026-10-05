@@ -7,6 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Link } from "react-router-dom";
+import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/useListParam";
+import { FilterChips } from "@/components/admin/FilterChips";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,10 +39,15 @@ const Enquiries = () => {
   const [items, setItems] = useState<Enquiry[]>([]);
   const [lines, setLines] = useState<ServiceLine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [lineFilter, setLineFilter] = useState("all");
-  const [view, setView] = useState("owed");
-  const [page, setPage] = useState(0);
+  // Filters live in the address bar and the desk remembers the last set used.
+  useRestoreListParams();
+  const clearParams = useClearListParams();
+  const [search, setSearch] = useListParam<string>("q", "");
+  const [lineFilter, setLineFilter] = useListParam<string>("line", "all");
+  const [view, setView] = useListParam<string>("view", "owed");
+  const [pageParam, setPageParam] = useListParam<string>("page", "1");
+  const page = Math.max(0, (Number(pageParam) || 1) - 1);
+  const setPage = (n: number) => setPageParam(String(n + 1));
 
   const [selected, setSelected] = useState<Enquiry | null>(null);
   const [sends, setSends] = useState<EnquirySend[]>([]);
@@ -213,6 +221,17 @@ const Enquiries = () => {
             {lines.map((l) => <SelectItem key={l.key} value={l.key}>{l.name}</SelectItem>)}
           </SelectContent>
         </Select>
+      </div>
+      <div className="mb-4">
+        <FilterChips
+          filters={[
+            ...(search ? [{ key: "q", label: `Search: ${search}`, onRemove: () => { setSearch(""); setPage(0); } }] : []),
+            ...(lineFilter !== "all" ? [{ key: "line", label: lineName(lineFilter), onRemove: () => { setLineFilter("all"); setPage(0); } }] : []),
+          ]}
+          onClearAll={() => clearParams(["q", "line", "page"])}
+          shown={filtered.length}
+          noun={filtered.length === 1 ? "enquiry" : "enquiries"}
+        />
       </div>
 
       <div className="hidden md:block overflow-x-auto border rounded-lg">

@@ -5,6 +5,9 @@
 // credential. A document that nobody can see is a document nobody reviews.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/useListParam";
+import { FilterChips } from "@/components/admin/FilterChips";
+
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertTriangle, CalendarDays, Check, Clock, ExternalLink, FileText, Flame, Inbox, Loader2,
@@ -102,8 +105,11 @@ const MatchUniverseVerification = () => {
   const [backlog, setBacklog] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [q, setQ] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  // Filters live in the address bar and the queue remembers the last set used.
+  useRestoreListParams();
+  const clearParams = useClearListParams();
+  const [q, setQ] = useListParam<string>("q", "");
+  const [typeFilter, setTypeFilter] = useListParam<string>("type", "all");
   const [busy, setBusy] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
 
@@ -302,6 +308,13 @@ const MatchUniverseVerification = () => {
           Settle what we can
         </Button>
       </MuToolbar>
+      <FilterChips
+        filters={[
+          ...(q ? [{ key: "q", label: `Search: ${q}`, onRemove: () => setQ("") }] : []),
+          ...(typeFilter !== "all" ? [{ key: "type", label: typeFilter, onRemove: () => setTypeFilter("all") }] : []),
+        ]}
+        onClearAll={() => clearParams(["q", "type"])}
+      />
 
       <MuSection
         title={

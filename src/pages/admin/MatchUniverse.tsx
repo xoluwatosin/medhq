@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/useListParam";
+import { FilterChips, type ActiveFilter } from "@/components/admin/FilterChips";
+import { humaniseTerm } from "@/lib/readable";
 
 import { Loader2, Search, Users, GitMerge, ShieldCheck, FileText, Briefcase, BriefcaseBusiness, CalendarCheck, Inbox, Activity, Send, Sparkles, UserRound, ClipboardList, Moon, UserX, Mailbox } from "lucide-react";
 
@@ -79,6 +82,10 @@ interface Row {
 
 const MatchUniverse = () => {
   const { toast } = useToast();
+  // Filters live in the address bar and the list remembers the last set used.
+  useRestoreListParams();
+  const clearParams = useClearListParams();
+  const { search: filterSearch } = useLocation();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -87,26 +94,26 @@ const MatchUniverse = () => {
   const [pendingReviews, setPendingReviews] = useState(0);
 
 
-  const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all");
-  const [docFilter, setDocFilter] = useState("all");
-  const [verifyFilter, setVerifyFilter] = useState("all");
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
-  const [careFilter, setCareFilter] = useState("all");
-  const [trackFilter, setTrackFilter] = useState("all");
-  const [liveInFilter, setLiveInFilter] = useState("all");
+  const [search, setSearch] = useListParam<string>("q", "");
+  const [sourceFilter, setSourceFilter] = useListParam<string>("channel", "all");
+  const [docFilter, setDocFilter] = useListParam<string>("docs", "all");
+  const [verifyFilter, setVerifyFilter] = useListParam<string>("verified", "all");
+  const [specialtyFilter, setSpecialtyFilter] = useListParam<string>("specialty", "all");
+  const [careFilter, setCareFilter] = useListParam<string>("care", "all");
+  const [trackFilter, setTrackFilter] = useListParam<string>("route", "all");
+  const [liveInFilter, setLiveInFilter] = useListParam<string>("livein", "all");
   // Referees the candidate has given us. A separate question from whether we
   // hold a written reference letter, so it gets its own filter.
-  const [refFilter, setRefFilter] = useState("all");
+  const [refFilter, setRefFilter] = useListParam<string>("referees", "all");
   const [tidying, setTidying] = useState(false);
-  const [sortBy, setSortBy] = useState<"recent" | "docs_desc" | "name_asc" | "exp_desc">("recent");
+  const [sortBy, setSortBy] = useListParam<"recent" | "docs_desc" | "name_asc" | "exp_desc">("sort", "recent");
   const [checked, setChecked] = useState<Set<string>>(new Set());
   // Account state: who can actually sign in, and who we have asked but not heard from.
-  const [accountFilter, setAccountFilter] = useState("all");
+  const [accountFilter, setAccountFilter] = useListParam<string>("account", "all");
   // Talent is a lifecycle state, not a UI convenience. People currently on the
   // Workforce belong in Workforce, so the default pool leaves them out. Their
   // record and history are untouched and still reachable here under "Everyone".
-  const [lifecycleFilter, setLifecycleFilter] = useState<"talent" | "workforce" | "all">("talent");
+  const [lifecycleFilter, setLifecycleFilter] = useListParam<"talent" | "workforce" | "all">("lifecycle", "talent");
   // Optional role to invite against, so the email leads with the job.
   const [blastOpp, setBlastOpp] = useState("none");
   const [openRoles, setOpenRoles] = useState<{ id: string; title: string }[]>([]);
@@ -114,19 +121,17 @@ const MatchUniverse = () => {
   // The primary register view. Active talent is the working default; the rest
   // surface a specific operational job (chase readiness, re-engage, invite,
   // stand down).
-  const [view, setView] = useState<
-    "active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all"
-  >("active");
+  const [view, setView] = useListParam<"active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all">("view", "active");
   // Placement readiness, read from mu_readiness_summary — never recomputed here.
   const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number }>>(new Map());
-  const [readinessFilter, setReadinessFilter] = useState<"all" | "ready" | "office" | "candidate" | "any">("all");
-  const [professionFilter, setProfessionFilter] = useState("all");
-  const [stateFilter, setStateFilter] = useState("all");
-  const [lgaFilter, setLgaFilter] = useState("");
-  const [minExpFilter, setMinExpFilter] = useState("");
-  const [engagementFilter, setEngagementFilter] = useState<"all" | "recent" | "dormant">("all");
-  const [freshnessFilter, setFreshnessFilter] = useState<"all" | "current" | "stale" | "never">("all");
-  const [lookingFilter, setLookingFilter] = useState("all");
+  const [readinessFilter, setReadinessFilter] = useListParam<"all" | "ready" | "office" | "candidate" | "any">("readiness", "all");
+  const [professionFilter, setProfessionFilter] = useListParam<string>("profession", "all");
+  const [stateFilter, setStateFilter] = useListParam<string>("state", "all");
+  const [lgaFilter, setLgaFilter] = useListParam<string>("lga", "");
+  const [minExpFilter, setMinExpFilter] = useListParam<string>("minyears", "");
+  const [engagementFilter, setEngagementFilter] = useListParam<"all" | "recent" | "dormant">("engagement", "all");
+  const [freshnessFilter, setFreshnessFilter] = useListParam<"all" | "current" | "stale" | "never">("availability", "all");
+  const [lookingFilter, setLookingFilter] = useListParam<string>("looking", "all");
 
   const load = async () => {
     const [{ data: people }, { data: mm }, { data: jn }, { data: docs }, { count: merges }, { count: claims }, { data: facetRows }, { data: prefRows }, { data: refRows }, { data: readinessRows }] = await Promise.all([
@@ -517,6 +522,36 @@ const MatchUniverse = () => {
     Channels: r.sources.join(" | "),
     "Last activity": r.latestAt,
   }));
+
+  // Rows hidden by a filter must never stay selected and get acted on.
+  useEffect(() => { setChecked(new Set()); }, [filterSearch]);
+
+  // One chip per filter that is narrowing the list.
+  const activeFilters: ActiveFilter[] = [
+    { key: "q", on: search !== "", label: `Search: ${search}`, clear: () => setSearch("") },
+    { key: "lifecycle", on: lifecycleFilter !== "talent", label: lifecycleFilter === "all" ? "Everyone, including Workforce" : "On the Workforce", clear: () => setLifecycleFilter("talent") },
+    { key: "profession", on: professionFilter !== "all", label: professionFilter, clear: () => setProfessionFilter("all") },
+    { key: "specialty", on: specialtyFilter !== "all", label: `Specialty: ${specialtyFilter}`, clear: () => setSpecialtyFilter("all") },
+    { key: "route", on: trackFilter !== "all", label: `Route: ${TRACK_TAGS.find((t) => t.id === trackFilter)?.label ?? humaniseTerm(trackFilter)}`, clear: () => setTrackFilter("all") },
+    { key: "care", on: careFilter !== "all", label: `Care: ${CARE_TYPE_LABEL[careFilter as keyof typeof CARE_TYPE_LABEL] ?? humaniseTerm(careFilter)}`, clear: () => setCareFilter("all") },
+    { key: "livein", on: liveInFilter !== "all", label: `Live-in: ${humaniseTerm(liveInFilter)}`, clear: () => setLiveInFilter("all") },
+    { key: "state", on: stateFilter !== "all", label: stateFilter, clear: () => { setStateFilter("all"); setLgaFilter(""); } },
+    { key: "lga", on: lgaFilter !== "", label: lgaFilter, clear: () => setLgaFilter("") },
+    { key: "minyears", on: minExpFilter !== "", label: `${minExpFilter}+ years`, clear: () => setMinExpFilter("") },
+    { key: "engagement", on: engagementFilter !== "all", label: engagementFilter === "recent" ? "Active in the last 90 days" : "Quiet for 90 days", clear: () => setEngagementFilter("all") },
+    { key: "availability", on: freshnessFilter !== "all", label: `Availability: ${humaniseTerm(freshnessFilter)}`, clear: () => setFreshnessFilter("all") },
+    { key: "looking", on: lookingFilter !== "all", label: LOOKING_OPTIONS.find((o) => o.code === lookingFilter)?.label ?? humaniseTerm(lookingFilter), clear: () => setLookingFilter("all") },
+    { key: "readiness", on: readinessFilter !== "all", label: `Readiness: ${humaniseTerm(readinessFilter)}`, clear: () => setReadinessFilter("all") },
+    { key: "docs", on: docFilter !== "all", label: `Documents: ${humaniseTerm(docFilter)}`, clear: () => setDocFilter("all") },
+    { key: "referees", on: refFilter !== "all", label: `Referees: ${humaniseTerm(refFilter)}`, clear: () => setRefFilter("all") },
+    { key: "verified", on: verifyFilter !== "all", label: humaniseTerm(verifyFilter), clear: () => setVerifyFilter("all") },
+    { key: "channel", on: sourceFilter !== "all", label: `Channel: ${humaniseTerm(sourceFilter)}`, clear: () => setSourceFilter("all") },
+    { key: "account", on: accountFilter !== "all", label: `Account: ${humaniseTerm(accountFilter)}`, clear: () => setAccountFilter("all") },
+  ]
+    .filter((f) => f.on)
+    .map(({ key, label, clear }) => ({ key, label, onRemove: clear }));
+  const clearAllFilters = () =>
+    clearParams(["q", "lifecycle", "profession", "specialty", "route", "care", "livein", "state", "lga", "minyears", "engagement", "availability", "looking", "readiness", "docs", "referees", "verified", "channel", "account"]);
 
   if (loading)
     return (
@@ -983,6 +1018,8 @@ const MatchUniverse = () => {
 </div>
       </details>
 
+
+      <FilterChips filters={activeFilters} onClearAll={clearAllFilters} />
 
       <MuSection
         title={`Showing ${filtered.length} of ${rows.length} people`}

@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Link2, UserRoundPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useListParam, useRestoreListParams } from "@/hooks/useListParam";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,7 +106,9 @@ const placeOf = (client: ClientRow) =>
 
 const Clients = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState<FilterId>("attention");
+  // The chosen view lives in the address bar and is remembered.
+  useRestoreListParams();
+  const [activeFilter, setActiveFilter] = useListParam<FilterId>("view", "attention");
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
