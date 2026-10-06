@@ -11,6 +11,8 @@ import { Chevrons, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/bra
 import { art } from "@/components/mc/art";
 import PostCard, { firstParagraph, postDate, readMinutes } from "@/components/blog/PostCard";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { Share2 } from "lucide-react";
 
 interface BlogPostData {
   id: string;
@@ -194,6 +196,27 @@ const BlogPost = () => {
             By {post.author}
             <span className="mt-1 block font-semibold text-body-navy sm:ml-3 sm:mt-0 sm:inline">{date}</span>
           </p>
+          {/* Shares the short link, so WhatsApp and other apps show a tidy
+              address under the preview instead of the long one. */}
+          <button
+            type="button"
+            onClick={async () => {
+              const url = shortBlogUrl(post.slug);
+              if (navigator.share) {
+                try { await navigator.share({ title: post.title, url }); } catch { /* closed */ }
+                return;
+              }
+              try {
+                await navigator.clipboard.writeText(url);
+                toast({ title: "Link copied", description: url });
+              } catch {
+                toast({ title: "Share this link", description: url });
+              }
+            }}
+            className="mt-6 inline-flex min-h-[44px] items-center gap-2 border-2 border-white px-4 text-[15px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy"
+          >
+            <Share2 className="h-4 w-4" aria-hidden="true" /> Share
+          </button>
         </div>
       </section>
 
