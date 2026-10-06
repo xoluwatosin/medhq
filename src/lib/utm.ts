@@ -54,10 +54,13 @@ export function captureAttribution(): Attribution | null {
 
     const inferred = inferSourceFromReferrer(externalRef);
 
+    // A short share link (/b/<code>) only ever comes from someone sharing a post.
+    const shared = url.pathname.startsWith("/b/");
+
     const attribution: Attribution = {
-      utm_source: url.searchParams.get("utm_source") || inferred.source,
-      utm_medium: url.searchParams.get("utm_medium") || inferred.medium,
-      utm_campaign: url.searchParams.get("utm_campaign"),
+      utm_source: url.searchParams.get("utm_source") || inferred.source || (shared ? "share" : null),
+      utm_medium: url.searchParams.get("utm_medium") || inferred.medium || (shared ? "shared_link" : null),
+      utm_campaign: url.searchParams.get("utm_campaign") || (shared ? "blog" : null),
       utm_term: url.searchParams.get("utm_term"),
       utm_content: url.searchParams.get("utm_content"),
       referrer: externalRef,

@@ -65,6 +65,50 @@ const KEEP_AWAKE = [
   "--disable-backgrounding-occluded-windows",
 ];
 
+// WhatsApp shows no picture when the share image is over about 300 KB, and
+// blog covers are often 2 to 10 MB. A page whose share image is large or
+// stored elsewhere gets a 1200x630 JPEG copy under 280 KB, served from the
+// site at /og/<page>.jpg. The picture on the page itself is untouched.
+const SHARE_LIMIT = 280 * 1024;
+const shareCache = new Map();
+const lightCopy = async (src, name) => {
+  if (shareCache.has(src)) return shareCache.get(src);
+  const job = (async () => {
+    const res = await fetch(src);
+    if (!res.ok) throw new Error(`share image ${res.status}`);
+    const original = Buffer.from(await res.arrayBuffer());
+    if (src.startsWith(SITE) && original.length <= SHARE_LIMIT) return null;
+    const sharp = (await import("sharp")).default;
+    let out;
+    for (const quality of [78, 68, 58, 48]) {
+      out = await sharp(original).rotate().resize(1200, 630, { fit: "cover", position: "attention" })
+        .flatten({ background: "#ffffff" }).jpeg({ quality, mozjpeg: true }).toBuffer();
+      if (out.length <= SHARE_LIMIT) break;
+    }
+    const rel = `og/${name}.jpg`;
+    mkdirSync(join(DIST, "og"), { recursive: true });
+    writeFileSync(join(DIST, rel), out);
+    return `${SITE}/${rel}`;
+  })().catch((e) => { log(`kept the original share image for ${name}: ${String(e?.message ?? e)}`); return null; });
+  shareCache.set(src, job);
+  return job;
+};
+
+const withLightShareImage = async (html, path) => {
+  const src = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1]?.replace(/&amp;/g, "&");
+  if (!src) return html;
+  const name = path === "/" ? "home" : path.replace(/^\//, "").replace(/[^a-z0-9]+/gi, "-");
+  const light = await lightCopy(src, name);
+  if (!light) return html;
+  const escaped = src.replace(/&/g, "&amp;");
+  html = html.split(`content="${escaped}"`).join(`content="${light}"`);
+  if (!/og:image:width/.test(html)) {
+    html = html.replace(/(<meta property="og:image" content="[^"]+"[^>]*>)/,
+      `$1<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/jpeg">`);
+  }
+  return html;
+};
+
 const launch = async () => {
   const puppeteer = (await import("puppeteer-core")).default;
   if (process.env.PRERENDER_CHROME) {
@@ -120,7 +164,7 @@ const renderOne = async (browser, base, path) => {
       root.querySelectorAll('[role="dialog"], [data-radix-portal]').forEach((n) => n.remove());
       return { head: document.head.innerHTML, root: root.innerHTML };
     });
-    const html = shell
+    let html = shell
       // The shell leaves </head> implied, so the head runs up to <body.
       .replace(/<head>[\s\S]*?(?=<body)/, () => `<head>${rendered.head}</head>\n  `)
       .replace(/<div id="root"><\/div>/, () => `<div id="root">${rendered.root}</div>`);
@@ -129,9 +173,17 @@ const renderOne = async (browser, base, path) => {
     if (!title || title === "Medic Connect" || /not found/i.test(title) || rootText < 200) {
       return { path, ok: false, why: `title "${title}", ${rootText} characters of text` };
     }
+    html = await withLightShareImage(html, path);
     const file = outFile(path);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, html);
+    // A blog post also answers at its short share link (/b/<code>), so the
+    // shared link previews with the post's own title and picture.
+    const short = path.startsWith("/blog/") && rendered.root.match(/www\.medicconnect\.co%2Fb%2F([a-z0-9]{6})|www\.medicconnect\.co\/b\/([a-z0-9]{6})/);
+    if (short) {
+      mkdirSync(join(DIST, "b"), { recursive: true });
+      writeFileSync(join(DIST, "b", `${short[1] ?? short[2]}.html`), html);
+    }
     return { path, ok: true, title };
   } catch (e) {
     return { path, ok: false, why: String(e?.message ?? e).split("\n")[0] };

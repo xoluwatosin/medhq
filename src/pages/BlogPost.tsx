@@ -1,3 +1,4 @@
+import { shortBlogUrl } from "@/lib/short-link";
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -225,7 +226,7 @@ const BlogPost = () => {
           <Stamp title="THE END" sub="THE BRIDGE" tone="blue" tilt={-8} />
         </div>
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(`${post.title} https://www.medicconnect.co/blog/${post.slug}`)}`}
+          href={`https://wa.me/?text=${encodeURIComponent(`${post.title}\n${shortBlogUrl(post.slug)}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-8 inline-flex min-h-[48px] items-center gap-3 border-2 border-navy bg-white px-5 text-[16px] font-extrabold text-navy shadow-offset-sm hover:bg-tint"

@@ -42,6 +42,7 @@ import Auth from "./pages/Auth";
 import Creator from "./pages/Creator";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import BlogShortLink from "./pages/BlogShortLink";
 import Matchmakers from "./pages/Matchmakers";
 
 /** The accessibility panel and live chat shown on every Medic Connect page. */
@@ -245,6 +246,7 @@ const App = () => (
 
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/b/:code" element={<BlogShortLink />} />
             <Route path="/hm" element={<Matchmakers />} />
             <Route path="/hm/:slug" element={<MatchmakerOpportunity />} />
             <Route path="/hm/:slug/apply" element={<MatchmakerApply />} />
