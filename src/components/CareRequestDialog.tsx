@@ -10,6 +10,7 @@
 // a previous visit, we show them back rather than asking again.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +77,7 @@ const CareRequestDialog = ({
   open: openProp, onOpenChange: onOpenChangeProp, prefill, preconfirmed = false,
 }: Props) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [openState, setOpenState] = useState(false);
   const controlled = openProp !== undefined;
   const open = controlled ? openProp : openState;
@@ -116,16 +118,14 @@ const CareRequestDialog = ({
   const steps: StepKey[] = useMemo(() => {
     const s: StepKey[] = [];
     if (pageKind && !preconfirmed) s.push("confirm");
+    const settled = pageKind && (confirmed === "yes" || preconfirmed);
+    // Who it is for comes before contact details, so a carer looking for work
+    // is sent to the right place before typing anything. Care from abroad is
+    // always for someone else.
+    if (!(settled && pageKind.line === ABROAD)) s.push("forWhom");
     if (contactKnown) s.push("recap");
     else s.push("name", "phone", "email", "consent");
-    if (pageKind && (confirmed === "yes" || preconfirmed)) {
-      // The service is settled, but not who it is for: one tap tells the
-      // enquiry desk whether they are speaking to the person or to family.
-      // Care from abroad is always for someone else.
-      if (pageKind.line !== ABROAD) s.push("forWhom");
-    } else {
-      s.push("forWhom", "who", "kind");
-    }
+    if (!settled) s.push("who", "kind");
     s.push("soon");
     return s;
   }, [pageKind, contactKnown, confirmed, preconfirmed]);
@@ -459,7 +459,7 @@ const CareRequestDialog = ({
                 <button
                   type="button"
                   className={`${requestSecondary} w-full`}
-                  onClick={() => { setEditContact(true); setIndex(pageKind && !preconfirmed ? 1 : 0); }}
+                  onClick={() => { setEditContact(true); setIndex(steps.indexOf("recap")); }}
                 >
                   <Pencil className="h-4 w-4" aria-hidden="true" /> Change my details
                 </button>
@@ -524,6 +524,8 @@ const CareRequestDialog = ({
                   })} />
                 <Choice label="For someone else" blurb="I am arranging care for a loved one" art={art.familyDoorNurse}
                   selected={forWhom === "else"} onClick={() => pick(() => setForWhom("else"))} />
+                <Choice label="I'm a carer looking for work" blurb="Join our network of nurses and caregivers" art={art.carerManJacket}
+                  selected={false} onClick={() => { onOpenChange(false); navigate("/join"); }} />
               </div>
             )}
 
