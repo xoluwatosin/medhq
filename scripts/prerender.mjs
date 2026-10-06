@@ -16,7 +16,7 @@
 // It never fails the build: if Chrome cannot start or a page will not
 // render, that page keeps the shell and the site works as it did.
 import { createServer } from "node:http";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 
 const DIST = resolve("dist");
@@ -46,6 +46,12 @@ const TYPES = {
 // otherwise the shell.
 const server = createServer((req, res) => {
   const url = decodeURIComponent((req.url ?? "/").split("?")[0]);
+  // A blank page on the same address, so share cards can load the site's fonts.
+  if (url === "/__card") {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end("<!doctype html><title>card</title>");
+    return;
+  }
   const file = join(DIST, url);
   if (url !== "/" && file.startsWith(DIST) && existsSync(file) && extname(file)) {
     res.writeHead(200, { "Content-Type": TYPES[extname(file)] ?? "application/octet-stream" });
@@ -96,7 +102,7 @@ const lightCopy = async (src, name) => {
 
 const withLightShareImage = async (html, path) => {
   const src = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1]?.replace(/&amp;/g, "&");
-  if (!src) return html;
+  if (!src || src.startsWith(`${SITE}/og/`)) return html;
   const name = path === "/" ? "home" : path.replace(/^\//, "").replace(/[^a-z0-9]+/gi, "-");
   const light = await lightCopy(src, name);
   if (!light) return html;
@@ -107,6 +113,81 @@ const withLightShareImage = async (html, path) => {
       `$1<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/jpeg">`);
   }
   return html;
+};
+
+// Pages with no picture of their own (every page but the blog posts) used to
+// share one logo card. Each now gets its own 1200x630 card, drawn in Chrome
+// with the site's font: the page's title, its "from" price and its main
+// picture, in the site's navy.
+const DEFAULT_SHARE = `${SITE}/social-cover.png`;
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const unesc = (t) => t.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+const cardHtml = (base, { title, price, picture, art, logo }) => {
+  const size = title.length > 70 ? 46 : title.length > 52 ? 52 : title.length > 36 ? 60 : 68;
+  return `<!doctype html><html><head><base href="${base}/"><meta charset="utf-8"><style>
+@font-face{font-family:F;src:url(fonts/Figtree-ExtraBold.ttf);font-weight:800}
+@font-face{font-family:F;src:url(fonts/Figtree-Bold.ttf);font-weight:700}
+*{box-sizing:border-box}
+body{margin:0;width:1200px;height:630px;overflow:hidden;background:#26306B;font-family:F,sans-serif;position:relative}
+.ring{position:absolute;right:-170px;bottom:-230px;width:640px;height:640px;border:96px solid #2E3878;border-radius:50%}
+.logo{position:absolute;left:64px;top:56px;background:#fff;padding:14px 22px}
+.logo img{height:52px;display:block}
+.title{position:absolute;left:64px;top:168px;width:${picture ? 620 : 1040}px;color:#fff;font-weight:800;font-size:${size}px;line-height:1.05;letter-spacing:-0.04em}
+.price{position:absolute;left:64px;bottom:62px;background:#3B4DC4;color:#fff;font-weight:800;font-size:34px;padding:10px 22px 12px;box-shadow:7px 7px 0 #fff}
+.domain{position:absolute;right:70px;bottom:44px;color:#C6CBF0;font-weight:700;font-size:24px}
+.pic{position:absolute;right:70px;top:84px;width:400px;height:430px;background:${art ? "#EEF1FF" : "#fff"};border:8px solid #fff;box-shadow:14px 14px 0 #3B4DC4;transform:rotate(2.5deg);overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:${art ? "contain" : "cover"};${art ? "padding:24px;" : ""}}
+</style></head><body><div class="ring"></div>
+<div class="logo"><img src="${logo}"></div>
+<div class="title">${esc(title)}</div>
+${price ? `<div class="price">${esc(price)}</div>` : ""}<div class="domain">medicconnect.co</div>
+${picture ? `<div class="pic"><img src="${picture}"></div>` : ""}
+</body></html>`;
+};
+
+const LOGO = (() => {
+  try {
+    const name = readdirSync(join(DIST, "assets")).find((f) => /^medicconnect-logo-[^.]+\.svg$/.test(f));
+    return name ? `assets/${name}` : "favicon.png";
+  } catch { return "favicon.png"; }
+})();
+
+const withShareCard = async (browser, base, html, path, picture, pictureIsArt) => {
+  const src = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+  if (src !== DEFAULT_SHARE) return html;
+  const raw = unesc(html.match(/<meta property="og:title" content="([^"]+)"/)?.[1] ?? "");
+  if (!raw) return html;
+  // "…in Lagos, Visits from ₦20,000" keeps "Visits" with its price.
+  const priced = raw.match(/,\s*([A-Z][a-z]+ from ₦[\d,]+)/) ?? raw.match(/(from ₦[\d,]+)/);
+  const price = priced?.[1] ?? null;
+  const title = raw
+    .replace(/\s*\|\s*Medic Connect\s*$/, "").replace(/^Medic Connect\s*\|\s*/, "")
+    .replace(priced?.[0] ?? "\u0000", "")
+    .replace(/\s+\|\s+/g, ": ")
+    .replace(/[\s,]+$/, "").trim();
+  const page = await browser.newPage();
+  try {
+    await page.setViewport({ width: 1200, height: 630 });
+    const pic = picture ? picture.replace(/^https?:\/\/127\.0\.0\.1:\d+\//, "") : null;
+    await page.goto(`${base}/__card`);
+    await page.setContent(cardHtml(base, { title, price, picture: pic, art: pictureIsArt, logo: LOGO }), { waitUntil: "load", timeout: 15_000 });
+    await page.evaluate(() => document.fonts.ready);
+    const shot = await page.screenshot({ type: "jpeg", quality: 82 });
+    const name = path === "/" ? "home" : path.replace(/^\//, "").replace(/[^a-z0-9]+/gi, "-");
+    mkdirSync(join(DIST, "og"), { recursive: true });
+    writeFileSync(join(DIST, "og", `${name}.jpg`), shot);
+    const url = `${SITE}/og/${name}.jpg`;
+    return html
+      .split(`content="${DEFAULT_SHARE}"`).join(`content="${url}"`)
+      // The card shows the page's title, so its alt text says the same.
+      .replace(/(<meta (?:property="og:image:alt"|name="twitter:image:alt") content=")[^"]*(")/g, `$1${esc(title)}$2`);
+  } catch (e) {
+    log(`kept the site card for ${path}: ${String(e?.message ?? e).split("\n")[0]}`);
+    return html;
+  } finally {
+    await page.close().catch(() => undefined);
+  }
 };
 
 const launch = async () => {
@@ -162,7 +243,29 @@ const renderOne = async (browser, base, path) => {
       const root = document.getElementById("root");
       // Anything inside #root marked as an open overlay goes too.
       root.querySelectorAll('[role="dialog"], [data-radix-portal]').forEach((n) => n.remove());
-      return { head: document.head.innerHTML, root: root.innerHTML };
+      // The page's main picture, for its share card: the largest photo or
+      // illustration in the first screens (never the logo or a drawn shape).
+      const pictures = [...root.querySelectorAll("img")]
+        .map((img) => ({ img, box: img.getBoundingClientRect() }))
+        .filter(({ img, box }) => img.currentSrc && !img.currentSrc.startsWith("data:") && !/logo|\.svg/i.test(img.currentSrc)
+          && box.top < 1800 && box.width > 120 && box.height > 120)
+        .sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height);
+      const top = pictures[0]?.img ?? null;
+      const picture = top?.currentSrc ?? null;
+      // An illustration has see-through corners; it is shown whole, while a
+      // photo is cropped to fill the frame.
+      let pictureIsArt = false;
+      try {
+        if (top) {
+          const c = document.createElement("canvas");
+          c.width = 64; c.height = 64;
+          const ctx = c.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(top, 0, 0, 64, 64);
+          const corners = [[0, 0], [c.width - 1, 0], [0, c.height - 1], [c.width - 1, c.height - 1]];
+          pictureIsArt = corners.some(([x, y]) => ctx.getImageData(x, y, 1, 1).data[3] < 250);
+        }
+      } catch { /* leave as photo */ }
+      return { head: document.head.innerHTML, root: root.innerHTML, picture, pictureIsArt };
     });
     let html = shell
       // The shell leaves </head> implied, so the head runs up to <body.
@@ -173,6 +276,7 @@ const renderOne = async (browser, base, path) => {
     if (!title || title === "Medic Connect" || /not found/i.test(title) || rootText < 200) {
       return { path, ok: false, why: `title "${title}", ${rootText} characters of text` };
     }
+    html = await withShareCard(browser, base, html, path, rendered.picture, rendered.pictureIsArt);
     html = await withLightShareImage(html, path);
     const file = outFile(path);
     mkdirSync(dirname(file), { recursive: true });
