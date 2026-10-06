@@ -126,6 +126,10 @@ const DEFAULT_SHARE = `${SITE}/social-cover.png`;
 const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const unesc = (t) => t.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
+// Figtree has no naira sign, and the build machine has no other fonts to
+// borrow one from, so the sign is drawn: Figtree's N with two bars.
+const textHtml = (t) => esc(t).replace(/₦/g, '<span class="ngn">N</span>');
+
 const cardHtml = (base, { title, price, picture, art, logo }) => {
   const size = title.length > 70 ? 46 : title.length > 52 ? 52 : title.length > 36 ? 60 : 68;
   return `<!doctype html><html><head><base href="${base}/"><meta charset="utf-8"><style>
@@ -138,13 +142,16 @@ body{margin:0;width:1200px;height:630px;overflow:hidden;background:#26306B;font-
 .logo img{height:52px;display:block}
 .title{position:absolute;left:64px;top:168px;width:${picture ? 620 : 1040}px;color:#fff;font-weight:800;font-size:${size}px;line-height:1.05;letter-spacing:-0.04em}
 .price{position:absolute;left:64px;bottom:62px;background:#3B4DC4;color:#fff;font-weight:800;font-size:34px;padding:10px 22px 12px;box-shadow:7px 7px 0 #fff}
+.ngn{position:relative;display:inline-block}
+.ngn::before,.ngn::after{content:"";position:absolute;left:-0.09em;right:-0.09em;height:0.08em;background:currentColor}
+.ngn::before{top:0.39em}.ngn::after{top:0.57em}
 .domain{position:absolute;right:70px;bottom:44px;color:#C6CBF0;font-weight:700;font-size:24px}
 .pic{position:absolute;right:70px;top:84px;width:400px;height:430px;background:${art ? "#EEF1FF" : "#fff"};border:8px solid #fff;box-shadow:14px 14px 0 #3B4DC4;transform:rotate(2.5deg);overflow:hidden}
 .pic img{width:100%;height:100%;object-fit:${art ? "contain" : "cover"};${art ? "padding:24px;" : ""}}
 </style></head><body><div class="ring"></div>
 <div class="logo"><img src="${logo}"></div>
-<div class="title">${esc(title)}</div>
-${price ? `<div class="price">${esc(price)}</div>` : ""}<div class="domain">medicconnect.co</div>
+<div class="title">${textHtml(title)}</div>
+${price ? `<div class="price">${textHtml(price)}</div>` : ""}<div class="domain">medicconnect.co</div>
 ${picture ? `<div class="pic"><img src="${picture}"></div>` : ""}
 </body></html>`;
 };
