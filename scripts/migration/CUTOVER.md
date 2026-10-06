@@ -51,3 +51,21 @@ The new database holds a snapshot taken at 21:01 UTC on 3 October 2026. Anything
 - Take the schema baseline for the single migration trail (`docs/platform-architecture.md`, D2). Not before: the restore replaces the schema.
 
 Held until the cutover is verified: Heard on its own domain and Supabase project, and the account-model addendum for one sign-in across roles.
+
+## Cutover log (6 October 2026)
+
+Done without a fresh export: the new database kept the 3 October snapshot, and the changes since were copied across by primary key.
+
+- Old site in maintenance; its 14 scheduled jobs paused.
+- All 13 post-snapshot migrations applied (NOTICE: 10 test care records removed, 4 kept; 0 credentials settled). Runbook checks pass.
+- Every edge function deployed; `mcp` and the Heard functions removed. `RELINK_RUN_KEY` left unset on purpose: the only caller sends `MU_LINK_SWEEP_KEY`, which notify-relink also accepts.
+- Rows changed after the snapshot copied: 5 logins (password hashes verified identical), 1 identity, 1 profile, 2 people, 5 documents, 2 references, 3 verifications, 2 work preferences, 7 availability rows, 10 parsed fields, 29 profile facets, 22 activity rows. Not copied (machine logs): mu_cv_parses, metrics_audit_findings, 2 admin_alerts, 26 campaign_events, and the midnight parse-retry touches on 7 people.
+- Storage: 1,043 files (applications 981, blog-images 24, creator-uploads 38) copied through a temporary signed-link pair; counts, bytes and a name:size fingerprint match per bucket. Both temporary functions retired.
+- Production deployment on Vercel; www.medicconnect.co primary, medicconnect.co redirects to it (308).
+- New project's 12 scheduled jobs switched on; first runs succeeded and the functions accepted the job keys.
+
+Still to do by hand (the connector will not run drops or deletes):
+- SQL editor: `drop table if exists public.cutover_files; drop function if exists private.cutover_upsert(regclass, jsonb);`
+- Edge Functions: delete `cutover-copy-files` (now a stub that answers 410).
+- Storage: delete the `database_export_03_10_26` bucket on the new project.
+- Smoke test in a browser: contact form email, candidate sign-in, a pre-assessment link, contract signing, an invoice.
