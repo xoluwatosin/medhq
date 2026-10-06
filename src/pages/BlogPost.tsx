@@ -140,6 +140,13 @@ const BlogPost = () => {
         imageAlt={post.featured_image_url ? post.title : undefined}
         type="article"
         publishedTime={post.published_at}
+        // Search results show this trail under the title; without it Google
+        // falls back to the hyphenated address.
+        breadcrumbs={[
+          { name: "Home", path: "/" },
+          { name: "The Bridge", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ]}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Article",

@@ -98,9 +98,14 @@ const renderOne = async (browser, base, path) => {
     // The page has rendered when it has replaced the shell's title.
     await page.waitForFunction(() => document.title && document.title !== "Medic Connect", { timeout: 8_000 })
       .catch(() => undefined);
-    const html = await page.evaluate(() => {
-      // Drop anything injected for the session only.
-      document.querySelectorAll('script[src*="googletagmanager"], [data-radix-portal], [role="dialog"]').forEach((n) => n.remove());
+    // Only two things are taken from the rendered page: the <head> (its own
+    // title, tags and structured data) and what is inside #root. Everything
+    // else is the untouched shell. A pop-up open at capture time lives outside
+    // #root and locks <body> (scroll lock, pointer-events: none, aria-hidden);
+    // none of that may reach visitors, because React replaces #root but never
+    // resets <body>.
+    const rendered = await page.evaluate(() => {
+      document.head.querySelectorAll('script[src*="googletagmanager"]').forEach((n) => n.remove());
       // The shell's site-wide fallback tags come first in <head>, and link
       // previews read the first og:title they find. Where the page set its
       // own version, the fallback goes.
@@ -110,8 +115,15 @@ const renderOne = async (browser, base, path) => {
       if (document.head.querySelector("link[rel=canonical][data-rh]")) {
         document.head.querySelectorAll("link[rel=canonical]:not([data-rh])").forEach((n) => n.remove());
       }
-      return "<!doctype html>\n" + document.documentElement.outerHTML;
+      const root = document.getElementById("root");
+      // Anything inside #root marked as an open overlay goes too.
+      root.querySelectorAll('[role="dialog"], [data-radix-portal]').forEach((n) => n.remove());
+      return { head: document.head.innerHTML, root: root.innerHTML };
     });
+    const html = shell
+      // The shell leaves </head> implied, so the head runs up to <body.
+      .replace(/<head>[\s\S]*?(?=<body)/, () => `<head>${rendered.head}</head>\n  `)
+      .replace(/<div id="root"><\/div>/, () => `<div id="root">${rendered.root}</div>`);
     const title = html.match(/<title[^>]*>([^<]*)<\/title>/)?.[1] ?? "";
     const rootText = html.split('id="root"')[1]?.replace(/<[^>]+>/g, "").trim().length ?? 0;
     if (!title || title === "Medic Connect" || /not found/i.test(title) || rootText < 200) {
