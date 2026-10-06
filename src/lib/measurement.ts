@@ -19,8 +19,40 @@ const FACILITY_ENQUIRY_LABEL = import.meta.env.VITE_GOOGLE_ADS_FACILITY_LABEL;
 
 const DEFAULT_VALUE_NGN = 35000; // Care Assessment Fee
 
+const GA_ID = "G-FT88EMTPEN";
+const STAFF_FLAG = "mc-staff";
+
+/**
+ * Browsers that have signed in to admin belong to the team. Nothing is sent
+ * from them, so their visits, tests and form trials stay out of the numbers.
+ * Visiting any page with ?mc_staff=0 clears the mark on that browser.
+ */
+export function isStaffBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (new URLSearchParams(window.location.search).get("mc_staff") === "0") {
+      localStorage.removeItem(STAFF_FLAG);
+      return false;
+    }
+    return localStorage.getItem(STAFF_FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markStaffBrowser() {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(STAFF_FLAG, "1"); } catch { /* storage blocked */ }
+  (window as unknown as Record<string, boolean>)[`ga-disable-${GA_ID}`] = true;
+  if (AW_ID) (window as unknown as Record<string, boolean>)[`ga-disable-${AW_ID}`] = true;
+}
+
+/** Team-only screens are never counted, whoever opens them. */
+const isInternalPath = (path: string) => /^\/(admin|assessor)(\/|$|\?)/.test(path);
+
 function gtag(...args: unknown[]) {
   if (typeof window === "undefined") return;
+  if (isStaffBrowser()) return;
   window.dataLayer = window.dataLayer || [];
   if (typeof window.gtag === "function") {
     window.gtag(...args);
@@ -50,6 +82,7 @@ export function gaEvent(name: string, params?: Record<string, unknown>) {
 
 /** Fire a SPA page_view so route changes are tracked. */
 export function pageView(path: string, title?: string) {
+  if (isInternalPath(path)) return;
   gaEvent("page_view", { page_path: path, page_title: title });
 }
 

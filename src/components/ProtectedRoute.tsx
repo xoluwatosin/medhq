@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { markStaffBrowser } from "@/lib/measurement";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, isAdminActive, loading } = useAuth();
@@ -10,6 +11,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // (staff sign-in, candidate portal, or an already-active session).
   useEffect(() => {
     if (!loading && user && isAdmin && isAdminActive) {
+      // From now on this browser's visits are the team's, not visitors'.
+      markStaffBrowser();
       const flag = `admin_login_logged_${user.id}`;
       if (!sessionStorage.getItem(flag)) {
         sessionStorage.setItem(flag, "1");

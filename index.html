@@ -58,6 +58,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  // Team browsers (signed in to admin) and team-only screens send nothing.
+  try {
+    if (new URLSearchParams(location.search).get('mc_staff') === '0') localStorage.removeItem('mc-staff');
+    if (localStorage.getItem('mc-staff') === '1' || /^\/(admin|assessor)(\/|$)/.test(location.pathname)) window['ga-disable-G-FT88EMTPEN'] = true;
+  } catch (e) {}
   var __gaInit = function(){ gtag('config', 'G-FT88EMTPEN'); };
   if ('requestIdleCallback' in window) { requestIdleCallback(__gaInit, { timeout: 3000 }); }
   else { setTimeout(__gaInit, 1500); }
