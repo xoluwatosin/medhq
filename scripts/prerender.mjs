@@ -28,7 +28,9 @@ const CONCURRENCY = 4;
 const log = (...a) => console.log("[prerender]", ...a);
 
 // 1. The shell, kept whatever happens next.
-const shell = readFileSync(join(DIST, "index.html"), "utf8");
+// A second run over the same build reads the shell it kept the first time,
+// since index.html by then holds the pre-rendered home page.
+const shell = readFileSync(join(DIST, existsSync(join(DIST, "app.html")) ? "app.html" : "index.html"), "utf8");
 writeFileSync(join(DIST, "app.html"), shell);
 
 const paths = [...readFileSync(join(DIST, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)]

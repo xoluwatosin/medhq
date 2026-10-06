@@ -4,7 +4,7 @@
  */
 import clinicalHero from "@/assets/hero/clinical-hero.jpg";
 import eldercareHero from "@/assets/hero/eldercare-hero.jpg";
-import hospitalStaffingHero from "@/assets/hero/hospital-staffing-hero.jpg";
+import hospitalStaffingHero from "@/assets/hero/hospital-staffing-hero.webp";
 import nannyHero from "@/assets/hero/nanny-hero.jpg";
 import pediatricHero from "@/assets/hero/pediatric-hero.jpg";
 import postnatalHero from "@/assets/hero/postnatal-hero.jpg";
