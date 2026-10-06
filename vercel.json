@@ -6,6 +6,11 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/review",
+      "destination": "https://g.page/r/CZRY7XIEFDWOEBM/review",
+      "permanent": false
+    },
+    {
       "source": "/antenatal-care-at-home",
       "destination": "/antenatal-care",
       "permanent": true
