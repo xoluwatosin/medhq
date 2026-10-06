@@ -319,6 +319,7 @@ const PreAssessment = () => {
       {
         who_for: r.isEnquirer ? "myself" : "someone_else",
         recipient_first_name: r.firstName,
+        intake_newborn_names: intakeRoutingAnswers(intake, r).intake_newborn_names,
         is_parent_guardian: intakeRoutingAnswers(intake, r).intake_filler_parent === "yes"
           ? "yes"
           : answersForRecipient(responses, r.id).is_parent_guardian,

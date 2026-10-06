@@ -26,6 +26,7 @@ import {
   answersForRecipient, CareIntake, emptyIntake, intakeRoutingAnswers, IntakeRecipient, recipientName, scopedKey,
   sectionKeysFor, sectionScope,
 } from "@/lib/care-intake";
+import { resolveCopy, voiceFor, type CopyVoice } from "@/lib/care-copy";
 import {
   MuEmpty, MuHero, MuHeroStrip, MuPage, MuRecordNav, MuRow, MuSection, MuTable,
 } from "@/components/admin/mu/MuShell";
@@ -126,6 +127,34 @@ const TAB_ALIASES: Record<string, string> = {
 };
 
 const dateOf = (value: string | null | undefined) => (value ? formatDate(value) : null);
+
+type AnswerGroup = {
+  key: string;
+  recipientId: string | null;
+  name: string | null;
+  /** Who answered for this person, from the intake. */
+  answeredBy: string | null;
+  sections: CareSection[];
+  answers: CareResponses;
+  /** Staff read section titles about this person by name. */
+  voice: CopyVoice;
+};
+
+/**
+ * Questions the family was not asked because the intake already settled them.
+ * The record still shows the answer, marked as coming from the intake, so a
+ * reader never mistakes a skipped question for a missing answer.
+ */
+const IMPLIED: Record<string, (answers: CareResponses) => string | null> = {
+  is_parent_guardian: (a) =>
+    a.intake_filler_parent === "yes"
+      ? `Yes, ${String(a.intake_relationship ?? "parent").toLowerCase()}`
+      : a.intake_parent_on_request === "yes"
+        ? "The baby's mother is on this request"
+        : null,
+  pn_delivery_date: (a) => (a.intake_newborn_dob ? dateOf(String(a.intake_newborn_dob)) : null),
+  pn_baby_name: (a) => (a.recipient_first_name ? String(a.recipient_first_name) : null),
+};
 
 const whatsappHref = (number: string, text: string) =>
   `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
@@ -306,9 +335,7 @@ const ClientRecord = () => {
   // Answers are held per care recipient (r1__question), exactly as the family
   // gave them, plus the request-wide answers under their plain identifiers.
   // The record is read back the same way, one person at a time.
-  const answerGroups = useMemo<
-    { key: string; recipientId: string | null; name: string | null; sections: CareSection[]; answers: CareResponses }[]
-  >(() => {
+  const answerGroups = useMemo<AnswerGroup[]>(() => {
     if (!definition) return [];
     const clientGroup = (client?.client_group as string | null) ?? null;
     const fallbackKey = service?.questionnaire_section
@@ -322,10 +349,10 @@ const ClientRecord = () => {
         definition,
         buildContext(definition, { clientGroup, serviceKey: fallbackKey, responses }),
       );
-      return [{ key: "all", recipientId: null, name: null, sections, answers: responses }];
+      return [{ key: "all", recipientId: null, name: null, answeredBy: null, sections, answers: responses, voice: voiceFor(responses) }];
     }
 
-    const groups: { key: string; recipientId: string | null; name: string | null; sections: CareSection[]; answers: CareResponses }[] = [];
+    const groups: AnswerGroup[] = [];
     const requestWide = new Map<string, CareSection>();
 
     for (const r of recipients) {
@@ -351,22 +378,33 @@ const ClientRecord = () => {
         if (sectionScope(section.id) === "request") requestWide.set(section.id, section);
         else own.push(section);
       }
+      const name = recipientName(r) || "Care recipient";
+      const relationship = r.relationship === "Other" ? r.relationshipOther : r.relationship;
       groups.push({
         key: r.id,
         recipientId: r.id,
-        name: recipientName(r) || "Care recipient",
+        name,
+        answeredBy: r.isEnquirer
+          ? "Answered by the person receiving care"
+          : relationship
+            ? `Answered by ${name}'s ${relationship.toLowerCase()}`
+            : null,
         sections: own,
         answers,
+        voice: { ...voiceFor({ ...answers, who_for: "someone_else" }, name), parent: false },
       });
     }
 
+    // The arrangements for the whole request read first, then each person.
     if (requestWide.size > 0) {
-      groups.push({
+      groups.unshift({
         key: "request",
         recipientId: null,
         name: "This request",
+        answeredBy: null,
         sections: [...requestWide.values()],
         answers: responses,
+        voice: voiceFor({ who_for: "someone_else" }, recipients.length === 1 ? recipientName(recipients[0]) : null),
       });
     }
     return groups;
@@ -555,7 +593,9 @@ const ClientRecord = () => {
   };
 
   const openSectionEdit = (sectionId: string, fields: CareField[], recipientId: string | null) => {
-    const title = sections.find((s) => s.id === sectionId)?.title ?? "Answers";
+    const group = answerGroups.find((g) => g.recipientId === recipientId);
+    const raw = sections.find((s) => s.id === sectionId)?.title;
+    const title = raw ? resolveCopy(raw, group?.voice ?? voiceFor({})) : "Answers";
     const current: CareResponses = {};
     for (const field of fields) {
       const key = scopedKey(recipientId, field.id);
@@ -835,21 +875,25 @@ const ClientRecord = () => {
                 const visible = group.sections
                   .map((section) => ({
                     section,
-                    fields: section.fields.filter((f) => fieldVisible(f, group.answers)),
+                    fields: section.fields.filter((f) =>
+                      fieldVisible(f, group.answers) || (!isAnswered(group.answers[f.id]) && IMPLIED[f.id]?.(group.answers))),
                   }))
                   .filter((entry) => entry.fields.length > 0);
                 if (visible.length === 0) return null;
                 return (
                   <div key={group.key} className="flex flex-col gap-4">
                     {group.name && (
-                      <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
-                        {group.name}
-                      </h3>
+                      <div>
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
+                          {group.name}
+                        </h3>
+                        {group.answeredBy && <p className="mt-1 text-[13px] text-muted-foreground">{group.answeredBy}</p>}
+                      </div>
                     )}
                     {visible.map(({ section, fields }) => (
                       <MuSection
                         key={`${group.key}-${section.id}`}
-                        title={section.title}
+                        title={resolveCopy(section.title, group.voice)}
                         actions={
                           <CareEditButton
                             label="Correct answers"
@@ -863,14 +907,17 @@ const ClientRecord = () => {
                             const amendment = amendmentFor(scopedKey(group.recipientId, field.id));
                             const value = group.answers[field.id];
                             const answered = isAnswered(value);
+                            const implied = answered ? null : IMPLIED[field.id]?.(group.answers) ?? null;
                             return {
                               label: field.record,
                               value: (
-                                <span className={cn(!answered && "text-muted-foreground")}>
-                                  {readAnswer(field, value, bandLabels)}
+                                <span className={cn(!answered && !implied && "text-muted-foreground")}>
+                                  {implied ?? readAnswer(field, value, bandLabels)}
                                 </span>
                               ),
-                              note: amendment
+                              note: implied
+                                ? "From the intake. The family was not asked this again."
+                                : amendment
                                 ? `What the family said stands. Corrected to ${readAnswer(field, amendment.corrected_value, bandLabels)} by ${amendment.amended_by_name ?? "an administrator"} on ${dateOf(amendment.created_at)}. Reason: ${amendment.reason}`
                                 : undefined,
                             };

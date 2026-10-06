@@ -3,7 +3,7 @@
 // Each persona is assembled the way PreAssessment.tsx assembles the form: the
 // request-wide pages, then each care recipient's pages, routed from the
 // intake's facts and worded in that person's voice. The checks are the faults
-// a walk-through of these fourteen people found in version 10. Set
+// walk-throughs of these people found in versions 10 and 11. Set
 // PERSONA_OUT to a folder to write each person's transcript for review.
 import { describe, expect, it } from "vitest";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import {
 import { buildItinerary } from "@/lib/care-itinerary";
 import { resolveCopy, voiceFor } from "@/lib/care-copy";
 
-const def = JSON.parse(readFileSync("docs/care/pre-assessment-v11.json", "utf8")) as CareDefinition;
+const def = JSON.parse(readFileSync("docs/care/pre-assessment-v12.json", "utf8")) as CareDefinition;
 const NOW = new Date("2026-10-06");
 const dob = (years: number) => `${2026 - years}-03-01`;
 
@@ -58,6 +58,26 @@ const PERSONAS: Persona[] = [
     recipients: [{ firstName: "Folake", isEnquirer: true, dateOfBirth: dob(72), dobKnown: "yes", services: ["eldercare"] }] },
   { id: "self-undecided", clientGroup: "adult", service: "other",
     recipients: [{ firstName: "Yemi", isEnquirer: true, dateOfBirth: dob(40), dobKnown: "yes", services: ["other"] }] },
+  // Omugwo: the new mother's own mother arranges care for her daughter and grandchild.
+  { id: "grandmother-omugwo", clientGroup: "maternal", service: "postnatal",
+    recipients: [
+      { firstName: "Ada", relationship: "Mother", dateOfBirth: dob(31), dobKnown: "yes", services: ["postnatal_mother"] },
+      { firstName: "Zara", relationship: "Grandmother", dateOfBirth: "2026-09-20", dobKnown: "yes", services: ["newborn"] }] },
+  { id: "sister-for-mother-and-baby", clientGroup: "maternal", service: "postnatal",
+    recipients: [
+      { firstName: "Bisi", relationship: "Sister", dateOfBirth: dob(28), dobKnown: "yes", services: ["postnatal_mother"] },
+      { firstName: "Tomi", relationship: "Aunt", dateOfBirth: "2026-09-28", dobKnown: "yes", services: ["newborn"] }] },
+  { id: "self-postnatal-only", clientGroup: "maternal", service: "postnatal",
+    recipients: [{ firstName: "Kemi", isEnquirer: true, dateOfBirth: dob(33), dobKnown: "yes", services: ["postnatal_mother"] }] },
+  { id: "husband-for-wife-only", clientGroup: "maternal", service: "postnatal",
+    recipients: [{ firstName: "Nkem", relationship: "Husband", dateOfBirth: dob(30), dobKnown: "yes", services: ["postnatal_mother"] }] },
+  { id: "self-postnatal-twins", clientGroup: "maternal", service: "postnatal",
+    recipients: [
+      { firstName: "Joy", isEnquirer: true, dateOfBirth: dob(32), dobKnown: "yes", services: ["postnatal_mother"] },
+      { firstName: "Taiwo", relationship: "Mother", dateOfBirth: "2026-09-22", dobKnown: "yes", services: ["newborn"] },
+      { firstName: "Kehinde", relationship: "Mother", dateOfBirth: "2026-09-22", dobKnown: "yes", services: ["newborn"] }] },
+  { id: "mother-for-baby-only", clientGroup: "maternal", service: "postnatal",
+    recipients: [{ firstName: "Dayo", relationship: "Mother", dateOfBirth: "2026-09-18", dobKnown: "yes", services: ["newborn"] }] },
 ];
 
 interface Asked { recipient: string | null; field: CareField; text: string }
@@ -94,6 +114,7 @@ const walk = (p: Persona): Asked[] => {
       ? voiceFor({
         who_for: g.r.isEnquirer ? "myself" : "someone_else",
         recipient_first_name: g.r.firstName,
+        intake_newborn_names: g.answers.intake_newborn_names,
         is_parent_guardian: g.answers.intake_filler_parent === "yes" ? "yes" : undefined,
       })
       : requestVoice;
@@ -123,7 +144,7 @@ if (process.env.PERSONA_OUT) {
   }
 }
 
-describe("pre-assessment v11, as fourteen different people", () => {
+describe("pre-assessment v12, as twenty different people", () => {
   it("does not ask a mother, father or guardian whether they are the parent", () => {
     expect(ids("mother-nanny-two-children")).not.toContain("is_parent_guardian");
     expect(ids("father-additional-needs")).not.toContain("is_parent_guardian");
@@ -188,5 +209,24 @@ describe("pre-assessment v11, as fourteen different people", () => {
     if (falls) expect(falls.text).toContain("Have you had a fall");
     const social = walks["self-older-eldercare"].find((a) => a.field.id === "ec_social");
     expect(social?.text).toContain("Who do you live with?");
+  });
+  it("does not ask a grandmother or aunt arranging omugwo who the baby's parent is", () => {
+    for (const id of ["grandmother-omugwo", "sister-for-mother-and-baby"]) {
+      expect(ids(id)).not.toContain("is_parent_guardian");
+      expect(ids(id)).not.toContain("pr_holder_first_name");
+    }
+  });
+
+  it("names the babies on the request in their mother's questions", () => {
+    const text = (id: string, field: string) => walks[id].find((a) => a.field.id === field)?.text ?? "";
+    expect(text("self-postnatal-and-baby", "pn_feeding")).toContain("How do you feed Zara?");
+    expect(text("grandmother-omugwo", "pn_feeding")).toContain("How does Ada feed Zara?");
+    expect(text("self-postnatal-twins", "pn_feeding")).toContain("How do you feed Taiwo and Kehinde?");
+    expect(text("self-postnatal-and-baby", "pn_mother_support")).toContain("Care of Zara");
+    expect(text("self-postnatal-only", "pn_delivery_date")).toContain("When was your baby born?");
+    expect(text("husband-for-wife-only", "pn_delivery_date")).toContain("When was the baby born?");
+    for (const id of Object.keys(walks)) {
+      expect(walks[id].filter((a) => /\{[A-Za-z]+\}/.test(a.text)).map((a) => a.field.id), id).toEqual([]);
+    }
   });
 });

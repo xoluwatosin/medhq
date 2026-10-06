@@ -14,6 +14,8 @@ export interface CopyVoice {
   recipient: string;
   /** The respondent is the child's parent or guardian. */
   parent: boolean;
+  /** The babies on the request by name, for questions put to their mother. */
+  baby?: string;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface CopyVoice {
 const TOKENS = [
   "subject", "Subject", "possessive", "Possessive",
   "do", "Do", "are", "Are", "have", "Have", "is", "Is", "was", "Was",
-  "them", "their", "child", "Child",
+  "them", "their", "child", "Child", "baby", "Baby",
 ] as const;
 
 const nameFrom = (value: unknown): string => {
@@ -49,6 +51,7 @@ export const voiceFor = (
     self,
     recipient,
     parent: String(responses.is_parent_guardian ?? "") === "yes",
+    baby: nameFrom(responses.intake_newborn_names),
   };
 };
 
@@ -83,6 +86,9 @@ const valueFor = (token: string, voice: CopyVoice): string => {
     case "Child": return capitalise(
       voice.parent && voice.recipient === "the person receiving care" ? "your child" : voice.recipient,
     );
+    // A baby on the request is named; otherwise it is the mother's baby.
+    case "baby": return voice.baby || (voice.self ? "your baby" : "the baby");
+    case "Baby": return capitalise(voice.baby || (voice.self ? "your baby" : "the baby"));
     default: return `{${token}}`;
   }
 };

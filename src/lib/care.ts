@@ -270,6 +270,8 @@ export const INTAKE_FACTS = [
   "intake_first_recipient",
   "intake_sole_self",
   "intake_newborn_dob",
+  "intake_newborn_names",
+  "intake_parent_on_request",
 ];
 
 /** Age bands for routing, never for a clinical judgement. */
@@ -363,7 +365,7 @@ export const derivedFacts = (
     derived_age_band: band,
     derived_recipient_group: group,
     derived_service: service || "unknown",
-    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" ? "yes" : "no",
+    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" || String(responses.intake_filler_parent ?? "") === "yes" ? "yes" : "no",
     derived_service_conflict: conflictWithRecorded || impossible ? "yes" : "no",
   };
 };

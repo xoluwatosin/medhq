@@ -242,7 +242,7 @@ export function derivedFacts(
     derived_age_band: band,
     derived_recipient_group: group,
     derived_service: service || "unknown",
-    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" ? "yes" : "no",
+    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" || String(responses.intake_filler_parent ?? "") === "yes" ? "yes" : "no",
     derived_service_conflict: conflict ? "yes" : "no",
   };
 }
@@ -892,6 +892,9 @@ export function intakeRoutingAnswers(
   const newborn = recipients.find((x) => x.id !== r.id && services(x).includes("newborn") && str(x.dateOfBirth));
   const relationship = str(r.relationship);
   const isEnquirer = r.isEnquirer === true;
+  const others = recipients.filter((x) => x.id !== r.id);
+  const babies = others.filter((x) => services(x).includes("newborn")).map((x) => str(x.firstName).trim()).filter(Boolean);
+  const names = babies.length <= 1 ? (babies[0] ?? "") : `${babies.slice(0, -1).join(", ")} and ${babies[babies.length - 1]}`;
   return {
     who_for: isEnquirer ? "myself" : "someone_else",
     recipient_first_name: str(r.firstName),
@@ -903,6 +906,9 @@ export function intakeRoutingAnswers(
     intake_first_recipient: recipients[0]?.id === r.id ? "yes" : "no",
     intake_sole_self: recipients.length === 1 && isEnquirer ? "yes" : "no",
     intake_newborn_dob: newborn ? str(newborn.dateOfBirth) : "",
+    intake_newborn_names: names,
+    intake_parent_on_request:
+      services(r).includes("newborn") && others.some((x) => services(x).includes("postnatal_mother")) ? "yes" : "no",
   };
 }
 
