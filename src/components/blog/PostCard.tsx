@@ -19,6 +19,24 @@ export const postDate = (iso: string, month: "short" | "long" = "short") =>
 /** The first paragraph of an excerpt; some excerpts carry several. */
 export const firstParagraph = (text?: string) => (text || "").split(/\n\s*\n/)[0].trim();
 
+/**
+ * A description short enough for search results and link previews (about 155
+ * characters): whole sentences while they fit, otherwise cut at a word.
+ */
+export const shareDescription = (text: string, max = 155) => {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const sentences = clean.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [];
+  let out = "";
+  for (const s of sentences) {
+    if ((out + s).trim().length > max) break;
+    out += s;
+  }
+  if (out.trim().length >= 70) return out.trim();
+  const cut = clean.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:]$/, "")}…`;
+};
+
 /** Minutes to read, at an easy 220 words a minute. */
 export const readMinutes = (content: string) => Math.max(1, Math.round(content.split(/\s+/).filter(Boolean).length / 220));
 

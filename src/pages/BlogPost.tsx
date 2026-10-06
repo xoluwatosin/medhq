@@ -9,7 +9,7 @@ import SEO from "@/components/SEO";
 import CareRequestDialog from "@/components/CareRequestDialog";
 import { Chevrons, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
-import PostCard, { firstParagraph, postDate, readMinutes } from "@/components/blog/PostCard";
+import PostCard, { firstParagraph, postDate, readMinutes, shareDescription } from "@/components/blog/PostCard";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Share2 } from "lucide-react";
@@ -137,7 +137,7 @@ const BlogPost = () => {
     <div className="min-h-dvh bg-background">
       <SEO
         title={`${post.title} | The Bridge`}
-        description={lede || `${post.title}, from The Bridge.`}
+        description={lede ? shareDescription(lede) : `${post.title}, from The Bridge.`}
         path={`/blog/${post.slug}`}
         image={post.featured_image_url || undefined}
         imageAlt={post.featured_image_url ? post.title : undefined}
@@ -154,7 +154,7 @@ const BlogPost = () => {
           "@context": "https://schema.org",
           "@type": "Article",
           "headline": post.title,
-          "description": lede,
+          "description": lede ? shareDescription(lede) : undefined,
           "image": post.featured_image_url || undefined,
           "author": { "@type": "Person", "name": post.author },
           "datePublished": post.published_at,
