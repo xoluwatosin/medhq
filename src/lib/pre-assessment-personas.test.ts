@@ -16,12 +16,16 @@ import {
 import { buildItinerary } from "@/lib/care-itinerary";
 import { resolveCopy, voiceFor } from "@/lib/care-copy";
 
-const def = JSON.parse(readFileSync("docs/care/pre-assessment-v12.json", "utf8")) as CareDefinition;
+const def = JSON.parse(readFileSync("docs/care/pre-assessment-v13.json", "utf8")) as CareDefinition;
 const NOW = new Date("2026-10-06");
 const dob = (years: number) => `${2026 - years}-03-01`;
 
 type R = Partial<IntakeRecipient> & { firstName: string; services: string[] };
-interface Persona { id: string; clientGroup: string; service: string; recipients: R[]; request?: CareResponses }
+interface Persona {
+  id: string; clientGroup: string; service: string; recipients: R[]; request?: CareResponses;
+  /** Answers given along the way that change what is asked next. */
+  answers?: CareResponses;
+}
 
 const PERSONAS: Persona[] = [
   { id: "self-clinical", clientGroup: "adult", service: "clinical_home_care",
@@ -34,7 +38,7 @@ const PERSONAS: Persona[] = [
     recipients: [{ firstName: "Funmi", isEnquirer: true, dateOfBirth: dob(29), dobKnown: "yes", services: ["antenatal"] }] },
   { id: "daughter-for-mother", clientGroup: "older_person", service: "eldercare",
     recipients: [{ firstName: "Grace", relationship: "Daughter", dateOfBirth: dob(78), dobKnown: "yes", services: ["eldercare"] }] },
-  { id: "son-abroad-for-father", clientGroup: "older_person", service: "eldercare",
+  { id: "son-abroad-for-father", clientGroup: "older_person", service: "eldercare", answers: { enquirer_location: "abroad" },
     recipients: [{ firstName: "Emeka", relationship: "Son", dobKnown: "no", approxAge: 80, services: ["eldercare"] }] },
   { id: "mother-nanny-two-children", clientGroup: "child", service: "nanny",
     recipients: [
@@ -90,7 +94,7 @@ const walk = (p: Persona): Asked[] => {
   };
   const request: CareResponses = p.request ?? { start_when: "this_week" };
   const routing = (r: IntakeRecipient): CareResponses => withDerived({
-    ...request, ...intakeRoutingAnswers(intake, r), service_requested: sectionKeysFor(r)[0] ?? p.service,
+    ...request, ...(p.answers ?? {}), ...intakeRoutingAnswers(intake, r), service_requested: sectionKeysFor(r)[0] ?? p.service,
   }, { recordedService: p.service, now: NOW });
   const sectionsFor = (r: IntakeRecipient): CareSection[] => {
     const found = new Map<string, CareSection>();
@@ -144,16 +148,12 @@ if (process.env.PERSONA_OUT) {
   }
 }
 
-describe("pre-assessment v12, as twenty different people", () => {
+describe("pre-assessment v13, as twenty different people", () => {
   it("does not ask a mother, father or guardian whether they are the parent", () => {
     expect(ids("mother-nanny-two-children")).not.toContain("is_parent_guardian");
     expect(ids("father-additional-needs")).not.toContain("is_parent_guardian");
     expect(ids("father-for-mother-and-baby")).not.toContain("is_parent_guardian");
     expect(ids("self-postnatal-and-baby")).not.toContain("is_parent_guardian");
-  });
-
-  it("still asks a grandmother who holds parental responsibility", () => {
-    expect(ids("grandmother-paediatric")).toContain("is_parent_guardian");
   });
 
   it("does not ask the baby's name or birth date again", () => {
@@ -227,6 +227,61 @@ describe("pre-assessment v12, as twenty different people", () => {
     expect(text("husband-for-wife-only", "pn_delivery_date")).toContain("When was the baby born?");
     for (const id of Object.keys(walks)) {
       expect(walks[id].filter((a) => /\{[A-Za-z]+\}/.test(a.text)).map((a) => a.field.id), id).toEqual([]);
+    }
+  });
+  it("asks someone who is not the parent whether the parents agree, not for their details", () => {
+    expect(ids("grandmother-paediatric")).toContain("parent_consent");
+    expect(ids("grandmother-paediatric")).not.toContain("is_parent_guardian");
+    expect(ids("grandmother-paediatric")).not.toContain("pr_holder_first_name");
+    for (const id of ["father-additional-needs", "mother-nanny-two-children", "grandmother-omugwo"]) {
+      expect(ids(id), id).not.toContain("parent_consent");
+    }
+  });
+
+  it("asks anyone arranging care for an adult one plain consent question", () => {
+    for (const id of ["neighbour-for-older-man", "daughter-for-mother", "wife-for-husband", "grandmother-omugwo"]) {
+      expect(ids(id).filter((f) => f === "recipient_consent").length, id).toBe(1);
+      expect(ids(id), id).not.toContain("decision_authority");
+    }
+    expect(ids("self-clinical")).not.toContain("recipient_consent");
+  });
+
+  it("asks family abroad for their time zone and a local contact", () => {
+    const abroad = ids("son-abroad-for-father");
+    expect(abroad).toContain("enquirer_timezone");
+    expect(abroad).toContain("local_contact");
+    expect(abroad).not.toContain("alt_contact_has");
+    expect(ids("daughter-for-mother")).toContain("enquirer_location");
+    expect(ids("daughter-for-mother")).not.toContain("local_contact");
+    expect(ids("self-older-eldercare")).not.toContain("enquirer_location");
+  });
+
+  it("asks older people how they like to be addressed", () => {
+    expect(walks["self-older-eldercare"].find((a) => a.field.id === "address_as")?.text).toContain("How would you like to be addressed?");
+    expect(walks["neighbour-for-older-man"].find((a) => a.field.id === "address_as")?.text).toContain("How would Peter like to be addressed?");
+    expect(ids("self-clinical")).not.toContain("address_as");
+  });
+
+  it("helps someone unsure of the service say what is needed", () => {
+    expect(ids("self-undecided")).toContain("ot_help_areas");
+    expect(ids("self-undecided")).not.toContain("ot_what");
+  });
+
+  it("never asks the same question twice for one person", () => {
+    for (const [id, asked] of Object.entries(walks)) {
+      const seen = new Map<string, number>();
+      for (const a of asked) {
+        if (a.field.id.startsWith("section:")) continue;
+        const key = `${a.recipient}:${a.field.id}`;
+        seen.set(key, (seen.get(key) ?? 0) + 1);
+      }
+      expect([...seen].filter(([, n]) => n > 1).map(([k]) => k), id).toEqual([]);
+    }
+  });
+
+  it("asks household and nanny-role questions once, however many people are on the request", () => {
+    for (const field of ["childcare_now", "nn_pattern", "nn_priorities", "enquirer_location"]) {
+      expect(ids("mother-nanny-two-children").filter((f) => f === field).length, field).toBeLessThanOrEqual(1);
     }
   });
 });

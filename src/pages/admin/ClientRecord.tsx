@@ -151,7 +151,9 @@ const IMPLIED: Record<string, (answers: CareResponses) => string | null> = {
       ? `Yes, ${String(a.intake_relationship ?? "parent").toLowerCase()}`
       : a.intake_parent_on_request === "yes"
         ? "The baby's mother is on this request"
-        : null,
+        : a.intake_relationship
+          ? `No, ${String(a.intake_relationship).toLowerCase()}`
+          : null,
   pn_delivery_date: (a) => (a.intake_newborn_dob ? dateOf(String(a.intake_newborn_dob)) : null),
   pn_baby_name: (a) => (a.recipient_first_name ? String(a.recipient_first_name) : null),
 };
