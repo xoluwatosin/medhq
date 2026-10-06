@@ -137,6 +137,7 @@ import LiveChatButton from "./components/LiveChatButton";
 import AccessibilityPanel from "./components/care/AccessibilityPanel";
 import { Analytics } from "./components/Analytics";
 import IPhoneScreenEdges from "./components/IPhoneScreenEdges";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -160,6 +161,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true }}>
+        <ScrollToTop />
         <IPhoneScreenEdges />
         <Analytics />
         <AuthProvider>
