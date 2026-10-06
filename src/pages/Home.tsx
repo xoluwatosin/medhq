@@ -3,7 +3,6 @@ import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import WelcomeIntake from "@/components/WelcomeIntake";
-import MobileWhatsAppBar from "@/components/mc/MobileWhatsAppBar";
 import { Highlight, Watermark } from "@/components/mc/brand";
 import Credentials from "@/components/mc/Credentials";
 import { art } from "@/components/mc/art";
@@ -220,9 +219,6 @@ const Home = () => (
     </section>
 
     <Footer />
-    {/* Room for the sticky bar on phones, in the footer's navy so no white strip shows. */}
-    <div aria-hidden="true" className="h-[calc(76px+env(safe-area-inset-bottom))] bg-navy lg:hidden" />
-    <MobileWhatsAppBar />
   </div>
 );
 
