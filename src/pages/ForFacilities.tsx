@@ -9,6 +9,8 @@ import KitPillHeading from "@/components/kit/KitPillHeading";
 import { NotchTag, Watermark } from "@/components/mc/brand";
 import Credentials from "@/components/mc/Credentials";
 import { SectionHead } from "@/components/mc/service-sections";
+import ServiceDirectory from "@/components/mc/ServiceDirectory";
+import { directoryGroups } from "@/content/seo/site-directory";
 import { art } from "@/components/mc/art";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
 import { cn } from "@/lib/utils";
@@ -245,6 +247,14 @@ const ForFacilities = () => {
             <FacilityEnquiryForm />
           </div>
         </section>
+
+        <ServiceDirectory
+          id="all-facility-heading"
+          eyebrow="Every facility service"
+          title="Staffing and support, by need"
+          groups={directoryGroups("facilities")}
+          exclude="/for-facilities"
+        />
 
         <section aria-labelledby="trust-heading" className="mt-20 lg:mt-28">
           <SectionHead id="trust-heading" eyebrow="Why facilities trust us" title="Checked, licensed and accountable." />

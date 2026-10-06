@@ -9,6 +9,10 @@ import {
 import lockupWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import { NotchTag } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
+import { NEIGHBOURHOODS } from "@/lib/neighbourhoods";
+
+/** Every area page, so each is one link from anywhere on the site. */
+const areaLinks = NEIGHBOURHOODS.map((n) => ({ label: n.name, href: `/home-care-${n.slug}` }));
 
 type FooterLink = { label: string; href: string; external?: boolean };
 type FooterColumn = { heading: string; links: FooterLink[] };
@@ -117,6 +121,18 @@ const Footer = () => {
           ))}
         </div>
 
+        {/* Desktop: every area we serve, one link each. */}
+        <div className="mb-8 hidden border-t border-hairline-navy pt-6 md:block lg:pr-[420px]">
+          <h3 className="label-caps !text-muted-navy mb-3">Home care across Lagos</h3>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
+            {areaLinks.map((a) => (
+              <li key={a.href}>
+                <Link to={a.href} className="hover:text-white transition-colors duration-200">{a.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Mobile: the same columns, collapsible */}
         <div className="md:hidden mb-8">
           <Accordion type="single" collapsible className="border-t border-hairline-navy">
@@ -152,6 +168,22 @@ const Footer = () => {
                 </AccordionContent>
               </AccordionItem>
             ))}
+            <AccordionItem value="areas" className="border-b border-hairline-navy">
+              <AccordionTrigger className="min-h-[44px] py-3 text-[15px] font-semibold text-white hover:no-underline">
+                Areas we cover
+              </AccordionTrigger>
+              <AccordionContent className="pb-2">
+                <ul className="grid grid-cols-2 text-[15px] text-body-navy">
+                  {areaLinks.map((a) => (
+                    <li key={`m-${a.href}`}>
+                      <Link to={a.href} className="flex min-h-[44px] items-center hover:text-white transition-colors duration-200">
+                        {a.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
 
           <div className="flex flex-wrap gap-x-6 text-[15px] text-body-navy">

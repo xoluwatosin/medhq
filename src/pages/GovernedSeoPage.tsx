@@ -6,6 +6,7 @@ import { PAGE_VISUALS } from "@/content/seo/page-visuals";
 import { GOVERNED_FEES, GOVERNED_MODULES } from "@/content/seo/governed-modules";
 import { art } from "@/components/mc/art";
 import NotFound from "@/pages/NotFound";
+import { directoryGroups, siblingsOf } from "@/content/seo/site-directory";
 
 const serviceSchema = (page: GovernedPage) => ({
   "@context": "https://schema.org",
@@ -111,6 +112,11 @@ const GovernedSeoPage = () => {
       modules={page.moduleCodes.map((code) => GOVERNED_MODULES[code]).filter(Boolean)}
       reasons={BENEFITS}
       bandPerson={isCandidate ? art.charCaregiver : isEmployer ? art.charDoctor : art.charNurse}
+      related={
+        page.path === "/careers"
+          ? directoryGroups("jobs")[0].links.filter((l) => l.path !== "/careers")
+          : siblingsOf(page.path)
+      }
     />
   );
 };

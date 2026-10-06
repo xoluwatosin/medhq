@@ -9,6 +9,8 @@ import { KitMain } from "@/components/kit/KitLayout";
 import { Watermark } from "@/components/mc/brand";
 
 import KitPillHeading from "@/components/kit/KitPillHeading";
+import ServiceDirectory from "@/components/mc/ServiceDirectory";
+import { directoryGroups } from "@/content/seo/site-directory";
 
 /**
  * The care at home service lines with starting prices from the published price
@@ -84,6 +86,13 @@ const CareAtHome = () => (
         </h2>
         <ServiceCards services={homeServices} />
       </section>
+
+      <ServiceDirectory
+        id="all-care-heading"
+        eyebrow="Everything we arrange at home"
+        title="Find the care you need"
+        groups={directoryGroups("clinical", "maternity", "children", "older", "guides")}
+      />
 
       <CTASection
         headline="Ready to arrange care at home?"
