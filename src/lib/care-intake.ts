@@ -38,7 +38,7 @@ export const CARE_SERVICES: CareServiceOption[] = [
     sectionKey: "postnatal",
     bands: ["adult"],
   },
-  { value: "newborn", label: "Newborn care", sectionKey: "newborn", bands: ["newborn", "infant"] },
+  { value: "newborn", label: "Newborn care", sectionKey: "newborn", bands: ["newborn", "infant", "expected"] },
   {
     value: "paediatric",
     label: "Paediatric care",
@@ -56,8 +56,9 @@ export const CARE_SERVICES: CareServiceOption[] = [
     label: "Nanny and childcare",
     sectionKey: "nanny",
     // Childcare is for a child. Attaching it to an adult is a conflict the
-    // respondent resolves, exactly as every other age rule is resolved.
-    bands: ["newborn", "infant", "child"],
+    // respondent resolves, exactly as every other age rule is resolved. A
+    // nanny is often arranged before the baby is born.
+    bands: ["newborn", "infant", "child", "expected"],
   },
   { value: "post_surgical", label: "Post-surgical care at home", sectionKey: "post_surgical" },
   { value: "eldercare", label: "Eldercare and companion care", sectionKey: "eldercare", bands: ["older_person", "adult"] },
@@ -88,6 +89,8 @@ export interface IntakeRecipient extends IntakePerson {
   /** True when the person asking is also receiving care. */
   isEnquirer?: boolean;
   dobKnown?: "yes" | "no";
+  /** Not born yet: dateOfBirth holds the expected date. */
+  expectedBirth?: boolean;
   dateOfBirth?: string;
   approxAge?: number | null;
   services: string[];
@@ -198,9 +201,16 @@ export const recipientAgeYears = (r: IntakeRecipient, now: Date = new Date()): n
   return Number.isFinite(approx) && approx >= 0 && approx <= 120 ? Math.floor(approx) : null;
 };
 
+/** An expected date more than ten months away is almost certainly a typing slip. */
+const expectedTooFar = (date: string, now: Date = new Date()) => {
+  const due = new Date(`${date.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(due.getTime()) || due.getTime() - now.getTime() > 305 * 86_400_000;
+};
+
 export const recipientBand = (r: IntakeRecipient, now: Date = new Date()): string => {
   const fromDob = ageFromDateOfBirth(r.dateOfBirth, now);
   if (fromDob) return ageBandOf(fromDob.years, fromDob.days);
+  if (r.expectedBirth && r.dateOfBirth) return "expected";
   return ageBandOf(recipientAgeYears(r, now), null);
 };
 
@@ -320,7 +330,9 @@ export const stepProblems = (
         problems[`${r.id}.relationship`] = "Choose a relationship";
       }
       if (r.dobKnown === "yes" && !filled(r.dateOfBirth)) {
-        problems[`${r.id}.dateOfBirth`] = "Enter a date of birth";
+        problems[`${r.id}.dateOfBirth`] = r.expectedBirth ? "Enter the expected date of birth" : "Enter a date of birth";
+      } else if (r.expectedBirth && r.dateOfBirth && expectedTooFar(r.dateOfBirth, now)) {
+        problems[`${r.id}.dateOfBirth`] = "Enter an expected date within the next ten months";
       }
       if (r.dobKnown === "no" && recipientAgeYears(r, now) === null) {
         problems[`${r.id}.approxAge`] = "Enter an approximate age in years";
@@ -454,7 +466,7 @@ export const intakeRoutingAnswers = (intake: CareIntake, r: IntakeRecipient): Re
   return {
     who_for: r.isEnquirer ? "myself" : "someone_else",
     recipient_first_name: r.firstName,
-    dob_known: r.dobKnown ?? null,
+    dob_known: r.expectedBirth ? "expected" : r.dobKnown ?? null,
     date_of_birth: r.dateOfBirth ?? null,
     approx_age: r.approxAge ?? null,
     intake_relationship: r.relationship ?? "",

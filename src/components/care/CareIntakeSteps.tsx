@@ -258,16 +258,21 @@ export const CareIntakeFlow = ({
 
       <div className="mt-4">
         <p className="text-[15px] font-bold text-ink2">Date of birth</p>
-        <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+        <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
           <Pick
             label="I know the date of birth"
-            selected={r.dobKnown === "yes"}
-            onClick={() => setRecipient(r.id, { dobKnown: "yes", approxAge: null })}
+            selected={r.dobKnown === "yes" && !r.expectedBirth}
+            onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: false, approxAge: null })}
           />
           <Pick
             label="I do not know the exact date"
             selected={r.dobKnown === "no"}
-            onClick={() => setRecipient(r.id, { dobKnown: "no", dateOfBirth: undefined })}
+            onClick={() => setRecipient(r.id, { dobKnown: "no", expectedBirth: false, dateOfBirth: undefined })}
+          />
+          <Pick
+            label="Not born yet"
+            selected={r.dobKnown === "yes" && !!r.expectedBirth}
+            onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: true, approxAge: null })}
           />
         </div>
         {problem(`${r.id}.dobKnown`) && (
@@ -275,7 +280,10 @@ export const CareIntakeFlow = ({
         )}
         {r.dobKnown === "yes" && (
           <div className="mt-3">
-            <Field label="Date of birth" error={problem(`${r.id}.dateOfBirth`)}>
+            <Field
+              label={r.expectedBirth ? "Expected date of birth" : "Date of birth"}
+              error={problem(`${r.id}.dateOfBirth`)}
+            >
               <Input
                 type="date"
                 className={textClass}

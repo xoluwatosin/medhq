@@ -5,7 +5,7 @@ import { validateDefinition } from "../../src/lib/care-schema";
 import type { CareDefinition } from "../../src/lib/care";
 
 const definition = JSON.parse(
-  readFileSync(new URL("../../docs/care/pre-assessment-v13.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../docs/care/pre-assessment-v14.json", import.meta.url), "utf8"),
 ) as CareDefinition;
 
 const result = validateDefinition(definition);

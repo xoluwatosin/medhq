@@ -194,6 +194,7 @@ export function ageFromDateOfBirth(
   return { years: Math.max(years, 0), days };
 }
 
+export const BABY_BANDS = ["newborn", "infant", "expected"];
 export const CHILD_ONLY_SERVICES = ["nanny", "additional_needs"];
 export const MATERNAL_SERVICES = ["antenatal", "postnatal"];
 
@@ -205,20 +206,22 @@ export function derivedFacts(
   const self = String(responses.who_for ?? "") === "myself";
   const age = ageFromDateOfBirth(responses.date_of_birth, now);
   const approx = Number(responses.approx_age);
-  const years = age
+  // A baby not born yet is held with the expected date (mirrors care.ts).
+  const expected = String(responses.dob_known ?? "") === "expected" && !age;
+  const years = expected ? null : age
     ? age.years
     : String(responses.dob_known ?? "") === "no" && Number.isFinite(approx) && approx >= 0 && approx <= 120
       ? Math.floor(approx)
       : null;
-  const band = ageBandOf(years, age ? age.days : null);
+  const band = expected ? "expected" : ageBandOf(years, age ? age.days : null);
   const answered =
     String(responses.service_confirmed ?? "") || String(responses.service_requested ?? "");
   const service = answered || String(options.recordedService ?? "") || "";
 
   const group =
-    MATERNAL_SERVICES.includes(service) && band !== "newborn" && band !== "infant"
+    MATERNAL_SERVICES.includes(service) && !BABY_BANDS.includes(band)
       ? "maternal"
-      : band === "newborn" || band === "infant"
+      : BABY_BANDS.includes(band)
         ? "baby"
         : band === "child"
           ? "child"
@@ -232,9 +235,9 @@ export function derivedFacts(
   const settled = !!String(responses.service_confirmed ?? "");
   const conflict =
     (!settled && !!recorded && !!answered && recorded !== answered) ||
-    (self && (band === "newborn" || band === "infant" || band === "child")) ||
+    (self && (BABY_BANDS.includes(band) || band === "child")) ||
     (CHILD_ONLY_SERVICES.includes(service) && years !== null && years >= 18) ||
-    (MATERNAL_SERVICES.includes(service) && (band === "child" || band === "newborn" || band === "infant"));
+    (MATERNAL_SERVICES.includes(service) && (band === "child" || BABY_BANDS.includes(band)));
 
   return {
     derived_is_self: self ? "yes" : "no",
@@ -898,7 +901,7 @@ export function intakeRoutingAnswers(
   return {
     who_for: isEnquirer ? "myself" : "someone_else",
     recipient_first_name: str(r.firstName),
-    dob_known: r.dobKnown ?? null,
+    dob_known: r.expectedBirth === true ? "expected" : r.dobKnown ?? null,
     date_of_birth: r.dateOfBirth ?? null,
     approx_age: r.approxAge ?? null,
     intake_relationship: relationship,
@@ -981,6 +984,9 @@ export function validateIntake(value: unknown): string | null {
       if (!shortText(r[key])) return "We cannot read the care recipient details";
     }
     if (r.dobKnown !== undefined && r.dobKnown !== null && !["yes", "no"].includes(String(r.dobKnown))) {
+      return "We cannot read the care recipient details";
+    }
+    if (r.expectedBirth !== undefined && r.expectedBirth !== null && typeof r.expectedBirth !== "boolean") {
       return "We cannot read the care recipient details";
     }
     if (r.approxAge !== undefined && r.approxAge !== null) {

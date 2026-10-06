@@ -16,7 +16,7 @@ import {
 import { buildItinerary } from "@/lib/care-itinerary";
 import { resolveCopy, voiceFor } from "@/lib/care-copy";
 
-const def = JSON.parse(readFileSync("docs/care/pre-assessment-v13.json", "utf8")) as CareDefinition;
+const def = JSON.parse(readFileSync("docs/care/pre-assessment-v14.json", "utf8")) as CareDefinition;
 const NOW = new Date("2026-10-06");
 const dob = (years: number) => `${2026 - years}-03-01`;
 
@@ -80,6 +80,12 @@ const PERSONAS: Persona[] = [
       { firstName: "Joy", isEnquirer: true, dateOfBirth: dob(32), dobKnown: "yes", services: ["postnatal_mother"] },
       { firstName: "Taiwo", relationship: "Mother", dateOfBirth: "2026-09-22", dobKnown: "yes", services: ["newborn"] },
       { firstName: "Kehinde", relationship: "Mother", dateOfBirth: "2026-09-22", dobKnown: "yes", services: ["newborn"] }] },
+  // A live-in newborn nanny, arranged before a baby born by surrogate arrives.
+  { id: "surrogacy-newborn-nanny", clientGroup: "child", service: "nanny",
+    request: { start_when: "specific", care_times: ["morning", "afternoon", "evening", "overnight"] },
+    recipients: [{ firstName: "Baby", relationship: "Mother", dateOfBirth: "2026-11-20", dobKnown: "yes", expectedBirth: true, services: ["nanny"] }] },
+  { id: "mother-newborn-nanny", clientGroup: "child", service: "nanny",
+    recipients: [{ firstName: "Tobi", relationship: "Mother", dateOfBirth: "2026-09-28", dobKnown: "yes", services: ["nanny"] }] },
   { id: "mother-for-baby-only", clientGroup: "maternal", service: "postnatal",
     recipients: [{ firstName: "Dayo", relationship: "Mother", dateOfBirth: "2026-09-18", dobKnown: "yes", services: ["newborn"] }] },
 ];
@@ -148,7 +154,7 @@ if (process.env.PERSONA_OUT) {
   }
 }
 
-describe("pre-assessment v13, as twenty different people", () => {
+describe("pre-assessment v14, as the families who fill it in", () => {
   it("does not ask a mother, father or guardian whether they are the parent", () => {
     expect(ids("mother-nanny-two-children")).not.toContain("is_parent_guardian");
     expect(ids("father-additional-needs")).not.toContain("is_parent_guardian");
@@ -283,5 +289,25 @@ describe("pre-assessment v13, as twenty different people", () => {
     for (const field of ["childcare_now", "nn_pattern", "nn_priorities", "enquirer_location"]) {
       expect(ids("mother-nanny-two-children").filter((f) => f === field).length, field).toBeLessThanOrEqual(1);
     }
+  });
+  it("asks about a baby not born yet in a way that makes sense", () => {
+    const asked = ids("surrogacy-newborn-nanny");
+    for (const odd of ["nn_naps", "nn_toileting", "nn_activities", "nn_diet_has", "regular_medicines", "allergies",
+      "hospital_recent", "languages", "communication_support", "child_knows_visit", "nn_duties_child", "nn_overnight"]) {
+      expect(asked, odd).not.toContain(odd);
+    }
+    for (const needed of ["nb_start", "nb_birth_place", "nb_feeding", "nb_tasks", "nb_nights", "nb_sleep_place", "expected_notes", "nn_pattern", "nn_experience"]) {
+      expect(asked, needed).toContain(needed);
+    }
+  });
+
+  it("asks a newborn's nanny about feeds and nights, not a toddler's day", () => {
+    const asked = ids("mother-newborn-nanny");
+    expect(asked).toContain("nb_feeding");
+    expect(asked).toContain("nb_nights");
+    expect(asked).not.toContain("nb_start");
+    expect(asked).not.toContain("nn_naps");
+    expect(asked).toContain("regular_medicines");
+    expect(ids("mother-nanny-two-children", "Tobi")).not.toContain("nb_feeding");
   });
 });

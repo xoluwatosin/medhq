@@ -304,6 +304,9 @@ export const ageFromDateOfBirth = (
   return { years: Math.max(years, 0), days };
 };
 
+/** A baby, born or expected. */
+export const BABY_BANDS = ["newborn", "infant", "expected"];
+
 /** Services that only make sense for a child. */
 export const CHILD_ONLY_SERVICES = ["nanny", "additional_needs"];
 /** Services that only make sense for a pregnancy or a new mother. */
@@ -323,12 +326,15 @@ export const derivedFacts = (
   const age = ageFromDateOfBirth(responses.date_of_birth, now);
   const approx = Number(responses.approx_age);
   const dobKnown = String(responses.dob_known ?? "");
-  const years = age
+  // A baby not born yet is held with the expected date. Once that date has
+  // passed the baby is simply a newborn.
+  const expected = dobKnown === "expected" && !age;
+  const years = expected ? null : age
     ? age.years
     : dobKnown === "no" && Number.isFinite(approx) && approx >= 0 && approx <= 120
       ? Math.floor(approx)
       : null;
-  const band = ageBandOf(years, age ? age.days : null);
+  const band = expected ? "expected" : ageBandOf(years, age ? age.days : null);
   // Where the recorded service and the answer disagree, the person is asked
   // once which support to prepare for. That answer settles it.
   const answeredService =
@@ -338,9 +344,9 @@ export const derivedFacts = (
   // The group the questions are actually written for. A maternal journey is
   // the service, not the age; a baby is the age, not the service.
   const group =
-    MATERNAL_SERVICES.includes(service) && band !== "newborn" && band !== "infant"
+    MATERNAL_SERVICES.includes(service) && !BABY_BANDS.includes(band)
       ? "maternal"
-      : band === "newborn" || band === "infant"
+      : BABY_BANDS.includes(band)
         ? "baby"
         : band === "child"
           ? "child"
@@ -355,9 +361,9 @@ export const derivedFacts = (
   const conflictWithRecorded =
     !settled && !!recorded && !!answeredService && recorded !== answeredService;
   const impossible =
-    (self && (band === "newborn" || band === "infant" || band === "child")) ||
+    (self && (BABY_BANDS.includes(band) || band === "child")) ||
     (CHILD_ONLY_SERVICES.includes(service) && years !== null && years >= 18) ||
-    (MATERNAL_SERVICES.includes(service) && (band === "child" || band === "newborn" || band === "infant"));
+    (MATERNAL_SERVICES.includes(service) && (band === "child" || BABY_BANDS.includes(band)));
 
   return {
     derived_is_self: self ? "yes" : "no",
