@@ -59,6 +59,10 @@ interface Props {
 }
 
 /** Names are always held as two parts. A stored single name is split once. */
+const ABROAD = "care_from_abroad";
+
+const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
 const splitName = (raw: string): { first: string; last: string } => {
   const parts = (raw || "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { first: "", last: "" };
@@ -114,7 +118,14 @@ const CareRequestDialog = ({
     if (pageKind && !preconfirmed) s.push("confirm");
     if (contactKnown) s.push("recap");
     else s.push("name", "phone", "email", "consent");
-    if (!(pageKind && (confirmed === "yes" || preconfirmed))) s.push("forWhom", "who", "kind");
+    if (pageKind && (confirmed === "yes" || preconfirmed)) {
+      // The service is settled, but not who it is for: one tap tells the
+      // enquiry desk whether they are speaking to the person or to family.
+      // Care from abroad is always for someone else.
+      if (pageKind.line !== ABROAD) s.push("forWhom");
+    } else {
+      s.push("forWhom", "who", "kind");
+    }
     s.push("soon");
     return s;
   }, [pageKind, contactKnown, confirmed, preconfirmed]);
@@ -145,10 +156,23 @@ const CareRequestDialog = ({
 
   const fullPhone = joinPhone(dial, phone);
 
+  // Care for family back home is arranged for someone else, never for yourself.
   const kinds = useMemo(
-    () => (who ? CARE_KINDS.filter((k) => k.who.includes(who as Who)) : CARE_KINDS),
-    [who],
+    () => CARE_KINDS
+      .filter((k) => !who || k.who.includes(who as Who))
+      .filter((k) => forWhom !== "me" || k.line !== ABROAD),
+    [who, forWhom],
   );
+
+  /** Who the care is for, as the enquiry desk reads it. */
+  const forWhomAnswer = forWhom === "me"
+    ? "For themselves"
+    : forWhom === "else" || kind?.line === ABROAD
+      ? "For someone else"
+      : "";
+  const whoAnswer = who
+    ? forWhom === "me" ? `Themselves, ${WHO_LABEL[who as Who]}` : capitalise(WHO_LABEL[who as Who])
+    : "";
 
   const reset = () => {
     const v = readVisitor();
@@ -218,7 +242,7 @@ const CareRequestDialog = ({
     `Name: ${name.trim()}`,
     `WhatsApp: ${fullPhone}`,
     email.trim() ? `Email: ${email.trim()}` : "",
-    `Care for: ${forWhom === "me" ? "myself" : who ? WHO_LABEL[who as Who] : "someone else"}`,
+    forWhom === "me" ? "Care for: myself" : who ? `Care for: ${WHO_LABEL[who as Who]}` : forWhomAnswer ? "Care for: someone else" : "",
     `Kind of care: ${kind?.label ?? ""}`,
     `How soon: ${soon}`,
   ].filter(Boolean).join("\n");
@@ -228,10 +252,10 @@ const CareRequestDialog = ({
     setSending(true);
     try {
       const summary = [
-        `Care for: ${forWhom === "me" ? "themselves" : who ? WHO_LABEL[who as Who] : "someone else"}`,
-        `Kind of care: ${kind.label}`,
-        `How soon: ${soon}`,
-      ].join(". ");
+        forWhomAnswer ? `${forWhomAnswer}${whoAnswer && forWhom !== "me" ? ` (${WHO_LABEL[who as Who]})` : ""}` : "",
+        kind.label,
+        `Needed: ${soon.toLowerCase()}`,
+      ].filter(Boolean).join(". ");
       const earlier = priorInterests(readVisitor(), kind.line);
       const id = await submitCareRequest({
         name,
@@ -244,8 +268,8 @@ const CareRequestDialog = ({
         serviceLineName: kind.label,
         message: summary,
         answers: {
-          for_whom: forWhom === "me" ? "For me" : forWhom === "else" ? "For someone else" : "",
-          who_needs_care: who ? WHO_LABEL[who as Who] : "",
+          for_whom: forWhomAnswer,
+          who_needs_care: whoAnswer,
           kind_of_care: kind.label,
           how_soon: soon,
           confirmed_from_page: pageKind ? `${pageKind.label} (${confirmed === "yes" ? "confirmed" : "changed"})` : "",
@@ -494,7 +518,10 @@ const CareRequestDialog = ({
             {stepKey === "forWhom" && (
               <div className="grid gap-2">
                 <Choice label="For me" blurb="I am the one who needs care" art={art.objHouseHeart}
-                  selected={forWhom === "me"} onClick={() => pick(() => setForWhom("me"))} />
+                  selected={forWhom === "me"} onClick={() => pick(() => {
+                    setForWhom("me");
+                    setKind((k) => (k?.line === ABROAD ? null : k));
+                  })} />
                 <Choice label="For someone else" blurb="I am arranging care for a loved one" art={art.familyDoorNurse}
                   selected={forWhom === "else"} onClick={() => pick(() => setForWhom("else"))} />
               </div>

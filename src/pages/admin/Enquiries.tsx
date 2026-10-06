@@ -29,6 +29,7 @@ import { selectAll } from "@/lib/select-all";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { PromoteEnquiries } from "@/components/admin/care/PromoteEnquiries";
+import { careRequestRows, isCareRequest, phoneCountry } from "@/lib/enquiry-summary";
 import {
   ENQUIRY_STAGES, loadEnquiries, loadServiceLines, loadSends, sendEnquiryReply,
   setEnquiryOwner, setEnquiryStage, stageLabel, enquiryOrigin,
@@ -408,7 +409,7 @@ const Enquiries = () => {
             <div className="space-y-5 text-sm break-words">
               <div className="grid gap-2 border border-line p-3 sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Email</span><div>{selected.email}</div></div>
-                <div><span className="text-muted-foreground">Phone</span><div>{selected.phone || "Not given"}</div></div>
+                <div><span className="text-muted-foreground">Phone</span><div>{selected.phone || "Not given"}{phoneCountry(selected.phone) && phoneCountry(selected.phone) !== "Nigeria" ? `, ${phoneCountry(selected.phone)}` : ""}</div></div>
                 <div><span className="text-muted-foreground">Service line</span><div>{lineName(selected.service_line)}</div></div>
                 <div><span className="text-muted-foreground">Town</span><div>{selected.city || "Not given"}</div></div>
                 <div><span className="text-muted-foreground">Sent through</span><div>{selected.source.replace(/_/g, " ")}</div></div>
@@ -416,7 +417,19 @@ const Enquiries = () => {
                 <div><span className="text-muted-foreground">Received</span><div>{format(new Date(selected.created_at), "dd MMM yyyy, HH:mm")}</div></div>
               </div>
 
-              {Object.keys(selected.answers).length > 0 && (
+              {isCareRequest(selected.answers) ? (
+                <div>
+                  <div className="font-semibold mb-2">Care request</div>
+                  <div className="border border-line divide-y divide-line-soft">
+                    {careRequestRows(selected.answers, lineName).map((row) => (
+                      <div key={row.label} className="flex gap-3 px-3 py-2">
+                        <div className="w-44 shrink-0 text-muted-foreground">{row.label}</div>
+                        <div>{row.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : Object.keys(selected.answers).length > 0 && (
                 <div>
                   <div className="font-semibold mb-2">Enquiry details</div>
                   <div className="border border-line divide-y divide-line-soft">
@@ -430,7 +443,7 @@ const Enquiries = () => {
                 </div>
               )}
 
-              {selected.message && (
+              {selected.message && !isCareRequest(selected.answers) && (
                 <div className="border border-line p-3">
                   <div className="font-semibold mb-1">Message</div>
                   <p className="whitespace-pre-wrap text-muted-foreground">{selected.message}</p>
