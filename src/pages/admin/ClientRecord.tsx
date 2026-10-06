@@ -20,10 +20,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   applicableSections, buildContext, CareDefinition, CareField, CareResponses,
   CareSection, fieldVisible, isAnswered, readAnswer, SERVICE_KEY_BY_SECTION,
-  createCarePerson,
+  createCarePerson, withDerived,
 } from "@/lib/care";
 import {
-  answersForRecipient, CareIntake, IntakeRecipient, recipientName, scopedKey,
+  answersForRecipient, CareIntake, emptyIntake, intakeRoutingAnswers, IntakeRecipient, recipientName, scopedKey,
   sectionKeysFor, sectionScope,
 } from "@/lib/care-intake";
 import {
@@ -330,12 +330,11 @@ const ClientRecord = () => {
 
     for (const r of recipients) {
       const answers: CareResponses = {
-        ...answersForRecipient(responses, r.id),
-        who_for: r.isEnquirer ? "myself" : "someone_else",
-        recipient_first_name: r.firstName,
-        dob_known: r.dobKnown ?? null,
-        date_of_birth: r.dateOfBirth ?? null,
-        approx_age: r.approxAge ?? null,
+        ...withDerived({
+          ...answersForRecipient(responses, r.id),
+          ...intakeRoutingAnswers({ ...emptyIntake(), recipients }, r),
+          service_requested: sectionKeysFor(r)[0] ?? fallbackKey ?? null,
+        }, { recordedService: fallbackKey ?? null }),
       } as CareResponses;
       const keys = sectionKeysFor(r);
       const found = new Map<string, CareSection>();

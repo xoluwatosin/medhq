@@ -6,7 +6,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   answersForRecipient, applicableSections, buildContext, cleanResponses, hashToken, LINK_SEGMENT,
-  fieldVisible, missingConsent, outstandingRequired, raisedFlags, recipientIdsOf, requestAnswers,
+  fieldVisible, intakeRoutingAnswers, missingConsent, withDerived, outstandingRequired, raisedFlags, recipientIdsOf, requestAnswers,
   SERVICE_KEY_BY_SECTION, validateResponses,
   withoutDerived,
   type ControlledRefs, type FormDefinition, type FormSection,
@@ -101,7 +101,12 @@ const evaluationGroups = (
   for (const recipient of recipients) {
     const id = typeof recipient.id === "string" ? recipient.id : "";
     if (!/^r\d+$/.test(id)) continue;
-    const local = answersForRecipient(responses, id);
+    // The intake's facts and the derived ones (age, group, service), so a
+    // question's own condition reads them exactly as the page does.
+    const local = withDerived(
+      { ...answersForRecipient(responses, id), ...intakeRoutingAnswers(recipients, recipient), service_requested: (Array.isArray(recipient.services) ? recipient.services.map(String).map((v) => SERVICE_SECTION[v]).find(Boolean) : null) ?? null },
+      { recordedService },
+    );
     const services = Array.isArray(recipient.services)
       ? recipient.services.map(String).map((s) => SERVICE_SECTION[s]).filter((s): s is string => !!s)
       : [];

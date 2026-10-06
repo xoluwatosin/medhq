@@ -432,6 +432,33 @@ export const answersForRecipient = (
   return out;
 };
 
+/** The person asking is this recipient's parent or legal guardian. */
+export const PARENT_RELATIONSHIPS = ["Mother", "Father", "Guardian"];
+
+/**
+ * What the intake already settles about one care recipient, in the terms the
+ * questions' conditions read. The page and the server both build routing from
+ * this, so they always agree on what is asked: a question the intake answers
+ * is not asked again, and a household question is asked once, not per person.
+ * Saved answers never override these facts.
+ */
+export const intakeRoutingAnswers = (intake: CareIntake, r: IntakeRecipient): Record<string, unknown> => {
+  const others = intake.recipients.filter((x) => x.id !== r.id);
+  const newborn = others.find((x) => x.services.includes("newborn") && x.dateOfBirth);
+  return {
+    who_for: r.isEnquirer ? "myself" : "someone_else",
+    recipient_first_name: r.firstName,
+    dob_known: r.dobKnown ?? null,
+    date_of_birth: r.dateOfBirth ?? null,
+    approx_age: r.approxAge ?? null,
+    intake_relationship: r.relationship ?? "",
+    intake_filler_parent: !r.isEnquirer && PARENT_RELATIONSHIPS.includes(r.relationship ?? "") ? "yes" : "no",
+    intake_first_recipient: intake.recipients[0]?.id === r.id ? "yes" : "no",
+    intake_sole_self: intake.recipients.length === 1 && !!r.isEnquirer ? "yes" : "no",
+    intake_newborn_dob: newborn?.dateOfBirth ?? "",
+  };
+};
+
 /** The questionnaire service key a care recipient's services open. */
 export const sectionKeysFor = (r: IntakeRecipient): string[] => [
   ...new Set(r.services.map((s) => serviceOption(s)?.sectionKey).filter((s): s is string => !!s)),

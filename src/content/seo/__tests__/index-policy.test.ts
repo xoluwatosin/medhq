@@ -40,7 +40,10 @@ describe("expansion indexing policy", () => {
   it("serves every merged route as a permanent server redirect", () => {
     const config = JSON.parse(readFileSync(resolve("vercel.json"), "utf8"));
     const served = Object.fromEntries(
-      (config.redirects ?? []).map((r: { source: string; destination: string; permanent: boolean }) => {
+      // Short links that leave the site (medicconnect.co/review) are not page merges.
+      (config.redirects ?? [])
+        .filter((r: { destination: string }) => r.destination.startsWith("/"))
+        .map((r: { source: string; destination: string; permanent: boolean }) => {
         expect(r.permanent).toBe(true);
         return [r.source, r.destination];
       }),

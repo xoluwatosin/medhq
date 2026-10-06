@@ -1,0 +1,192 @@
+// The pre-assessment as the people who actually fill it in.
+//
+// Each persona is assembled the way PreAssessment.tsx assembles the form: the
+// request-wide pages, then each care recipient's pages, routed from the
+// intake's facts and worded in that person's voice. The checks are the faults
+// a walk-through of these fourteen people found in version 10. Set
+// PERSONA_OUT to a folder to write each person's transcript for review.
+import { describe, expect, it } from "vitest";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  applicableSections, buildContext, withDerived, type CareDefinition, type CareField, type CareResponses, type CareSection,
+} from "@/lib/care";
+import {
+  emptyIntake, intakeRoutingAnswers, sectionKeysFor, sectionScope, type CareIntake, type IntakeRecipient,
+} from "@/lib/care-intake";
+import { buildItinerary } from "@/lib/care-itinerary";
+import { resolveCopy, voiceFor } from "@/lib/care-copy";
+
+const def = JSON.parse(readFileSync("docs/care/pre-assessment-v11.json", "utf8")) as CareDefinition;
+const NOW = new Date("2026-10-06");
+const dob = (years: number) => `${2026 - years}-03-01`;
+
+type R = Partial<IntakeRecipient> & { firstName: string; services: string[] };
+interface Persona { id: string; clientGroup: string; service: string; recipients: R[]; request?: CareResponses }
+
+const PERSONAS: Persona[] = [
+  { id: "self-clinical", clientGroup: "adult", service: "clinical_home_care",
+    recipients: [{ firstName: "Tosin", isEnquirer: true, dateOfBirth: dob(34), dobKnown: "yes", services: ["clinical_home_care"] }] },
+  { id: "self-postnatal-and-baby", clientGroup: "maternal", service: "postnatal",
+    recipients: [
+      { firstName: "Ada", isEnquirer: true, dateOfBirth: dob(31), dobKnown: "yes", services: ["postnatal_mother"] },
+      { firstName: "Zara", relationship: "Mother", dateOfBirth: "2026-09-20", dobKnown: "yes", services: ["newborn"] }] },
+  { id: "self-antenatal", clientGroup: "maternal", service: "antenatal",
+    recipients: [{ firstName: "Funmi", isEnquirer: true, dateOfBirth: dob(29), dobKnown: "yes", services: ["antenatal"] }] },
+  { id: "daughter-for-mother", clientGroup: "older_person", service: "eldercare",
+    recipients: [{ firstName: "Grace", relationship: "Daughter", dateOfBirth: dob(78), dobKnown: "yes", services: ["eldercare"] }] },
+  { id: "son-abroad-for-father", clientGroup: "older_person", service: "eldercare",
+    recipients: [{ firstName: "Emeka", relationship: "Son", dobKnown: "no", approxAge: 80, services: ["eldercare"] }] },
+  { id: "mother-nanny-two-children", clientGroup: "child", service: "nanny",
+    recipients: [
+      { firstName: "Tobi", relationship: "Mother", dateOfBirth: dob(4), dobKnown: "yes", services: ["nanny"] },
+      { firstName: "Lola", relationship: "Mother", dateOfBirth: "2025-09-01", dobKnown: "yes", services: ["nanny"] }] },
+  { id: "father-additional-needs", clientGroup: "child", service: "additional_needs",
+    recipients: [{ firstName: "David", relationship: "Father", dateOfBirth: dob(7), dobKnown: "yes", services: ["additional_needs"] }] },
+  { id: "grandmother-paediatric", clientGroup: "child", service: "paediatric",
+    recipients: [{ firstName: "Obi", relationship: "Grandmother", dateOfBirth: dob(3), dobKnown: "yes", services: ["paediatric"] }] },
+  { id: "wife-for-husband", clientGroup: "adult", service: "post_surgical",
+    recipients: [{ firstName: "Tunde", relationship: "Wife", dateOfBirth: dob(52), dobKnown: "yes", services: ["post_surgical"] }] },
+  { id: "self-post-surgical", clientGroup: "adult", service: "post_surgical",
+    recipients: [{ firstName: "Segun", isEnquirer: true, dateOfBirth: dob(45), dobKnown: "yes", services: ["post_surgical"] }] },
+  { id: "father-for-mother-and-baby", clientGroup: "maternal", service: "postnatal",
+    recipients: [
+      { firstName: "Ife", relationship: "Husband", dateOfBirth: dob(30), dobKnown: "yes", services: ["postnatal_mother"] },
+      { firstName: "Ayo", relationship: "Father", dateOfBirth: "2026-09-25", dobKnown: "yes", services: ["newborn"] }] },
+  { id: "neighbour-for-older-man", clientGroup: "older_person", service: "eldercare",
+    recipients: [{ firstName: "Peter", relationship: "Neighbour", dobKnown: "no", approxAge: 85, services: ["eldercare"] }] },
+  { id: "self-older-eldercare", clientGroup: "older_person", service: "eldercare",
+    recipients: [{ firstName: "Folake", isEnquirer: true, dateOfBirth: dob(72), dobKnown: "yes", services: ["eldercare"] }] },
+  { id: "self-undecided", clientGroup: "adult", service: "other",
+    recipients: [{ firstName: "Yemi", isEnquirer: true, dateOfBirth: dob(40), dobKnown: "yes", services: ["other"] }] },
+];
+
+interface Asked { recipient: string | null; field: CareField; text: string }
+
+/** What one persona is asked, in order, worded for them. */
+const walk = (p: Persona): Asked[] => {
+  const intake: CareIntake = {
+    ...emptyIntake(),
+    recipients: p.recipients.map((r, i) => ({ id: `r${i + 1}`, lastName: "", ...r }) as IntakeRecipient),
+  };
+  const request: CareResponses = p.request ?? { start_when: "this_week" };
+  const routing = (r: IntakeRecipient): CareResponses => withDerived({
+    ...request, ...intakeRoutingAnswers(intake, r), service_requested: sectionKeysFor(r)[0] ?? p.service,
+  }, { recordedService: p.service, now: NOW });
+  const sectionsFor = (r: IntakeRecipient): CareSection[] => {
+    const found = new Map<string, CareSection>();
+    for (const key of sectionKeysFor(r).length ? sectionKeysFor(r) : [p.service]) {
+      const ctx = buildContext(def, {
+        clientGroup: p.clientGroup, serviceKey: key, responses: { ...routing(r), service_requested: key }, now: NOW,
+      });
+      for (const s of applicableSections(def, ctx)) found.set(s.id, s);
+    }
+    return def.sections.filter((s) => found.has(s.id));
+  };
+  const out: Asked[] = [];
+  const only = intake.recipients.length === 1 ? intake.recipients[0] : null;
+  const requestVoice = only?.isEnquirer ? voiceFor({ who_for: "myself" }) : voiceFor(request, "the client");
+  const groups = [
+    { r: null as IntakeRecipient | null, sections: sectionsFor(intake.recipients[0]).filter((s) => sectionScope(s.id) === "request"), answers: request },
+    ...intake.recipients.map((r) => ({ r, sections: sectionsFor(r).filter((s) => sectionScope(s.id) === "recipient"), answers: routing(r) })),
+  ];
+  for (const g of groups) {
+    const voice = g.r
+      ? voiceFor({
+        who_for: g.r.isEnquirer ? "myself" : "someone_else",
+        recipient_first_name: g.r.firstName,
+        is_parent_guardian: g.answers.intake_filler_parent === "yes" ? "yes" : undefined,
+      })
+      : requestVoice;
+    for (const page of buildItinerary(g.sections, g.answers)) {
+      if (page.kind === "cover") {
+        out.push({ recipient: g.r?.firstName ?? null, field: { id: `section:${page.sectionId}` } as CareField, text: resolveCopy(page.title, voice) });
+      }
+      if (page.kind !== "questions") continue;
+      for (const f of page.fields) {
+        const text = [f.asked, f.help, ...(f.options ?? []).map((o) => o.label)].map((t) => resolveCopy(t ?? "", voice)).join(" | ");
+        out.push({ recipient: g.r?.firstName ?? null, field: f, text });
+      }
+    }
+  }
+  return out;
+};
+
+const walks = Object.fromEntries(PERSONAS.map((p) => [p.id, walk(p)]));
+const ids = (id: string, recipient?: string | null) =>
+  walks[id].filter((a) => recipient === undefined || a.recipient === recipient).map((a) => a.field.id);
+
+if (process.env.PERSONA_OUT) {
+  mkdirSync(process.env.PERSONA_OUT, { recursive: true });
+  for (const [id, asked] of Object.entries(walks)) {
+    writeFileSync(`${process.env.PERSONA_OUT}/${id}.md`,
+      asked.map((a) => (a.field.id.startsWith("section:") ? `\n## ${a.recipient ?? "Whole request"}: ${a.text}` : `- [${a.field.id}] ${a.text}`)).join("\n"));
+  }
+}
+
+describe("pre-assessment v11, as fourteen different people", () => {
+  it("does not ask a mother, father or guardian whether they are the parent", () => {
+    expect(ids("mother-nanny-two-children")).not.toContain("is_parent_guardian");
+    expect(ids("father-additional-needs")).not.toContain("is_parent_guardian");
+    expect(ids("father-for-mother-and-baby")).not.toContain("is_parent_guardian");
+    expect(ids("self-postnatal-and-baby")).not.toContain("is_parent_guardian");
+  });
+
+  it("still asks a grandmother who holds parental responsibility", () => {
+    expect(ids("grandmother-paediatric")).toContain("is_parent_guardian");
+  });
+
+  it("does not ask the baby's name or birth date again", () => {
+    for (const id of ["self-postnatal-and-baby", "father-for-mother-and-baby"]) {
+      expect(ids(id)).not.toContain("pn_baby_name");
+      expect(ids(id)).not.toContain("pn_delivery_date");
+    }
+  });
+
+  it("does not ask babies and toddlers about languages or knowing about the visit", () => {
+    expect(ids("self-postnatal-and-baby", "Zara")).not.toContain("languages");
+    expect(ids("self-postnatal-and-baby", "Zara")).not.toContain("child_knows_visit");
+    expect(ids("mother-nanny-two-children", "Lola")).not.toContain("child_knows_visit");
+    expect(ids("grandmother-paediatric", "Obi")).not.toContain("child_knows_visit");
+    expect(ids("father-additional-needs", "David")).toContain("child_knows_visit");
+  });
+
+  it("asks household questions once, not for every person", () => {
+    for (const id of ["self-postnatal-and-baby", "father-for-mother-and-baby", "mother-nanny-two-children"]) {
+      for (const field of ["situation", "immediate_danger", "support_now", "alt_contact_has"]) {
+        expect(ids(id).filter((f) => f === field).length, `${id} ${field}`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("does not ask how soon support is needed after asking when care should begin", () => {
+    for (const id of Object.keys(walks)) expect(ids(id), id).not.toContain("urgency");
+  });
+
+  it("never speaks of the person filling in by their own name", () => {
+    const selfNames: Record<string, string> = {
+      "self-clinical": "Tosin", "self-antenatal": "Funmi", "self-post-surgical": "Segun",
+      "self-older-eldercare": "Folake", "self-undecided": "Yemi", "self-postnatal-and-baby": "Ada",
+    };
+    for (const [id, name] of Object.entries(selfNames)) {
+      const named = walks[id].filter((a) => a.text.includes(name));
+      expect(named.map((a) => a.field.id), id).toEqual([]);
+      expect(walks[id].filter((a) => /the mother|the care recipient|we have noticed/i.test(a.text)).map((a) => a.field.id), id).toEqual([]);
+    }
+  });
+
+  it("speaks to a mother about her own recovery, and about the baby by name", () => {
+    const mother = walks["self-postnatal-and-baby"].find((a) => a.field.id === "pn_mother_recovery");
+    expect(mother?.text).toContain("How is your recovery going?");
+    const term = walks["self-postnatal-and-baby"].find((a) => a.field.id === "pn_baby_term");
+    expect(term?.text).toContain("Was Zara born at term or early?");
+    const wife = walks["father-for-mother-and-baby"].find((a) => a.field.id === "pn_mother_recovery");
+    expect(wife?.text).toContain("How is Ife's recovery going?");
+  });
+
+  it("asks someone about their own falls in the second person", () => {
+    const falls = walks["self-older-eldercare"].find((a) => a.field.id === "mb_falls");
+    if (falls) expect(falls.text).toContain("Have you had a fall");
+    const social = walks["self-older-eldercare"].find((a) => a.field.id === "ec_social");
+    expect(social?.text).toContain("Who do you live with?");
+  });
+});

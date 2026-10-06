@@ -260,6 +260,18 @@ export const DERIVED_FIELDS = [
 
 export const DERIVED_PREFIX = "derived_";
 
+/**
+ * Facts the intake settles about each care recipient (intakeRoutingAnswers in
+ * care-intake.ts). Conditions may read them like answers; nobody answers them.
+ */
+export const INTAKE_FACTS = [
+  "intake_relationship",
+  "intake_filler_parent",
+  "intake_first_recipient",
+  "intake_sole_self",
+  "intake_newborn_dob",
+];
+
 /** Age bands for routing, never for a clinical judgement. */
 export const ageBandOf = (years: number | null, days: number | null): string => {
   if (years === null) return "unknown";

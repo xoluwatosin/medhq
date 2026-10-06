@@ -874,6 +874,38 @@ export function answersForRecipient(
   return out;
 }
 
+/** The person asking is this recipient's parent or legal guardian. */
+export const PARENT_RELATIONSHIPS = ["Mother", "Father", "Guardian"];
+
+/**
+ * What the intake already settles about one care recipient, in the terms the
+ * questions' conditions read. Mirrors intakeRoutingAnswers in
+ * src/lib/care-intake.ts: the page and the server must route identically, or
+ * the server would prune answers to questions the family was shown.
+ */
+export function intakeRoutingAnswers(
+  recipients: Record<string, unknown>[],
+  r: Record<string, unknown>,
+): Record<string, unknown> {
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const services = (x: Record<string, unknown>) => (Array.isArray(x.services) ? x.services.map(String) : []);
+  const newborn = recipients.find((x) => x.id !== r.id && services(x).includes("newborn") && str(x.dateOfBirth));
+  const relationship = str(r.relationship);
+  const isEnquirer = r.isEnquirer === true;
+  return {
+    who_for: isEnquirer ? "myself" : "someone_else",
+    recipient_first_name: str(r.firstName),
+    dob_known: r.dobKnown ?? null,
+    date_of_birth: r.dateOfBirth ?? null,
+    approx_age: r.approxAge ?? null,
+    intake_relationship: relationship,
+    intake_filler_parent: !isEnquirer && PARENT_RELATIONSHIPS.includes(relationship) ? "yes" : "no",
+    intake_first_recipient: recipients[0]?.id === r.id ? "yes" : "no",
+    intake_sole_self: recipients.length === 1 && isEnquirer ? "yes" : "no",
+    intake_newborn_dob: newborn ? str(newborn.dateOfBirth) : "",
+  };
+}
+
 /** Answers that belong to the request itself, excluding recipient namespaces. */
 export function requestAnswers(responses: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(

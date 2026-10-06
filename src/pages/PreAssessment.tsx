@@ -26,10 +26,10 @@ import { SaveState, useAutosave } from "@/components/field";
 import { cn } from "@/lib/utils";
 import {
   applicableSections, buildContext, CareDefinition, CareField, CareOption, CareResponses,
-  CareSection, fieldVisible, isAnswered, pruneHiddenFieldAnswers, readAnswer,
+  CareSection, fieldVisible, isAnswered, pruneHiddenFieldAnswers, readAnswer, withDerived,
 } from "@/lib/care";
 import {
-  answersForRecipient, CareIntake, CareIntakeSeed, emptyIntake, IntakeRecipient, mergeIntakeSeed,
+  answersForRecipient, CareIntake, CareIntakeSeed, emptyIntake, intakeRoutingAnswers, IntakeRecipient, mergeIntakeSeed,
   recipientName, scopedKey, sectionKeysFor, sectionScope,
 } from "@/lib/care-intake";
 import { buildItinerary, ItineraryPage } from "@/lib/care-itinerary";
@@ -131,7 +131,16 @@ const PreAssessment = () => {
       if (!data || id === "care_intake") return next;
 
       const owner = /^r\d+__/.exec(id)?.[0]?.slice(0, -2) ?? null;
-      const local = owner ? answersForRecipient(next, owner) : next;
+      // Visibility is judged with the intake's facts, exactly as the pages are.
+      const held = (next.care_intake as CareIntake | undefined) ?? emptyIntake();
+      const ownerRecipient = owner ? held.recipients.find((r) => r.id === owner) : undefined;
+      const local = owner
+        ? withDerived({
+          ...answersForRecipient(next, owner),
+          ...(ownerRecipient ? intakeRoutingAnswers(held, ownerRecipient) : {}),
+          service_requested: ownerRecipient ? sectionKeysFor(ownerRecipient)[0] ?? null : null,
+        }, { recordedService: data.context.service_key })
+        : next;
       const fields = data.definition.sections.flatMap((section) => section.fields);
       const pruned = pruneHiddenFieldAnswers(fields, local);
       for (const field of fields) {
@@ -161,16 +170,14 @@ const PreAssessment = () => {
   // The answers one care recipient's routing is worked out from: their own
   // answers, plus the facts the intake already settled about them.
   const routingAnswers = useCallback(
-    (r: IntakeRecipient): CareResponses => ({
+    // With the derived facts (age, group, service) included, so a question's
+    // own condition can read them exactly as a section's can.
+    (r: IntakeRecipient): CareResponses => withDerived({
       ...answersForRecipient(responses, r.id),
-      who_for: r.isEnquirer ? "myself" : "someone_else",
-      recipient_first_name: r.firstName,
-      dob_known: r.dobKnown ?? null,
-      date_of_birth: r.dateOfBirth ?? null,
-      approx_age: r.approxAge ?? null,
+      ...intakeRoutingAnswers(intake, r),
       service_requested: sectionKeysFor(r)[0] ?? data?.context.service_key ?? null,
-    }),
-    [responses, data],
+    }, { recordedService: data?.context.service_key ?? null }),
+    [responses, data, intake],
   );
 
   const topUp = data?.scope === "top_up";
@@ -301,9 +308,21 @@ const PreAssessment = () => {
   // The wording follows whoever the page is about.
   const voice = useMemo(() => {
     const r = recipientOf(page?.recipientId ?? null);
-    if (!r) return voiceFor(responses, data?.person.preferred_name ?? null);
+    if (!r) {
+      // A request-wide page is about the one person asking, when they are the
+      // only person receiving care: never their own name in the third person.
+      const only = intake.recipients.length === 1 ? intake.recipients[0] : null;
+      if (only?.isEnquirer) return voiceFor({ who_for: "myself" }, null);
+      return voiceFor(responses, data?.person.preferred_name ?? null);
+    }
     return voiceFor(
-      { who_for: r.isEnquirer ? "myself" : "someone_else", recipient_first_name: r.firstName },
+      {
+        who_for: r.isEnquirer ? "myself" : "someone_else",
+        recipient_first_name: r.firstName,
+        is_parent_guardian: intakeRoutingAnswers(intake, r).intake_filler_parent === "yes"
+          ? "yes"
+          : answersForRecipient(responses, r.id).is_parent_guardian,
+      },
       data?.person.preferred_name ?? null,
     );
   }, [page, intake, responses, data]);
