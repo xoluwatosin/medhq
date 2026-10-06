@@ -1,3 +1,4 @@
+import { SOCIAL_PROFILES } from "@/lib/social-profiles";
 /**
  * Centralised Schema.org builders for AI-discoverability.
  *
@@ -185,9 +186,7 @@ export function medicalBusinessSchema() {
       "name": "Healthcare Federation of Nigeria",
       "url": "https://hfnigeria.com",
     },
-    "sameAs": [
-      "https://flyingdoctorsnigeria.com",
-    ],
+    "sameAs": SOCIAL_PROFILES,
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
       "name": "Medic Connect Care Services",

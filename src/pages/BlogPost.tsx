@@ -137,7 +137,9 @@ const BlogPost = () => {
         description={lede || `${post.title}, from The Bridge.`}
         path={`/blog/${post.slug}`}
         image={post.featured_image_url || undefined}
+        imageAlt={post.featured_image_url ? post.title : undefined}
         type="article"
+        publishedTime={post.published_at}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Article",

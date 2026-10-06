@@ -1,3 +1,4 @@
+import { SOCIAL_PROFILES } from "@/lib/social-profiles";
 import { Link } from "react-router-dom";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
@@ -79,7 +80,7 @@ const Home = () => (
             name: "Healthcare Federation of Nigeria",
             url: "https://hfnigeria.com",
           },
-          sameAs: ["https://flyingdoctorsnigeria.com"],
+          sameAs: SOCIAL_PROFILES,
         },
         {
           "@context": "https://schema.org",
