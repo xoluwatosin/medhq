@@ -64,8 +64,7 @@ Done without a fresh export: the new database kept the 3 October snapshot, and t
 - Production deployment on Vercel; www.medicconnect.co primary, medicconnect.co redirects to it (308).
 - New project's 12 scheduled jobs switched on; first runs succeeded and the functions accepted the job keys.
 
-Still to do by hand (the connector will not run drops or deletes):
-- SQL editor: `drop table if exists public.cutover_files; drop function if exists private.cutover_upsert(regclass, jsonb);`
-- Edge Functions: delete `cutover-copy-files` (now a stub that answers 410).
-- Storage: delete the `database_export_03_10_26` bucket on the new project.
-- Smoke test in a browser: contact form email, candidate sign-in, a pre-assessment link, contract signing, an invoice.
+Clean-up, done 6 October:
+- `public.cutover_files` and `private.cutover_upsert` dropped; `cutover-copy-files` deleted; the empty `database_export_03_10_26` bucket deleted. Buckets left: applications, blog-images, care-uploads, creator-uploads. `care-uploads` is empty on both projects (the old bucket held no files).
+- Vercel production branch set to `claude/stoic-clarke-xwp2ql` (Settings > Environments > Production > Branch Tracking), so pushes to it go live.
+- Smoke test passed: admin sign-in works on medicconnect.co, and table counts match the old project apart from the removed test care records and machine logs.
