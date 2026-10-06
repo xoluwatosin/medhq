@@ -246,7 +246,6 @@ const renderOne = async (browser, base, path) => {
     // none of that may reach visitors, because React replaces #root but never
     // resets <body>.
     const rendered = await page.evaluate(() => {
-      document.head.querySelectorAll('script[src*="googletagmanager"]').forEach((n) => n.remove());
       // The shell's site-wide fallback tags come first in <head>, and link
       // previews read the first og:title they find. Where the page set its
       // own version, the fallback goes.
