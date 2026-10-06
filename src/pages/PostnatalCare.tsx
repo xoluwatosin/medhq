@@ -96,6 +96,14 @@ const config: ServicePageConfig = {
     body: "We coordinate with the family on the ground, send updates on WhatsApp and bill you directly.",
     art: art.motherDaughterVideoCall,
   },
+  related: [
+    { label: "Omugwo care", path: "/omugwo" },
+    { label: "Newborn care", path: "/newborn-care" },
+    { label: "Night nurse for a newborn", path: "/night-nurse-for-newborn" },
+    { label: "Breastfeeding support at home", path: "/breastfeeding-support-at-home" },
+    { label: "C-section recovery at home", path: "/c-section-recovery-at-home" },
+    { label: "What does an omugwo caregiver do?", path: "/guides/what-does-an-omugwo-caregiver-do" },
+  ],
   cta: {
     headline: "Rest, heal and bond with your baby.",
     body: "Tell us your due date or when baby arrived, and we will plan the support around you.",

@@ -6,7 +6,7 @@ import { KitMain } from "@/components/kit/KitLayout";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { CarerID, Watermark } from "@/components/mc/brand";
 import Credentials from "@/components/mc/Credentials";
-import { SectionHead } from "@/components/mc/service-sections";
+import { RelatedLinks, SectionHead } from "@/components/mc/service-sections";
 import { art } from "@/components/mc/art";
 import { cn } from "@/lib/utils";
 import aboutMoment from "@/assets/photos/about-moment.webp";
@@ -221,6 +221,14 @@ const MedicAbout = () => (
           ))}
         </ul>
       </section>
+
+      <RelatedLinks
+        links={[
+          { label: "Careers", path: "/careers" },
+          { label: "How our home care works", path: "/how-medic-connect-home-care-works" },
+          { label: "Healthcare facility support", path: "/for-facilities" },
+        ]}
+      />
 
       <CTASection
         headline="Care, connected."

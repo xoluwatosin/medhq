@@ -63,6 +63,14 @@ const config: ServicePageConfig = {
     body: "Focused nursing for the recovery window: wounds, drains and medicines on time.",
     art: art.manCrutches,
   },
+  related: [
+    { label: "24-hour nursing care", path: "/24-hour-nursing-care" },
+    { label: "Doctor home visits", path: "/doctor-home-visits" },
+    { label: "Chronic care at home", path: "/chronic-care-at-home" },
+    { label: "Palliative care at home", path: "/palliative-care-at-home" },
+    { label: "Physiotherapy at home", path: "/physiotherapy-at-home" },
+    { label: "Catheter care at home", path: "/catheter-care-at-home" },
+  ],
   cta: {
     headline: "Care you can trust, right at home.",
     body: "Tell us what is needed and we will arrange the assessment.",

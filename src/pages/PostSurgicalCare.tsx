@@ -83,6 +83,14 @@ const config: ServicePageConfig = {
     body: "We book and bill from your side, and send updates on WhatsApp after each visit.",
     art: art.grandparentsVideoCall,
   },
+  related: [
+    { label: "Care after hospital discharge", path: "/care-after-hospital-discharge" },
+    { label: "Who do I need after surgery?", path: "/who-do-i-need-after-surgery" },
+    { label: "Wound dressing at home", path: "/wound-dressing-at-home" },
+    { label: "Physiotherapy at home", path: "/physiotherapy-at-home" },
+    { label: "Orthopaedic recovery at home", path: "/orthopaedic-recovery-at-home" },
+    { label: "Doctor home visits", path: "/doctor-home-visits" },
+  ],
   cta: {
     headline: "Recover at home, safely.",
     body: "Tell us the surgery date and we will plan the support around it.",

@@ -73,6 +73,14 @@ const config: ServicePageConfig = {
     { title: "Your nanny starts", text: "With check-ins from our team." },
   ],
   faqs: shownFaqs,
+  related: [
+    { label: "Live-in nanny", path: "/live-in-nanny" },
+    { label: "Newborn care", path: "/newborn-care" },
+    { label: "Night nurse for a newborn", path: "/night-nurse-for-newborn" },
+    { label: "Shadow teacher", path: "/shadow-teacher" },
+    { label: "Who should I hire for a newborn?", path: "/who-should-i-hire-for-a-newborn" },
+    { label: "Nanny jobs", path: "/nanny-jobs-and-opportunities" },
+  ],
   cta: {
     headline: "Find the nanny you'd choose.",
     body: "Tell us about your children and your days, and we will start the search.",
@@ -82,7 +90,7 @@ const config: ServicePageConfig = {
 
 const NannyChildcare = () => (
   <>
-    <SEO title="Trained Nannies in Lagos | Vetted & Insured | Medic Connect" description="Trained nannies in Lagos, vetted with police clearance, infant CPR and references. Fees are quoted after a one-off ₦35,000 home assessment." path="/nanny-childcare" jsonLd={[{"@context":"https://schema.org","@type":"Service","name":"Nanny & Childcare","serviceType":"Childcare","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Trained, vetted and insured nannies matched to your family across Lagos.","url":"https://www.medicconnect.co/nanny-childcare"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":shownFaqs.map(f=>({"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}}))}]} />
+    <SEO title="Nanny in Lagos: Trained, Vetted Nannies | Medic Connect" description="Need a nanny in Lagos? We place trained nannies, checked with police clearance, references and infant CPR. It starts with a one-off ₦35,000 home assessment." path="/nanny-childcare" jsonLd={[{"@context":"https://schema.org","@type":"Service","name":"Nanny & Childcare","serviceType":"Childcare","provider":{"@type":"Organization","name":"Medic Connect","url":"https://www.medicconnect.co"},"areaServed":{"@type":"Place","name":"Lagos, Nigeria"},"description":"Trained, vetted nannies matched to your family across Lagos.","url":"https://www.medicconnect.co/nanny-childcare"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":shownFaqs.map(f=>({"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}}))}]} />
     <ServicePage c={config} />
   </>
 );

@@ -76,6 +76,14 @@ const config: ServicePageConfig = {
     body: "Housekeeping, laundry, waste, pest control and security for healthcare facilities.",
     art: art.securityOfficerRadio,
   },
+  related: [
+    { label: "Nurse staffing", path: "/nurse-staffing" },
+    { label: "Doctor staffing", path: "/doctor-staffing" },
+    { label: "NGO healthcare staffing", path: "/ngo-healthcare-staffing" },
+    { label: "Healthcare facility support", path: "/for-facilities" },
+    { label: "Event medical cover", path: "/event-medical-cover" },
+    { label: "Corporate healthcare staffing", path: "/corporate-healthcare-staffing" },
+  ],
   cta: {
     headline: "Need cover this week?",
     body: "Send us the rota gap and we will tell you what we can fill and when.",

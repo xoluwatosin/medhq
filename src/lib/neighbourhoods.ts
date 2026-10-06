@@ -149,7 +149,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "For planned deliveries we can have a postnatal nurse in your home the day you come back from hospital. Walk-in requests are usually covered within 48 hours.",
       },
     ],
-    nearby: ["lekki-phase-1", "vgc", "ajah"],
+    nearby: ["lekki-phase-1", "vgc", "ajah", "ikoyi", "victoria-island"],
   },
   {
     slug: "victoria-island",

@@ -68,6 +68,14 @@ const config: ServicePageConfig = {
     body: "Visit notes on WhatsApp, scheduling across time zones and international billing. Stay the son or daughter and let us be the hands.",
     art: art.videoCallFamily,
   },
+  related: [
+    { label: "24-hour nursing care", path: "/24-hour-nursing-care" },
+    { label: "Live-in caregiver", path: "/live-in-caregiver" },
+    { label: "Chronic care at home", path: "/chronic-care-at-home" },
+    { label: "Palliative care at home", path: "/palliative-care-at-home" },
+    { label: "Home care or a care home?", path: "/home-care-vs-care-home" },
+    { label: "Caregiver cost in Lagos", path: "/caregiver-cost-in-lagos" },
+  ],
   cta: {
     headline: "Your loved one deserves compassionate care.",
     body: "Let's create a plan that gives them comfort and gives you peace of mind.",

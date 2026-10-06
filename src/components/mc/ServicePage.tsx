@@ -8,7 +8,7 @@ import FacilityEnquiryForm, { type FacilityServiceKey } from "@/components/facil
 import { KitMain } from "@/components/kit/KitLayout";
 import KitPillHeading from "@/components/kit/KitPillHeading";
 import { CarerID, EmergencyBox, NotchTag, TapeLabel, Watermark } from "@/components/mc/brand";
-import { SectionHead } from "@/components/mc/service-sections";
+import { RelatedLinks, SectionHead } from "@/components/mc/service-sections";
 import FeePanel from "@/components/mc/FeePanel";
 import { GOVERNED_FEES } from "@/content/seo/governed-modules";
 import { cn } from "@/lib/utils";
@@ -63,6 +63,8 @@ export interface ServicePageConfig {
   faqs?: { q: string; a: string }[];
   /** An optional linked panel, e.g. care from abroad. */
   crossLink?: { href: string; tag: string; title: string; body: string; art: string };
+  /** Closely related pages, linked near the foot so readers and search engines find them. */
+  related?: { label: string; path: string }[];
   cta: { headline: string; body: string; person: string };
   children?: ReactNode;
 }
@@ -376,6 +378,8 @@ const ServicePage = ({ c }: { c: ServicePageConfig }) => {
             </span>
           </Link>
         )}
+
+        {c.related && c.related.length > 0 && <RelatedLinks links={c.related} />}
 
         {c.children}
 
