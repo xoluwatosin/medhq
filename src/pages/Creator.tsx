@@ -2,6 +2,8 @@ import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { attributionColumns } from "@/lib/utm";
+import { trackCreatorApplication } from "@/lib/measurement";
 import MedicHeader from "@/components/MedicHeader";
 import SEO from "@/components/SEO";
 import Footer from "@/components/Footer";
@@ -221,6 +223,7 @@ const Creator = () => {
       portfolio_url: portfolioUrl,
       rate_card_url: rateCardUrl,
       message: result.data.message,
+      ...attributionColumns(),
     });
 
     if (error) {
@@ -230,6 +233,7 @@ const Creator = () => {
       return;
     }
 
+    trackCreatorApplication();
     // Send email notification (fire-and-forget)
     supabase.functions.invoke("send-form-notification", {
       body: {

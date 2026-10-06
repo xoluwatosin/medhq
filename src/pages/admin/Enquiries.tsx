@@ -31,7 +31,7 @@ import { format, formatDistanceToNowStrict } from "date-fns";
 import { PromoteEnquiries } from "@/components/admin/care/PromoteEnquiries";
 import {
   ENQUIRY_STAGES, loadEnquiries, loadServiceLines, loadSends, sendEnquiryReply,
-  setEnquiryOwner, setEnquiryStage, stageLabel,
+  setEnquiryOwner, setEnquiryStage, stageLabel, enquiryOrigin,
   type Enquiry, type EnquirySend, type ServiceLine,
 } from "@/lib/enquiries";
 
@@ -411,7 +411,8 @@ const Enquiries = () => {
                 <div><span className="text-muted-foreground">Phone</span><div>{selected.phone || "Not given"}</div></div>
                 <div><span className="text-muted-foreground">Service line</span><div>{lineName(selected.service_line)}</div></div>
                 <div><span className="text-muted-foreground">Town</span><div>{selected.city || "Not given"}</div></div>
-                <div><span className="text-muted-foreground">Source</span><div>{selected.source.replace(/_/g, " ")}</div></div>
+                <div><span className="text-muted-foreground">Sent through</span><div>{selected.source.replace(/_/g, " ")}</div></div>
+                <div><span className="text-muted-foreground">Came from</span><div>{enquiryOrigin(selected)}</div></div>
                 <div><span className="text-muted-foreground">Received</span><div>{format(new Date(selected.created_at), "dd MMM yyyy, HH:mm")}</div></div>
               </div>
 

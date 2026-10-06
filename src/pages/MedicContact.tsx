@@ -13,6 +13,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { attributionColumns } from "@/lib/utm";
 import { trackContactForm } from "@/lib/measurement";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,8 @@ const MedicContact = () => {
       phone: result.data.phone,
       service: result.data.service,
       message: result.data.message,
+      source: "contact_form",
+      ...attributionColumns(),
     });
 
     if (error) {

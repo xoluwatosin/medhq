@@ -12,6 +12,10 @@ const AW_ID = import.meta.env.VITE_GOOGLE_ADS_AW_ID;
 const CONTACT_FORM_LABEL = import.meta.env.VITE_GOOGLE_ADS_CONTACT_LABEL;
 const CARE_REQUEST_LABEL = import.meta.env.VITE_GOOGLE_ADS_CARE_LABEL;
 const JOIN_APPLICATION_LABEL = import.meta.env.VITE_GOOGLE_ADS_JOIN_LABEL;
+// Optional: give these their own Ads conversions; without a label they are
+// measured in Analytics only.
+const WHATSAPP_CHAT_LABEL = import.meta.env.VITE_GOOGLE_ADS_WHATSAPP_LABEL;
+const FACILITY_ENQUIRY_LABEL = import.meta.env.VITE_GOOGLE_ADS_FACILITY_LABEL;
 
 const DEFAULT_VALUE_NGN = 35000; // Care Assessment Fee
 
@@ -72,6 +76,32 @@ export function trackContactForm(source: string = "contact_form", value: number 
 export function trackCareRequest(serviceLine?: string, value: number = DEFAULT_VALUE_NGN) {
   gaEvent("submit_form", { form_name: "care_request", service_line: serviceLine ?? "unknown" });
   adConversion(CARE_REQUEST_LABEL, value);
+}
+
+/**
+ * A family started a WhatsApp chat through the bubble's short form. Its own
+ * event, so chats are not counted as care requests.
+ */
+export function trackWhatsAppChat(serviceLine?: string) {
+  gaEvent("whatsapp_chat_started", { service_line: serviceLine ?? "unknown" });
+  adConversion(WHATSAPP_CHAT_LABEL);
+}
+
+/** A hospital, clinic or organisation sent the For facilities form (B2B lead). */
+export function trackFacilityEnquiry(serviceLine?: string) {
+  gaEvent("generate_lead", { method: "facility_form", service_line: serviceLine ?? "unknown" });
+  gaEvent("facility_enquiry", { service_line: serviceLine ?? "unknown" });
+  adConversion(FACILITY_ENQUIRY_LABEL);
+}
+
+/** A content creator applied to the creator programme. */
+export function trackCreatorApplication() {
+  gaEvent("creator_application", {});
+}
+
+/** A candidate applied to a job advert. */
+export function trackJobApplication(opportunity: string) {
+  gaEvent("job_application", { opportunity });
 }
 
 /** Someone showed interest in a service line, before any request is sent. */

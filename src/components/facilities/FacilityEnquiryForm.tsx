@@ -1,3 +1,4 @@
+import { trackFacilityEnquiry } from "@/lib/measurement";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,6 +178,7 @@ const FacilityEnquiryForm = ({ initialService }: { initialService?: ServiceKey }
         consentEmail: consent,
         source: "for_facilities_form",
       });
+      trackFacilityEnquiry(s.line);
       sendEnquiryReply(id).catch(() => undefined);
       supabase.functions
         .invoke("send-form-notification", {

@@ -1,3 +1,4 @@
+import { trackJobApplication } from "@/lib/measurement";
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { MapPin, ArrowLeft, Loader2, Upload, CheckCircle2 } from "lucide-react";
@@ -237,6 +238,7 @@ const MatchmakerApply = () => {
         landing_path: attr?.landing_path ?? null,
       } as any);
       if (error) throw error;
+      trackJobApplication(opp.slug);
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {

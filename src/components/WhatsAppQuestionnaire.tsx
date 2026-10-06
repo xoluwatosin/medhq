@@ -16,7 +16,7 @@ import { art } from "@/components/mc/art";
 import { CARE_KINDS, CareKind, WHATSAPP_NUMBER } from "@/components/request/care-kinds";
 import { submitCareRequest } from "@/lib/enquiries";
 import { rememberInterest, readVisitor, writeVisitor } from "@/lib/visitor";
-import { trackCareRequest, trackServiceInterest } from "@/lib/measurement";
+import { trackWhatsAppChat, trackServiceInterest } from "@/lib/measurement";
 
 interface Props {
   open: boolean;
@@ -71,7 +71,7 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
         consentEmail: false,
         source: "whatsapp_widget",
       });
-      trackCareRequest(kind.line);
+      trackWhatsAppChat(kind.line);
       trackServiceInterest(kind.line, "whatsapp_widget");
       rememberInterest(kind.line);
       writeVisitor({ name: name.trim(), dial, phone: phone.trim() });

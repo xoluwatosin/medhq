@@ -13,6 +13,7 @@ import { PasswordRequirements } from "@/components/candidate/PasswordRequirement
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { attributionColumns } from "@/lib/utm";
 import { trackJoinApplication } from "@/lib/measurement";
 import { trackBySlug, YEAR_OF_STUDY, JOIN_PENDING_KEY } from "@/lib/join-tracks";
 
@@ -144,7 +145,9 @@ const JoinAccount = () => {
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/portal`,
-        data: { display_name: fullName },
+        // The visit's source rides on the account, so we can tell which
+        // channels bring candidates.
+        data: { display_name: fullName, acquisition: attributionColumns() },
       },
     });
 

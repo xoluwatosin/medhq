@@ -88,3 +88,21 @@ export function getAttribution(): Attribution | null {
     return null;
   }
 }
+
+/**
+ * The visit's source as database columns, for any public form that records a
+ * lead (contact_submissions, creator_applications, join_applications and the
+ * matchmaker applications all carry these seven columns).
+ */
+export function attributionColumns() {
+  const a = getAttribution();
+  return {
+    utm_source: a?.utm_source ?? null,
+    utm_medium: a?.utm_medium ?? null,
+    utm_campaign: a?.utm_campaign ?? null,
+    utm_term: a?.utm_term ?? null,
+    utm_content: a?.utm_content ?? null,
+    referrer: a?.referrer ?? null,
+    landing_path: a?.landing_path ?? null,
+  };
+}
