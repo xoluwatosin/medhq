@@ -16,6 +16,7 @@
 // It never fails the build: if Chrome cannot start or a page will not
 // render, that page keeps the shell and the site works as it did.
 import { createServer } from "node:http";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 
@@ -175,13 +176,19 @@ const withShareCard = async (browser, base, html, path, picture, pictureIsArt) =
     await page.goto(`${base}/__card`);
     await page.setContent(cardHtml(base, { title, price, picture: pic, art: pictureIsArt, logo: LOGO }), { waitUntil: "load", timeout: 15_000 });
     await page.evaluate(() => document.fonts.ready);
-    const shot = await page.screenshot({ type: "jpeg", quality: 82 });
+    const shot = await page.screenshot({ type: "png" });
+    // Saved the same way as the blog pictures, which iMessage and WhatsApp
+    // both show: a plain JPEG with no colour profile from the browser.
+    const sharp = (await import("sharp")).default;
+    const card = await sharp(shot).flatten({ background: "#26306B" }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
     const name = path === "/" ? "home" : path.replace(/^\//, "").replace(/[^a-z0-9]+/gi, "-");
     mkdirSync(join(DIST, "og"), { recursive: true });
-    writeFileSync(join(DIST, "og", `${name}.jpg`), shot);
-    const url = `${SITE}/og/${name}.jpg`;
+    writeFileSync(join(DIST, "og", `${name}.jpg`), card);
+    // A changed card gets a new address, so apps that kept the old one fetch it again.
+    const url = `${SITE}/og/${name}.jpg?v=${createHash("sha1").update(card).digest("hex").slice(0, 8)}`;
     return html
       .split(`content="${DEFAULT_SHARE}"`).join(`content="${url}"`)
+      .replace(/(<meta property="og:image:height" content="630"[^>]*>)/, '$1<meta property="og:image:type" content="image/jpeg">')
       // The card shows the page's title, so its alt text says the same.
       .replace(/(<meta (?:property="og:image:alt"|name="twitter:image:alt") content=")[^"]*(")/g, `$1${esc(title)}$2`);
   } catch (e) {
