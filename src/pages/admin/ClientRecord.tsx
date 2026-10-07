@@ -43,6 +43,7 @@ import WorkSection from "@/components/admin/care/WorkSection";
 import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
 import HomeSection from "@/components/admin/care/HomeSection";
+import CareRoute, { type CareRouteId } from "@/components/admin/care/CareRoute";
 import PossibleDuplicates from "@/components/admin/care/PossibleDuplicates";
 import PayersSection from "@/components/admin/care/PayersSection";
 import { homeOverview, linkScope, type HomeOverview, type LinkScope } from "@/lib/care-records";
@@ -214,7 +215,7 @@ const ClientRecord = () => {
 
   const load = useCallback(async () => {
     const [clientRes, contactRes, docRes, defRes, bandRes, tokenRes, flagRes, actRes] = await Promise.all([
-      adminDb().from("clients").select("*, services(name, questionnaire_section)").eq("id", id).maybeSingle(),
+      adminDb().from("clients").select("*, services(name, questionnaire_section, home_assessment)").eq("id", id).maybeSingle(),
       adminDb().from("client_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
       adminDb().from("care_documents").select("*").eq("client_id", id).eq("kind", "pre_assessment")
         .order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -738,6 +739,13 @@ const ClientRecord = () => {
         strip={
           <MuHeroStrip
             items={[
+              ...(client.paused_at ? [{
+                label: "On hold",
+                sentence: [
+                  (client.paused_reason as string | null) ?? "",
+                  client.paused_until ? `Comes off hold on ${dateOf(String(client.paused_until))}.` : "Taken off hold by hand.",
+                ].filter(Boolean).join(" "),
+              }] : []),
               {
                 label: "Pre-assessment",
                 sentence: doc?.submitted_at
@@ -779,6 +787,18 @@ const ClientRecord = () => {
           </MuSection>
         )}
 
+        {tab === "overview" && (
+          <CareRoute
+            clientId={String(id)}
+            route={(client.care_route as CareRouteId | null) ?? null}
+            startsAt={(client.care_starts_at as "home" | "hospital" | null) ?? null}
+            preliminary={(client.preliminary as Record<string, string | boolean> | null) ?? {}}
+            serviceName={service?.name ?? null}
+            assessmentRequired={(client.services as { home_assessment?: string } | null)?.home_assessment === "required"}
+            canEdit={isCoordinator}
+            onChanged={() => { void load(); }}
+          />
+        )}
         {tab === "overview" && <PossibleDuplicates clientId={String(id)} />}
         {tab === "overview" && (
           <HomeSection

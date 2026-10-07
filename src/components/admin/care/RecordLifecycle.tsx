@@ -13,7 +13,8 @@ import { ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { SelectField } from "@/components/field";
+import { DateField, SelectField } from "@/components/field";
+import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { clientLifecycle, type ClientLifecycleAction } from "@/lib/care-records";
 
@@ -101,11 +102,13 @@ const RecordLifecycle = ({
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [reason, setReason] = useState("");
   const [choice, setChoice] = useState("");
+  const [until, setUntil] = useState("");
   const [saving, setSaving] = useState(false);
 
   const open = (action: ClientLifecycleAction) => {
     setReason("");
     setChoice("");
+    setUntil("");
     setPrompt(PROMPTS[action]);
   };
 
@@ -120,9 +123,19 @@ const RecordLifecycle = ({
       return;
     }
     const recorded = prompt.reasons ? [choice, reason.trim()].filter(Boolean).join(". ") : reason;
+    // The hold ends at the start of the chosen day, Lagos time.
+    const untilAt = prompt.action === "hold" && until ? `${until}T00:00:00+01:00` : null;
+    if (untilAt && new Date(untilAt).getTime() <= Date.now()) {
+      toast.error("Choose a day after today for the hold to end");
+      return;
+    }
     setSaving(true);
     try {
       await clientLifecycle(clientId, prompt.action, recorded);
+      if (untilAt) {
+        const { error } = await adminDb().rpc("care_client_hold_until", { _client_id: clientId, _until: untilAt });
+        if (error) throw error;
+      }
       toast.success(
         prompt.action === "hold" ? "Client put on hold"
           : prompt.action === "resume" ? "Client taken off hold"
@@ -179,6 +192,14 @@ const RecordLifecycle = ({
               placeholder="Choose a reason"
               onChange={(v) => setChoice(v ?? "")}
               options={prompt.reasons.map((r) => ({ value: r, label: r }))}
+            />
+          )}
+          {prompt?.action === "hold" && (
+            <DateField
+              label="Hold ends (optional)"
+              value={until}
+              onChange={setUntil}
+              help="The client comes off hold by themselves on this day. Leave it empty to take them off hold by hand."
             />
           )}
           {prompt?.needsReason && (

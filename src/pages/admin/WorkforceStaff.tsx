@@ -45,6 +45,7 @@ import AccessAreas from "@/components/admin/AccessAreas";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { returnToTalent } from "@/lib/lifecycle";
 import { ACCESS_DELEGATE_PERMISSION } from "@/lib/admin-access";
+import ClinicalAssessorPanel from "@/components/admin/mu/ClinicalAssessorPanel";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -92,39 +93,6 @@ const WorkforceStaff = () => {
   const [inviting, setInviting] = useState(false);
 
   const [contact, setContact] = useState({ name: "", relationship: "", phone: "", email: "", address: "" });
-
-  // Who may be sent out to carry out a care assessment. It is a capability on
-  // the workforce record, not a job title, and it is only real when the person
-  // is active here and can actually sign in.
-  const [capability, setCapability] = useState<{
-    active: boolean; eligible: boolean; has_account: boolean; staff_active: boolean;
-    live_assessments: number;
-  } | null>(null);
-  const [capabilityReason, setCapabilityReason] = useState("");
-  const [savingCapability, setSavingCapability] = useState(false);
-
-  const loadCapability = useCallback(async () => {
-    if (!id) return;
-    const { data } = await adminDb().rpc("care_assessor_capability", { _person_id: id });
-    setCapability((data ?? null) as typeof capability);
-  }, [id]);
-
-  useEffect(() => { void loadCapability(); }, [loadCapability]);
-
-  const setAssessor = async (active: boolean) => {
-    setSavingCapability(true);
-    const { error } = await adminDb().rpc("care_assessor_capability_set", {
-      _person_id: id, _active: active, _reason: capabilityReason.trim() || null,
-    });
-    setSavingCapability(false);
-    if (error) {
-      toast({ title: "Could not change this", description: error.message, variant: "destructive" });
-      return;
-    }
-    setCapabilityReason("");
-    await loadCapability();
-    toast({ title: active ? "Clinical assessor added" : "Clinical assessor removed" });
-  };
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -459,47 +427,7 @@ const WorkforceStaff = () => {
             </div>
           </MuSection>
 
-          <MuSection title="Clinical assessor">
-            <div className="space-y-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="min-w-[220px] flex-1 space-y-1.5">
-                <Label>Reason</Label>
-                <Input
-                  value={capabilityReason}
-                  onChange={(e) => setCapabilityReason(e.target.value)}
-                  placeholder={capability?.active ? "Why this is being removed" : "Why this is being added"}
-                />
-              </div>
-              <Button
-                size="sm"
-                variant={capability?.active ? "outline" : "default"}
-                disabled={savingCapability || (!capability?.active && !(capability?.has_account && capability?.staff_active))}
-                onClick={() => setAssessor(!capability?.active)}
-              >
-                {capability?.active ? "Remove clinical assessor" : "Make clinical assessor"}
-              </Button>
-              <MuStatus
-                label={capability?.active ? "Clinical assessor" : "Not an assessor"}
-                tone={capability?.active ? "good" : "neutral"}
-              />
-            </div>
-            {capability?.active && (capability.live_assessments ?? 0) > 0 && (
-              <MuNote title="Reassign their visits first" tone="warning">
-                {capability.live_assessments} assessment{capability.live_assessments === 1 ? " is" : "s are"} still assigned. Move them to another assessor first.
-              </MuNote>
-            )}
-            {capability?.active && !capability.eligible && (
-              <MuNote title="Cannot be assigned yet" tone="warning">
-                Visits need active staff status and a sign-in.
-              </MuNote>
-            )}
-            {!capability?.active && !(capability?.has_account && capability?.staff_active) && (
-              <MuNote title="Not eligible yet">
-                Set their staff status to active and invite them to sign in first.
-              </MuNote>
-            )}
-            </div>
-          </MuSection>
+          {id && <ClinicalAssessorPanel personId={id} />}
 
           <MuSection
             title="Emergency contacts"

@@ -55,6 +55,7 @@ import { trackLabel } from "@/lib/join-tracks";
 import { SEX_OPTIONS } from "@/lib/work-preferences";
 import { emailHistoryFor, type EmailEvent } from "@/lib/email-analytics";
 import AvailabilityDetail from "@/components/admin/mu/AvailabilityDetail";
+import ClinicalAssessorPanel from "@/components/admin/mu/ClinicalAssessorPanel";
 
 
 
@@ -794,6 +795,8 @@ const MatchUniversePerson = () => {
               ]}
             />
           </MuSection>
+
+          {id && <ClinicalAssessorPanel personId={id} />}
 
           <Collapsible>
             <MuSection padded={false}>

@@ -174,6 +174,9 @@ export interface AssessmentWork {
   review_reason: string | null;
   /** The twelve checks, as the reviewer left them. Null until one is recorded. */
   review_checklist: ReviewChecklist | null;
+  /** What the assessor is paid for this assessment, and when it was paid. */
+  assessor_fee_naira: number | null;
+  assessor_paid_at: string | null;
   created_at: string;
   updated_at: string;
 }
