@@ -446,56 +446,6 @@ const ClientRecord = () => {
     void load();
   };
 
-  // A member of staff fills the pre-assessment in with the family, on a call or
-  // in person. It opens the same form the family would get. Answers are saved
-  // against the main contact, who is the person giving them.
-  const startNow = async () => {
-    if (!primary) {
-      toast.error("Add a main contact on the Contacts tab first");
-      return;
-    }
-    // Opened before any waiting so the browser does not block it as a pop-up.
-    const form = window.open("", "_blank");
-    const fail = (message: string) => { form?.close(); toast.error(message); };
-    setBusy(true);
-    let plain: string | null = null;
-    let replaced = false;
-    if (!liveToken) {
-      const { data, error } = await supabase.functions.invoke("care-token-create", {
-        body: {
-          client_id: id,
-          contact_id: primary.id,
-          filler_type: primary.relationship_code === "self" ? "client" : "family_member",
-        },
-      });
-      if (error || !data?.ok) { setBusy(false); fail(data?.error ?? "Could not start the pre-assessment"); return; }
-      plain = data.token;
-      sessionStorage.setItem(`care_token_${data.token_id}`, data.token);
-    } else {
-      plain = sessionStorage.getItem(`care_token_${liveToken.id}`);
-      if (!plain) {
-        // The link is only ever shown once, so a fresh one is issued. Answers
-        // already given stay on the record.
-        const { data, error } = await supabase.functions.invoke("care-token-send", {
-          body: { token_id: liveToken.id, delivery_method: "copied", resend: true },
-        });
-        if (error || !data?.ok || !data.link) { setBusy(false); fail(data?.error ?? "Could not open the pre-assessment"); return; }
-        plain = String(data.link).split("/pre-assessment/")[1] ?? null;
-        if (plain) sessionStorage.setItem(`care_token_${liveToken.id}`, plain);
-        replaced = !!liveToken.first_opened_at || !!liveToken.delivery_method;
-      }
-    }
-    setBusy(false);
-    if (!plain) { fail("Could not open the pre-assessment"); return; }
-    const url = `${window.location.origin}/pre-assessment/${plain}`;
-    setLink(url);
-    if (form) form.location.href = url;
-    else window.location.assign(url);
-    toast.success(replaced ? "Opened. Any link sent earlier has been replaced by this one." : "Pre-assessment opened");
-    void logActivity("pre_assessment_started_by_staff", { contact: primary.full_name ?? null });
-    void load();
-  };
-
   // resend is only ever true when a coordinator deliberately asks to send the
   // email again. A repeated ordinary send is treated as the same send.
   const sendLink = async (method: "email" | "whatsapp" | "copied", resend = false) => {
@@ -918,27 +868,9 @@ const ClientRecord = () => {
               </MuSection>
             )}
 
-            {!doc?.submitted_at && (
-              <MuSection
-                title={doc ? "Pre-assessment started" : "Start the pre-assessment"}
-                description={primary
-                  ? `Fill it in now with ${primary.full_name}, or send them the link to complete themselves.`
-                  : "Add a main contact on the Contacts tab first."}
-              >
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" className="h-11" disabled={busy || !primary} onClick={startNow}>
-                    {doc ? "Continue the pre-assessment" : "Start pre-assessment now"}
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" onClick={() => setTab("link")}>
-                    Send the link instead
-                  </Button>
-                </div>
-              </MuSection>
-            )}
-
             {!doc ? (
               <MuSection padded={false}>
-                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Start it above, or send the link for the family to complete." />
+                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Send the pre-assessment link from the Pre-assessment link tab." />
               </MuSection>
             ) : (
               answerGroups.map((group) => {
