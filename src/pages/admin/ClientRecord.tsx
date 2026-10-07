@@ -32,7 +32,7 @@ import {
 } from "@/components/admin/mu/MuShell";
 import { PhoneField, SelectField, Status } from "@/components/field";
 import { art } from "@/components/mc/art";
-import { careFlagTone, careStageLabel, careStageTone } from "@/lib/care-status";
+import { careFlagTone, careStageLabel, careStageTone, clientStatusOf } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, SEX_TERMS, STATE_TERMS, ageText, lgaTerms, lgaLabel, relationshipLabel,
   sexLabel, stateLabel, languageLabels,
@@ -709,7 +709,12 @@ const ClientRecord = () => {
         title={String(client.full_name)}
         subtitle={service?.name ?? "No service set"}
         facts={[
-          { label: "Stage", value: careStageLabel(stage) },
+          {
+            label: "Status",
+            value: clientStatusOf(stage).id === "pending"
+              ? `Pending: ${careStageLabel(stage).toLowerCase()}`
+              : clientStatusOf(stage).label,
+          },
           { label: "Age", value: ageText(client.date_of_birth as string | null, client.date_of_birth_is_estimated as boolean | null) },
           { label: "Area", value: area || undefined },
           { label: "Main contact", value: primary?.full_name },

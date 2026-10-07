@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { adminDb } from "@/lib/admin-utils";
 import { CLIENT_GROUPS, createCarePerson, workKindLabel } from "@/lib/care";
-import { careStageLabel, careStageTone } from "@/lib/care-status";
+import { CLIENT_STATUSES, careStageLabel, clientStatusOf } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, STATE_TERMS, ageText, lgaTerms, stateLabel, lgaLabel,
 } from "@/lib/care-vocabularies";
@@ -28,7 +28,7 @@ import { dueText, nextActions, needsAttention, workTone, type NextAction } from 
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import PromoteEnquiries from "@/components/admin/care/PromoteEnquiries";
 import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
-import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
+import ConsoleFilters from "@/components/admin/console/ConsoleFilters";
 import ConsoleTable, { ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
 import CareRequests from "@/pages/admin/CareRequests";
@@ -58,29 +58,25 @@ interface ServiceRow {
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-// One Care list: the people, and the requests still being prepared, as views
-// of the same list rather than two pages with two meanings of "attention".
+// One Care list. Each client has one of four statuses; "Needs you" is the
+// work waiting on staff for clients still in care. Care requests not yet
+// routed into a client stay reachable as their own view.
 const FILTERS = [
-  { id: "attention", label: "Needs attention" },
-  { id: "requests", label: "Requests" },
-  { id: "awaiting", label: "Awaiting responses" },
-  { id: "returned", label: "Responses returned" },
-  { id: "booked", label: "Assessment booked" },
-  { id: "running", label: "Care running" },
-  { id: "paused", label: "Paused" },
-  { id: "closed", label: "Closed" },
-  { id: "all", label: "All" },
+  { id: "attention", label: "Needs you", urgent: true },
+  { id: "open", label: "All open" },
+  ...CLIENT_STATUSES.map((s) => ({ id: s.id, label: s.label })),
+  { id: "requests", label: "Requests to route" },
   { id: "archived", label: "Archive" },
 ] as const;
 
 type FilterId = (typeof FILTERS)[number]["id"];
 
 const COLUMNS: ConsoleColumn[] = [
-  { key: "client", label: "Client", width: "24%" },
-  { key: "service", label: "Service", width: "18%" },
-  { key: "status", label: "Status", width: "16%" },
-  { key: "next", label: "Next action", width: "27%" },
-  { key: "action", label: "Action", width: "15%" },
+  { key: "client", label: "Client", width: "26%" },
+  { key: "status", label: "Status", width: "17%" },
+  { key: "service", label: "Service", width: "17%" },
+  { key: "next", label: "Next step", width: "30%" },
+  { key: "updated", label: "Added", width: "10%" },
 ];
 
 const elapsedLabel = (iso: string) => {
@@ -92,16 +88,19 @@ const elapsedLabel = (iso: string) => {
 
 const matchesFilter = (client: ClientRow, filter: FilterId) => {
   if (filter === "archived") return Boolean(client.archived_at);
-  if (client.archived_at) return false;
-  if (filter === "all") return true;
-  if (filter === "attention") return needsAttention(client.action);
-  if (filter === "awaiting") return client.stage === "awaiting_pre_assessment";
-  if (filter === "returned") return client.stage === "pre_assessment_received";
-  if (filter === "booked") return client.stage === "assessment_booked";
-  if (filter === "paused") return client.stage === "paused";
-  if (filter === "closed") return client.stage === "closed";
-  if (filter === "requests") return false;
-  return client.stage === "care_running";
+  if (client.archived_at || filter === "requests") return false;
+  const status = clientStatusOf(client.stage).id;
+  if (filter === "open") return status !== "ended";
+  // A file on hold or ended is not waiting on anyone.
+  if (filter === "attention") return (status === "pending" || status === "active") && needsAttention(client.action);
+  return status === filter;
+};
+
+const matchesSearch = (client: ClientRow, query: string, service: string) => {
+  if (service && client.service !== service) return false;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return [client.full_name, client.preferred_name, placeOf(client)].some((v) => v?.toLowerCase().includes(q));
 };
 
 const placeOf = (client: ClientRow) =>
@@ -121,6 +120,8 @@ const Clients = () => {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [query, setQuery] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
   const [open, setOpen] = useState(false);
   const [sweepOpen, setSweepOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,13 +168,23 @@ const Clients = () => {
 
   useEffect(() => { void load(); }, []);
 
-  const visibleClients = useMemo(
-    () => clients.filter((client) => matchesFilter(client, activeFilter)),
-    [clients, activeFilter],
+  const searched = useMemo(
+    () => clients.filter((client) => matchesSearch(client, query, serviceFilter)),
+    [clients, query, serviceFilter],
   );
 
-  const tabs = useMemo(
-    () => FILTERS.map((f) => ({ ...f, count: f.id === "requests" ? undefined : clients.filter((c) => matchesFilter(c, f.id)).length })),
+  const visibleClients = useMemo(
+    () => searched.filter((client) => matchesFilter(client, activeFilter)),
+    [searched, activeFilter],
+  );
+
+  const filters = useMemo(
+    () => FILTERS.map((f) => ({ ...f, count: f.id === "requests" ? undefined : searched.filter((c) => matchesFilter(c, f.id)).length })),
+    [searched],
+  );
+
+  const serviceNames = useMemo(
+    () => [...new Set(clients.map((c) => c.service))].sort(),
     [clients],
   );
 
@@ -452,13 +463,36 @@ const Clients = () => {
       />
 
 
-      <ConsoleTabs
-        tabs={tabs}
+      <ConsoleFilters
+        filters={filters}
         active={activeFilter}
         onChange={(id) => setActiveFilter(id as FilterId)}
         label="Filter clients"
         controls="client-records"
       />
+
+      {activeFilter !== "requests" && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Input
+            type="search"
+            aria-label="Search clients"
+            placeholder="Search by name or area"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-10 min-w-0 flex-[1_1_240px]"
+          />
+          <div className="min-w-0 flex-[0_1_220px]">
+            <SelectField
+              label="Service"
+              hideLabel
+              value={serviceFilter}
+              placeholder="All services"
+              onChange={(v) => setServiceFilter(v ?? "")}
+              options={serviceNames.map((n) => ({ value: n, label: n }))}
+            />
+          </div>
+        </div>
+      )}
 
       <div id="client-records">
         {activeFilter === "requests" ? (
@@ -471,8 +505,8 @@ const Clients = () => {
           <div className="border border-line bg-card">
             <MuEmpty
               art={art.objCarePlan}
-              title={activeFilter === "attention" ? "Nothing needs attention" : "No clients here"}
-              description={activeFilter === "all" ? "Add a client or route care requests to start a record." : "Nothing in this view right now. Try another filter."}
+              title={activeFilter === "attention" ? "Nothing needs you right now" : "No clients here"}
+              description={query || serviceFilter ? "No client matches the search. Clear it to see everyone." : activeFilter === "open" ? "Add a client or route care requests to start a record." : "Nothing in this view right now. Try another filter."}
             />
           </div>
         ) : (
@@ -484,22 +518,25 @@ const Clients = () => {
               renderRow={(client) => (
                 <>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">
-                    <strong className="block text-sm font-semibold text-navy">{client.full_name}</strong>
+                    <Link
+                      to={`/admin/clients/${client.id}`}
+                      className="block text-sm font-semibold text-navy underline-offset-2 hover:underline focus-visible:underline"
+                    >
+                      {client.full_name}
+                    </Link>
                     <span className="mt-0.5 block text-xs text-muted-copy">
                       {placeOf(client) || "Details not set"}
                     </span>
                   </td>
-                  <td className="border-r border-line-soft px-3 py-3 align-middle">{client.service}</td>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">
-                    <Status label={careStageLabel(client.stage)} tone={careStageTone(client.stage)} />
-                    <span className="mt-1 block text-xs font-semibold text-muted-copy">{elapsedLabel(client.created_at)}</span>
+                    <Status label={clientStatusOf(client.stage).label} tone={clientStatusOf(client.stage).tone} />
+                    {clientStatusOf(client.stage).id === "pending" && (
+                      <span className="mt-1 block text-xs text-muted-copy">{careStageLabel(client.stage)}</span>
+                    )}
                   </td>
+                  <td className="border-r border-line-soft px-3 py-3 align-middle">{client.service}</td>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">{nextActionCell(client)}</td>
-                  <td className="px-3 py-2 align-middle">
-                    <Button asChild type="button" variant="outline" size="sm" className="h-11 w-full border-line-soft bg-card px-2.5 text-xs text-navy">
-                      <Link to={`/admin/clients/${client.id}`}>Open record</Link>
-                    </Button>
-                  </td>
+                  <td className="px-3 py-3 align-middle text-xs font-semibold tabular-nums text-muted-copy">{elapsedLabel(client.created_at)}</td>
                 </>
               )}
             />
@@ -510,7 +547,7 @@ const Clients = () => {
                 key: client.id,
                 title: client.full_name,
                 state: [client.service, placeOf(client) || "Details not set", elapsedLabel(client.created_at)].join(", "),
-                status: <Status label={careStageLabel(client.stage)} tone={careStageTone(client.stage)} />,
+                status: <Status label={clientStatusOf(client.stage).label} tone={clientStatusOf(client.stage).tone} />,
                 to: `/admin/clients/${client.id}`,
               }))}
             />

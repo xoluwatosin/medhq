@@ -13,6 +13,7 @@ import { ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { SelectField } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
 import { clientLifecycle, type ClientLifecycleAction } from "@/lib/care-records";
 
@@ -22,35 +23,54 @@ interface Prompt {
   description: string;
   confirm: string;
   needsReason: boolean;
+  /** The reasons offered, as the leading words of the recorded reason. */
+  reasons?: readonly string[];
 }
+
+// The reasons follow how home care systems record a break and an ending:
+// a short fixed list, with "Other" and a note for anything else.
+const HOLD_REASONS = ["In hospital", "Travelling", "Respite", "Other"] as const;
+const END_REASONS = [
+  "Care finished",
+  "Did not go ahead",
+  "Left the service: needs went up",
+  "Left the service: needs went down",
+  "Left the service: price",
+  "Left the service: moved away",
+  "Left the service: service quality",
+  "Deceased",
+  "Other",
+] as const;
 
 const PROMPTS: Record<ClientLifecycleAction, Prompt> = {
   hold: {
     action: "hold",
-    title: "Put this file on hold",
-    description: "The file stays open and stops appearing as outstanding work.",
+    title: "Put this client on hold",
+    description: "The client stays on file and leaves the Needs you list until care resumes.",
     confirm: "Put on hold",
     needsReason: true,
+    reasons: HOLD_REASONS,
   },
   resume: {
     action: "resume",
-    title: "Take this file off hold",
-    description: "Work on this file resumes from its current stage.",
+    title: "Take this client off hold",
+    description: "Work resumes from where it was.",
     confirm: "Take off hold",
     needsReason: false,
   },
   close: {
     action: "close",
-    title: "Close this file",
-    description: "Closing records that care is not continuing. Everything on the file is kept.",
-    confirm: "Close file",
+    title: "End care for this client",
+    description: "The client's status becomes Ended. Everything on file is kept and the file can be reopened.",
+    confirm: "End care",
     needsReason: true,
+    reasons: END_REASONS,
   },
   reopen: {
     action: "reopen",
-    title: "Reopen this file",
-    description: "The file returns to the stage its records support.",
-    confirm: "Reopen file",
+    title: "Reopen this client",
+    description: "The client returns to the status their records support.",
+    confirm: "Reopen",
     needsReason: false,
   },
   archive: {
@@ -80,27 +100,34 @@ const RecordLifecycle = ({
 }) => {
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [reason, setReason] = useState("");
+  const [choice, setChoice] = useState("");
   const [saving, setSaving] = useState(false);
 
   const open = (action: ClientLifecycleAction) => {
     setReason("");
+    setChoice("");
     setPrompt(PROMPTS[action]);
   };
 
   const run = async () => {
     if (!prompt) return;
-    if (prompt.needsReason && !reason.trim()) {
-      toast.error("Record a reason");
+    if (prompt.reasons && !choice) {
+      toast.error("Choose a reason");
       return;
     }
+    if (prompt.needsReason && (prompt.reasons ? choice === "Other" : true) && !reason.trim()) {
+      toast.error("Say what the reason is");
+      return;
+    }
+    const recorded = prompt.reasons ? [choice, reason.trim()].filter(Boolean).join(". ") : reason;
     setSaving(true);
     try {
-      await clientLifecycle(clientId, prompt.action, reason);
+      await clientLifecycle(clientId, prompt.action, recorded);
       toast.success(
-        prompt.action === "hold" ? "File put on hold"
-          : prompt.action === "resume" ? "File taken off hold"
-            : prompt.action === "close" ? "File closed"
-              : prompt.action === "reopen" ? "File reopened"
+        prompt.action === "hold" ? "Client put on hold"
+          : prompt.action === "resume" ? "Client taken off hold"
+            : prompt.action === "close" ? "Care ended"
+              : prompt.action === "reopen" ? "Client reopened"
                 : prompt.action === "archive" ? "File archived"
                   : "File restored",
       );
@@ -145,10 +172,19 @@ const RecordLifecycle = ({
             <DialogTitle>{prompt?.title}</DialogTitle>
             <DialogDescription>{prompt?.description}</DialogDescription>
           </DialogHeader>
+          {prompt?.reasons && (
+            <SelectField
+              label="Reason"
+              value={choice}
+              placeholder="Choose a reason"
+              onChange={(v) => setChoice(v ?? "")}
+              options={prompt.reasons.map((r) => ({ value: r, label: r }))}
+            />
+          )}
           {prompt?.needsReason && (
             <div className="grid gap-2">
               <label htmlFor="lifecycle-reason" className="text-[13.5px] font-semibold text-foreground">
-                Reason
+                {prompt.reasons ? (choice === "Other" ? "What is the reason?" : "Note (optional)") : "Reason"}
               </label>
               <Textarea
                 id="lifecycle-reason"
