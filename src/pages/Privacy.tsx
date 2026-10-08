@@ -12,7 +12,7 @@ const Privacy = () => {
       <SEO title="Privacy Policy | Medic Connect" description="How Medic Connect collects, uses, and protects your personal information." path="/privacy" />
       <MedicHeader />
 
-      <KitPageHero eyebrow="Legal" title="Privacy policy" accent={[1]} lead="Last updated 17 February 2026." art={art.objShieldCheck} artClassName="bottom-8 h-[110px] md:mb-16 md:h-[190px] lg:h-[220px]" />
+      <KitPageHero eyebrow="Legal" title="Privacy policy" accent={[1]} lead="Last updated 8 October 2026." art={art.objShieldCheck} artClassName="bottom-8 h-[110px] md:mb-16 md:h-[190px] lg:h-[220px]" />
 
       <KitMain>
         <KitLegal note={<>Questions about your data? Email <a className="font-extrabold text-brand underline" href="mailto:hello@medicconnect.co">hello@medicconnect.co</a>.</>}>
@@ -44,6 +44,7 @@ const Privacy = () => {
               <li><strong>Healthcare Data:</strong> Medical history, care requirements, treatment preferences, health conditions, and clinical notes necessary for the provision of home care, antenatal, postnatal, paediatric, and eldercare services.</li>
               <li><strong>Professional and Employment Data:</strong> Qualifications, professional certifications, licensure details, employment history, references, and background check results for healthcare professionals applying to join our network.</li>
               <li><strong>Financial Data:</strong> Bank account details and payment information necessary for processing payments for our Services.</li>
+              <li><strong>Agreement Records:</strong> When you accept a care offer online, your typed name, your drawn signature, the date and time, the option you chose and your IP address and device details, kept as the record of your agreement.</li>
               <li><strong>Communications Data:</strong> Records of correspondence, including emails, contact form submissions, and enquiries submitted through our website.</li>
             </ul>
 
@@ -105,7 +106,8 @@ const Privacy = () => {
               <li><strong>Healthcare Professionals:</strong> We share relevant client information with healthcare professionals assigned to provide care, to the extent necessary for safe and effective service delivery.</li>
               <li><strong>Partner Healthcare Facilities:</strong> We may share professional data with hospitals, clinics, and research institutions for staffing placements and clinical research coordination.</li>
               <li><strong>Regulatory Bodies:</strong> We may disclose information to healthcare regulatory authorities, professional licensing bodies, and government agencies as required by law.</li>
-              <li><strong>Payment Processors:</strong> We share financial data with secure, PCI-compliant payment processing partners to facilitate transactions.</li>
+              <li><strong>Payment Processors:</strong> We share financial data with secure, PCI-compliant payment processing partners, such as Paystack, to facilitate transactions. Card details are entered with the payment processor and are not stored by us.</li>
+              <li><strong>Messaging:</strong> Where you agree to it in your care plan, daily care updates are shared with the people you choose through WhatsApp or another channel you prefer.</li>
               <li><strong>Service Providers:</strong> We engage third-party service providers (e.g., hosting, analytics, email delivery) who process data on our behalf under strict contractual obligations of confidentiality.</li>
               <li><strong>Legal Requirements:</strong> We may disclose information where required by law, regulation, legal process, or governmental request.</li>
             </ul>
@@ -119,6 +121,9 @@ const Privacy = () => {
             <h2>6. International data transfers</h2>
             <p>
               As Medic Connect operates in both Nigeria and the United Kingdom, your personal data may be transferred between these jurisdictions. When we transfer personal data internationally, we ensure that appropriate safeguards are in place to protect your information in accordance with the NDPA and UK GDPR, including the use of standard contractual clauses, adequacy decisions, and other legally recognised transfer mechanisms.
+            </p>
+            <p>
+              Some of the service providers we use for hosting, email delivery and payments may store or process data outside Nigeria. We use providers that protect personal data to standards the NDPA recognises, and only to provide our Services.
             </p>
           </section>
 
@@ -214,7 +219,7 @@ const Privacy = () => {
           <section>
             <h2>12. Children's privacy</h2>
             <p>
-              Our website and Services are not directed at children under the age of 18. We do not knowingly collect personal information from children under 18 without parental or guardian consent. Where we provide paediatric or nanny/childcare services, all personal data relating to minors is collected from and managed by their parents or legal guardians. If you believe we have inadvertently collected personal data from a child without appropriate consent, please contact us immediately and we will take steps to delete such information.
+              Our website and Services are not directed at children under the age of 18. We do not knowingly collect personal information from children under 18 without parental or guardian consent. Where we provide newborn, paediatric or nanny/childcare services, all personal data relating to the child, including health information, is collected from and managed with their parents or legal guardians, and used only to provide and record their care. If you believe we have inadvertently collected personal data from a child without appropriate consent, please contact us immediately and we will take steps to delete such information.
             </p>
           </section>
 

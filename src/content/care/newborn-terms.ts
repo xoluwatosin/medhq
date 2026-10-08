@@ -1,9 +1,16 @@
 // Newborn care service terms, as offered to families with a care offer.
 //
-// The words are those of the reviewed .docx (version 0.4), split into clauses
+// The words are those of the reviewed .docx (version 0.4), with the v0.5
+// changes below, split into clauses
 // so the offer page can show them and keep an exact copy with each offer. A
 // change to these words is a new version: bump TERMS_VERSION, never edit an
 // issued version in place.
+//
+// v0.5: an assessment fee applies only where an assessment is needed;
+// days off may be arranged as a pattern, at least one day a week on
+// average; an upfront payment ended early is charged at the monthly rate
+// for the months used; online acceptance records the drawn signature;
+// the quotation is called the care offer.
 export interface TermsClause {
   number: number;
   title: string;
@@ -12,7 +19,7 @@ export interface TermsClause {
   paragraphs: string[];
 }
 
-export const NEWBORN_TERMS_VERSION = "Newborn care service terms v0.4";
+export const NEWBORN_TERMS_VERSION = "Newborn care service terms v0.5";
 
 export const NEWBORN_TERMS: TermsClause[] = [
   {
@@ -27,9 +34,9 @@ export const NEWBORN_TERMS: TermsClause[] = [
     "number": 2,
     "title": "The documents and acceptance",
     "paragraphs": [
-      "The agreement consists of these terms, the accepted quotation and the individual Care Schedule, each identified by reference and version. The Schedule records price, dates, duties, rota, protected rest and supplies. “Proposed care and support” is a discussion document, not an issued care plan or care-worker instructions. Agreement to that proposal alone does not form this service agreement. A separate privacy notice explains personal-information handling.",
+      "The agreement consists of these terms, the accepted care offer (our quotation) and the individual Care Schedule, each identified by reference and version. The Schedule records price, dates, duties, rota, protected rest and supplies. “Proposed care and support” is a discussion document, not an issued care plan or care-worker instructions. Agreement to that proposal alone does not form this service agreement. A separate privacy notice explains personal-information handling.",
       "The agreement is formed when you accept the completed commercial documents and these terms in writing, including electronically, and we confirm acceptance in writing. We will give you copies of every accepted version. Care starts only after package agreement, appropriate consents, confirmed staffing, clinical approval and issue of the care plan, required payment and our confirmation of the start. Payment alone does not issue the care plan or bypass these steps.",
-      "You may comment on or correct the proposal. Clinical staff review corrections and issue a revised draft where needed; comments do not directly change the clinical plan. Material changes to scope, hours or price require a revised quotation and written agreement. An expressly agreed Schedule variation takes priority on that point; mandatory law always prevails. A care-plan change alone cannot change fees or contracted hours."
+      "You may comment on or correct the proposal. Clinical staff review corrections and issue a revised draft where needed; comments do not directly change the clinical plan. Material changes to scope, hours or price require a revised care offer and written agreement. An expressly agreed Schedule variation takes priority on that point; mandatory law always prevails. A care-plan change alone cannot change fees or contracted hours."
     ]
   },
   {
@@ -54,7 +61,7 @@ export const NEWBORN_TERMS: TermsClause[] = [
     "number": 5,
     "title": "Hours and live in arrangements",
     "paragraphs": [
-      "Live-in means that a staff member stays at the home. The Care Schedule and care plan specify duty hours, overnight duties, breaks, protected uninterrupted rest, a weekly day off and handovers. Weekly day-off relief is included in the care fee. The care plan identifies who covers each daily rest period; any additional staffing and price must be agreed in the quotation before delivery.",
+      "Live-in means that a staff member stays at the home. The Care Schedule and care plan specify duty hours, overnight duties, breaks, protected uninterrupted rest, days off and handovers. Days off are arranged around your family and the staff member, at least the equivalent of one day a week on average, for example one day each week or two days together every two weeks. Relief cover for days off is included in the care fee. The care plan identifies who covers each daily rest period; any additional staffing and price must be agreed in the care offer before delivery.",
       "A single live-in staff member is not available continuously for 24 hours. Please do not assign duties during agreed rest periods. If night waking or another change regularly interrupts protected rest, we will review the rota with you and arrange a safe alternative. Any additional fee requires written agreement. An immediate emergency will be managed under clause 8."
     ]
   },
@@ -100,9 +107,10 @@ export const NEWBORN_TERMS: TermsClause[] = [
     "title": "Fees and what they cover",
     "group": "Fees and changes to the booking",
     "paragraphs": [
-      "Your quotation and Care Schedule show monthly fees, billing periods, total duration and price, included cover, the assessment, any upfront-payment discount as a separate line, other agreed items and applicable tax treatment. Quotes are valid for 14 calendar days from issue. No undisclosed holiday, overnight, transport or administrative charge may be added after acceptance.",
-      "The care needs assessment costs ₦35,000, charged separately and not credited against care fees. The quotation shows any amount already paid. Paying for a completed assessment does not commit you to ongoing care. Clause 13 applies if the assessment is cancelled before delivery.",
+      "Your care offer and Care Schedule show monthly fees, billing periods, total duration and price, included cover, the assessment, any upfront-payment discount as a separate line, other agreed items and applicable tax treatment. Care offers are valid for 14 calendar days from issue. No undisclosed holiday, overnight, transport or administrative charge may be added after acceptance.",
+      "Where a care needs assessment is needed, the care offer says so. It costs ₦35,000, charged separately and not credited against care fees. If the care offer says no assessment is needed, none is charged. The care offer shows any amount already paid. Paying for a completed assessment does not commit you to ongoing care. Clause 13 applies if the assessment is cancelled before delivery.",
       "Care fees are payable monthly in advance, with the first month paid before the confirmed start. Use the business bank details or Paystack payment link on our invoice. Staff may not collect service fees or negotiate private payments. We will provide payment confirmation.",
+      "Where the care offer allows it, you may instead pay for every month upfront at the discount shown. If you then end care early, the care already provided is charged at the monthly rate, without the discount, and the balance is refunded under clause 15. If care ends early because of our failure, our decision for operational reasons, or the baby’s hospitalisation or death, you keep the discount on the care provided.",
       "Partial months and unused days are calculated by dividing the monthly care fee by the scheduled care days in that billing month; partial days use the agreed duty hours for that day. Included relief is not an extra service day. Routine staff arrival, departure and relief-change travel for live-in, live-out and shift care is included. Other travel included in the package is identified in the Schedule. For trips outside that scope, including accompanying the baby, agree arrangements and charges beforehand: the family may arrange and pay, or we invoice approved costs paid by the carer, with receipts or other evidence. Emergency arrangements follow clause 8."
     ]
   },
@@ -208,7 +216,7 @@ export const NEWBORN_TERMS: TermsClause[] = [
     "title": "Acceptance",
     "paragraphs": [
       "Before accepting, please review the Care Schedule, particularly the scope, rota and rest cover, fees, start arrangements, cancellation and hospitalisation provisions, and service contacts. Ask us to explain anything unclear. Acceptance does not waive rights that the law protects.",
-      "When you accept online, we record your name, the date and time, the option you chose, how you will pay and this terms version, and send you a copy. We confirm acceptance in writing before care starts."
+      "When you accept online, you type your full name and sign with your finger or mouse. We record your name, your signature, the date and time, the option you chose, how you will pay and this terms version. Your signature has the same effect as signing on paper. Once your first payment is received, we email you a copy of the signed agreement, which is our written confirmation of your booking."
     ]
   }
 ];
