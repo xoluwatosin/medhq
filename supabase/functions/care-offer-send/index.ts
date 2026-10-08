@@ -100,9 +100,9 @@ Deno.serve(async (req) => {
           from: "Medic Connect <hello@medicconnect.co>",
           to: [email],
           reply_to: "hello@medicconnect.co",
-          subject: `Your care offer for ${careFor}, ${offer.reference}`,
+          subject: `Your care offer for ${careFor} is ready`,
           html,
-          ...(pdf ? { attachments: [{ filename: `Medic Connect care offer ${offer.reference}.pdf`, content: pdf }] } : {}),
+          ...(pdf ? { attachments: [{ filename: `Care offer for ${careFor}, Medic Connect.pdf`, content: pdf }] } : {}),
         }),
       });
       emailed = res.ok;

@@ -511,7 +511,8 @@ export async function buildOfferPdf(
   return doc.output("blob");
 }
 
-export const offerPdfName = (reference: string) => `Medic Connect care offer ${reference}.pdf`;
+export const offerPdfName = (offer: OfferView) =>
+  offer.status === "accepted" ? `Signed care agreement for ${offer.content.careFor}, Medic Connect.pdf` : `Care offer for ${offer.content.careFor}, Medic Connect.pdf`;
 
 /** The PDF as base64, to email or to keep as the signed copy. */
 export async function offerPdfBase64(offer: OfferView): Promise<string> {
@@ -529,7 +530,7 @@ export async function downloadOfferPdf(offer: OfferView) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = offerPdfName(offer.reference);
+  a.download = offerPdfName(offer);
   document.body.appendChild(a);
   a.click();
   a.remove();

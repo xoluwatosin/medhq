@@ -243,7 +243,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
     ? [kitParagraph("For each month after this one, we email you a payment link five days before it is due.")]
     : [];
 
-  await sendEmail(to, firstPayment ? `Booking confirmed: care for ${careFor}, ${offer.reference}` : `Payment received for month ${month}: care for ${careFor}`, kitEmail({
+  await sendEmail(to, firstPayment ? `You are all booked in: care for ${careFor}` : `Thank you: month ${month} of ${careFor}'s care is paid`, kitEmail({
     eyebrow: firstPayment ? "Booking confirmed" : "Payment received",
     title: firstPayment ? `Thank you, ${first}` : `Thank you for month ${month}`,
     standfirst: `${amount} received for ${careFor}'s care`,
@@ -263,7 +263,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
       kitParagraph("Paystack also emails you a receipt for the payment."),
       kitParagraph(WHATSAPP_LINE),
     ].join(""),
-  }), copy ? { filename: `Medic Connect care agreement ${offer.reference} signed.pdf`, content: copy } : undefined);
+  }), copy ? { filename: `Signed care agreement for ${careFor}, Medic Connect.pdf`, content: copy } : undefined);
 
   const staff = Deno.env.get("NOTIFICATION_EMAIL") ?? "";
   await sendEmail(staff, `Payment received: ${careFor}, ${amount} (${forWhat.toLowerCase()})`, kitEmail({

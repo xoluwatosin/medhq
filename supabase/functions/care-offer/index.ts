@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
     const to = String(contact?.email ?? "").trim().toLowerCase();
     if (to) {
       const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
-      await sendEmail(to, `You have accepted your care offer, ${o.reference}`, kitEmail({
+      await sendEmail(to, `Thank you for accepting your care offer for ${o.content?.careFor ?? "your family"}`, kitEmail({
         eyebrow: "Care offer",
         title: "Thank you, your choice is recorded",
         standfirst: `${o.content?.serviceTitle ?? "Care"} for ${o.content?.careFor ?? ""}`,

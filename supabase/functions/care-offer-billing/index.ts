@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       const to = String(contact?.email ?? "").trim().toLowerCase();
       const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
       const pay = o.content?.payment ?? {};
-      const sent = await sendEmail(to, `Payment for month ${row.number} of ${months}: care for ${careFor}`, kitEmail({
+      const sent = await sendEmail(to, `${careFor}'s care: next month's payment`, kitEmail({
         eyebrow: "Care payment",
         title: `Month ${row.number} of ${months} for ${careFor}`,
         standfirst: `${naira(Number(row.amount))}, due ${longDate(row.due_on)}`,
