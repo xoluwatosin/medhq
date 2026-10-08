@@ -156,6 +156,57 @@ const evaluationGroups = (
       ];
 };
 
+type NamedContact = { firstName?: string; lastName?: string; phone?: string; email?: string; relationship?: string; relationshipOther?: string };
+
+async function addNamedContacts(
+  db: ReturnType<typeof createClient>,
+  clientId: string,
+  groups: { sections: { fields?: { id: string; type: string }[] }[]; responses: Record<string, unknown> }[],
+) {
+  const named: NamedContact[] = [];
+  for (const group of groups) {
+    for (const section of group.sections) {
+      for (const field of section.fields ?? []) {
+        if (field.type !== "contact_block") continue;
+        const value = group.responses[field.id];
+        if (value && typeof value === "object" && !Array.isArray(value)) named.push(value as NamedContact);
+      }
+    }
+  }
+  if (named.length === 0) return;
+
+  const { data: existing } = await db.from("client_contacts").select("full_name, phone").eq("client_id", clientId);
+  const digits = (v?: string | null) => String(v ?? "").replace(/\D/g, "").slice(-10);
+  const known = (existing ?? []) as { full_name: string | null; phone: string | null }[];
+
+  for (const c of named) {
+    const first = String(c.firstName ?? "").trim();
+    const last = String(c.lastName ?? "").trim();
+    const phone = String(c.phone ?? "").trim();
+    const fullName = [first, last].filter(Boolean).join(" ");
+    if (!fullName || (!phone && !String(c.email ?? "").trim())) continue;
+    const already = known.some((k) =>
+      (phone && digits(k.phone) && digits(k.phone) === digits(phone)) ||
+      String(k.full_name ?? "").trim().toLowerCase() === fullName.toLowerCase());
+    if (already) continue;
+
+    const relationship = c.relationship === "Other" ? String(c.relationshipOther ?? "").trim() || null : c.relationship || null;
+    const email = String(c.email ?? "").trim().toLowerCase() || null;
+    const { data: person, error: personError } = await db.from("care_people").insert({
+      full_name: fullName, first_name: first || null, last_name: last || null,
+      phone: phone || null, whatsapp: phone || null, email, source: "pre_assessment",
+    }).select("id").single();
+    if (personError) throw personError;
+    const { error: contactError } = await db.from("client_contacts").insert({
+      client_id: clientId, person_id: (person as { id: string }).id, full_name: fullName,
+      first_name: first || null, last_name: last || null, relationship,
+      phone: phone || null, whatsapp: phone || null, email, is_primary: false, is_enquirer: false,
+    });
+    if (contactError) throw contactError;
+    known.push({ full_name: fullName, phone });
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -485,6 +536,17 @@ Deno.serve(async (req) => {
     // Nothing is reported as sent back unless it truly is. A failure here
     // leaves the form open, so the family can press Send again.
     if (finaliseError) throw finaliseError;
+
+    // Anyone else the family named to reach (the alternative contact, or the
+    // local contact for a family abroad) joins the client's contacts, so staff
+    // find them on the record and not only inside the answers. A name and a
+    // way to reach them is enough; the relationship is added when given. This
+    // never stops a form being received.
+    try {
+      await addNamedContacts(db, token.client_id, groups);
+    } catch (err) {
+      console.error("care-form-save named contacts", err instanceof Error ? err.message : err);
+    }
 
     // A top-up closes the gap it was sent for.
     const { error: coverageError } = await db
