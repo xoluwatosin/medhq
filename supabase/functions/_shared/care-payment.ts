@@ -237,6 +237,8 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
     { title: "Care starts", detail: String(c.start ?? "On the agreed date.") },
   ];
   const copy = firstPayment ? await signedCopy(db, offer.signed_pdf_path ?? null) : null;
+  // Back to their offer page: the family's own link, kept with the payment.
+  const pageUrl = typeof offer.pay_url === "string" && offer.pay_url.startsWith(SITE_URL) ? offer.pay_url.split("?")[0] : null;
   const monthlyNote = offer.accepted_payment === "monthly" && months > 1
     ? [kitParagraph("For each month after this one, we email you a payment link five days before it is due.")]
     : [];
@@ -257,6 +259,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
             : "Your signed agreement can be downloaded from your offer page at any time.")]
         : []),
       ...(firstPayment ? [kitSubhead("What happens next"), kitSteps(next), ...monthlyNote] : []),
+      ...(pageUrl ? [kitButton("View your booking", pageUrl)] : []),
       kitParagraph("Paystack also emails you a receipt for the payment."),
       kitParagraph(WHATSAPP_LINE),
     ].join(""),
