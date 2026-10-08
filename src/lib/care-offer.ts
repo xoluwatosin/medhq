@@ -277,7 +277,7 @@ export const newbornLiveInTemplate = (args: {
     "Nothing is bought or charged without your agreement.",
   ],
   assessment: "No care needs assessment is needed for this care. Your nurse and our clinical lead will go through the baby's needs with you at the introduction.",
-  payment: { bankName: "", accountName: "Medic Connect Limited", accountNumber: "" },
+  payment: { bankName: "Providus Bank", accountName: "Medic Connect Limited", accountNumber: "1307500114" },
 });
 
 /** What still has to be filled in before an offer can be sent. */

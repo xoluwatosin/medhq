@@ -77,7 +77,9 @@ export async function buildOfferPdf(
 
   let ink: readonly number[] = C.ink;
   let fontSize = 10;
+  let fontWeight: "normal" | "bold" | "extrabold" = "normal";
   const font = (weight: "normal" | "bold" | "extrabold", size: number, colour: readonly number[] = C.ink) => {
+    fontWeight = weight;
     doc.setFont("Figtree", weight);
     doc.setFontSize(size);
     doc.setTextColor(colour[0], colour[1], colour[2]);
@@ -130,7 +132,16 @@ export async function buildOfferPdf(
     font("bold", 7.5, C.white);
     doc.text(`Care offer ${offer.reference}`, PAGE_W - M, 6.8, { align: "right" });
   };
-  const newPage = () => { doc.addPage(); watermark(); strip(); y = TOP; };
+  // The strip sets its own white text; the text that runs on from the page
+  // before carries on in its own font and colour, not the strip's.
+  const newPage = () => {
+    const keep = { weight: fontWeight, size: fontSize, colour: ink };
+    doc.addPage();
+    watermark();
+    strip();
+    font(keep.weight, keep.size, keep.colour);
+    y = TOP;
+  };
   const ensure = (h: number) => { if (y + h > PAGE_H - BOTTOM) newPage(); };
   const fill = (colour: readonly number[]) => doc.setFillColor(colour[0], colour[1], colour[2]);
   const stroke = (colour: readonly number[], width = 0.3) => { doc.setDrawColor(colour[0], colour[1], colour[2]); doc.setLineWidth(width); };
