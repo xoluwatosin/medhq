@@ -188,7 +188,7 @@ export const OfferSchedule = ({
       <dl className="mt-3 border-2 border-navy bg-card">
         {list.map((row, i) => (
           <div key={row.label} className={cn("grid gap-1 px-4 py-3 sm:grid-cols-[170px_1fr] sm:gap-4 sm:px-5", i > 0 && "border-t border-line")}>
-            <dt className="text-[13px] font-bold text-label">{row.label}</dt>
+            <dt className="text-[14.5px] font-extrabold text-navy">{row.label}</dt>
             <dd className="flex flex-col gap-1.5 text-[14.5px] leading-[1.55] text-ink">
               {row.lines.map((l) => <span key={l}>{l}</span>)}
             </dd>

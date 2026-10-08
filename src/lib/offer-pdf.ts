@@ -388,7 +388,7 @@ export async function buildOfferPdf(
       stroke(C.line, 0.3);
       doc.line(M, y, M + W, y);
       const top = y;
-      font("bold", 8.5, C.label);
+      font("extrabold", 9.5, C.navy);
       doc.text(doc.splitTextToSize(row.label, labelW - 4) as string[], M, y + 5);
       y += 2;
       row.lines.forEach((l) => para(l, { size: 9.5, colour: C.ink, x: M + labelW, w: W - labelW, after: 1 }));
