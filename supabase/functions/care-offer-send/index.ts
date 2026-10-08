@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
           kitParagraph(`${first}, thank you for talking with us. Here is our offer for ${careFor}${options.length > 1 ? `, with ${options.length} options to compare` : ""}.`),
           kitFacts(options.map((o) => {
             const t = optionTotals(o, months, pct);
-            return { label: o.title, value: `${naira(t.monthly)} a month${pct > 0 ? `, or ${naira(t.upfront)} for ${months} months paid upfront` : ""}` };
+            return { label: o.title, value: `${naira(t.monthly)} a month${pct > 0 ? `, or ${naira(t.upfront)} for all ${months} months paid upfront (a ${pct}% discount)` : ""}` };
           })),
           kitButton("View and accept your offer", link),
           kitSubhead("What happens next"),

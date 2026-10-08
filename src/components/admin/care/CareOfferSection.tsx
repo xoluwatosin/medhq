@@ -2,21 +2,20 @@
 // see it, send it by email (with the PDF), WhatsApp or a copied link, and see
 // when it was opened and what was accepted. A sent offer is fixed; to change
 // it, withdraw it and make a new one.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Eye, Mail, MessageCircle, Plus, X } from "lucide-react";
+import { Copy, Eye, FileDown, Mail, MessageCircle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CareField, CareSheet } from "@/components/admin/care/CareSurface";
 import { MuEmpty, MuRow, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import { art } from "@/components/mc/art";
 import { cxInputClass } from "@/components/candidate/primitives";
-import OfferDocument from "@/components/care/OfferDocument";
-import CareOffer, { OfferPrintHeader } from "@/pages/care/CareOffer";
+import CareOffer from "@/pages/care/CareOffer";
 import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION, type TermsClause } from "@/content/care/newborn-terms";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
-import { contractToPdfBlob } from "@/lib/contract-pdf";
+import { buildOfferPdf, downloadOfferPdf } from "@/lib/offer-pdf";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
   naira, newbornLiveInTemplate, offerGaps, optionTotals,
@@ -84,8 +83,6 @@ export default function CareOfferSection({
   const [withdrawing, setWithdrawing] = useState<OfferRow | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [printing, setPrinting] = useState<OfferRow | null>(null);
-  const printRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     const { data } = await adminDb().from("care_offers").select("*").eq("client_id", clientId).order("created_at", { ascending: false });
@@ -124,17 +121,24 @@ export default function CareOfferSection({
     void load();
   };
 
-  // The PDF is made from the same document the family will see, at A4 width.
+  // The same PDF the family downloads from their page.
+  const asView = (o: OfferRow) => ({
+    reference: o.reference,
+    status: o.status,
+    content: o.content,
+    terms_version: o.terms_version,
+    terms: o.terms,
+    expires_at: o.expires_at,
+    accepted_option: o.accepted_option,
+    accepted_payment: o.accepted_payment as "monthly" | "upfront" | null,
+    accepted_name: o.accepted_name,
+    accepted_at: o.accepted_at,
+  });
   const makePdf = async (offer: OfferRow): Promise<string | null> => {
-    setPrinting(offer);
-    await new Promise((r) => setTimeout(r, 250));
     try {
-      if (!printRef.current) return null;
-      return await blobToBase64(await contractToPdfBlob(printRef.current));
+      return await blobToBase64(await buildOfferPdf(asView(offer)));
     } catch {
       return null;
-    } finally {
-      setPrinting(null);
     }
   };
 
@@ -217,6 +221,7 @@ export default function CareOfferSection({
                 action={
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" variant="outline" className="h-9" onClick={() => setPreviewing(o)}><Eye className="mr-1.5 h-4 w-4" /> Preview</Button>
+                    <Button type="button" variant="outline" className="h-9" onClick={() => void downloadOfferPdf(asView(o)).catch(() => toast.error("The PDF could not be made"))}><FileDown className="mr-1.5 h-4 w-4" /> PDF</Button>
                     {o.status === "draft" && (
                       <Button type="button" variant="outline" className="h-9" onClick={() => setEditing({ id: o.id, content: o.content, validUntil: o.expires_at?.slice(0, 10) ?? inDays(14) })}>Edit</Button>
                     )}
@@ -335,21 +340,6 @@ export default function CareOfferSection({
         </div>
       )}
 
-      {printing && (
-        <div aria-hidden="true" className="pointer-events-none fixed left-[-10000px] top-0">
-          <div ref={printRef} className="w-[794px] bg-white p-10">
-            <OfferPrintHeader reference={printing.reference} />
-            <OfferDocument
-              reference={printing.reference}
-              content={printing.content}
-              terms={printing.terms}
-              termsVersion={printing.terms_version}
-              expiresAt={printing.expires_at}
-              print
-            />
-          </div>
-        </div>
-      )}
     </MuSection>
   );
 }

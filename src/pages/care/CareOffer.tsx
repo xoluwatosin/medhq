@@ -11,12 +11,12 @@ import { NotchTag, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 import { Choice, requestPrimary, requestSecondary } from "@/components/request/RequestShell";
 import { FamilyLoading } from "@/components/care/FamilyShell";
-import OfferDocument, {
+import {
   OfferBankDetails, OfferCompareTable, OfferHowItWorks, OfferIncluded, OfferLabel,
   OfferOptionCard, OfferPriceNote, OfferSummary, OfferTerms,
 } from "@/components/care/OfferDocument";
 import { supabase } from "@/integrations/supabase/client";
-import { contractToPdfBlob } from "@/lib/contract-pdf";
+import { downloadOfferPdf } from "@/lib/offer-pdf";
 import { formatDate } from "@/lib/format";
 import { firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
 import { cn } from "@/lib/utils";
@@ -79,8 +79,8 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [seen, setSeen] = useState<number[]>([0]);
-  const printRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLOListElement>(null);
 
@@ -131,16 +131,13 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   };
 
   const downloadPdf = async () => {
-    if (!printRef.current || !offer) return;
+    if (!offer) return;
     setMaking(true);
+    setPdfError(null);
     try {
-      const blob = await contractToPdfBlob(printRef.current);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Medic Connect care offer ${offer.reference}.pdf`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      await downloadOfferPdf(offer);
+    } catch {
+      setPdfError("The PDF could not be made. Please try again, or ask us to email it to you.");
     } finally {
       setMaking(false);
     }
@@ -297,7 +294,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
     ),
     included: (
       <div className="flex flex-col gap-6">
-        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">What your nurse does</h2>
+        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Your nurse's responsibilities</h2>
         <OfferIncluded content={c} />
       </div>
     ),
@@ -379,9 +376,9 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
             {(["monthly", "upfront"] as const).filter((p) => p === "monthly" || c.upfrontDiscountPercent > 0).map((p) => {
               const t = chosen ? optionTotals(chosen, c.months, c.upfrontDiscountPercent) : null;
               const blurb = t
-                ? p === "monthly" ? `${naira(t.monthly)} a month, the first before care starts` : `${naira(t.upfront)} once, saving ${naira(t.saving)}`
+                ? p === "monthly" ? `${naira(t.monthly)} a month, the first before care starts` : `${naira(t.upfront)} once. A ${c.upfrontDiscountPercent}% discount, saving you ${naira(t.saving)}`
                 : p === "monthly" ? "Each month in advance" : `${c.upfrontDiscountPercent}% off the total`;
-              return <Choice key={p} label={p === "monthly" ? "Monthly" : `All ${c.months} months upfront`} blurb={blurb} selected={plan === p} onClick={() => setPlan(p)} />;
+              return <Choice key={p} label={p === "monthly" ? "Monthly" : `All ${c.months} months upfront (${c.upfrontDiscountPercent}% discount)`} blurb={blurb} selected={plan === p} onClick={() => setPlan(p)} />;
             })}
           </div>
         </fieldset>
@@ -435,13 +432,6 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
       {/* Where they are, and every part one tap away. */}
       <nav aria-label="Parts of the offer" className="sticky top-0 z-20 border-b-2 border-navy bg-card">
-        <div className="mx-auto max-w-3xl px-4 pt-3 sm:px-8">
-          <div className="flex gap-1">
-            {STEPS.map((s, i) => (
-              <span key={s.id} className={cn("h-[5px] flex-1 transition-colors duration-300", i <= step ? "bg-brand" : "bg-tint")} />
-            ))}
-          </div>
-        </div>
         <ol ref={railRef} className="mx-auto flex max-w-3xl gap-1.5 overflow-x-auto px-4 py-2.5 [scrollbar-width:none] sm:px-8">
           {STEPS.map((s, i) => {
             const isCurrent = i === step;
@@ -466,6 +456,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       </nav>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-6 sm:px-8 sm:pt-8">
+        {pdfError && <p role="alert" className="mb-4 border-l-4 border-destructive bg-tint px-4 py-3 text-[14.5px] font-bold text-ink">{pdfError}</p>}
         <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">{current.label}</p>
         <div key={current.id} className="animate-in fade-in slide-in-from-right-4 duration-300">{body[current.id]}</div>
         <p className="mt-10 border-t border-line pt-5 text-[14px] leading-[1.6] text-body">
@@ -485,44 +476,8 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         </div>
       </div>
 
-      {/* The PDF is made from this copy: every part, every clause open, at A4 width. */}
-      <div aria-hidden="true" className="pointer-events-none fixed left-[-10000px] top-0">
-        <div ref={printRef} className="w-[794px] bg-white p-10">
-          <OfferPrintHeader reference={offer.reference} />
-          <OfferDocument
-            reference={offer.reference}
-            content={c}
-            terms={offer.terms}
-            termsVersion={offer.terms_version}
-            expiresAt={offer.expires_at}
-            print
-            chosenOption={accepted ? offer.accepted_option : null}
-          />
-          {accepted && (
-            <div className="mc-accept-inner mt-8 border-2 border-navy p-5">
-              <p className="text-[16px] font-extrabold text-navy">Accepted</p>
-              <p className="mt-2 text-[14px] text-ink">
-                {chosen?.title}, paying {acceptedPlan === "upfront" ? "upfront" : "monthly"}. Accepted online by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}, under {offer.terms_version}.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
-
-export const OfferPrintHeader = ({ reference }: { reference: string }) => (
-  <div className="mb-8 flex items-end justify-between border-b-4 border-navy pb-4">
-    <div>
-      <p className="text-[24px] font-extrabold tracking-[-0.04em] text-navy">Medic Connect</p>
-      <p className="text-[12px] text-body">Medic Connect Limited, RC 8026476, 145 Igbosere Road, Lagos Island, Lagos</p>
-    </div>
-    <div className="text-right">
-      <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">Care offer</p>
-      <p className="text-[14px] font-bold text-navy">{reference}</p>
-    </div>
-  </div>
-);
 
 export default CareOffer;

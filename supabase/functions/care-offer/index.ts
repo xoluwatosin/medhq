@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     const pay = o.content?.payment ?? {};
     const facts = [
       { label: "Option", value: option.title },
-      { label: "Payment", value: payment === "upfront" ? `All ${months} months upfront, ${naira(t.upfront)}` : `Monthly, ${naira(t.monthly)} a month` },
+      { label: "Payment", value: payment === "upfront" ? `All ${months} months upfront, ${naira(t.upfront)} (a ${pct}% discount, saving ${naira(t.saving)})` : `Monthly, ${naira(t.monthly)} a month` },
       { label: "Accepted by", value: name },
       { label: "Terms", value: o.terms_version },
     ];

@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, Minus } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { naira, optionTotals, type OfferContent, type OfferOption } from "@/lib/care-offer";
+import { naira, optionTotals, upfrontLine, type OfferContent, type OfferOption } from "@/lib/care-offer";
 import type { TermsClause } from "@/content/care/newborn-terms";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +48,18 @@ export const OfferSummary = ({ reference, content, expiresAt }: { reference: str
   </dl>
 );
 
+/** An option's name, with any plus sign set large in brand blue. */
+export const OptionTitle = ({ title, onDark = false }: { title: string; onDark?: boolean }) => (
+  <>
+    {title.split(" + ").map((part, i) => (
+      <span key={part}>
+        {i > 0 && <span className={cn("mx-1 font-black", onDark ? "text-white" : "text-brand")} aria-label="plus">+</span>}
+        {part}
+      </span>
+    ))}
+  </>
+);
+
 /** One option, priced. */
 export const OfferOptionCard = ({
   option, content, chosen = false, action,
@@ -56,7 +68,7 @@ export const OfferOptionCard = ({
   return (
     <article className={cn("mc-keep flex flex-col border-2 border-navy bg-card p-5 sm:p-6", chosen ? "shadow-offset-blue" : "shadow-offset-sm")}>
       {chosen && <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">Your choice</p>}
-      <h3 className="text-[21px] font-extrabold leading-[1.15] tracking-[-0.03em] text-navy">{option.title}</h3>
+      <h3 className="text-[21px] font-extrabold leading-[1.15] tracking-[-0.03em] text-navy"><OptionTitle title={option.title} /></h3>
       <p className="mt-2 text-[14.5px] font-bold leading-[1.5] text-ink">{option.staffing}</p>
       <p className="mt-2 text-[14.5px] leading-[1.55] text-body">{option.summary}</p>
       <div className="mt-5 bg-tint px-4 py-4">
@@ -65,7 +77,7 @@ export const OfferOptionCard = ({
         </p>
         <p className="mt-2 text-[14px] text-body">{naira(t.total)} for {content.months} months, paid monthly</p>
         {content.upfrontDiscountPercent > 0 && (
-          <p className="mt-1 text-[14px] font-extrabold text-brand">{naira(t.upfront)} paid upfront, saving {naira(t.saving)}</p>
+          <p className="mt-2 border-t border-line pt-2 text-[14px] font-bold leading-[1.45] text-brand">{upfrontLine(t, content.months, content.upfrontDiscountPercent)}</p>
         )}
       </div>
       <div className="mt-5"><OfferLabel>Good for</OfferLabel></div>
@@ -83,14 +95,14 @@ export const OfferCompareTable = ({ content }: { content: OfferContent }) => {
   const rows = [
     { label: "A month", value: (o: OfferOption) => naira(o.monthly) },
     { label: `${months} months, monthly`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).total) },
-    ...(pct > 0 ? [{ label: `${months} months, upfront`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).upfront) }] : []),
+    ...(pct > 0 ? [{ label: `${months} months upfront (${pct}% discount)`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).upfront) }] : []),
   ];
   return (
     <table className="mc-keep w-full border-2 border-navy text-left text-[14px]">
       <thead className="bg-navy text-white">
         <tr>
           <th className="w-[34%] px-3 py-2.5 text-[12.5px] font-bold"><span className="sr-only">Cost</span></th>
-          {options.map((o) => <th key={o.id} className="px-3 py-2.5 text-[13px] font-extrabold leading-tight">{o.title}</th>)}
+          {options.map((o) => <th key={o.id} className="px-3 py-2.5 text-[13px] font-extrabold leading-tight"><OptionTitle title={o.title} onDark /></th>)}
         </tr>
       </thead>
       <tbody>
@@ -235,7 +247,7 @@ const OfferDocument = ({
       <div className="mt-4"><OfferPriceNote /></div>
     </Part>
 
-    <Part label="What is included" title="What your nurse does"><OfferIncluded content={content} /></Part>
+    <Part label="What is included" title="Your nurse's responsibilities"><OfferIncluded content={content} /></Part>
     <Part label="How it works" title="Before and during care"><OfferHowItWorks content={content} /></Part>
     <Part label="Paying" title="How to pay">
       <p className="mb-4 text-[15px] leading-[1.6] text-body">

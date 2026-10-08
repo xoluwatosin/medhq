@@ -66,6 +66,10 @@ export const optionTotals = (option: OfferOption, months: number, discountPercen
   return { monthly: option.monthly, total, upfront, saving: total - upfront };
 };
 
+/** The upfront price, said plainly as a discount. */
+export const upfrontLine = (t: { upfront: number; saving: number }, months: number, discountPercent: number) =>
+  `Pay all ${months} months upfront: ${naira(t.upfront)}. That is a ${discountPercent}% discount, saving you ${naira(t.saving)}.`;
+
 /** The first payment due for the plan chosen. */
 export const firstPayment = (option: OfferOption, months: number, discountPercent: number, plan: PaymentPlan) => {
   const t = optionTotals(option, months, discountPercent);
@@ -95,8 +99,8 @@ export const newbornLiveInTemplate = (args: {
     {
       id: "one_nurse",
       title: "One live-in nurse",
-      staffing: "One nurse or midwife lives in, with a relief nurse on her weekly day off.",
-      monthly: 680000,
+      staffing: "One nurse or midwife lives in, with a relief nurse on her days off.",
+      monthly: 769000,
       summary: "Your nurse looks after the baby through the day and does the night feeds, with 8 hours of protected sleep each night.",
       goodFor: [
         "One familiar person caring for the baby every day",
@@ -105,12 +109,12 @@ export const newbornLiveInTemplate = (args: {
       ],
       consider: [
         "She is not awake all night. During her 8 hours of rest, a parent or another adult looks after the baby.",
-        "On her day off each week, a relief nurse we provide covers the day.",
+        "Her days off are arranged around your family and the nurse, for example one day a week or two days together every two weeks. A relief nurse we provide covers them.",
       ],
     },
     {
       id: "live_in_and_night",
-      title: "Live-in nurse plus a night nurse",
+      title: "Live-in nurse + night nurse",
       staffing: "A live-in nurse or midwife for the day, and a second nurse who comes in every night from 7pm to 7am.",
       monthly: 1454000,
       summary: "There is always a nurse awake and on duty with the baby, day and night, and your day nurse is fresh each morning.",
@@ -121,7 +125,7 @@ export const newbornLiveInTemplate = (args: {
       ],
       consider: [
         "Your home provides a room for the live-in nurse. The night nurse travels in each evening.",
-        "On each nurse's day off, a relief nurse we provide covers that shift.",
+        "Each nurse's days off are arranged around your family and the nurses. A relief nurse we provide covers those shifts.",
         "The higher monthly cost.",
       ],
     },
@@ -132,7 +136,7 @@ export const newbornLiveInTemplate = (args: {
     "Settling and safe sleep",
     "Night feeds",
     "Going with you to check-ups and vaccinations",
-    "The baby's laundry",
+    "The baby's laundry and light cleaning",
     "A daily record of feeds, sleep and nappies, shared with you each day",
     "A weekly review by our clinical lead",
     "A replacement nurse within 72 hours if the match does not work",
@@ -145,7 +149,7 @@ export const newbornLiveInTemplate = (args: {
   ],
   howItWorks: [
     "Before the first shift, we arrange a meeting and introduction with your nurse.",
-    "Live-in nurses have protected rest and one day off a week. Relief cover is included in the price.",
+    "Live-in nurses have protected rest and regular days off, arranged around your family and the nurse: one day a week, or two days together every two weeks. Relief cover is included in the price.",
     "Our team is available every day from 7am to 10pm. Your care schedule includes an emergency plan for any time of night.",
     "Care fees are paid monthly in advance, with the first month paid before care starts. Or pay for all months upfront and save.",
   ],
