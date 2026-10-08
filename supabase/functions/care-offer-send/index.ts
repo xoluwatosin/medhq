@@ -123,11 +123,11 @@ Deno.serve(async (req) => {
     }
 
     const whatsappText = [
-      `Hello ${first}, here is your care offer for ${careFor} from Medic Connect.`,
-      options.length > 1 ? `It compares ${options.map((o) => o.title.toLowerCase()).join(" and ")}, with prices and the terms.` : "It has the price and the terms.",
-      `You can read it, download it as a PDF, sign and pay here: ${link}`,
-      "Once your payment is in, we email you your signed agreement and get in touch to plan day 0.",
-      "Any questions, just reply here.",
+      first && first !== "Hello" ? `Hello ${first} 👋` : "Hello 👋",
+      `Thank you for talking with us about ${careFor}. Your care offer is ready${options.length === 2 ? ", with both options side by side" : options.length > 2 ? ", with the options side by side" : ""}, so you can take your time with it.`,
+      `Here it is: ${link}`,
+      "You can read it, download the PDF, and when you are ready, accept and pay right there. If you would like a copy by email too, just say.",
+      "Any questions at all, just reply here. 💙\nThe Medic Connect team",
     ].join("\n\n");
 
     return json({
