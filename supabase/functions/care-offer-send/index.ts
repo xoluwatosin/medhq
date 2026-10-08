@@ -4,7 +4,7 @@
 // very same document the family will see. Sending fixes the offer: from here
 // on its words and prices cannot change.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
+import { kitEmail, kitButton, kitParagraph, kitSteps, kitSubhead, kitTable } from "../_shared/kit-email.ts";
 import { naira, newOfferSecret, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 
@@ -84,17 +84,29 @@ Deno.serve(async (req) => {
         eyebrow: "Care offer",
         title: `Your care offer for ${careFor}`,
         standfirst: `${content.serviceTitle ?? "Care"}, ${months} months`,
-        preheader: options.length > 1 ? `${options.length} options to compare, and how to accept` : "Your offer, and how to accept",
+        preheader: options.length > 1 ? `${options.length} options to compare, then sign and pay online` : "Your offer: read it, sign and pay online",
         bodyHtml: [
-          kitParagraph(`${first}, thank you for talking with us. Here is our offer for ${careFor}${options.length > 1 ? `, with ${options.length} options to compare` : ""}.`),
-          kitFacts(options.map((o) => {
-            const t = optionTotals(o, months, pct);
-            return { label: o.title, value: `${naira(t.monthly)} a month${pct > 0 ? `, or ${naira(t.upfront)} for all ${months} months paid upfront (a ${pct}% discount)` : ""}` };
-          })),
-          kitButton("View and accept your offer", link),
-          kitSubhead("What happens next"),
-          kitParagraph("Read the offer and the terms, choose the option that suits you, and accept on the page. We then confirm in writing and arrange a meeting and introduction with your nurse before the first shift."),
-          kitParagraph(`The offer is attached as a PDF to keep.${offer.expires_at ? ` It is valid until ${new Date(offer.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.` : ""} Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237.`),
+          kitParagraph(`${first}, thank you for talking with us. Here is our offer for ${careFor}${options.length > 1 ? `, with ${options.length} options to compare` : ""}. Everything is on one page: read it, choose, sign and pay, all from your phone.`),
+          // Fees as a table: one column per option.
+          kitTable(
+            ["Fees", ...options.map((o) => o.title)],
+            [
+              ["A month", ...options.map((o) => naira(o.monthly))],
+              [`${months} months, paid monthly`, ...options.map((o) => naira(optionTotals(o, months, pct).total))],
+              ...(pct > 0 ? [[`${months} months upfront (${pct}% discount)`, ...options.map((o) => naira(optionTotals(o, months, pct).upfront))]] : []),
+            ],
+            ["left", ...options.map(() => "right" as const)],
+          ),
+          kitButton("View your offer", link),
+          kitSubhead("How it works"),
+          kitSteps([
+            { title: "Read your offer", detail: `Compare the options, your care schedule and the terms of care.${offer.expires_at ? ` It is valid until ${new Date(offer.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.` : ""}` },
+            { title: "Choose and sign", detail: "Pick the option that suits you and how you would like to pay, then sign on the page with your finger or mouse." },
+            { title: "Pay", detail: `Online with Paystack (card, bank transfer or USSD), or by bank transfer. Pay monthly, with the first month before care starts${pct > 0 ? `, or all ${months} months upfront and save ${pct}%` : ""}.` },
+            { title: "Your booking is confirmed", detail: "Once your payment is in, we email you your signed agreement to keep." },
+            { title: "We plan day 0 with you", detail: "Within one working day, we get in touch to arrange meeting your nurse and to agree your care plan before care starts." },
+          ]),
+          kitParagraph("The offer is attached as a PDF to read at your own pace. Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237."),
         ].join(""),
       });
       const res = await fetch("https://api.resend.com/emails", {
@@ -129,7 +141,8 @@ Deno.serve(async (req) => {
     const whatsappText = [
       `Hello ${first}, here is your care offer for ${careFor} from Medic Connect.`,
       options.length > 1 ? `It compares ${options.map((o) => o.title.toLowerCase()).join(" and ")}, with prices and the terms.` : "It has the price and the terms.",
-      `You can read it, download it as a PDF and accept it here: ${link}`,
+      `You can read it, download it as a PDF, sign and pay here: ${link}`,
+      "Once your payment is in, we email you your signed agreement and get in touch to plan day 0.",
       "Any questions, just reply here.",
     ].join("\n\n");
 
