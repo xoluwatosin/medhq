@@ -12,7 +12,7 @@
 // sent it stays readable, because the person who filled it in should be able to
 // see what we hold about them without asking anyone.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +71,9 @@ interface AnswerGroup {
 
 const PreAssessment = () => {
   const { token = "" } = useParams();
+  // Opened from the client record by staff filling the form in with the family.
+  const [searchParams] = useSearchParams();
+  const staffFill = searchParams.get("staff") === "1";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<LoadResult | null>(null);
@@ -479,13 +482,20 @@ const PreAssessment = () => {
   }
 
   const seo = (
-    <SEO
-      title="Medic Connect | Before your visit"
-      description="Please complete these questions before your care assessment."
-      path="/pre-assessment"
-      breadcrumbs={[]}
-      noindex
-    />
+    <>
+      <SEO
+        title="Medic Connect | Before your visit"
+        description="Please complete these questions before your care assessment."
+        path="/pre-assessment"
+        breadcrumbs={[]}
+        noindex
+      />
+      {staffFill && (
+        <div className="sticky top-0 z-50 bg-navy px-4 py-2 text-center text-[13px] font-semibold text-white">
+          You are filling this in with the family. Ask each question as it is written.
+        </div>
+      )}
+    </>
   );
 
   if (error || !data) {

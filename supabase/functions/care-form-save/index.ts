@@ -183,8 +183,8 @@ async function addNamedContacts(
     const first = String(c.firstName ?? "").trim();
     const last = String(c.lastName ?? "").trim();
     const phone = String(c.phone ?? "").trim();
-    const fullName = [first, last].filter(Boolean).join(" ");
-    if (!fullName || (!phone && !String(c.email ?? "").trim())) continue;
+    const fullName = [first, last].join(" ");
+    if (!first || !last || !phone) continue;
     const already = known.some((k) =>
       (phone && digits(k.phone) && digits(k.phone) === digits(phone)) ||
       String(k.full_name ?? "").trim().toLowerCase() === fullName.toLowerCase());
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
 
     const { data: token } = await db
       .from("care_access_tokens")
-      .select("id, client_id, filler_type, person_id, suppress_auto_grant, expires_at, revoked_at, frozen_at, document_id, scope, covers_recipient_key, covers_services")
+      .select("id, client_id, filler_type, person_id, suppress_auto_grant, expires_at, revoked_at, frozen_at, document_id, scope, covers_recipient_key, covers_services, filled_by_staff")
       .eq("token_hash", token_hash)
       .maybeSingle();
     if (!token) return json({ error: "This link is not valid" }, 404);
@@ -317,6 +317,20 @@ Deno.serve(async (req) => {
     const { data: existing } = token.document_id
       ? await existingQuery.eq("id", token.document_id).maybeSingle()
       : await existingQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
+
+    // A form already sent back, perhaps by staff filling it in with the
+    // family, is not started again from another link.
+    if (!existing && !token.document_id && token.scope !== "top_up") {
+      const { data: sent } = await db
+        .from("care_documents")
+        .select("id")
+        .eq("client_id", client.id)
+        .eq("kind", "pre_assessment")
+        .eq("status", "submitted")
+        .limit(1)
+        .maybeSingle();
+      if (sent) return json({ error: "This form has already been sent back to us" }, 409);
+    }
 
     // A form that has been started stays on the questions it was started on.
     // Only a new draft picks up the current published version.
@@ -539,13 +553,22 @@ Deno.serve(async (req) => {
 
     // Anyone else the family named to reach (the alternative contact, or the
     // local contact for a family abroad) joins the client's contacts, so staff
-    // find them on the record and not only inside the answers. A name and a
-    // way to reach them is enough; the relationship is added when given. This
-    // never stops a form being received.
+    // find them on the record and not only inside the answers. A first name,
+    // a last name and a phone number are enough; the relationship and email
+    // are added when given. This never stops a form being received.
     try {
       await addNamedContacts(db, token.client_id, groups);
     } catch (err) {
       console.error("care-form-save named contacts", err instanceof Error ? err.message : err);
+    }
+
+    if (token.filled_by_staff) {
+      await db.from("care_activity").insert({
+        client_id: token.client_id,
+        action: "pre_assessment_filled_by_staff",
+        detail: { document_id: documentId },
+        actor_id: token.filled_by_staff,
+      });
     }
 
     // A top-up closes the gap it was sent for.

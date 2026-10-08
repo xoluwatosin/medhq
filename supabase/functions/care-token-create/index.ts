@@ -49,6 +49,10 @@ Deno.serve(async (req) => {
     let fillerType = typeof body?.filler_type === "string" ? body.filler_type : "";
     let toContactId = contactId;
     const scope = body?.scope === "top_up" ? "top_up" : "full";
+    // A member of staff filling the form in with the family, on a call or in
+    // person. Their link lasts a working day, continues the family's draft if
+    // there is one, and never gives anyone portal access.
+    const staffFill = body?.staff_fill === true && scope === "full";
     const recipientId = typeof body?.request_recipient_id === "string" ? body.request_recipient_id : "";
     const intentionIds: string[] = Array.isArray(body?.intention_ids)
       ? body.intention_ids.filter((v: unknown): v is string => typeof v === "string" && UUID.test(v))
@@ -168,9 +172,23 @@ Deno.serve(async (req) => {
       boundDocumentId = draft.id;
     }
 
+    if (staffFill) {
+      const { data: draft } = await db
+        .from("care_documents")
+        .select("id")
+        .eq("client_id", clientId)
+        .eq("kind", "pre_assessment")
+        .eq("status", "draft")
+        .is("built_from_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      boundDocumentId = draft?.id ?? null;
+    }
+
     const plain = `${client.enquiry_number}-${newSecret()}`;
     const token_hash = await hashToken(plain);
-    const expires = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+    const expires = new Date(Date.now() + (staffFill ? 12 * 60 * 60 * 1000 : 90 * 24 * 60 * 60 * 1000)).toISOString();
 
     const { data: token, error } = await db
       .from("care_access_tokens")
@@ -187,6 +205,7 @@ Deno.serve(async (req) => {
         document_id: boundDocumentId,
         covers_services: coversServices,
         covers_recipient_key: coversRecipientKey,
+        ...(staffFill ? { filled_by_staff: callerId, suppress_auto_grant: true } : {}),
       })
       .select("id, expires_at")
       .single();
@@ -209,7 +228,7 @@ Deno.serve(async (req) => {
     }
 
     await db.from("care_access_log").insert({
-      token_id: token.id, client_id: clientId, action: "token_created",
+      token_id: token.id, client_id: clientId, action: staffFill ? "staff_fill_opened" : "token_created",
     });
 
     // The plain token leaves here once and is never written to a log.

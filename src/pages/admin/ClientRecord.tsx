@@ -101,6 +101,8 @@ interface TokenRow {
   first_opened_at: string | null;
   submitted_at: string | null;
   delivery_method: string | null;
+  /** Set when staff opened the form to fill it in with the family. */
+  filled_by_staff: string | null;
   created_at: string;
 }
 
@@ -123,7 +125,8 @@ const TAB_ALIASES: Record<string, string> = {
   money: "commercial",
   finance: "commercial",
   tasks: "work",
-  questionnaire: "link",
+  questionnaire: "responses",
+  link: "responses",
   history: "activity",
 };
 
@@ -324,7 +327,8 @@ const ClientRecord = () => {
   const responses = doc?.responses ?? {};
   const outstanding = doc?.outstanding_required ?? [];
   const openFlags = flags.filter((f) => !f.cleared_at);
-  const liveToken = tokens.find((t) => !t.revoked_at && !t.submitted_at && new Date(t.expires_at) > new Date());
+  const liveToken = tokens.find((t) =>
+    !t.filled_by_staff && !t.revoked_at && !t.submitted_at && new Date(t.expires_at) > new Date());
   const [liveScope, setLiveScope] = useState<LinkScope | null>(null);
   const liveTokenId = liveToken?.id;
   useEffect(() => {
@@ -467,6 +471,32 @@ const ClientRecord = () => {
     else toast.success("Link ready");
     void logActivity(resend ? "link_resent" : "link_sent", { method });
     void load();
+  };
+
+  // Staff fill the form in with the family, on a call or in person. The form
+  // opens in a new tab on a link of its own that lasts a working day and
+  // continues the family's draft if they started one.
+  const fillNow = async () => {
+    const tab = window.open("about:blank", "_blank");
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("care-token-create", {
+      body: {
+        client_id: id,
+        contact_id: primary?.id ?? null,
+        filler_type: primary?.relationship_code === "self" ? "client" : "family_member",
+        staff_fill: true,
+      },
+    });
+    setBusy(false);
+    if (error || !data?.ok) {
+      tab?.close();
+      toast.error(data?.error ?? "Could not open the form");
+      return;
+    }
+    const url = `/pre-assessment/${data.token}?staff=1`;
+    if (tab) tab.location.href = url;
+    else window.location.assign(url);
+    void logActivity("pre_assessment_staff_opened", { contact: primary?.full_name ?? null });
   };
 
   const revokeLink = async () => {
@@ -690,7 +720,7 @@ const ClientRecord = () => {
       { value: "care-plan", label: "Working plan" }, { value: "proposal", label: "Client proposal" },
     ] },
     { label: "People and access", items: [
-      { value: "contacts", label: "Contacts" }, { value: "link", label: "Pre-assessment link" }, { value: "access", label: "Access" },
+      { value: "contacts", label: "Contacts" }, { value: "access", label: "Access" },
     ] },
     ...(isCoordinator ? [{ label: "Finance", items: [{ value: "commercial", label: "Finance" }] }] : []),
     { label: "Record history", items: [{ value: "activity", label: "Activity" }] },
@@ -887,6 +917,86 @@ const ClientRecord = () => {
 
         {tab === "responses" && (
           <>
+            {doc?.status !== "submitted" && (
+            <MuSection title="Pre-assessment form" description={`Send the family a link, or fill it in with them on a call. Links read ${reference}-XXXX.`}>
+              {liveToken ? (
+                <div className="flex flex-col gap-3">
+                  <MuTable
+                    rows={[
+                      { label: "Link", value: liveScope?.kind === "top_up" ? "Follow-up" : "Pre-assessment" },
+                      {
+                        label: "Sent to",
+                        value: liveScope?.sent_to
+                          ? `${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}`
+                          : primary?.full_name ?? "The main contact",
+                      },
+                      ...(liveScope && liveScope.covers.length > 0 ? [{ label: "Covers", value: liveScope.covers.join(", ") }] : []),
+                      { label: "Expires", value: dateOf(liveToken.expires_at) },
+                      { label: "Opened", value: liveToken.first_opened_at ? "Yes" : "Not yet" },
+                      ...(liveScope?.gives_portal_access ? [{ label: "Portal", value: "Can follow the request once sent back" }] : []),
+                    ]}
+                  />
+                  {link && (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input readOnly value={link} className="min-w-0 flex-1 border border-line-soft bg-muted px-3 py-2 text-xs" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11"
+                        onClick={() => { void navigator.clipboard.writeText(link); toast.success("Link copied"); }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" /> Copy
+                      </Button>
+                      {primary?.whatsapp && (
+                        <a
+                          className="inline-flex h-11 items-center justify-center border border-line px-4 text-sm font-semibold"
+                          href={whatsappHref(primary.whatsapp, `Here are the questions before your visit: ${link}`)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="h-11" disabled={busy} onClick={() => sendLink("email")}>
+                      <Mail className="mr-2 h-4 w-4" /> Email the link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy}
+                            onClick={() => sendLink("email", true)}>
+                      Send again
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={() => sendLink("whatsapp")}>
+                      <MessageCircle className="mr-2 h-4 w-4" /> Get link for WhatsApp
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={revokeLink}>
+                      Withdraw link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy || !primary} onClick={fillNow}>
+                      Fill in now
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-[14.5px] text-foreground">
+                    {primary
+                      ? `No live link. It will be sent to ${primary.full_name}.`
+                      : "No live link. Add a main contact on the Contacts tab first."}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="h-11" disabled={busy || !primary} onClick={createLink}>
+                      Create link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy || !primary} onClick={fillNow}>
+                      Fill in now
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </MuSection>
+            )}
             {outstanding.length > 0 && (
               <MuSection title="Still unanswered">
                 <ul className="flex flex-col gap-1.5">
@@ -899,7 +1009,7 @@ const ClientRecord = () => {
 
             {!doc ? (
               <MuSection padded={false}>
-                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Send the pre-assessment link from the Pre-assessment link tab." />
+                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Send the family the link above, or fill it in with them now." />
               </MuSection>
             ) : (
               answerGroups.map((group) => {
@@ -1021,79 +1131,6 @@ const ClientRecord = () => {
                     }
                   />
                 ))}
-              </div>
-            )}
-          </MuSection>
-        )}
-
-        {tab === "link" && (
-          <MuSection title="Pre-assessment link" description={`Links read ${reference}-XXXX.`}>
-            {liveToken ? (
-              <div className="flex flex-col gap-3">
-                <MuTable
-                  rows={[
-                    { label: "Link", value: liveScope?.kind === "top_up" ? "Follow-up" : "Pre-assessment" },
-                    {
-                      label: "Sent to",
-                      value: liveScope?.sent_to
-                        ? `${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}`
-                        : primary?.full_name ?? "The main contact",
-                    },
-                    ...(liveScope && liveScope.covers.length > 0 ? [{ label: "Covers", value: liveScope.covers.join(", ") }] : []),
-                    { label: "Expires", value: dateOf(liveToken.expires_at) },
-                    { label: "Opened", value: liveToken.first_opened_at ? "Yes" : "Not yet" },
-                    ...(liveScope?.gives_portal_access ? [{ label: "Portal", value: "Can follow the request once sent back" }] : []),
-                  ]}
-                />
-                {link && (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input readOnly value={link} className="min-w-0 flex-1 border border-line-soft bg-muted px-3 py-2 text-xs" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11"
-                      onClick={() => { void navigator.clipboard.writeText(link); toast.success("Link copied"); }}
-                    >
-                      <Copy className="mr-2 h-4 w-4" /> Copy
-                    </Button>
-                    {primary?.whatsapp && (
-                      <a
-                        className="inline-flex h-11 items-center justify-center border border-line px-4 text-sm font-semibold"
-                        href={whatsappHref(primary.whatsapp, `Here are the questions before your visit: ${link}`)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open WhatsApp
-                      </a>
-                    )}
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" className="h-11" disabled={busy} onClick={() => sendLink("email")}>
-                    <Mail className="mr-2 h-4 w-4" /> Email the link
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy}
-                          onClick={() => sendLink("email", true)}>
-                    Send again
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={() => sendLink("whatsapp")}>
-                    <MessageCircle className="mr-2 h-4 w-4" /> Get link for WhatsApp
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={revokeLink}>
-                    Withdraw link
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <p className="text-[14.5px] text-foreground">
-                  {primary
-                    ? `No live link. It will be sent to ${primary.full_name}.`
-                    : "No live link. Add a main contact on the Contacts tab first."}
-                </p>
-                <Button type="button" className="h-11 self-start" disabled={busy || !primary} onClick={createLink}>
-                  Create link
-                </Button>
               </div>
             )}
           </MuSection>
