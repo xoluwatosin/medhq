@@ -79,6 +79,41 @@ export const optionTotals = (option: OfferOption, months: number, discountPercen
 export const upfrontLine = (t: { upfront: number; saving: number }, months: number, discountPercent: number) =>
   `Pay all ${months} months upfront: ${naira(t.upfront)}. That is a ${discountPercent}% discount, saving you ${naira(t.saving)}.`;
 
+/** One row of a fees table. */
+export interface FeeRow { label: string; value: string; strong?: boolean }
+
+/** An option's fees, as a table, for the page and the PDF alike. */
+export const feeRows = (option: OfferOption, months: number, discountPercent: number): FeeRow[] => {
+  const t = optionTotals(option, months, discountPercent);
+  return [
+    { label: "A month", value: naira(t.monthly), strong: true },
+    { label: `${months} months, paid monthly`, value: naira(t.total) },
+    ...(discountPercent > 0
+      ? [
+          { label: `${months} months, paid upfront (${discountPercent}% discount)`, value: naira(t.upfront) },
+          { label: "You save by paying upfront", value: naira(t.saving) },
+        ]
+      : []),
+  ];
+};
+
+/** What the family pays, once they have chosen an option and how to pay. */
+export const chosenFeeRows = (option: OfferOption, months: number, discountPercent: number, plan: PaymentPlan): FeeRow[] => {
+  const t = optionTotals(option, months, discountPercent);
+  if (plan === "upfront") {
+    return [
+      { label: `Your payment, for all ${months} months`, value: naira(t.upfront), strong: true },
+      { label: "Full price, paid monthly", value: naira(t.total) },
+      { label: `You save (${discountPercent}% discount)`, value: naira(t.saving) },
+    ];
+  }
+  return [
+    { label: "Your first payment, before care starts", value: naira(t.monthly), strong: true },
+    ...(months > 1 ? [{ label: `Then each month, for ${months - 1} more months`, value: naira(t.monthly) }] : []),
+    { label: `Total over ${months} months`, value: naira(t.total) },
+  ];
+};
+
 /** The care schedule's rows, in words, for the page and the PDF alike. */
 export interface ScheduleRow {
   label: string;

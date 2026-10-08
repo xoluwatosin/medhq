@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, Minus } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { naira, optionTotals, scheduleRows, upfrontLine, type OfferContent, type OfferOption, type PaymentPlan } from "@/lib/care-offer";
+import { feeRows, naira, optionTotals, scheduleRows, type FeeRow, type OfferContent, type OfferOption, type PaymentPlan } from "@/lib/care-offer";
 import type { TermsClause } from "@/content/care/newborn-terms";
 import { cn } from "@/lib/utils";
 
@@ -60,26 +60,32 @@ export const OptionTitle = ({ title, onDark = false }: { title: string; onDark?:
   </>
 );
 
+/** Fees as a two-column table: what it is, and how much. */
+export const OfferFeeTable = ({ rows, caption = "Fees" }: { rows: FeeRow[]; caption?: string }) => (
+  <table className="mc-keep w-full border-2 border-navy bg-card text-left text-[14px]">
+    <caption className="sr-only">{caption}</caption>
+    <tbody>
+      {rows.map((r, i) => (
+        <tr key={r.label} className={cn(i > 0 && "border-t border-line", r.strong && "bg-tint")}>
+          <th scope="row" className={cn("px-3 py-2.5 align-middle text-[13.5px] leading-[1.35]", r.strong ? "font-extrabold text-navy" : "font-bold text-label")}>{r.label}</th>
+          <td className={cn("whitespace-nowrap px-3 py-2.5 text-right align-middle tabular-nums", r.strong ? "text-[20px] font-extrabold tracking-[-0.03em] text-navy" : "font-extrabold text-ink")}>{r.value}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
 /** One option, priced. */
 export const OfferOptionCard = ({
   option, content, chosen = false, action,
 }: { option: OfferOption; content: OfferContent; chosen?: boolean; action?: React.ReactNode }) => {
-  const t = optionTotals(option, content.months, content.upfrontDiscountPercent);
   return (
     <article className={cn("mc-keep flex flex-col border-2 border-navy bg-card p-5 sm:p-6", chosen ? "shadow-offset-blue" : "shadow-offset-sm")}>
       {chosen && <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">Your choice</p>}
       <h3 className="text-[21px] font-extrabold leading-[1.15] tracking-[-0.03em] text-navy"><OptionTitle title={option.title} /></h3>
       <p className="mt-2 text-[14.5px] font-bold leading-[1.5] text-ink">{option.staffing}</p>
       <p className="mt-2 text-[14.5px] leading-[1.55] text-body">{option.summary}</p>
-      <div className="mt-5 bg-tint px-4 py-4">
-        <p className="text-[30px] font-extrabold leading-none tracking-[-0.04em] text-navy">
-          {naira(t.monthly)}<span className="text-[15px] font-bold tracking-normal text-body"> a month</span>
-        </p>
-        <p className="mt-2 text-[14px] text-body">{naira(t.total)} for {content.months} months, paid monthly</p>
-        {content.upfrontDiscountPercent > 0 && (
-          <p className="mt-2 border-t border-line pt-2 text-[14px] font-bold leading-[1.45] text-brand">{upfrontLine(t, content.months, content.upfrontDiscountPercent)}</p>
-        )}
-      </div>
+      <div className="mt-5"><OfferFeeTable rows={feeRows(option, content.months, content.upfrontDiscountPercent)} caption={`Fees for ${option.title}`} /></div>
       <div className="mt-5"><OfferLabel>Good for</OfferLabel></div>
       <div className="mt-3"><Ticks items={option.goodFor} /></div>
       <div className="mt-5"><OfferLabel>Worth knowing</OfferLabel></div>
@@ -95,7 +101,10 @@ export const OfferCompareTable = ({ content }: { content: OfferContent }) => {
   const rows = [
     { label: "A month", value: (o: OfferOption) => naira(o.monthly) },
     { label: `${months} months, monthly`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).total) },
-    ...(pct > 0 ? [{ label: `${months} months upfront (${pct}% discount)`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).upfront) }] : []),
+    ...(pct > 0 ? [
+      { label: `${months} months upfront (${pct}% discount)`, value: (o: OfferOption) => naira(optionTotals(o, months, pct).upfront) },
+      { label: "You save upfront", value: (o: OfferOption) => naira(optionTotals(o, months, pct).saving) },
+    ] : []),
   ];
   return (
     <table className="mc-keep w-full border-2 border-navy text-left text-[14px]">

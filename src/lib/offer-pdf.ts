@@ -1,18 +1,25 @@
 // The care offer as a real PDF: text, not a picture of the page.
 //
+// It carries the brand as the page does: the logo on the cover and on a slim
+// strip atop every later page, and the soft brand marks as watermarks. Fees
+// are always shown as tables.
+//
 // Built straight from the offer's content with the site's own font, laid out
 // for A4 with proper page breaks, so it is sharp, small and the same on every
 // phone and computer. The family's download and the copy attached to the
 // email both come from here.
-import { jsPDF } from "jspdf";
+import { GState, jsPDF } from "jspdf";
 import {
-  naira, optionTotals, scheduleRows, upfrontLine,
-  type OfferContent, type OfferOption, type OfferView,
+  chosenFeeRows, feeRows, naira, optionTotals, scheduleRows,
+  type FeeRow, type OfferContent, type OfferOption, type OfferView, type PaymentPlan,
 } from "@/lib/care-offer";
 import { formatDate } from "@/lib/format";
 
 type Weight = "Regular" | "Bold" | "ExtraBold";
 export type FontLoader = (weight: Weight) => Promise<string>;
+/** The brand pictures, as base64 PNG: the white logo, the soft full mark and the soft O. */
+export type PdfImage = "logo-white" | "mark" | "o";
+export type ImageLoader = (name: PdfImage) => Promise<string>;
 
 const C = {
   navy: [38, 48, 107] as const,
@@ -39,6 +46,13 @@ export const browserFonts: FontLoader = async (weight) => {
   return toBase64(await res.arrayBuffer());
 };
 
+/** In the browser, the brand pictures made for the PDF. */
+export const browserImages: ImageLoader = async (name) => {
+  const res = await fetch(`/pdf/${name}.png`);
+  if (!res.ok) throw new Error(`Picture ${name} could not be loaded`);
+  return toBase64(await res.arrayBuffer());
+};
+
 const PAGE_W = 210;
 const PAGE_H = 297;
 const M = 18; // side margin
@@ -47,8 +61,12 @@ const BOTTOM = 20;
 const W = PAGE_W - M * 2;
 const PT = 0.3528; // mm per point
 
-export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = browserFonts): Promise<Blob> {
+export async function buildOfferPdf(
+  offer: OfferView, loadFont: FontLoader = browserFonts, loadImage: ImageLoader = browserImages,
+): Promise<Blob> {
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+  const [logoWhite, mark, ring] = await Promise.all((["logo-white", "mark", "o"] as PdfImage[]).map(loadImage));
+  const LOGO_RATIO = 301 / 1080;
   for (const w of ["Regular", "Bold", "ExtraBold"] as Weight[]) {
     doc.addFileToVFS(`Figtree-${w}.ttf`, await loadFont(w));
     doc.addFont(`Figtree-${w}.ttf`, "Figtree", w === "Regular" ? "normal" : w === "Bold" ? "bold" : "extrabold");
@@ -96,7 +114,23 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     });
   };
   const lineH = (size: number, lead = 1.4) => size * PT * lead;
-  const newPage = () => { doc.addPage(); y = TOP; };
+  const faded = (opacity: number, draw: () => void) => {
+    doc.saveGraphicsState();
+    doc.setGState(new GState({ opacity }));
+    draw();
+    doc.restoreGraphicsState();
+  };
+  /** The soft brand mark, whole, low on the page behind the text. */
+  const watermark = () => faded(0.05, () => doc.addImage(mark, "PNG", PAGE_W - M - 62, PAGE_H - 100, 74, 74, "mark", "FAST"));
+  /** Later pages: a slim navy strip with the logo and the reference. */
+  const strip = () => {
+    fill(C.navy);
+    doc.rect(0, 0, PAGE_W, 11, "F");
+    doc.addImage(logoWhite, "PNG", M, 3, 22, 22 * LOGO_RATIO, "logo-white", "FAST");
+    font("bold", 7.5, C.white);
+    doc.text(`Care offer ${offer.reference}`, PAGE_W - M, 6.8, { align: "right" });
+  };
+  const newPage = () => { doc.addPage(); watermark(); strip(); y = TOP; };
   const ensure = (h: number) => { if (y + h > PAGE_H - BOTTOM) newPage(); };
   const fill = (colour: readonly number[]) => doc.setFillColor(colour[0], colour[1], colour[2]);
   const stroke = (colour: readonly number[], width = 0.3) => { doc.setDrawColor(colour[0], colour[1], colour[2]); doc.setLineWidth(width); };
@@ -156,6 +190,29 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     }
   };
 
+  /** Fees as a two-column table; the first, strong row on a tint. */
+  const feeTable = (rows: FeeRow[], x = M, w = W) => {
+    const valueW = 42;
+    const heights = rows.map((r) => Math.max(8.5, measure(r.label, r.strong ? 10 : 9, w - valueW - 6, r.strong ? "extrabold" : "bold", 1.25) + 4.5));
+    const total = heights.reduce((a, b) => a + b, 0);
+    ensure(total);
+    const top = y;
+    rows.forEach((r, i) => {
+      const h = heights[i];
+      if (r.strong) { fill(C.tint); doc.rect(x, y, w, h, "F"); }
+      if (i > 0) { stroke(C.line, 0.3); doc.line(x, y, x + w, y); }
+      font(r.strong ? "extrabold" : "bold", r.strong ? 10 : 9, r.strong ? C.navy : C.label);
+      const lines = doc.splitTextToSize(r.label, w - valueW - 6) as string[];
+      const textTop = y + (h - lines.length * lineH(r.strong ? 10 : 9, 1.25)) / 2 + (r.strong ? 10 : 9) * PT * 0.8;
+      doc.text(lines, x + 3, textTop, { lineHeightFactor: 1.25 });
+      font("extrabold", r.strong ? 13 : 10, r.strong ? C.navy : C.ink);
+      write(r.value, x + w - 3, y + h / 2 + (r.strong ? 13 : 10) * PT * 0.35, { align: "right" });
+      y += h;
+    });
+    stroke(C.navy, 0.5);
+    doc.rect(x, top, w, total);
+  };
+
   const footer = () => {
     const total = doc.getNumberOfPages();
     for (let i = 1; i <= total; i++) {
@@ -170,10 +227,17 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
   };
 
   /* ---- Cover band ---- */
+  watermark();
   fill(C.navy);
   doc.rect(0, 0, PAGE_W, 46, "F");
-  font("extrabold", 15, C.white);
-  doc.text("Medic Connect", M, 15);
+  // The soft O, cropped by the band, as on the site's navy.
+  doc.saveGraphicsState();
+  doc.rect(0, 0, PAGE_W, 46, null);
+  doc.clip();
+  doc.discardPath();
+  faded(0.5, () => doc.addImage(ring, "PNG", PAGE_W - 62, -38, 96, 96, "o", "FAST"));
+  doc.restoreGraphicsState();
+  doc.addImage(logoWhite, "PNG", M, 9, 40, 40 * LOGO_RATIO, "logo-white", "FAST");
   font("extrabold", 7.5, C.white);
   doc.text("CARE OFFER", PAGE_W - M, 15, { align: "right", charSpace: 0.6 });
   font("bold", 9, C.white);
@@ -212,9 +276,9 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
   /* ---- Options ---- */
   part("Your options", c.options.length > 1 ? "Compare the options" : "The care we are offering", 60);
   const optionBox = (o: OfferOption) => {
-    const t = optionTotals(o, c.months, c.upfrontDiscountPercent);
     const inner = W - 12;
-    const priceH = 26;
+    const fees = feeRows(o, c.months, c.upfrontDiscountPercent);
+    const priceH = fees.length * 9 + 2;
     const listH = (items: string[]) => items.reduce((s, i) => s + measure(i, 10, inner - 7) + 1.5, 0);
     const h = 8 + measure(o.title, 14, inner, "extrabold", 1.2) + measure(o.staffing, 10, inner, "bold") + 2
       + measure(o.summary, 10, inner) + 4 + priceH + 6 + 6 + listH(o.goodFor) + 6 + listH(o.consider) + 6;
@@ -225,22 +289,8 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     para(o.title, { size: 14, weight: "extrabold", colour: C.navy, x: M + 6, w: inner, lead: 1.2, after: 1 });
     para(o.staffing, { size: 10, weight: "bold", colour: C.ink, x: M + 6, w: inner, after: 1.5 });
     para(o.summary, { size: 10, colour: C.body, x: M + 6, w: inner, after: 3 });
-    ensure(priceH);
-    fill(C.tint);
-    doc.rect(M + 6, y, inner, priceH, "F");
-    font("extrabold", 18, C.navy);
-    const priceText = naira(t.monthly);
-    write(priceText, M + 10, y + 9);
-    const pw = doc.getTextWidth(prep(priceText)) - doc.getTextWidth(MARK) + doc.getTextWidth("N");
-    font("bold", 9.5, C.body);
-    doc.text(" a month", M + 10 + pw, y + 9);
-    font("normal", 9.5, C.body);
-    write(`${c.months} months, paid monthly: ${naira(t.total)}`, M + 10, y + 15.5);
-    if (c.upfrontDiscountPercent > 0) {
-      font("bold", 9.5, C.brand);
-      write(doc.splitTextToSize(prep(upfrontLine(t, c.months, c.upfrontDiscountPercent)), inner - 8) as string[], M + 10, y + 21);
-    }
-    y += priceH + 5;
+    feeTable(fees, M + 6, inner);
+    y += 5;
     font("extrabold", 7.5, C.label);
     ensure(6);
     doc.text("GOOD FOR", M + 6, y + 2.5, { charSpace: 0.6 });
@@ -259,14 +309,15 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     }
     y += 5;
   };
-  c.options.forEach(optionBox);
-
   if (c.options.length > 1) {
     const rows: [string, (o: OfferOption) => string][] = [
       ["A month", (o) => naira(o.monthly)],
       [`${c.months} months, paid monthly`, (o) => naira(optionTotals(o, c.months, c.upfrontDiscountPercent).total)],
       ...(c.upfrontDiscountPercent > 0
-        ? [[`${c.months} months upfront (${c.upfrontDiscountPercent}% discount)`, (o: OfferOption) => naira(optionTotals(o, c.months, c.upfrontDiscountPercent).upfront)] as [string, (o: OfferOption) => string]]
+        ? [
+            [`${c.months} months upfront (${c.upfrontDiscountPercent}% discount)`, (o: OfferOption) => naira(optionTotals(o, c.months, c.upfrontDiscountPercent).upfront)] as [string, (o: OfferOption) => string],
+            ["You save upfront", (o: OfferOption) => naira(optionTotals(o, c.months, c.upfrontDiscountPercent).saving)] as [string, (o: OfferOption) => string],
+          ]
         : []),
     ];
     const firstCol = 62;
@@ -290,7 +341,10 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     stroke(C.navy, 0.6);
     doc.rect(M, y - headH - rows.length * 9, W, headH + rows.length * 9);
     y += 4;
+    para("Each option in detail follows.", { size: 9.5, after: 4 });
   }
+  c.options.forEach(optionBox);
+
   para("These are the full prices. Nothing is added for nights, public holidays, travel to and from your home, or administration. No VAT is charged.", { size: 9.5, after: 2 });
 
   /* ---- Responsibilities ---- */
@@ -358,7 +412,8 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
   if (offer.status === "accepted" && offer.accepted_name) {
     const chosen = c.options.find((o) => o.id === offer.accepted_option);
     part("Accepted", "Your acceptance", 20);
-    para(`${chosen?.title ?? "Option"}, paying ${offer.accepted_payment === "upfront" ? `all ${c.months} months upfront` : "monthly"}. Accepted online by ${offer.accepted_name}${offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}, under ${offer.terms_version}.`, { size: 10, colour: C.ink });
+    para(`${chosen?.title ?? "Option"}, paying ${offer.accepted_payment === "upfront" ? `all ${c.months} months upfront` : "monthly"}. Accepted online by ${offer.accepted_name}${offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}, under ${offer.terms_version}.`, { size: 10, colour: C.ink, after: 3 });
+    if (chosen) feeTable(chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, (offer.accepted_payment ?? "monthly") as PaymentPlan));
   }
 
   /* ---- Terms ---- */

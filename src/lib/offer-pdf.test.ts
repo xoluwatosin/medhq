@@ -5,6 +5,7 @@ import { newbornLiveInTemplate, type OfferView } from "@/lib/care-offer";
 import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION } from "@/content/care/newborn-terms";
 
 const fonts = async (w: string) => readFileSync(`public/fonts/Figtree-${w}.ttf`).toString("base64");
+const images = async (name: string) => readFileSync(`public/pdf/${name}.png`).toString("base64");
 
 const offer = (status: OfferView["status"] = "sent"): OfferView => {
   const content = newbornLiveInTemplate({
@@ -24,7 +25,7 @@ const offer = (status: OfferView["status"] = "sent"): OfferView => {
 
 describe("care offer PDF", () => {
   it("is a small, text-based A4 PDF with every part and the terms", async () => {
-    const blob = await buildOfferPdf(offer(), fonts as never);
+    const blob = await buildOfferPdf(offer(), fonts as never, images as never);
     const bytes = new Uint8Array(await blob.arrayBuffer());
     if (process.env.OFFER_PDF_OUT) writeFileSync(process.env.OFFER_PDF_OUT, bytes);
     const head = new TextDecoder().decode(bytes.slice(0, 5));
@@ -36,7 +37,7 @@ describe("care offer PDF", () => {
   });
 
   it("records the acceptance when the offer has been accepted", async () => {
-    const blob = await buildOfferPdf(offer("accepted"), fonts as never);
+    const blob = await buildOfferPdf(offer("accepted"), fonts as never, images as never);
     expect(blob.size).toBeGreaterThan(1000);
   });
 });

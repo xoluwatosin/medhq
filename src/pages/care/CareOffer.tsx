@@ -12,13 +12,13 @@ import { art } from "@/components/mc/art";
 import { Choice, requestPrimary, requestSecondary } from "@/components/request/RequestShell";
 import { FamilyLoading } from "@/components/care/FamilyShell";
 import {
-  OfferBankDetails, OfferCompareTable, OfferSchedule, OfferIncluded, OfferLabel,
+  OfferBankDetails, OfferCompareTable, OfferFeeTable, OfferSchedule, OfferIncluded, OfferLabel,
   OfferOptionCard, OfferPriceNote, OfferSummary, OfferTerms,
 } from "@/components/care/OfferDocument";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadOfferPdf } from "@/lib/offer-pdf";
 import { formatDate } from "@/lib/format";
-import { firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
+import { chosenFeeRows, firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
 import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 
@@ -133,7 +133,8 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
   useEffect(() => { void load(); }, [load]);
 
-  // The accessibility button keeps clear of the Back and Next bar.
+  // The accessibility button keeps clear of the Back and Next bar, measured
+  // once the bar is on screen (it is not there on the welcome screen).
   const loaded = !!offer;
   useEffect(() => {
     const root = document.documentElement;
@@ -147,7 +148,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       root.style.removeProperty("--mc-bottom-reserve");
       window.dispatchEvent(new Event("resize"));
     };
-  }, [loaded]);
+  }, [loaded, opened]);
 
   // The part showing stays in view in the row of parts.
   useEffect(() => {
@@ -413,10 +414,8 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         </div>
         <div>
           <OfferLabel>{acceptedPlan === "upfront" ? "Your payment" : "Your first payment"}</OfferLabel>
-          <p className="mt-2 text-[30px] font-extrabold leading-none tracking-[-0.04em] text-navy">{naira(due)}</p>
-          <p className="mt-2 text-[14.5px] text-body">
-            {acceptedPlan === "upfront" ? `All ${c.months} months, with your ${c.upfrontDiscountPercent}% discount.` : "Your first month, paid before care starts."} Choose how you would like to pay.
-          </p>
+          <div className="mt-3"><OfferFeeTable rows={chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan)} caption="Your fees" /></div>
+          <p className="mt-3 text-[14.5px] text-body">Choose how you would like to pay {naira(due)}.</p>
           <div className="mt-4 flex flex-col gap-2.5">
             <Choice label="Pay online with Paystack" blurb="Card, bank transfer or USSD. Paid instantly and confirmed automatically." selected={payWay === "paystack"} onClick={() => setPayWay("paystack")} />
             <Choice label="Pay by bank transfer" blurb="Send it from your bank to ours, using your reference." selected={payWay === "bank"} onClick={() => setPayWay("bank")} />
@@ -508,8 +507,9 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           <div className="border-l-4 border-brand bg-tint px-4 py-3">
             <p className="text-[15px] font-extrabold text-navy">Your care schedule</p>
             <p className="mt-1 text-[14.5px] leading-[1.55] text-ink">
-              {chosen.title}, starting {c.start.charAt(0).toLowerCase() + c.start.slice(1)}, for {c.months} months. {naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))} {plan === "upfront" ? `once, for all ${c.months} months` : "a month"}.
+              {chosen.title}, starting {c.start.charAt(0).toLowerCase() + c.start.slice(1)}, for {c.months} months.
             </p>
+            <div className="mt-3"><OfferFeeTable rows={chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, plan)} caption="Your fees" /></div>
             <button type="button" onClick={() => { setViewing(Math.max(0, c.options.findIndex((o) => o.id === chosen.id))); go(2); }} className="mt-1 text-[14.5px] font-extrabold text-brand underline underline-offset-2">
               Read your full care schedule
             </button>
@@ -536,7 +536,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
         {chosen && (
           <p className="text-[14.5px] leading-[1.55] text-body">
-            Your first payment will be <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b>. As soon as you accept, you can pay online with Paystack or by bank transfer.
+            As soon as you accept, you can pay your {plan === "upfront" ? "payment" : "first payment"} of <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b> online with Paystack or by bank transfer.
           </p>
         )}
         {problem && <p className="text-[14.5px] font-bold text-destructive" role="alert">{problem}</p>}
