@@ -9,7 +9,8 @@
 // before Paystack is called, so two runs never bill it twice; if Paystack
 // fails, the claim is released and the next run tries again.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { kitButton, kitEmail, kitFacts, kitList, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
+import { KIT_ART, kitButton, kitEmail, kitList, kitSubhead } from "../_shared/kit-email.ts";
+import { greeting, payPanel, signOff } from "../_shared/care-offer-email.ts";
 import { naira, newOfferSecret, offerTokenHash } from "../_shared/care-offer.ts";
 import { confirmCarePayment, createCareInvoice } from "../_shared/care-payment.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
@@ -119,21 +120,23 @@ Deno.serve(async (req) => {
       const pay = o.content?.payment ?? {};
       const sent = await sendEmail(to, `${careFor}'s care: next month's payment`, kitEmail({
         eyebrow: "Care payment",
-        title: `Month ${row.number} of ${months}`,
-        standfirst: `${naira(Number(row.amount))}, due ${longDate(row.due_on)}`,
+        title: "Next month, sorted",
+        accent: "sorted",
+        art: KIT_ART.calendar,
+        standfirst: `Month ${row.number} of ${months}, due ${longDate(row.due_on)}`,
+        preheader: `Your payment for month ${row.number} is ready, due ${longDate(row.due_on)}.`,
         bodyHtml: [
-          kitParagraph(`${first}, here is the payment for the next month of care. It is due on ${longDate(row.due_on)}.`),
-          kitParagraph("Pay online by card, bank transfer or USSD through Paystack:"),
-          kitButton(`Pay ${naira(Number(row.amount))} with Paystack`, made.payUrl),
-          kitSubhead("Or pay by bank transfer"),
-          kitFacts([
-            { label: "Amount", value: naira(Number(row.amount)) },
-            { label: "Bank", value: String(pay.bankName ?? "") },
-            { label: "Account name", value: String(pay.accountName ?? "") },
-            { label: "Account number", value: String(pay.accountNumber ?? "") },
-            { label: "Reference", value: `${o.reference} M${row.number}` },
-          ]),
-          kitParagraph("Need another way to pay? Reply to this email, or WhatsApp us on +234 812 698 8237 and we will arrange it."),
+          greeting(first, [`Here is the payment for the next month of care. It takes a minute online, and it is due on ${longDate(row.due_on)}.`]),
+          payPanel({
+            amount: naira(Number(row.amount)),
+            due: longDate(row.due_on),
+            payUrl: made.payUrl,
+            bank: {
+              bankName: String(pay.bankName ?? ""), accountName: String(pay.accountName ?? ""),
+              accountNumber: String(pay.accountNumber ?? ""), reference: `${o.reference} M${row.number}`,
+            },
+          }),
+          signOff("Need another way to pay? Reply or WhatsApp us and we will arrange it."),
         ].join(""),
       }));
       if (sent) await db.from("care_offer_instalments").update({ emailed_at: new Date().toISOString() }).eq("id", row.id);

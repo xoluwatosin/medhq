@@ -10,13 +10,13 @@
 // The thank-you for the first payment is our written confirmation of the
 // booking, with the family's signed copy of the agreement attached.
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { kitButton, kitEmail, kitFacts, kitParagraph, kitSteps, kitSubhead } from "./kit-email.ts";
+import { KIT, KIT_ART, kitButton, kitEmail, kitFacts, kitParagraph } from "./kit-email.ts";
+import { attachmentBadge, greeting, moneyPanel, signOff, softButton, stepTiles } from "./care-offer-email.ts";
 import { kobo, mapStatus } from "./paystack-invoice.ts";
 import { naira } from "./care-offer.ts";
 import { SITE_URL } from "./site-url.ts";
 
 const PAYSTACK = "https://api.paystack.co";
-const WHATSAPP_LINE = "Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237.";
 
 async function paystack(path: string, init: { method?: string; body?: unknown } = {}) {
   const key = Deno.env.get("PAYSTACK_SECRET_KEY");
@@ -230,38 +230,45 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
   const to = String(contact?.email ?? "").trim().toLowerCase();
   const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
 
-  const next = [
-    { title: "We plan day 0 with you", detail: "We will be in touch within one working day to arrange it." },
-    { title: "You meet your nurse", detail: "A meeting and introduction with your nurse before the first shift." },
-    { title: "We agree your care plan together", detail: "The daily routine, supplies, days off and emergency plan, agreed with you before care starts." },
-    { title: "Care starts", detail: String(c.start ?? "On the agreed date.") },
-  ];
   const copy = firstPayment ? await signedCopy(db, offer.signed_pdf_path ?? null) : null;
   // Back to their offer page: the family's own link, kept with the payment.
   const pageUrl = typeof offer.pay_url === "string" && offer.pay_url.startsWith(SITE_URL) ? offer.pay_url.split("?")[0] : null;
-  const monthlyNote = offer.accepted_payment === "monthly" && months > 1
-    ? [kitParagraph("For each month after this one, we email you a payment link five days before it is due.")]
-    : [];
+  const monthly = offer.accepted_payment === "monthly" && months > 1;
 
   await sendEmail(to, firstPayment ? `You are all booked in: care for ${careFor}` : `Thank you: month ${month} of ${careFor}'s care is paid`, kitEmail({
     eyebrow: firstPayment ? "Booking confirmed" : "Payment received",
-    title: firstPayment ? `Thank you, ${first}` : `Thank you for month ${month}`,
-    standfirst: `${amount} received`,
+    title: firstPayment ? "You are all booked in" : `Month ${month}, all paid`,
+    accent: firstPayment ? "booked" : "paid",
+    art: KIT_ART.nurse,
+    standfirst: firstPayment ? "Your payment is in, and your care is confirmed" : "Thank you, your payment is in",
     preheader: firstPayment ? "Your payment is in. Here is what happens next." : `Your payment for month ${month} is in.`,
     bodyHtml: [
-      kitParagraph(firstPayment
-        ? `${first}, thank you. We have received your payment, and this email confirms your booking.`
-        : `${first}, thank you. We have received your payment for month ${month}.`),
-      kitFacts(facts),
+      greeting(first, [firstPayment
+        ? "Thank you. We have received your payment, and this email confirms your booking. We cannot wait to meet you."
+        : `Thank you. We have received your payment for month ${month}.`]),
+      moneyPanel({
+        label: "Payment received",
+        amount,
+        sub: `${forWhat}${option ? `, ${option.title.toLowerCase()}` : ""}. Paid on ${paidOn}.`,
+      }),
       ...(firstPayment
-        ? [kitParagraph(copy
-            ? "Your signed agreement is attached: the offer you accepted, your care schedule and the terms of care, with your signature. Please keep it."
-            : "Your signed agreement can be downloaded from your offer page at any time.")]
+        ? [copy
+            ? attachmentBadge("Your signed agreement is attached.", "Your offer, care schedule and terms, with your signature. Please keep it safe.")
+            : `<p style="font-family:${KIT.font};font-size:15px;line-height:1.7;color:${KIT.body};margin:0 0 22px;">Your signed agreement can be downloaded from your offer page at any time.</p>`]
         : []),
-      ...(firstPayment ? [kitSubhead("What happens next"), kitSteps(next), ...monthlyNote] : []),
-      ...(pageUrl ? [kitButton("View your booking", pageUrl)] : []),
-      kitParagraph("Paystack also emails you a receipt for the payment."),
-      kitParagraph(WHATSAPP_LINE),
+      ...(firstPayment
+        ? [stepTiles("What happens next", [
+            { art: KIT_ART.calendar, title: "We plan day 0 with you", line: "We will be in touch within one working day." },
+            { art: KIT_ART.coordinator, title: "You meet your nurse", line: "An introduction before the first shift." },
+            { art: KIT_ART.carePlan, title: "We agree your care plan together", line: "The daily routine, supplies, days off and emergency plan." },
+            { art: KIT_ART.shield, title: "Care starts", line: String(c.start ?? "On the agreed date.") },
+          ])]
+        : []),
+      ...(firstPayment && monthly
+        ? [`<p style="font-family:${KIT.font};font-size:15px;line-height:1.7;color:${KIT.body};margin:0 0 22px;">For each month after this one, we email you a payment link five days before it is due.</p>`]
+        : []),
+      ...(pageUrl ? [softButton(firstPayment ? "View your booking" : "View your care", pageUrl)] : []),
+      signOff(`Paystack also emails you a receipt. Your reference is ${month && month > 1 ? `${offer.reference} M${month}` : offer.reference}.`),
     ].join(""),
   }), copy ? { filename: `Signed care agreement for ${careFor}, Medic Connect.pdf`, content: copy } : undefined);
 

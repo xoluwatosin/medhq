@@ -16,7 +16,8 @@
 // agreement and hands it back here to keep. Once the first payment is in, it
 // is emailed to them as our written confirmation of the booking.
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
+import { KIT, KIT_ART, kitEmail, kitButton, kitFacts, kitParagraph } from "../_shared/kit-email.ts";
+import { greeting, infoRows, payPanel, signOff, softButton } from "../_shared/care-offer-email.ts";
 import { naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
 import { confirmCarePayment, createCareInvoice, startCareCheckout } from "../_shared/care-payment.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
@@ -273,28 +274,30 @@ Deno.serve(async (req) => {
     if (to) {
       const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
       await sendEmail(to, `Thank you for accepting your care offer for ${o.content?.careFor ?? "your family"}`, kitEmail({
-        eyebrow: "Care offer",
-        title: "Thank you, your choice is recorded",
-        standfirst: String(o.content?.serviceTitle ?? "Care"),
+        eyebrow: "Offer accepted",
+        title: "You are nearly there",
+        accent: "nearly",
+        art: KIT_ART.caregiver,
+        standfirst: "One step left: your first payment",
+        preheader: "Thank you for accepting. Here is how to make your first payment.",
         bodyHtml: [
-          kitParagraph(`${first}, thank you. Here is what you accepted.`),
-          kitFacts(facts),
-          kitSubhead(`Your first payment: ${naira(due)}`),
-          ...(a.pay_url ? [
-            kitParagraph("Pay online by card, bank transfer or USSD through Paystack:"),
-            kitButton("Pay with Paystack", a.pay_url),
-            kitParagraph("Or pay by bank transfer to:"),
-          ] : [kitParagraph("Pay by bank transfer to:")]),
-          kitFacts([
-            { label: "Amount", value: naira(due) },
-            { label: "Bank", value: String(pay.bankName ?? "") },
-            { label: "Account name", value: String(pay.accountName ?? "") },
-            { label: "Account number", value: String(pay.accountNumber ?? "") },
-            { label: "Reference", value: o.reference },
+          greeting(first, ["Thank you for accepting. Here is what you chose, and the one step left before we plan day 0 with you."]),
+          infoRows([
+            { label: "Your choice", value: option.title },
+            { label: "Paying", value: payment === "upfront" ? `All ${months} months upfront, saving ${naira(t.saving)}` : `Monthly, ${naira(t.monthly)} a month` },
+            { label: "Signed by", value: name },
           ]),
-          kitParagraph("Once your payment is received, we email you your signed agreement to confirm your booking, and we will be in touch to plan day 0 with you: meeting your nurse and agreeing your care plan before care starts."),
-          kitButton("View your offer", `${SITE_URL}/o/${plain}`),
-          kitParagraph("Need another way to pay? Reply to this email, or WhatsApp us on +234 812 698 8237 and we will arrange it."),
+          payPanel({
+            amount: naira(due),
+            payUrl: a.pay_url,
+            bank: {
+              bankName: String(pay.bankName ?? ""), accountName: String(pay.accountName ?? ""),
+              accountNumber: String(pay.accountNumber ?? ""), reference: o.reference,
+            },
+          }),
+          `<p style="font-family:${KIT.font};font-size:15.5px;line-height:1.7;color:${KIT.body};margin:0 0 22px;">As soon as your payment is in, we email you your signed agreement and get in touch to plan day 0: meeting your nurse and agreeing your care plan.</p>`,
+          softButton("View your offer", `${SITE_URL}/o/${plain}`),
+          signOff("Need another way to pay? Reply or WhatsApp us and we will arrange it."),
         ].join(""),
       }));
     }
