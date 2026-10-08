@@ -16,7 +16,7 @@ import {
 import { buildItinerary } from "@/lib/care-itinerary";
 import { resolveCopy, voiceFor } from "@/lib/care-copy";
 
-const def = JSON.parse(readFileSync("docs/care/pre-assessment-v14.json", "utf8")) as CareDefinition;
+const def = JSON.parse(readFileSync("docs/care/pre-assessment-v15.json", "utf8")) as CareDefinition;
 const NOW = new Date("2026-10-06");
 const dob = (years: number) => `${2026 - years}-03-01`;
 
@@ -154,7 +154,7 @@ if (process.env.PERSONA_OUT) {
   }
 }
 
-describe("pre-assessment v14, as the families who fill it in", () => {
+describe("pre-assessment v15, as the families who fill it in", () => {
   it("does not ask a mother, father or guardian whether they are the parent", () => {
     expect(ids("mother-nanny-two-children")).not.toContain("is_parent_guardian");
     expect(ids("father-additional-needs")).not.toContain("is_parent_guardian");

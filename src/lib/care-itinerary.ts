@@ -72,7 +72,7 @@ export const PRESENTATION_GROUPS: Record<string, PresentationRule[]> = {
     { id: "contact", title: "Staying in touch", startsAt: ["enquirer_location", "alt_contact_has", "alt_contact_first_name"] },
   ],
   core_arrangements: [
-    { id: "care", title: "Care arrangements", startsAt: "care_days" },
+    { id: "care", title: "Care arrangements", startsAt: "care_pattern" },
     { id: "assessment", title: "Assessment availability", startsAt: "visit_preferences" },
   ],
   svc_nanny_children: [
