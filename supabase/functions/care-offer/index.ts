@@ -9,6 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
 import { naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
+import { hostedLink, kobo, mapStatus } from "../_shared/paystack-invoice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,13 +24,113 @@ type Offer = {
   id: string; client_id: string; reference: string; status: string; content: Record<string, any>;
   terms_version: string; terms: unknown; expires_at: string | null; first_opened_at: string | null;
   accepted_option: string | null; accepted_payment: string | null; accepted_name: string | null; accepted_at: string | null;
+  invoice_id: string | null; pay_url: string | null;
 };
 
 const view = (o: Offer) => ({
   reference: o.reference, status: o.status, content: o.content, terms_version: o.terms_version, terms: o.terms,
   expires_at: o.expires_at, accepted_option: o.accepted_option, accepted_payment: o.accepted_payment,
-  accepted_name: o.accepted_name, accepted_at: o.accepted_at,
+  accepted_name: o.accepted_name, accepted_at: o.accepted_at, pay_url: o.pay_url,
 });
+
+/**
+ * The Paystack invoice for what the family accepted: the first month, or
+ * every month upfront with the discount. Made once; a failure here never
+ * undoes the acceptance, and the next time the page opens it is tried again.
+ * Paystack payments mark the invoice paid through the existing webhook.
+ */
+async function ensurePaymentLink(db: ReturnType<typeof createClient>, o: Offer): Promise<Offer> {
+  if (o.status !== "accepted" || o.pay_url) return o;
+  const key = Deno.env.get("PAYSTACK_SECRET_KEY");
+  if (!key) return o;
+  const options = (o.content?.options ?? []) as { id: string; title: string; monthly: number }[];
+  const option = options.find((x) => x.id === o.accepted_option);
+  if (!option) return o;
+  const months = Number(o.content?.months ?? 0);
+  const pct = Number(o.content?.upfrontDiscountPercent ?? 0);
+  const t = optionTotals(option, months, pct);
+  const upfront = o.accepted_payment === "upfront";
+  const amount = upfront ? t.upfront : t.monthly;
+  const careFor = String(o.content?.careFor ?? "");
+  const service = String(o.content?.serviceTitle ?? "Care");
+  const description = upfront
+    ? `${service}, ${option.title}, for ${careFor}: all ${months} months paid upfront (${pct}% discount, saving ${naira(t.saving)})`
+    : `${service}, ${option.title}, for ${careFor}: first month`;
+
+  const { data: contact } = await db
+    .from("client_contacts").select("id, full_name, first_name, last_name, email, phone")
+    .eq("client_id", o.client_id).eq("is_primary", true).maybeSingle();
+  const email = String(contact?.email ?? "").trim().toLowerCase();
+  if (!email) return o;
+  const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "");
+  const last = String(contact?.last_name || String(contact?.full_name ?? "").split(" ").slice(1).join(" ") || "");
+
+  const call = async (path: string, payload: unknown) => {
+    const res = await fetch(`https://api.paystack.co${path}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const out = await res.json().catch(() => ({}));
+    return { ok: res.ok && out?.status !== false, body: out };
+  };
+  try {
+    const customer = await call("/customer", { email, first_name: first || undefined, last_name: last || undefined, phone: contact?.phone || undefined });
+    const request = await call("/paymentrequest", {
+      customer: customer.body?.data?.customer_code ?? email,
+      description: `Care offer ${o.reference} from Medic Connect`,
+      line_items: [{ name: description, amount: kobo(amount), quantity: 1 }],
+      currency: "NGN",
+      draft: false,
+      send_notification: false,
+      has_invoice: true,
+    });
+    if (!request.ok) {
+      console.error("care-offer paystack", request.body?.message);
+      return o;
+    }
+    const data = request.body.data;
+    const code = String(data?.request_code ?? "");
+    if (!code) return o;
+    const { data: invoice, error } = await db.from("paystack_invoices").insert({
+      invoice_number: `MC-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
+      request_code: code,
+      offline_reference: data?.offline_reference ?? null,
+      hosted_link: hostedLink(code),
+      paystack_id: data?.id ?? null,
+      client_id: o.client_id,
+      recipient_contact_id: contact?.id ?? null,
+      client_name: String(contact?.full_name ?? `${first} ${last}`).trim() || email,
+      client_first_name: first || null,
+      client_last_name: last || null,
+      client_email: email,
+      client_phone: contact?.phone ?? null,
+      vat_rate: 0,
+      subtotal: amount,
+      vat_amount: 0,
+      total: amount,
+      notes: `Care offer ${o.reference}`,
+      status: mapStatus(data?.status),
+      sent_at: new Date().toISOString(),
+      issued_at: new Date().toISOString(),
+    }).select("id").single();
+    if (error) throw error;
+    await db.from("paystack_invoice_lines").insert({
+      invoice_id: invoice.id, position: 0, description, quantity: 1, unit_price: amount, line_total: amount,
+    });
+    const { data: updated } = await db.from("care_offers")
+      .update({ invoice_id: invoice.id, pay_url: hostedLink(code) })
+      .eq("id", o.id).is("pay_url", null).select("*").maybeSingle();
+    await db.from("care_activity").insert({
+      client_id: o.client_id, action: "invoice_issued",
+      detail: { invoice_id: invoice.id, request_code: code, offer_id: o.id, amount }, actor_id: null,
+    });
+    return (updated as Offer | null) ?? { ...o, invoice_id: invoice.id, pay_url: hostedLink(code) };
+  } catch (e) {
+    console.error("care-offer payment link failed", e instanceof Error ? e.message : e);
+    return o;
+  }
+}
 
 async function sendEmail(to: string, subject: string, html: string) {
   const key = Deno.env.get("RESEND_API_KEY");
@@ -74,11 +175,11 @@ Deno.serve(async (req) => {
         await db.from("care_offers").update({ first_opened_at: now }).eq("id", o.id).is("first_opened_at", null);
         await db.from("care_activity").insert({ client_id: o.client_id, action: "offer_opened", detail: { offer_id: o.id, reference: o.reference }, actor_id: null });
       }
-      return json({ ok: true, offer: view(o) });
+      return json({ ok: true, offer: view(await ensurePaymentLink(db, o)) });
     }
 
     // Accept.
-    if (o.status === "accepted") return json({ ok: true, offer: view(o), already: true });
+    if (o.status === "accepted") return json({ ok: true, offer: view(await ensurePaymentLink(db, o)), already: true });
     if (o.expires_at && new Date(o.expires_at) < new Date()) {
       return json({ error: "This offer has expired. Contact us and we will send you an up-to-date one." }, 410);
     }
@@ -108,7 +209,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (acceptError) throw acceptError;
     if (!accepted) return json({ error: "This offer can no longer be accepted. Contact us and we will help." }, 409);
-    const a = accepted as Offer;
+    const a = await ensurePaymentLink(db, accepted as Offer);
 
     await db.from("care_activity").insert({
       client_id: o.client_id, action: "offer_accepted",
@@ -136,7 +237,7 @@ Deno.serve(async (req) => {
       standfirst: `${o.reference}, ${o.content?.preparedFor ?? ""}`,
       bodyHtml: [
         kitFacts(facts),
-        kitParagraph(`First payment due: ${naira(due)}. Confirm acceptance in writing and arrange the introduction.`),
+        kitParagraph(`First payment due: ${naira(due)}. ${a.pay_url ? "A Paystack payment link was made for it." : "The Paystack link could not be made; it is tried again when the family opens the offer."} Confirm acceptance in writing and arrange the introduction.`),
         kitButton("Open the record", `${SITE_URL}/admin/clients/${o.client_id}?tab=commercial`),
       ].join(""),
     }));
@@ -155,7 +256,12 @@ Deno.serve(async (req) => {
         bodyHtml: [
           kitParagraph(`${first}, thank you. Here is what you accepted.`),
           kitFacts(facts),
-          kitSubhead("Your first payment"),
+          kitSubhead(`Your first payment: ${naira(due)}`),
+          ...(a.pay_url ? [
+            kitParagraph("Pay online by card, bank transfer or USSD through Paystack:"),
+            kitButton("Pay with Paystack", a.pay_url),
+            kitParagraph("Or pay by bank transfer to:"),
+          ] : [kitParagraph("Pay by bank transfer to:")]),
           kitFacts([
             { label: "Amount", value: naira(due) },
             { label: "Bank", value: String(pay.bankName ?? "") },
@@ -165,7 +271,7 @@ Deno.serve(async (req) => {
           ]),
           kitParagraph("We will confirm your booking in writing and arrange a meeting and introduction with your nurse before the first shift. Care starts once the first payment is received."),
           kitButton("View your offer", `${SITE_URL}/o/${plain}`),
-          kitParagraph("Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237."),
+          kitParagraph("Need another way to pay? Reply to this email, or WhatsApp us on +234 812 698 8237 and we will arrange it."),
         ].join(""),
       }));
     }

@@ -112,6 +112,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const [problem, setProblem] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [payWay, setPayWay] = useState<"paystack" | "bank">("paystack");
   const [seen, setSeen] = useState<number[]>([0]);
   const barRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLOListElement>(null);
@@ -235,6 +236,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const open = offerOpen(offer);
   const chosen = c.options.find((o) => o.id === (accepted ? offer.accepted_option : option)) ?? null;
   const acceptedPlan = (offer.accepted_payment ?? plan) as PaymentPlan;
+  const payUrl = offer.pay_url ?? c.payment.payOnlineUrl ?? null;
   const due = chosen ? firstPayment(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan) : 0;
   const ready = !!option && agree && name.trim().includes(" ") && name.trim().length >= 3;
   const current = STEPS[step];
@@ -372,9 +374,39 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           </p>
         </div>
         <div>
-          <OfferLabel>Your first payment</OfferLabel>
-          <div className="mt-3"><OfferBankDetails reference={offer.reference} content={c} amount={due} /></div>
-          {c.payment.payOnlineUrl && <a href={c.payment.payOnlineUrl} className={cn(requestPrimary, "mt-4 w-full sm:w-auto")}>Pay online</a>}
+          <OfferLabel>{acceptedPlan === "upfront" ? "Your payment" : "Your first payment"}</OfferLabel>
+          <p className="mt-2 text-[30px] font-extrabold leading-none tracking-[-0.04em] text-navy">{naira(due)}</p>
+          <p className="mt-2 text-[14.5px] text-body">
+            {acceptedPlan === "upfront" ? `All ${c.months} months, with your ${c.upfrontDiscountPercent}% discount.` : "Your first month, paid before care starts."} Choose how you would like to pay.
+          </p>
+          <div className="mt-4 flex flex-col gap-2.5">
+            <Choice label="Pay online with Paystack" blurb="Card, bank transfer or USSD. Paid instantly and confirmed automatically." selected={payWay === "paystack"} onClick={() => setPayWay("paystack")} />
+            <Choice label="Pay by bank transfer" blurb="Send it from your bank to ours, using your reference." selected={payWay === "bank"} onClick={() => setPayWay("bank")} />
+          </div>
+          {payWay === "paystack" && (
+            <div className="mt-4">
+              {payUrl ? (
+                <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "w-full sm:w-auto")}>
+                  Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" />
+                </a>
+              ) : (
+                <p className="border-l-4 border-brand bg-tint px-4 py-3 text-[14.5px] leading-[1.55] text-ink">
+                  Your payment link is being prepared. Open this page again in a few minutes, or pay by bank transfer now.
+                </p>
+              )}
+            </div>
+          )}
+          {payWay === "bank" && (
+            <div className="mt-4"><OfferBankDetails reference={offer.reference} content={c} amount={due} /></div>
+          )}
+          <a
+            href={`${WHATSAPP}?text=${encodeURIComponent(`Hello Medic Connect, I have accepted care offer ${offer.reference} for ${c.careFor}. I would like to pay another way.`)}`}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(requestSecondary, "mt-5 w-full sm:w-auto")}
+          >
+            <MessageCircle className="h-4 w-4" /> Need another way to pay? Message us
+          </a>
         </div>
         <div>
           <OfferLabel>What happens next</OfferLabel>
@@ -402,7 +434,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       <div className="flex flex-col gap-7">
         <div>
           <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Accept your offer</h2>
-          <p className="mt-2 text-[15px] leading-[1.55] text-body">Accepting books your care. Nothing is taken from you here: you pay by bank transfer afterwards.</p>
+          <p className="mt-2 text-[15px] leading-[1.55] text-body">Accepting books your care. Nothing is taken from you here: you pay afterwards, online with Paystack or by bank transfer.</p>
         </div>
 
         {c.options.length > 1 && (
@@ -449,7 +481,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
         {chosen && (
           <p className="text-[14.5px] leading-[1.55] text-body">
-            Your first payment will be <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b>. We show you the bank details as soon as you accept.
+            Your first payment will be <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b>. As soon as you accept, you can pay online with Paystack or by bank transfer.
           </p>
         )}
         {problem && <p className="text-[14.5px] font-bold text-destructive" role="alert">{problem}</p>}
@@ -458,7 +490,9 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   };
 
   const primary = isLast
-    ? (accepted || !open
+    ? (accepted && payWay === "paystack" && payUrl
+        ? <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "flex-1 sm:flex-none")}>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></a>
+        : accepted || !open
         ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
         : (
           <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(requestPrimary, "flex-1 sm:flex-none")}>
