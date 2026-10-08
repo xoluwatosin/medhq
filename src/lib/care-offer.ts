@@ -140,36 +140,34 @@ export const scheduleRows = (
   const pct = content.upfrontDiscountPercent;
   const fees = (o: OfferOption): string[] => {
     const t = optionTotals(o, months, pct);
-    const monthly = `${naira(t.monthly)} a month, paid in advance, with the first month paid before care starts. ${naira(t.total)} over ${months} months.`;
-    const upfront = `${naira(t.upfront)} once, for all ${months} months. A ${pct}% discount, saving ${naira(t.saving)}.`;
+    const monthly = `${naira(t.monthly)} a month, paid in advance; the first month before care starts.`;
+    const upfront = `${naira(t.upfront)} once, for all ${months} months (${pct}% discount).`;
     if (plan === "monthly" || pct <= 0) return [monthly];
     if (plan === "upfront") return [upfront];
     return [`Monthly: ${monthly}`, `Upfront: ${upfront}`];
   };
   const options = option ? [option] : content.options;
+  // A short record: each fact once. What the rest of the offer already sets
+  // out (the duties, the option in full) is referred to, not retold.
   const now: ScheduleRow[] = [
-    { label: "Reference", lines: [`${reference}. This care schedule forms part of your agreement with the terms of care.`] },
-    { label: "Care for", lines: [content.careFor] },
+    { label: "Reference", lines: [`${reference}, part of your agreement with the terms of care.`] },
     { label: "Arranged by", lines: [`${content.preparedFor}, the parent or guardian making care decisions and responsible for payment, unless agreed otherwise in writing.`] },
-    { label: "Where", lines: [content.location] },
-    { label: "Starts", lines: [`${content.start}, after a meeting and introduction with your nurse.`] },
-    { label: "Length", lines: [`${months} months from the day care starts, unless extended in writing.`] },
-    ...options.map((o) => ({ label: option ? "Care" : `Care: ${o.title}`, lines: [`${o.title}. ${o.staffing}`] })),
-    { label: "Responsibilities", lines: [`As listed under Your nurse's responsibilities. Not included: ${content.notIncluded.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`] },
-    { label: "Days off and relief", lines: ["Live-in nurses have regular days off. A relief nurse we provide covers them, at no extra cost."] },
+    { label: "Care for", lines: [`${content.careFor}, at home in ${content.location}.`] },
+    ...options.map((o) => ({ label: option ? "Care" : `Care: ${o.title}`, lines: [o.staffing] })),
+    { label: "Starts", lines: [`${content.start}, for ${months} months, after a meeting and introduction with your nurse. Longer only if agreed in writing.`] },
+    { label: "Duties", lines: ["As set out in Your nurse's responsibilities."] },
     ...options.map((o) => ({ label: option ? "Fees" : `Fees: ${o.title}`, lines: fees(o) })),
     { label: "Your home provides", lines: content.familyProvides },
-    { label: "Daily updates", lines: [`A daily record of feeds, sleep and nappies, shared with ${content.preparedFor} each day. A weekly review by our clinical lead.`] },
-    { label: "Contacts", lines: ["Our team: +234 812 698 8237 and hello@medicconnect.co, every day from 7am to 10pm."] },
+    { label: "Contacts", lines: ["+234 812 698 8237 and hello@medicconnect.co, every day from 7am to 10pm."] },
   ];
   const later: ScheduleRow[] = [
-    { label: "Start date", lines: ["The exact day care starts, once you know when the baby will be home."] },
+    { label: "Start date", lines: ["The exact day, once you know when the baby will be home."] },
     ...options.map((o) => ({ label: option ? "Daily routine" : `Daily routine: ${o.title}`, lines: ["Proposed, to agree with you:", ...(o.rota?.length ? o.rota : [o.summary])], later: true })),
-    { label: "Days off", lines: ["Which days, for example one day a week or two days together every two weeks, to suit your family and the nurse."] },
+    { label: "Days off", lines: ["Which days, for example one day a week or two days together every two weeks. A relief nurse we provide covers them, at no extra cost."] },
     { label: "Supplies", lines: content.supplies?.length ? content.supplies : ["Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment. Nothing is bought or charged without your agreement."] },
     { label: "Baby's needs", lines: [content.assessment || "Your nurse and our clinical lead go through the baby's needs with you at the introduction.", "Feeding, sleep and any medical instructions from the hospital."] },
     { label: "Emergency plan", lines: ["Who to call, the hospital to use and how to get there, at any time of day or night."] },
-    { label: "Updates", lines: ["How you would like your daily updates, for example by WhatsApp, and who else should receive them."] },
+    { label: "Updates", lines: ["How you would like your daily record and updates, for example by WhatsApp, and who else should receive them."] },
   ].map((r) => ({ ...r, later: true }));
   return [...now, ...later];
 };
