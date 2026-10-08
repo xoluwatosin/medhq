@@ -18,7 +18,9 @@ const LiveChatButton = () => {
     pathname.startsWith("/portal") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/join") ||
-    pathname.startsWith("/claim")
+    pathname.startsWith("/claim") ||
+    // A care offer has its own WhatsApp link and a Back and Next bar here.
+    pathname.startsWith("/care/offer")
   ) return null;
 
   return (

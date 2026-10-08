@@ -1,36 +1,76 @@
-// The family's care offer: read it, compare the options, read the terms,
-// download it, and accept. No account is needed; the link is the key.
+// The family's care offer, one part at a time: a welcome, the options to
+// compare, what is included, how it works, the terms, and accepting. Drawn
+// like the site's request journey: a navy cap, a progress bar with every part
+// reachable, one part on screen, and Back and Next at the foot. No account is
+// needed; the link is the key.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Download, MessageCircle } from "lucide-react";
-import {
-  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilyShell, FamilyText,
-  familyInput, familyPrimary, familySecondary,
-} from "@/components/care/FamilyShell";
-import OfferDocument from "@/components/care/OfferDocument";
+import { ArrowLeft, ArrowRight, Download, MessageCircle } from "lucide-react";
+import SEO from "@/components/SEO";
+import { NotchTag, Watermark } from "@/components/mc/brand";
+import { art } from "@/components/mc/art";
+import { Choice, requestPrimary, requestSecondary } from "@/components/request/RequestShell";
+import { FamilyLoading } from "@/components/care/FamilyShell";
+import OfferDocument, {
+  OfferBankDetails, OfferCompareTable, OfferHowItWorks, OfferIncluded, OfferLabel,
+  OfferOptionCard, OfferPriceNote, OfferSummary, OfferTerms,
+} from "@/components/care/OfferDocument";
 import { supabase } from "@/integrations/supabase/client";
 import { contractToPdfBlob } from "@/lib/contract-pdf";
 import { formatDate } from "@/lib/format";
 import { firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
 import { cn } from "@/lib/utils";
+import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 
 const WHATSAPP = "https://wa.me/2348126988237";
 
-const choiceCard = (on: boolean) => cn(
-  "flex w-full cursor-pointer items-start gap-3 border-2 p-4 text-left transition-colors",
-  on ? "border-navy bg-tint shadow-offset-sm" : "border-line bg-card hover:border-navy",
-);
+type StepId = "welcome" | "options" | "included" | "how" | "terms" | "accept";
 
-const Radio = ({ on }: { on: boolean }) => (
-  <span aria-hidden="true" className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2", on ? "border-brand" : "border-label")}>
-    {on && <span className="h-2.5 w-2.5 rounded-full bg-brand" />}
-  </span>
+const STEPS: { id: StepId; short: string; label: string; art: string }[] = [
+  { id: "welcome", short: "Welcome", label: "Your offer", art: art.postnatalSpecialist },
+  { id: "options", short: "Options", label: "Your options", art: art.nightNurseCot },
+  { id: "included", short: "Included", label: "What is included", art: art.objBottleMuslin },
+  { id: "how", short: "How it works", label: "How it works", art: art.objCalendar },
+  { id: "terms", short: "Terms", label: "The agreement", art: art.objSignedContract },
+  { id: "accept", short: "Accept", label: "Accept", art: art.objHandshake },
+];
+
+const errorFrom = async (data: { error?: string } | null, e: unknown, fallback: string) => {
+  const ctx = (e as { context?: Response } | null)?.context;
+  const body = ctx && typeof ctx.json === "function" ? await ctx.json().catch(() => null) : null;
+  return data?.error ?? body?.error ?? fallback;
+};
+
+/** The navy cap: the site's hero in small. */
+const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => void; making?: boolean; artSrc?: string }) => (
+  <header className="relative overflow-hidden bg-navy pt-[max(12px,env(safe-area-inset-top))]">
+    <Watermark glyph="o" size={300} opacity={0.12} className="-right-[110px] -top-[60px]" />
+    <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 sm:px-8">
+      <img src={logoWhite} alt="Medic Connect" className="h-7 w-auto sm:h-8" />
+      {onPdf && (
+        <button type="button" onClick={onPdf} disabled={making} className="inline-flex min-h-10 items-center gap-1.5 border-2 border-outline-navy px-3 text-[13.5px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy disabled:opacity-60">
+          <Download className="h-4 w-4" aria-hidden="true" /> {making ? "Making PDF" : "PDF"}
+        </button>
+      )}
+    </div>
+    <div className="relative mx-auto flex max-w-3xl items-end px-4 sm:px-8">
+      <div className="min-w-0 flex-1 pb-6 pt-5 pr-[86px] sm:pb-8 sm:pr-0">
+        <span className="inline-flex"><NotchTag tone="white" size="sm">Care offer</NotchTag></span>
+        <h1 className="mt-3 text-[25px] font-extrabold leading-[1.08] tracking-[-0.04em] text-white sm:text-[34px]">{title}</h1>
+      </div>
+      {artSrc && (
+        <img src={artSrc} alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-3 h-[92px] w-auto object-contain object-bottom sm:static sm:h-[130px]" />
+      )}
+    </div>
+  </header>
 );
 
 const CareOffer = () => {
   const { token = "" } = useParams();
   const [offer, setOffer] = useState<OfferView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
+  const [viewing, setViewing] = useState(0);
   const [option, setOption] = useState<string | null>(null);
   const [plan, setPlan] = useState<PaymentPlan>("monthly");
   const [agree, setAgree] = useState(false);
@@ -38,14 +78,15 @@ const CareOffer = () => {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
+  const [seen, setSeen] = useState<number[]>([0]);
   const printRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLOListElement>(null);
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.functions.invoke("care-offer", { body: { token, action: "load" } });
     if (e || !data?.ok) {
-      const ctx = (e as { context?: Response } | null)?.context;
-      const body = ctx && typeof ctx.json === "function" ? await ctx.json().catch(() => null) : null;
-      setError(data?.error ?? body?.error ?? "We could not open this offer.");
+      setError(await errorFrom(data, e, "We could not open this offer."));
       return;
     }
     const o = data.offer as OfferView;
@@ -54,6 +95,35 @@ const CareOffer = () => {
   }, [token]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // The accessibility button keeps clear of the Back and Next bar.
+  const loaded = !!offer;
+  useEffect(() => {
+    const root = document.documentElement;
+    const publish = () => {
+      root.style.setProperty("--mc-bottom-reserve", `${barRef.current?.offsetHeight ?? 0}px`);
+      window.dispatchEvent(new Event("resize"));
+    };
+    const t = window.setTimeout(publish, 50);
+    return () => {
+      window.clearTimeout(t);
+      root.style.removeProperty("--mc-bottom-reserve");
+      window.dispatchEvent(new Event("resize"));
+    };
+  }, [loaded]);
+
+  // The part showing stays in view in the row of parts.
+  useEffect(() => {
+    const chip = railRef.current?.querySelector<HTMLElement>('[aria-current="step"]');
+    chip?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [step]);
+
+  const go = (n: number) => {
+    const next = Math.max(0, Math.min(STEPS.length - 1, n));
+    setStep(next);
+    setSeen((s) => (s.includes(next) ? s : [...s, next]));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const downloadPdf = async () => {
     if (!printRef.current || !offer) return;
@@ -80,171 +150,333 @@ const CareOffer = () => {
     });
     setBusy(false);
     if (e || !data?.ok) {
-      const ctx = (e as { context?: Response } | null)?.context;
-      const body = ctx && typeof ctx.json === "function" ? await ctx.json().catch(() => null) : null;
-      setProblem(data?.error ?? body?.error ?? "That did not go through. Please try again.");
+      setProblem(await errorFrom(data, e, "That did not go through. Please try again."));
       return;
     }
     setOffer(data.offer as OfferView);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (error) {
+  const seo = <SEO title="Your care offer | Medic Connect" description="Your care offer from Medic Connect" path="/care/offer" noindex />;
+
+  if (error || !offer) {
     return (
-      <FamilyShell eyebrow="Care offer" title="Your care offer" path="/care/offer">
-        <FamilyCard>
-          <FamilyHeading>We could not open this offer</FamilyHeading>
-          <FamilyText className="mt-3">{error}</FamilyText>
-          <a href={WHATSAPP} className={cn(familySecondary, "mt-5")}><MessageCircle className="h-4 w-4" /> Message us on WhatsApp</a>
-        </FamilyCard>
-      </FamilyShell>
-    );
-  }
-  if (!offer) {
-    return (
-      <FamilyShell eyebrow="Care offer" title="Your care offer" path="/care/offer">
-        <FamilyLoading label="Opening your offer" />
-      </FamilyShell>
+      <div className="flex min-h-dvh flex-col bg-card">
+        {seo}
+        <Cap title="Your care offer" />
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-8">
+          {error ? (
+            <>
+              <h2 className="text-[22px] font-extrabold tracking-[-0.03em] text-navy">We could not open this offer</h2>
+              <p className="mt-3 text-[15.5px] leading-[1.6] text-body">{error}</p>
+              <a href={WHATSAPP} className={cn(requestSecondary, "mt-6")}><MessageCircle className="h-4 w-4" /> Message us on WhatsApp</a>
+            </>
+          ) : <FamilyLoading label="Opening your offer" />}
+        </main>
+      </div>
     );
   }
 
   const c = offer.content;
+  const first = c.preparedFor.split(" ")[0] || "Hello";
   const accepted = offer.status === "accepted";
   const open = offerOpen(offer);
   const chosen = c.options.find((o) => o.id === (accepted ? offer.accepted_option : option)) ?? null;
   const acceptedPlan = (offer.accepted_payment ?? plan) as PaymentPlan;
   const due = chosen ? firstPayment(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan) : 0;
   const ready = !!option && agree && name.trim().includes(" ") && name.trim().length >= 3;
+  const current = STEPS[step];
+  const isLast = step === STEPS.length - 1;
+  const viewingOption = c.options[Math.min(viewing, c.options.length - 1)];
 
-  const paymentDetails = (
-    <dl className="mt-4 grid gap-3 border-2 border-navy bg-card p-5 sm:grid-cols-2">
-      <div><dt className="text-[13px] font-bold text-label">Amount</dt><dd className="mt-1 text-[18px] font-extrabold text-navy">{naira(due)}</dd></div>
-      <div><dt className="text-[13px] font-bold text-label">Reference</dt><dd className="mt-1 text-[16px] font-extrabold text-navy">{offer.reference}</dd></div>
-      <div><dt className="text-[13px] font-bold text-label">Bank</dt><dd className="mt-1 text-[16px] font-extrabold text-navy">{c.payment.bankName}</dd></div>
-      <div><dt className="text-[13px] font-bold text-label">Account number</dt><dd className="mt-1 text-[16px] font-extrabold tracking-[0.04em] text-navy">{c.payment.accountNumber}</dd></div>
-      <div className="sm:col-span-2"><dt className="text-[13px] font-bold text-label">Account name</dt><dd className="mt-1 text-[16px] font-extrabold text-navy">{c.payment.accountName}</dd></div>
-    </dl>
+  const chooseButton = (id: string) => (
+    <button
+      type="button"
+      onClick={() => setOption(id)}
+      aria-pressed={option === id}
+      className={cn(option === id ? requestPrimary : requestSecondary, "w-full")}
+    >
+      {option === id ? "Chosen" : "Choose this option"}
+    </button>
   );
 
-  return (
-    <FamilyShell
-      eyebrow="Care offer"
-      title={`Your care offer for ${c.careFor}`}
-      accent={c.careFor.split(" ").map((_, i) => 4 + i)}
-      lead={accepted ? "Thank you. Your choice is recorded." : `Prepared for ${c.preparedFor}. Read it through, compare the options and accept at the end.`}
-      path="/care/offer"
-      action={
-        <button type="button" onClick={() => void downloadPdf()} disabled={making} className="inline-flex min-h-11 items-center gap-2 border-2 border-outline-navy px-3 text-[14px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy disabled:opacity-60">
-          <Download className="h-4 w-4" aria-hidden="true" /> {making ? "Making PDF" : "PDF"}
+  const body: Record<StepId, React.ReactNode> = {
+    welcome: (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Hello {first}</h2>
+          <p className="mt-3 text-[16px] leading-[1.65] text-ink">{c.intro}</p>
+        </div>
+        {!accepted && !open && (
+          <p className="border-l-4 border-destructive bg-tint px-4 py-3 text-[14.5px] leading-[1.6] text-ink">
+            This offer {offer.status === "withdrawn" ? "has been withdrawn" : "has expired"}. Message us and we will send you an up-to-date one.
+          </p>
+        )}
+        <OfferSummary reference={offer.reference} content={c} expiresAt={offer.expires_at} />
+        <div>
+          <OfferLabel>In this offer</OfferLabel>
+          <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+            {STEPS.slice(1).map((s, i) => (
+              <li key={s.id}>
+                <button type="button" onClick={() => go(i + 1)} className="flex w-full items-center gap-3 border-2 border-navy bg-card px-3 py-2.5 text-left shadow-offset-sm transition-colors hover:bg-tint">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-brand text-[13px] font-extrabold text-white">{i + 1}</span>
+                  <span className="text-[15px] font-extrabold text-navy">{s.label}</span>
+                  <ArrowRight className="ml-auto h-4 w-4 text-brand" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    ),
+    options: (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">
+            {c.options.length > 1 ? `${c.options.length === 2 ? "Two" : c.options.length} ways to care for ${c.careFor}` : "The care we are offering"}
+          </h2>
+          {c.options.length > 1 && <p className="mt-2 text-[15px] leading-[1.55] text-body">Look at each, then choose the one that suits your family. You can change your mind before you accept.</p>}
+        </div>
+
+        {c.options.length > 1 && (
+          <div role="tablist" aria-label="Options" className="grid grid-cols-2 border-2 border-navy md:hidden">
+            {c.options.map((o, i) => (
+              <button
+                key={o.id}
+                type="button"
+                role="tab"
+                aria-selected={viewing === i}
+                onClick={() => setViewing(i)}
+                className={cn("min-h-12 px-2 text-[14px] font-extrabold leading-tight", viewing === i ? "bg-navy text-white" : "bg-card text-navy", i > 0 && "border-l-2 border-navy")}
+              >
+                {o.title}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="md:hidden">
+          {viewingOption && (
+            <OfferOptionCard
+              key={viewingOption.id}
+              option={viewingOption}
+              content={c}
+              chosen={accepted ? offer.accepted_option === viewingOption.id : option === viewingOption.id}
+              action={accepted || !open ? undefined : chooseButton(viewingOption.id)}
+            />
+          )}
+        </div>
+        <div className={cn("hidden gap-5 md:grid", c.options.length > 1 && "md:grid-cols-2")}>
+          {c.options.map((o) => (
+            <OfferOptionCard
+              key={o.id}
+              option={o}
+              content={c}
+              chosen={accepted ? offer.accepted_option === o.id : option === o.id}
+              action={accepted || !open ? undefined : chooseButton(o.id)}
+            />
+          ))}
+        </div>
+
+        {c.options.length > 1 && (
+          <div>
+            <OfferLabel>Side by side</OfferLabel>
+            <div className="mt-3"><OfferCompareTable content={c} /></div>
+          </div>
+        )}
+        <OfferPriceNote />
+      </div>
+    ),
+    included: (
+      <div className="flex flex-col gap-6">
+        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">What your nurse does</h2>
+        <OfferIncluded content={c} />
+      </div>
+    ),
+    how: (
+      <div className="flex flex-col gap-6">
+        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Before and during care</h2>
+        <OfferHowItWorks content={c} />
+      </div>
+    ),
+    terms: (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Terms of care</h2>
+          <p className="mt-2 text-[15px] leading-[1.55] text-body">The agreement between us. Tap any part to read it, and ask us about anything that is not clear.</p>
+        </div>
+        <OfferTerms terms={offer.terms} version={offer.terms_version} />
+        <button type="button" onClick={() => void downloadPdf()} disabled={making} className={cn(requestSecondary, "self-start")}>
+          <Download className="h-4 w-4" /> {making ? "Making PDF" : "Download the offer and terms"}
         </button>
-      }
-    >
-      {accepted && chosen && (
-        <FamilyCard>
-          <FamilyHeading>You chose {chosen.title.toLowerCase()}</FamilyHeading>
-          <FamilyText className="mt-3">
-            Accepted by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}, paying {acceptedPlan === "upfront" ? `all ${c.months} months upfront` : "monthly"}. We have emailed you a copy.
-          </FamilyText>
-          <p className="mt-6 text-[13px] font-extrabold uppercase tracking-[0.12em] text-label">Your first payment</p>
-          {paymentDetails}
-          {c.payment.payOnlineUrl && (
-            <a href={c.payment.payOnlineUrl} className={cn(familyPrimary, "mt-5")}>Pay online</a>
-          )}
-          <FamilyText className="mt-5">
-            Next, we confirm your booking in writing and arrange a meeting and introduction with your nurse before the first shift. Care starts once the first payment is received.
-          </FamilyText>
-        </FamilyCard>
-      )}
+      </div>
+    ),
+    accept: accepted && chosen ? (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Thank you, {first}</h2>
+          <p className="mt-3 text-[15.5px] leading-[1.6] text-ink">
+            You chose <b>{chosen.title.toLowerCase()}</b>, paying {acceptedPlan === "upfront" ? `all ${c.months} months upfront` : "monthly"}.
+            Accepted by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}. We have emailed you a copy.
+          </p>
+        </div>
+        <div>
+          <OfferLabel>Your first payment</OfferLabel>
+          <div className="mt-3"><OfferBankDetails reference={offer.reference} content={c} amount={due} /></div>
+          {c.payment.payOnlineUrl && <a href={c.payment.payOnlineUrl} className={cn(requestPrimary, "mt-4 w-full sm:w-auto")}>Pay online</a>}
+        </div>
+        <div>
+          <OfferLabel>What happens next</OfferLabel>
+          <ol className="mt-3 flex flex-col gap-3">
+            {[
+              "We confirm your booking in writing.",
+              "We arrange a meeting and introduction with your nurse.",
+              "Care starts once your first payment is received.",
+            ].map((t, i) => (
+              <li key={t} className="flex gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-navy text-[13px] font-extrabold text-white">{i + 1}</span>
+                <span className="pt-0.5 text-[15px] text-ink">{t}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    ) : !open ? (
+      <div className="flex flex-col gap-4">
+        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy">This offer can no longer be accepted</h2>
+        <p className="text-[15.5px] leading-[1.6] text-body">{offer.status === "withdrawn" ? "It has been withdrawn." : "It has expired."} Message us and we will send you an up-to-date offer.</p>
+        <a href={WHATSAPP} className={cn(requestSecondary, "self-start")}><MessageCircle className="h-4 w-4" /> WhatsApp us</a>
+      </div>
+    ) : (
+      <div className="flex flex-col gap-7">
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Accept your offer</h2>
+          <p className="mt-2 text-[15px] leading-[1.55] text-body">Accepting books your care. Nothing is taken from you here: you pay by bank transfer afterwards.</p>
+        </div>
 
-      {!accepted && !open && (
-        <FamilyNote title="This offer can no longer be accepted">
-          {offer.status === "withdrawn" ? "It has been withdrawn." : "It has expired."} Message us and we will send you an up-to-date offer.
-        </FamilyNote>
-      )}
-
-      <OfferDocument
-        reference={offer.reference}
-        content={c}
-        terms={offer.terms}
-        termsVersion={offer.terms_version}
-        expiresAt={offer.expires_at}
-        chosenOption={accepted ? offer.accepted_option : null}
-      />
-
-      {!accepted && open && (
-        <FamilyCard>
-          <FamilyHeading>Accept your offer</FamilyHeading>
-          <FamilyText className="mt-2">Accepting books your care. It does not take any money: you pay by bank transfer once you have accepted.</FamilyText>
-
-          {c.options.length > 1 && (
-            <fieldset className="mt-6">
-              <legend className="text-[15.5px] font-extrabold text-navy">1. Which option?</legend>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {c.options.map((o) => (
-                  <button key={o.id} type="button" role="radio" aria-checked={option === o.id} onClick={() => setOption(o.id)} className={choiceCard(option === o.id)}>
-                    <Radio on={option === o.id} />
-                    <span>
-                      <span className="block text-[16px] font-extrabold text-navy">{o.title}</span>
-                      <span className="mt-1 block text-[14px] text-body">{naira(o.monthly)} a month</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          )}
-
-          <fieldset className="mt-6">
-            <legend className="text-[15.5px] font-extrabold text-navy">{c.options.length > 1 ? "2. " : "1. "}How would you like to pay?</legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {(["monthly", "upfront"] as const).filter((p) => p === "monthly" || c.upfrontDiscountPercent > 0).map((p) => {
-                const t = chosen ? optionTotals(chosen, c.months, c.upfrontDiscountPercent) : null;
-                return (
-                  <button key={p} type="button" role="radio" aria-checked={plan === p} onClick={() => setPlan(p)} className={choiceCard(plan === p)}>
-                    <Radio on={plan === p} />
-                    <span>
-                      <span className="block text-[16px] font-extrabold text-navy">{p === "monthly" ? "Monthly" : `All ${c.months} months upfront`}</span>
-                      <span className="mt-1 block text-[14px] text-body">
-                        {t
-                          ? p === "monthly" ? `${naira(t.monthly)} a month, the first before care starts` : `${naira(t.upfront)} once, saving ${naira(t.saving)}`
-                          : p === "monthly" ? "Each month in advance" : `${c.upfrontDiscountPercent}% off the total`}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
+        {c.options.length > 1 && (
+          <fieldset>
+            <legend className="text-[16px] font-extrabold text-navy">Which option?</legend>
+            <div className="mt-3 flex flex-col gap-2.5">
+              {c.options.map((o) => (
+                <Choice key={o.id} label={o.title} blurb={`${naira(o.monthly)} a month. ${o.staffing}`} selected={option === o.id} onClick={() => setOption(o.id)} />
+              ))}
             </div>
           </fieldset>
+        )}
 
-          <label className="mt-6 flex cursor-pointer items-start gap-3">
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[hsl(var(--brand))]" />
-            <span className="text-[15px] leading-[1.55] text-ink">I have read the offer and the terms of care ({offer.terms_version}) and I accept them.</span>
-          </label>
+        <fieldset>
+          <legend className="text-[16px] font-extrabold text-navy">How would you like to pay?</legend>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {(["monthly", "upfront"] as const).filter((p) => p === "monthly" || c.upfrontDiscountPercent > 0).map((p) => {
+              const t = chosen ? optionTotals(chosen, c.months, c.upfrontDiscountPercent) : null;
+              const blurb = t
+                ? p === "monthly" ? `${naira(t.monthly)} a month, the first before care starts` : `${naira(t.upfront)} once, saving ${naira(t.saving)}`
+                : p === "monthly" ? "Each month in advance" : `${c.upfrontDiscountPercent}% off the total`;
+              return <Choice key={p} label={p === "monthly" ? "Monthly" : `All ${c.months} months upfront`} blurb={blurb} selected={plan === p} onClick={() => setPlan(p)} />;
+            })}
+          </div>
+        </fieldset>
 
-          <label className="mt-5 block">
-            <span className="text-[15px] font-extrabold text-navy">Your full name</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className={cn(familyInput, "mt-2 min-h-12")} placeholder="First and last name" />
-          </label>
+        <label className="flex cursor-pointer items-start gap-3 border-2 border-navy bg-tint p-4">
+          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--brand))]" />
+          <span className="text-[15px] leading-[1.55] text-ink">
+            I have read the offer and the <button type="button" onClick={() => go(4)} className="font-extrabold text-brand underline underline-offset-2">terms of care</button>, and I accept them.
+          </span>
+        </label>
 
-          {problem && <p className="mt-4 text-[14.5px] font-bold text-destructive" role="alert">{problem}</p>}
+        <label className="block">
+          <span className="text-[16px] font-extrabold text-navy">Your full name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            placeholder="First and last name"
+            className="mt-2 min-h-12 w-full border-2 border-navy bg-card px-4 text-[16px] text-ink placeholder:text-label focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
+          />
+        </label>
 
-          <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(familyPrimary, "mt-6 w-full sm:w-auto")}>
-            {busy ? "Accepting" : chosen ? `Accept ${chosen.title.toLowerCase()}` : "Accept"}
+        {chosen && (
+          <p className="text-[14.5px] leading-[1.55] text-body">
+            Your first payment will be <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b>. We show you the bank details as soon as you accept.
+          </p>
+        )}
+        {problem && <p className="text-[14.5px] font-bold text-destructive" role="alert">{problem}</p>}
+      </div>
+    ),
+  };
+
+  const primary = isLast
+    ? (accepted || !open
+        ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
+        : (
+          <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(requestPrimary, "flex-1 sm:flex-none")}>
+            {busy ? "Accepting" : !option ? "Choose an option first" : `Accept ${chosen?.title.toLowerCase() ?? ""}`}
           </button>
-          {!option && c.options.length > 1 && <p className="mt-3 text-[14px] text-body">Choose an option first.</p>}
-        </FamilyCard>
-      )}
+        ))
+    : (
+      <button type="button" onClick={() => go(step + 1)} className={cn(requestPrimary, "flex-1 sm:flex-none")}>
+        {step === 0 ? "See the options" : `Next: ${STEPS[step + 1].short.toLowerCase()}`} <ArrowRight className="h-4 w-4" />
+      </button>
+    );
 
-      <FamilyNote title="Questions?">
-        Call or WhatsApp us on +234 812 698 8237, or email hello@medicconnect.co. We are here every day from 7am to 10pm.
-        <span className="mt-3 flex flex-wrap gap-2">
-          <a href={WHATSAPP} className={familySecondary}><MessageCircle className="h-4 w-4" /> WhatsApp us</a>
-          <button type="button" onClick={() => void downloadPdf()} disabled={making} className={familySecondary}>
-            <Download className="h-4 w-4" /> {making ? "Making PDF" : "Download PDF"}
-          </button>
-        </span>
-      </FamilyNote>
+  return (
+    <div className="flex min-h-dvh flex-col bg-card">
+      {seo}
+      <Cap title={`Your care offer for ${c.careFor}`} onPdf={() => void downloadPdf()} making={making} artSrc={current.art} />
 
-      {/* The PDF is made from this copy: every clause open, at A4 width. */}
+      {/* Where they are, and every part one tap away. */}
+      <nav aria-label="Parts of the offer" className="sticky top-0 z-20 border-b-2 border-navy bg-card">
+        <div className="mx-auto max-w-3xl px-4 pt-3 sm:px-8">
+          <div className="flex gap-1">
+            {STEPS.map((s, i) => (
+              <span key={s.id} className={cn("h-[5px] flex-1 transition-colors duration-300", i <= step ? "bg-brand" : "bg-tint")} />
+            ))}
+          </div>
+        </div>
+        <ol ref={railRef} className="mx-auto flex max-w-3xl gap-1.5 overflow-x-auto px-4 py-2.5 [scrollbar-width:none] sm:px-8">
+          {STEPS.map((s, i) => {
+            const isCurrent = i === step;
+            const label = s.id === "accept" && accepted ? "Your booking" : s.short;
+            return (
+              <li key={s.id} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => go(i)}
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={cn(
+                    "inline-flex min-h-9 items-center gap-1.5 border-2 px-2.5 text-[13px] font-extrabold transition-colors",
+                    isCurrent ? "border-navy bg-navy text-white" : seen.includes(i) ? "border-navy bg-tint text-navy" : "border-line bg-card text-label",
+                  )}
+                >
+                  <span className="tabular-nums">{i + 1}</span> {label}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-6 sm:px-8 sm:pt-8">
+        <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">{current.label}</p>
+        <div key={current.id} className="animate-in fade-in slide-in-from-right-4 duration-300">{body[current.id]}</div>
+        <p className="mt-10 border-t border-line pt-5 text-[14px] leading-[1.6] text-body">
+          Questions? Call or WhatsApp us on <a href={WHATSAPP} className="font-extrabold text-brand">+234 812 698 8237</a>, or email hello@medicconnect.co. We are here every day from 7am to 10pm.
+        </p>
+      </main>
+
+      {/* Back and Next, always within reach of a thumb. */}
+      <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-navy bg-card pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-4 sm:justify-between sm:px-8">
+          {step > 0 ? (
+            <button type="button" onClick={() => go(step - 1)} className={cn(requestSecondary, "px-4")} aria-label="Back">
+              <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
+            </button>
+          ) : <span className="hidden sm:block" />}
+          {primary}
+        </div>
+      </div>
+
+      {/* The PDF is made from this copy: every part, every clause open, at A4 width. */}
       <div aria-hidden="true" className="pointer-events-none fixed left-[-10000px] top-0">
         <div ref={printRef} className="w-[794px] bg-white p-10">
           <OfferPrintHeader reference={offer.reference} />
@@ -267,7 +499,7 @@ const CareOffer = () => {
           )}
         </div>
       </div>
-    </FamilyShell>
+    </div>
   );
 };
 
