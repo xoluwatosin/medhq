@@ -201,7 +201,7 @@ const AssessmentSection = ({
             title="No assessment arranged"
             description={preAssessmentReturned
               ? "Arrange the visit and assign an assessor."
-              : "The pre-assessment has to come back before a visit can be arranged."}
+              : "The visit can be arranged once the pre-assessment comes back, or once you record on the Overview that an assessment is needed."}
           />
         ) : (
           <MuTable

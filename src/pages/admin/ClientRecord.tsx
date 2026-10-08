@@ -795,6 +795,8 @@ const ClientRecord = () => {
             preliminary={(client.preliminary as Record<string, string | boolean> | null) ?? {}}
             serviceName={service?.name ?? null}
             assessmentRequired={(client.services as { home_assessment?: string } | null)?.home_assessment === "required"}
+            assessmentDecision={(client.assessment_decision as "needed" | "not_needed" | null) ?? null}
+            assessmentReason={(client.assessment_reason as string | null) ?? null}
             canEdit={isCoordinator}
             onChanged={() => { void load(); }}
           />
@@ -822,7 +824,9 @@ const ClientRecord = () => {
           <AssessmentSection
             clientId={String(id)}
             canArrange={isCoordinator}
-            preAssessmentReturned={![
+            // Booking is open once the form is back, or once staff have
+            // decided an assessment is needed.
+            preAssessmentReturned={client.assessment_decision === "needed" || ![
               "enquiry", "awaiting_pre_assessment", "pre_assessment_sent", "callback_due",
             ].includes(stage)}
             onChanged={() => { void load(); }}

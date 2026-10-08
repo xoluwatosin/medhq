@@ -13,6 +13,7 @@ import { art } from "@/components/mc/art";
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
 import { DateField, DateTimeField, SelectField, Status } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
+import { adminDb } from "@/lib/admin-utils";
 import { roleText } from "@/lib/care-records";
 import { assessorOptions, LOCATION_KINDS, locationLabel, type AssessorOption } from "@/lib/care-assessment";
 import { formatDateTime } from "@/lib/format";
@@ -46,8 +47,14 @@ const GroupSection = ({
 
   // Adding a recipient
   const [addingRecipient, setAddingRecipient] = useState(false);
-  const [recipientName, setRecipientName] = useState("");
+  const [recipientFirst, setRecipientFirst] = useState("");
+  const [recipientLast, setRecipientLast] = useState("");
   const [recipientDob, setRecipientDob] = useState("");
+  const [recipientService, setRecipientService] = useState("");
+
+  // Removing a recipient added by mistake
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
+  const [removeReason, setRemoveReason] = useState("");
 
   // Recording a relationship
   const [addingRelationship, setAddingRelationship] = useState(false);
@@ -60,7 +67,7 @@ const GroupSection = ({
   const [editingService, setEditingService] = useState<string | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceId, setServiceId] = useState("");
-  const [serviceState, setServiceState] = useState("proposed");
+  const [serviceState, setServiceState] = useState("confirmed");
   const [serviceRecipients, setServiceRecipients] = useState<string[]>([]);
   const [serviceReason, setServiceReason] = useState("");
 
@@ -128,14 +135,44 @@ const GroupSection = ({
     if (!request) return;
     setSaving(true);
     try {
-      await addRecipient({ requestId: request.id, fullName: recipientName, dateOfBirth: recipientDob || null });
+      const first = recipientFirst.trim();
+      const last = recipientLast.trim();
+      const created = await addRecipient({
+        requestId: request.id, fullName: [first, last].join(" "), dateOfBirth: recipientDob || null,
+      });
+      // The service goes on the care record; the request picks it up from there.
+      const { error } = await adminDb().from("clients")
+        .update({ first_name: first, last_name: last, service_id: recipientService })
+        .eq("id", created.client_id);
+      if (error) throw error;
       toast.success("Recipient added");
       setAddingRecipient(false);
-      setRecipientName("");
+      setRecipientFirst("");
+      setRecipientLast("");
       setRecipientDob("");
+      setRecipientService("");
       await refresh();
     } catch (error) {
       toast.error(careErrorMessage(error, "Could not add the recipient"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitRemoval = async () => {
+    if (!removing) return;
+    setSaving(true);
+    try {
+      const { error } = await adminDb().rpc("care_request_recipient_remove", {
+        _recipient_id: removing.id, _reason: removeReason.trim(),
+      });
+      if (error) throw error;
+      toast.success(`${removing.name} removed`);
+      setRemoving(null);
+      setRemoveReason("");
+      await refresh();
+    } catch (error) {
+      toast.error(careErrorMessage(error, "Could not remove the recipient"));
     } finally {
       setSaving(false);
     }
@@ -167,7 +204,7 @@ const GroupSection = ({
     const existing = request?.services.find((s) => s.id === id) ?? null;
     setEditingService(id);
     setServiceId(existing?.service_id ?? "");
-    setServiceState(existing?.state ?? "proposed");
+    setServiceState(existing?.state === "declined" ? "declined" : "confirmed");
     setServiceRecipients(existing ? existing.recipients.map((r) => r.request_recipient_id) : []);
     setServiceReason(existing?.reason ?? "");
     setServiceOpen(true);
@@ -330,8 +367,21 @@ const GroupSection = ({
                 state={r.address_line ?? undefined}
                 status={
                   r.person_id
-                    ? <Status label="Person attached" tone="good" />
+                    ? undefined
                     : <Status label="No person attached" tone="warning" />
+                }
+                action={
+                  canEdit && recipients.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9"
+                      onClick={() => { setRemoveReason(""); setRemoving({ id: r.id, name: r.full_name }); }}
+                    >
+                      Remove
+                    </Button>
+                  ) : undefined
                 }
               />
             ))}
@@ -444,7 +494,7 @@ const GroupSection = ({
                   state={names || undefined}
                   status={
                     <>
-                      <Status label={STATE_LABELS[s.state] ?? s.state} tone={s.state === "confirmed" ? "good" : "neutral"} />
+                      {s.state === "declined" && <Status label={STATE_LABELS.declined} tone="neutral" />}
                       {conflict && <Status label="Clinical decision needed" tone="warning" />}
                     </>
                   }
@@ -529,13 +579,40 @@ const GroupSection = ({
         description="A new care record is created for this person."
         onSave={submitRecipient}
         saving={saving}
-        saveDisabled={!recipientName.trim()}
+        saveDisabled={!recipientFirst.trim() || !recipientLast.trim() || !recipientService}
       >
-        <CareFormRow label="Full name">
-          <input className={cxInputClass()} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
+        <CareFormRow label="First name">
+          <input className={cxInputClass()} value={recipientFirst} onChange={(e) => setRecipientFirst(e.target.value)} />
         </CareFormRow>
-        <CareFormRow label="Date of birth">
+        <CareFormRow label="Last name">
+          <input className={cxInputClass()} value={recipientLast} onChange={(e) => setRecipientLast(e.target.value)} />
+        </CareFormRow>
+        <p className="text-[13px] text-muted-foreground">For a baby not yet born, use Baby and the family name.</p>
+        <CareFormRow label="Date of birth, or expected date">
           <DateField value={recipientDob} onChange={setRecipientDob} />
+        </CareFormRow>
+        <CareFormRow label="Service">
+          <SelectField
+            value={recipientService}
+            onChange={setRecipientService}
+            options={services.map((sv) => ({ value: sv.id, label: sv.name }))}
+            placeholder="Choose a service"
+          />
+        </CareFormRow>
+      </CareSheet>
+
+      <CareSheet
+        open={Boolean(removing)}
+        onOpenChange={(next) => { if (!next) setRemoving(null); }}
+        title={removing ? `Remove ${removing.name}` : "Remove recipient"}
+        description="Their care record is removed from this request. A copy is kept, with your name and the reason."
+        onSave={submitRemoval}
+        saveLabel="Remove"
+        saving={saving}
+        saveDisabled={!removeReason.trim()}
+      >
+        <CareFormRow label="Why is this person being removed?">
+          <input className={cxInputClass()} value={removeReason} onChange={(e) => setRemoveReason(e.target.value)} />
         </CareFormRow>
       </CareSheet>
 
@@ -583,17 +660,6 @@ const GroupSection = ({
             onChange={setServiceId}
             options={services.map((s) => ({ value: s.id, label: s.name }))}
             placeholder="Choose a service"
-          />
-        </CareFormRow>
-        <CareFormRow label="State">
-          <SelectField
-            value={serviceState}
-            onChange={setServiceState}
-            options={[
-              { value: "proposed", label: "Proposed" },
-              { value: "confirmed", label: "Confirmed" },
-              { value: "declined", label: "Declined" },
-            ]}
           />
         </CareFormRow>
         <CareFormRow label="Recipients">

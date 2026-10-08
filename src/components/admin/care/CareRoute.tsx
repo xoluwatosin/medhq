@@ -15,11 +15,11 @@ import { careErrorMessage } from "@/lib/care-errors";
 
 export type CareRouteId = "standard" | "urgent" | "one_off" | "staffing";
 
-const CARE_ROUTES: { id: CareRouteId; label: string; detail: string }[] = [
-  { id: "standard", label: "Standard", detail: "A care needs assessment at home, then the care plan." },
-  { id: "urgent", label: "Urgent start", detail: "Care starts on the preliminary information." },
-  { id: "one_off", label: "One-off", detail: "A single shift or visit, on the preliminary information." },
-  { id: "staffing", label: "Staffing only", detail: "We provide staff; the preliminary information is enough." },
+// How care starts when there is no home assessment first.
+const START_KINDS: { id: Exclude<CareRouteId, "standard">; label: string; detail: string }[] = [
+  { id: "urgent", label: "Urgent start", detail: "Care has to begin straight away." },
+  { id: "one_off", label: "One-off", detail: "A single shift or visit." },
+  { id: "staffing", label: "Staffing only", detail: "We provide staff for the family to manage." },
 ];
 
 const PRELIMINARY: { key: string; label: string; help: string }[] = [
@@ -38,10 +38,13 @@ const preliminaryComplete = (p: Preliminary | null | undefined) =>
 const naira = (n: number) => `₦${n.toLocaleString("en-NG")}`;
 
 const CareRoute = ({
-  clientId, route, startsAt, preliminary, serviceName, assessmentRequired, canEdit, onChanged,
+  clientId, route, startsAt, preliminary, serviceName, assessmentRequired, assessmentDecision, assessmentReason,
+  canEdit, onChanged,
 }: {
   clientId: string;
   route: CareRouteId | null;
+  assessmentDecision: "needed" | "not_needed" | null;
+  assessmentReason: string | null;
   startsAt: "home" | "hospital" | null;
   preliminary: Preliminary;
   serviceName: string | null;
@@ -52,6 +55,7 @@ const CareRoute = ({
   const [fee, setFee] = useState<number | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [noAssessment, setNoAssessment] = useState(false);
+  const [reason, setReason] = useState("");
   const [draft, setDraft] = useState<Preliminary>(preliminary);
   const [saving, setSaving] = useState(false);
 
@@ -68,16 +72,30 @@ const CareRoute = ({
 
   const feeText = fee ? naira(fee) : "the assessment fee";
 
-  const setRoute = async (next: CareRouteId, where: "home" | "hospital" | null = startsAt) => {
+  const setRoute = async (next: CareRouteId | null, where: "home" | "hospital" | null = startsAt) => {
+    if (!next) return;
     setSaving(true);
     const { error } = await adminDb().rpc("care_client_route_set", {
       _client_id: clientId, _route: next, _starts_at: where,
     });
     setSaving(false);
-    if (error) return toast.error(careErrorMessage(error, "Could not save the route"));
+    if (error) return toast.error(careErrorMessage(error, "Could not save how care starts"));
+    toast.success("Saved");
+    onChanged();
+  };
+
+  const decide = async (needed: boolean) => {
+    if (!needed && !reason.trim()) return toast.error("Say why an assessment is not needed");
+    setSaving(true);
+    const { error } = await adminDb().rpc("care_client_assessment_decide", {
+      _client_id: clientId, _needed: needed, _reason: needed ? null : reason.trim(),
+    });
+    setSaving(false);
+    if (error) return toast.error(careErrorMessage(error, "Could not save the decision"));
     setChoosing(false);
     setNoAssessment(false);
-    toast.success("Route saved");
+    setReason("");
+    toast.success(needed ? "Assessment needed" : "Assessment not needed");
     onChanged();
   };
 
@@ -100,96 +118,113 @@ const CareRoute = ({
     + (preliminary.consent === true ? 1 : 0);
   const total = PRELIMINARY.length + 1;
   const ready = preliminaryComplete(preliminary);
-  const current = CARE_ROUTES.find((r) => r.id === route) ?? null;
-  const showChoice = !current || choosing;
+  const decided = assessmentDecision !== null;
+  const showChoice = !decided || choosing;
+  const startKind = START_KINDS.find((k) => k.id === route) ?? null;
 
   return (
     <MuSection
       title="Route into care"
-      description={current ? current.detail : "Decide how this client comes into care."}
-      actions={current && canEdit && !choosing ? (
-        <Button type="button" variant="outline" className="h-10" onClick={() => setChoosing(true)}>Change route</Button>
+      description="Whether a care needs assessment at home comes first, and how care starts."
+      actions={decided && canEdit && !choosing ? (
+        <Button type="button" variant="outline" className="h-10" onClick={() => setChoosing(true)}>Change</Button>
       ) : undefined}
     >
       <div className="grid gap-5">
-        {current && !choosing && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Status label={current.label} tone={current.id === "urgent" ? "warning" : "info"} />
-            {current.id === "standard" && <span className="text-sm text-muted-copy">Care needs assessment at home, {feeText}</span>}
+        {decided && !choosing && (
+          <div className="grid gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Status
+                label={assessmentDecision === "needed" ? "Assessment at home needed" : "No assessment needed"}
+                tone={assessmentDecision === "needed" ? "info" : "neutral"}
+              />
+              {assessmentDecision === "needed" && <span className="text-sm text-muted-copy">{feeText}</span>}
+            </div>
+            {assessmentDecision === "not_needed" && assessmentReason && (
+              <p className="text-sm text-muted-copy">Reason: {assessmentReason}</p>
+            )}
           </div>
         )}
 
         {showChoice && canEdit && (
           <div className="grid gap-3">
-            {assessmentRequired && !noAssessment ? (
-              <>
-                <p className="text-sm text-ink">
-                  {serviceName ?? "This service"} always has a care needs assessment at home first.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" className="h-11" disabled={saving} onClick={() => void setRoute("standard")}>
-                    Confirm assessment at home, {feeText}
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" onClick={() => setNoAssessment(true)}>
-                    Care must start before an assessment
-                  </Button>
-                </div>
-              </>
-            ) : !noAssessment ? (
+            {!noAssessment ? (
               <>
                 <p className="text-sm font-semibold text-ink">Does this client need a care needs assessment at home?</p>
+                {assessmentRequired && (
+                  <p className="text-sm text-muted-copy">{serviceName ?? "This service"} usually has one.</p>
+                )}
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" className="h-11" disabled={saving} onClick={() => void setRoute("standard")}>
+                  <Button type="button" className="h-11" disabled={saving} onClick={() => void decide(true)}>
                     Yes, {feeText}
                   </Button>
                   <Button type="button" variant="outline" className="h-11" onClick={() => setNoAssessment(true)}>
-                    No
+                    No, not needed
                   </Button>
                 </div>
               </>
             ) : (
-              <>
-                <p className="text-sm font-semibold text-ink">How does care start?</p>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {CARE_ROUTES.filter((r) => r.id !== "standard").map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void setRoute(r.id)}
-                      className="border border-line bg-card p-4 text-left hover:border-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <span className="block text-[15px] font-bold text-navy">{r.label}</span>
-                      <span className="mt-1 block text-sm text-muted-copy">{r.detail}</span>
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <Button type="button" variant="ghost" className="h-10 px-0 text-sm" onClick={() => setNoAssessment(false)}>
+              <div className="grid gap-2">
+                <label htmlFor="no-assessment-reason" className="text-sm font-semibold text-ink">
+                  Why is an assessment not needed?
+                </label>
+                <Textarea
+                  id="no-assessment-reason"
+                  rows={2}
+                  value={reason}
+                  placeholder="For example: the baby is born by surrogacy and the nanny starts at the hospital."
+                  onChange={(e) => setReason(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" className="h-11" disabled={saving || !reason.trim()} onClick={() => void decide(false)}>
+                    Save
+                  </Button>
+                  <Button type="button" variant="ghost" className="h-11" onClick={() => setNoAssessment(false)}>
                     Back
                   </Button>
                 </div>
-              </>
+              </div>
             )}
             {choosing && (
               <div>
                 <Button type="button" variant="outline" className="h-10" onClick={() => { setChoosing(false); setNoAssessment(false); }}>
-                  Keep {current?.label ?? "the current route"}
+                  Keep as it is
                 </Button>
               </div>
             )}
           </div>
         )}
 
-        {current && (
+        {assessmentDecision === "not_needed" && (
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-ink">Is this any of these? (optional)</p>
+            <div className="flex flex-wrap gap-2">
+              {START_KINDS.map((k) => (
+                <Button
+                  key={k.id}
+                  type="button"
+                  variant={startKind?.id === k.id ? "default" : "outline"}
+                  className="h-10"
+                  disabled={!canEdit || saving}
+                  title={k.detail}
+                  onClick={() => void setRoute(k.id)}
+                >
+                  {k.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {decided && (
           <div className="max-w-xs">
             <SelectField
-              label="Care starts"
+              label="Where care begins"
               value={startsAt ?? ""}
               placeholder="Not decided"
-              disabled={!canEdit || saving}
-              onChange={(v) => { if (v) void setRoute(current.id, v as "home" | "hospital"); }}
-              options={[{ value: "home", label: "At home" }, { value: "hospital", label: "In hospital" }]}
+              disabled={!canEdit || saving || !route}
+              onChange={(v) => { if (v) void setRoute(route, v as "home" | "hospital"); }}
+              options={[{ value: "home", label: "At home" }, { value: "hospital", label: "In hospital, then home" }]}
             />
           </div>
         )}
@@ -204,7 +239,7 @@ const CareRoute = ({
           </div>
           <p className="text-sm text-muted-copy">
             Needed on every route.
-            {current?.id === "standard" ? " The standard route also needs the accepted assessment and the care plan." : ""}
+            {assessmentDecision === "needed" ? " With an assessment, the accepted assessment and the care plan come first too." : ""}
           </p>
           {PRELIMINARY.map((f) => (
             <div key={f.key} className="grid gap-1.5">
