@@ -9,14 +9,21 @@ import { KIT, KIT_ART, type KitArt } from "./kit-email.ts";
 const esc = (v: string) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const F = KIT.font;
 
-/** One tile of what is inside: a small picture, a title and a line. */
-const tile = (art: KitArt, title: string, line: string) => `
+/**
+ * The baby's name on a strip of clear tape: a translucent band of the soft
+ * brand blue, slightly taller than the text, as if stuck on the page.
+ */
+const taped = (name: string) =>
+  `<span style="background-color:rgba(142,155,240,0.38);box-shadow:5px 0 0 rgba(142,155,240,0.38),-5px 0 0 rgba(142,155,240,0.38);color:${KIT.navy};font-weight:800;padding:2px 0;white-space:nowrap;">${esc(name)}</span>`;
+
+/** One tile of what is inside: a small picture, a title and a line (HTML). */
+const tile = (art: KitArt, title: string, lineHtml: string) => `
   <td class="mc-fcol" width="50%" style="width:50%;padding:0 6px 12px;vertical-align:top;">
     <table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" style="height:100%;background:${KIT.tint};border:2px solid ${KIT.navy};">
       <tr><td class="mc-tile" style="padding:16px 16px 18px;vertical-align:top;height:132px;">
         <img src="${art.src}" alt="" height="44" style="display:block;height:44px;width:auto;border:0;margin:0 0 10px;" />
         <div style="font-family:${F};font-size:16px;font-weight:800;letter-spacing:-0.01em;color:${KIT.navy};line-height:1.25;">${esc(title)}</div>
-        <div style="font-family:${F};font-size:14px;line-height:1.5;color:${KIT.body};margin-top:4px;">${esc(line)}</div>
+        <div style="font-family:${F};font-size:14px;line-height:1.6;color:${KIT.body};margin-top:4px;">${lineHtml}</div>
       </td></tr>
     </table>
   </td>`;
@@ -26,16 +33,18 @@ const tile = (art: KitArt, title: string, line: string) => `
  * way in. No prices: those are in the offer and the attached PDF.
  */
 export function offerEmailBody(o: { first: string; careFor: string; optionCount: number; link: string; validUntil: string | null }) {
-  const careFor = esc(o.careFor);
-  const ways = o.optionCount > 1 ? `${["", "", "Two", "Three", "Four"][o.optionCount] ?? o.optionCount} ways we can care for ${o.careFor}, side by side` : `How we will care for ${o.careFor}`;
+  const careFor = taped(o.careFor);
+  const ways = o.optionCount > 1
+    ? `${["", "", "Two", "Three", "Four"][o.optionCount] ?? o.optionCount} ways we can care for ${careFor}, side by side`
+    : `How we will care for ${careFor}`;
   return `
   <p style="font-family:${F};font-size:22px;font-weight:800;letter-spacing:-0.02em;color:${KIT.navy};margin:0 0 10px;">${o.first && o.first !== "Hello" ? `Hello ${esc(o.first)},` : "Hello,"}</p>
   <p style="font-family:${F};font-size:16px;line-height:1.7;color:${KIT.body};margin:0 0 26px;">Thank you for talking with us about ${careFor}. We have put everything together in one place, so you can take your time with it.</p>
 
   <div style="font-family:${F};font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:${KIT.brand};margin:0 0 12px;">What is inside</div>
   <table class="mc-tiles" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 -6px 14px;width:calc(100% + 12px);">
-    <tr>${tile(KIT_ART.carePlan, "Your options", ways)}${tile(KIT_ART.calendar, "Your care schedule", "What we agree now, and what we plan together")}</tr>
-    <tr>${tile(KIT_ART.shield, "Terms of care", "Our promises to you, and how it all works")}${tile(KIT_ART.envelope, "Sign online", "Accept and pay from your phone, in minutes")}</tr>
+    <tr>${tile(KIT_ART.carePlan, "Your options", ways)}${tile(KIT_ART.calendar, "Your care schedule", esc("What we agree now, and what we plan together"))}</tr>
+    <tr>${tile(KIT_ART.shield, "Terms of care", esc("Our promises to you, and how it all works"))}${tile(KIT_ART.envelope, "Sign online", esc("Accept and pay from your phone, in minutes"))}</tr>
   </table>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${KIT.navy};margin:0 0 22px;box-shadow:6px 6px 0 ${KIT.brand};">
