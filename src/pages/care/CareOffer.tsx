@@ -541,7 +541,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         )}
         <details className="border-2 border-navy bg-card">
           <summary className="cursor-pointer px-4 py-3 text-[15px] font-extrabold text-navy">Your care schedule</summary>
-          <div className="border-t-2 border-navy"><OfferSchedule content={c} reference={offer.reference} option={chosen} plan={acceptedPlan} /></div>
+          <div className="border-t-2 border-navy bg-desk/40 p-4 sm:p-5"><OfferSchedule content={c} reference={offer.reference} option={chosen} plan={acceptedPlan} /></div>
         </details>
         <div>
           <OfferLabel>What happens next</OfferLabel>

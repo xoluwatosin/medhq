@@ -698,12 +698,14 @@ export const MuRow = ({
   className?: string;
 }) => (
   <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5", className)}>
-    <div className="min-w-0 flex-1">
+    {/* The text keeps a readable width; on a narrow screen the status and
+        actions wrap below it rather than squeezing it. */}
+    <div className="min-w-[min(100%,15rem)] flex-1">
       <p className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">{title}</p>
       {state && <div className="mt-0.5 text-[13.5px] leading-snug text-muted-foreground">{state}</div>}
     </div>
     {status && <div className="flex shrink-0 items-center gap-2">{status}</div>}
-    {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+    {action && <div className="flex max-w-full shrink-0 items-center gap-2">{action}</div>}
   </div>
 );
 

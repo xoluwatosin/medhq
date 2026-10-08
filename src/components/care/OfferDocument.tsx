@@ -199,7 +199,9 @@ export const OfferSchedule = ({
   );
   return (
     <div className="flex flex-col gap-6">
-      {group("What you agree to now", "By accepting, you agree to these.", rows.filter((r) => !r.later))}
+      {plan
+        ? group("What you agreed to", "You agreed to these when you accepted.", rows.filter((r) => !r.later))
+        : group("What you agree to now", "By accepting, you agree to these.", rows.filter((r) => !r.later))}
       {group("What we agree with you before care starts", "These are part of your care plan. We go through them with you at the introduction, and nothing here is charged without your agreement.", rows.filter((r) => r.later))}
     </div>
   );
