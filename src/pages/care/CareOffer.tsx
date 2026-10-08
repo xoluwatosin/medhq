@@ -65,9 +65,10 @@ const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => vo
   </header>
 );
 
-const CareOffer = () => {
+/** With `preview`, staff see exactly what the family will see; nothing is loaded or accepted. */
+const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const { token = "" } = useParams();
-  const [offer, setOffer] = useState<OfferView | null>(null);
+  const [offer, setOffer] = useState<OfferView | null>(preview ?? null);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [viewing, setViewing] = useState(0);
@@ -84,6 +85,10 @@ const CareOffer = () => {
   const railRef = useRef<HTMLOListElement>(null);
 
   const load = useCallback(async () => {
+    if (preview) {
+      setOption(preview.accepted_option ?? (preview.content.options.length === 1 ? preview.content.options[0].id : null));
+      return;
+    }
     const { data, error: e } = await supabase.functions.invoke("care-offer", { body: { token, action: "load" } });
     if (e || !data?.ok) {
       setError(await errorFrom(data, e, "We could not open this offer."));
@@ -92,7 +97,7 @@ const CareOffer = () => {
     const o = data.offer as OfferView;
     setOffer(o);
     setOption((current) => current ?? o.accepted_option ?? (o.content.options.length === 1 ? o.content.options[0].id : null));
-  }, [token]);
+  }, [token, preview]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -143,6 +148,10 @@ const CareOffer = () => {
 
   const accept = async () => {
     if (!offer || !option) return;
+    if (preview) {
+      setProblem("This is a preview. Accepting only works from the family's link.");
+      return;
+    }
     setBusy(true);
     setProblem(null);
     const { data, error: e } = await supabase.functions.invoke("care-offer", {

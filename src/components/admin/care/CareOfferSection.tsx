@@ -11,7 +11,7 @@ import { MuEmpty, MuRow, MuSection, MuStatus } from "@/components/admin/mu/MuShe
 import { art } from "@/components/mc/art";
 import { cxInputClass } from "@/components/candidate/primitives";
 import OfferDocument from "@/components/care/OfferDocument";
-import { OfferPrintHeader } from "@/pages/care/CareOffer";
+import CareOffer, { OfferPrintHeader } from "@/pages/care/CareOffer";
 import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION, type TermsClause } from "@/content/care/newborn-terms";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -314,20 +314,24 @@ export default function CareOfferSection({
 
       {previewing && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-navy px-4 py-3 text-white">
-            <p className="text-[14px] font-bold">Preview: what the family sees, {previewing.reference}</p>
-            <button type="button" onClick={() => setPreviewing(null)} className="inline-flex min-h-10 items-center gap-1.5 border border-white/40 px-3 text-[14px] font-bold"><X className="h-4 w-4" /> Close</button>
+          <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-ink px-4 py-2 text-white">
+            <p className="text-[13px] font-bold">Preview of {previewing.reference}: what the family sees</p>
+            <button type="button" onClick={() => setPreviewing(null)} className="inline-flex min-h-9 items-center gap-1.5 border border-white/40 px-3 text-[13px] font-bold"><X className="h-4 w-4" /> Close</button>
           </div>
-          <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8">
-            <OfferDocument
-              reference={previewing.reference}
-              content={previewing.content}
-              terms={previewing.terms}
-              termsVersion={previewing.terms_version}
-              expiresAt={previewing.expires_at}
-              chosenOption={previewing.accepted_option}
-            />
-          </div>
+          <CareOffer
+            preview={{
+              reference: previewing.reference,
+              status: previewing.status === "draft" ? "sent" : previewing.status,
+              content: previewing.content,
+              terms_version: previewing.terms_version,
+              terms: previewing.terms,
+              expires_at: previewing.expires_at,
+              accepted_option: previewing.accepted_option,
+              accepted_payment: previewing.accepted_payment as "monthly" | "upfront" | null,
+              accepted_name: previewing.accepted_name,
+              accepted_at: previewing.accepted_at,
+            }}
+          />
         </div>
       )}
 
