@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, Minus } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { naira, optionTotals, upfrontLine, type OfferContent, type OfferOption } from "@/lib/care-offer";
+import { naira, optionTotals, scheduleRows, upfrontLine, type OfferContent, type OfferOption, type PaymentPlan } from "@/lib/care-offer";
 import type { TermsClause } from "@/content/care/newborn-terms";
 import { cn } from "@/lib/utils";
 
@@ -168,6 +168,21 @@ export const OfferBankDetails = ({ reference, content, amount }: { reference: st
   </dl>
 );
 
+export const OfferSchedule = ({
+  content, reference, option, plan,
+}: { content: OfferContent; reference: string; option: OfferOption | null; plan: PaymentPlan | null }) => (
+  <dl className="border-2 border-navy bg-card">
+    {scheduleRows(content, reference, option, plan).map((row, i) => (
+      <div key={row.label} className={cn("grid gap-1 px-4 py-3 sm:grid-cols-[170px_1fr] sm:gap-4 sm:px-5", i > 0 && "border-t border-line")}>
+        <dt className="text-[13px] font-bold text-label">{row.label}</dt>
+        <dd className="flex flex-col gap-1.5 text-[14.5px] leading-[1.55] text-ink">
+          {row.lines.map((l) => <span key={l}>{l}</span>)}
+        </dd>
+      </div>
+    ))}
+  </dl>
+);
+
 export const OfferTerms = ({ terms, version, expanded = false }: { terms: TermsClause[]; version: string; expanded?: boolean }) => {
   const [open, setOpen] = useState<number | null>(null);
   return (
@@ -248,7 +263,9 @@ const OfferDocument = ({
     </Part>
 
     <Part label="What is included" title="Your nurse's responsibilities"><OfferIncluded content={content} /></Part>
-    <Part label="How it works" title="Before and during care"><OfferHowItWorks content={content} /></Part>
+    <Part label="Your care schedule" title="Care schedule">
+      <OfferSchedule content={content} reference={reference} option={content.options.find((o) => o.id === chosenOption) ?? null} plan={null} />
+    </Part>
     <Part label="Paying" title="How to pay">
       <p className="mb-4 text-[15px] leading-[1.6] text-body">
         Pay by bank transfer, using <span className="font-extrabold text-navy">{reference}</span> as the payment reference. We confirm every payment in writing.

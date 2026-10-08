@@ -6,7 +6,7 @@
 // email both come from here.
 import { jsPDF } from "jspdf";
 import {
-  naira, optionTotals, upfrontLine,
+  naira, optionTotals, scheduleRows, upfrontLine,
   type OfferContent, type OfferOption, type OfferView,
 } from "@/lib/care-offer";
 import { formatDate } from "@/lib/format";
@@ -300,29 +300,27 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
   eyebrow("Not included");
   bullets(c.notIncluded, "no");
 
-  /* ---- How it works ---- */
-  part("How it works", "Before and during care");
-  c.howItWorks.forEach((item, i) => {
-    const h = measure(item, 10, W - 10);
-    ensure(h + 2);
-    fill(C.navy);
-    doc.rect(M, y, 5.5, 5.5, "F");
-    font("extrabold", 8.5, C.white);
-    doc.text(String(i + 1), M + 2.75, y + 4, { align: "center" });
-    para(item, { size: 10, colour: C.ink, x: M + 9, w: W - 9, after: 2.5 });
-  });
-  y += 2;
-  eyebrow("Your home provides");
-  bullets(c.familyProvides);
-  y += 2;
-  const ah = measure(c.assessment, 9.5, W - 10) + 6;
-  ensure(ah);
-  fill(C.tint);
-  doc.rect(M, y, W, ah, "F");
-  fill(C.brand);
-  doc.rect(M, y, 1.2, ah, "F");
-  y += 3;
-  para(c.assessment, { size: 9.5, x: M + 5, w: W - 10, after: 3 });
+  /* ---- Care schedule ---- */
+  part("Your care schedule", "Care schedule", 30);
+  {
+    const chosen = c.options.find((o) => o.id === offer.accepted_option) ?? null;
+    const plan = offer.status === "accepted" ? (offer.accepted_payment ?? null) : null;
+    const labelW = 42;
+    for (const row of scheduleRows(c, offer.reference, chosen, plan)) {
+      const h = row.lines.reduce((sum, l) => sum + measure(l, 9.5, W - labelW - 4) + 1, 0) + 4;
+      ensure(Math.min(h, 40));
+      stroke(C.line, 0.3);
+      doc.line(M, y, M + W, y);
+      const top = y;
+      font("bold", 8.5, C.label);
+      doc.text(doc.splitTextToSize(row.label, labelW - 4) as string[], M, y + 5);
+      y += 2;
+      row.lines.forEach((l) => para(l, { size: 9.5, colour: C.ink, x: M + labelW, w: W - labelW, after: 1 }));
+      y = Math.max(y + 1.5, top + 10);
+    }
+    stroke(C.line, 0.3);
+    doc.line(M, y, M + W, y);
+  }
 
   /* ---- Paying ---- */
   part("Paying", "How to pay");

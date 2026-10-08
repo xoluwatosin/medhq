@@ -5,14 +5,14 @@
 // needed; the link is the key.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Download, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, MessageCircle } from "lucide-react";
 import SEO from "@/components/SEO";
 import { NotchTag, Watermark } from "@/components/mc/brand";
 import { art } from "@/components/mc/art";
 import { Choice, requestPrimary, requestSecondary } from "@/components/request/RequestShell";
 import { FamilyLoading } from "@/components/care/FamilyShell";
 import {
-  OfferBankDetails, OfferCompareTable, OfferHowItWorks, OfferIncluded, OfferLabel,
+  OfferBankDetails, OfferCompareTable, OfferSchedule, OfferIncluded, OfferLabel,
   OfferOptionCard, OfferPriceNote, OfferSummary, OfferTerms,
 } from "@/components/care/OfferDocument";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,13 +24,12 @@ import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 
 const WHATSAPP = "https://wa.me/2348126988237";
 
-type StepId = "welcome" | "options" | "included" | "how" | "terms" | "accept";
+type StepId = "welcome" | "options" | "schedule" | "terms" | "accept";
 
 const STEPS: { id: StepId; short: string; label: string; art: string }[] = [
   { id: "welcome", short: "Welcome", label: "Your offer", art: art.postnatalSpecialist },
   { id: "options", short: "Options", label: "Your options", art: art.nightNurseCot },
-  { id: "included", short: "Included", label: "What is included", art: art.objBottleMuslin },
-  { id: "how", short: "How it works", label: "How it works", art: art.objCalendar },
+  { id: "schedule", short: "Care schedule", label: "Your care schedule", art: art.objBottleMuslin },
   { id: "terms", short: "Terms", label: "The agreement", art: art.objSignedContract },
   { id: "accept", short: "Accept", label: "Accept", art: art.objHandshake },
 ];
@@ -160,6 +159,10 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
   const go = (n: number) => {
     const next = Math.max(0, Math.min(STEPS.length - 1, n));
+    const picked = offer?.accepted_option ?? option;
+    if (STEPS[next]?.id === "schedule" && picked && offer) {
+      setViewing(Math.max(0, offer.content.options.findIndex((o) => o.id === picked)));
+    }
     setStep(next);
     setSeen((s) => (s.includes(next) ? s : [...s, next]));
   };
@@ -243,10 +246,29 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const isLast = step === STEPS.length - 1;
   const viewingOption = c.options[Math.min(viewing, c.options.length - 1)];
 
+  // The option the schedule is showing: the one chosen, or the one switched to.
+  const scheduleOption = c.options[Math.min(viewing, c.options.length - 1)] ?? null;
+  const optionTabs = c.options.length > 1 ? (
+    <div role="tablist" aria-label="Options" className="grid grid-cols-2 border-2 border-navy">
+      {c.options.map((o, i) => (
+        <button
+          key={o.id}
+          type="button"
+          role="tab"
+          aria-selected={viewing === i}
+          onClick={() => setViewing(i)}
+          className={cn("min-h-12 px-2 text-[14px] font-extrabold leading-tight", viewing === i ? "bg-navy text-white" : "bg-card text-navy", i > 0 && "border-l-2 border-navy")}
+        >
+          {o.title}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   const chooseButton = (id: string) => (
     <button
       type="button"
-      onClick={() => setOption(id)}
+      onClick={() => { setOption(id); setViewing(Math.max(0, c.options.findIndex((o) => o.id === id))); }}
       aria-pressed={option === id}
       className={cn(option === id ? requestPrimary : requestSecondary, "w-full")}
     >
@@ -340,16 +362,32 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         <OfferPriceNote />
       </div>
     ),
-    included: (
+    schedule: (
       <div className="flex flex-col gap-6">
-        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Your nurse's responsibilities</h2>
-        <OfferIncluded content={c} />
-      </div>
-    ),
-    how: (
-      <div className="flex flex-col gap-6">
-        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Before and during care</h2>
-        <OfferHowItWorks content={c} />
+        <div>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Your care schedule</h2>
+          <p className="mt-2 text-[15px] leading-[1.55] text-body">
+            {c.options.length > 1
+              ? option || accepted
+                ? "The details of your care. It opens on the option you chose; switch to see the other."
+                : "The details of your care for each option. Switch between them, and choose one when you are ready."
+              : "The details of your care."}
+          </p>
+        </div>
+        {optionTabs}
+        {scheduleOption && !accepted && open && c.options.length > 1 && (
+          option === scheduleOption.id
+            ? <p className="flex items-center gap-2 text-[15px] font-extrabold text-brand"><Check className="h-5 w-5" aria-hidden="true" /> This is the option you have chosen</p>
+            : <div>{chooseButton(scheduleOption.id)}</div>
+        )}
+        <div>
+          <OfferLabel>Your nurse's responsibilities</OfferLabel>
+          <div className="mt-3"><OfferIncluded content={c} /></div>
+        </div>
+        <div>
+          <OfferLabel>The details</OfferLabel>
+          <div className="mt-3"><OfferSchedule content={c} reference={offer.reference} option={scheduleOption} plan={accepted ? acceptedPlan : null} /></div>
+        </div>
       </div>
     ),
     terms: (
@@ -408,6 +446,10 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
             <MessageCircle className="h-4 w-4" /> Need another way to pay? Message us
           </a>
         </div>
+        <details className="border-2 border-navy bg-card">
+          <summary className="cursor-pointer px-4 py-3 text-[15px] font-extrabold text-navy">Your care schedule</summary>
+          <div className="border-t-2 border-navy"><OfferSchedule content={c} reference={offer.reference} option={chosen} plan={acceptedPlan} /></div>
+        </details>
         <div>
           <OfferLabel>What happens next</OfferLabel>
           <ol className="mt-3 flex flex-col gap-3">
@@ -462,10 +504,22 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           </div>
         </fieldset>
 
+        {chosen && (
+          <div className="border-l-4 border-brand bg-tint px-4 py-3">
+            <p className="text-[15px] font-extrabold text-navy">Your care schedule</p>
+            <p className="mt-1 text-[14.5px] leading-[1.55] text-ink">
+              {chosen.title}, starting {c.start.charAt(0).toLowerCase() + c.start.slice(1)}, for {c.months} months. {naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))} {plan === "upfront" ? `once, for all ${c.months} months` : "a month"}.
+            </p>
+            <button type="button" onClick={() => { setViewing(Math.max(0, c.options.findIndex((o) => o.id === chosen.id))); go(2); }} className="mt-1 text-[14.5px] font-extrabold text-brand underline underline-offset-2">
+              Read your full care schedule
+            </button>
+          </div>
+        )}
+
         <label className="flex cursor-pointer items-start gap-3 border-2 border-navy bg-tint p-4">
           <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--brand))]" />
           <span className="text-[15px] leading-[1.55] text-ink">
-            I have read the offer and the <button type="button" onClick={() => go(4)} className="font-extrabold text-brand underline underline-offset-2">terms of care</button>, and I accept them.
+            I have read my care schedule, the offer and the <button type="button" onClick={() => go(3)} className="font-extrabold text-brand underline underline-offset-2">terms of care</button>, and I accept them.
           </span>
         </label>
 

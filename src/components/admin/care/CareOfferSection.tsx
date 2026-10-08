@@ -296,6 +296,7 @@ export default function CareOfferSection({
                   <CareField label="In a sentence"><Area rows={2} value={o.summary} onChange={(v) => setOption(i, { summary: v })} /></CareField>
                   <CareField label="Good for" help="One per line"><Area value={o.goodFor.join("\n")} onChange={(v) => setOption(i, { goodFor: lines(v) })} /></CareField>
                   <CareField label="Worth knowing" help="One per line"><Area value={o.consider.join("\n")} onChange={(v) => setOption(i, { consider: lines(v) })} /></CareField>
+                  <CareField label="Rota and rest" help="One per line, for the care schedule"><Area value={(o.rota ?? []).join("\n")} onChange={(v) => setOption(i, { rota: lines(v) })} /></CareField>
                   {e.options.length > 1 && (
                     <Button type="button" variant="ghost" className="h-9 self-start" onClick={() => set({ options: e.options.filter((_, j) => j !== i) })}>Remove this option</Button>
                   )}
@@ -305,8 +306,8 @@ export default function CareOfferSection({
 
             <CareField label="Included" help="One per line"><Area rows={6} value={e.included.join("\n")} onChange={(v) => set({ included: lines(v) })} /></CareField>
             <CareField label="Not included" help="One per line"><Area value={e.notIncluded.join("\n")} onChange={(v) => set({ notIncluded: lines(v) })} /></CareField>
-            <CareField label="How it works" help="One per line"><Area rows={5} value={e.howItWorks.join("\n")} onChange={(v) => set({ howItWorks: lines(v) })} /></CareField>
             <CareField label="Your home provides" help="One per line"><Area value={e.familyProvides.join("\n")} onChange={(v) => set({ familyProvides: lines(v) })} /></CareField>
+            <CareField label="Supplies" help="Who supplies what, one per line, for the care schedule"><Area value={(e.supplies ?? []).join("\n")} onChange={(v) => set({ supplies: lines(v) })} /></CareField>
             <CareField label="Assessment"><Area rows={3} value={e.assessment} onChange={(v) => set({ assessment: v })} /></CareField>
 
             <div className="grid gap-4 sm:grid-cols-2">
