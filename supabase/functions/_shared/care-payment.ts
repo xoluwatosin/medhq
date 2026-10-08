@@ -7,6 +7,8 @@
 // stale; the checkout carries the invoice id, and its reference is kept so
 // the payment can be confirmed on return, by the webhook or by the daily job,
 // whichever comes first. The family is thanked, and staff told, exactly once.
+// The thank-you for the first payment is our written confirmation of the
+// booking, with the family's signed copy of the agreement attached.
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { kitButton, kitEmail, kitFacts, kitParagraph, kitSteps, kitSubhead } from "./kit-email.ts";
 import { kobo, mapStatus } from "./paystack-invoice.ts";
@@ -28,16 +30,30 @@ async function paystack(path: string, init: { method?: string; body?: unknown } 
   return { ok: res.ok && body?.status !== false, body };
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, attachment?: { filename: string; content: string }) {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key || !to) return false;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: "Medic Connect <hello@medicconnect.co>", to: [to], reply_to: "hello@medicconnect.co", subject, html }),
+    body: JSON.stringify({
+      from: "Medic Connect <hello@medicconnect.co>", to: [to], reply_to: "hello@medicconnect.co", subject, html,
+      ...(attachment ? { attachments: [attachment] } : {}),
+    }),
   });
   if (!res.ok) console.error("care payment email failed", res.status, await res.text().catch(() => ""));
   return res.ok;
+}
+
+/** The signed copy of an agreement, as base64 for an email attachment. */
+async function signedCopy(db: SupabaseClient, path: string | null): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await db.storage.from("care-agreements").download(path);
+  if (error || !data) return null;
+  const bytes = new Uint8Array(await data.arrayBuffer());
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
 }
 
 const longDate = (d: string) =>
@@ -215,30 +231,36 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
   const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
 
   const next = [
-    { title: "We confirm your booking", detail: "You will hear from us in writing within one working day." },
-    { title: "You meet your nurse", detail: "We arrange a meeting and introduction with your nurse before the first shift." },
+    { title: "We plan day 0 with you", detail: "We will be in touch within one working day to arrange it." },
+    { title: "You meet your nurse", detail: "A meeting and introduction with your nurse before the first shift." },
     { title: "We agree your care plan together", detail: "The daily routine, supplies, days off and emergency plan, agreed with you before care starts." },
     { title: "Care starts", detail: String(c.start ?? "On the agreed date.") },
   ];
+  const copy = firstPayment ? await signedCopy(db, offer.signed_pdf_path ?? null) : null;
   const monthlyNote = offer.accepted_payment === "monthly" && months > 1
     ? [kitParagraph("For each month after this one, we email you a payment link five days before it is due.")]
     : [];
 
-  await sendEmail(to, firstPayment ? `Payment received, thank you: care for ${careFor}` : `Payment received for month ${month}: care for ${careFor}`, kitEmail({
-    eyebrow: "Payment received",
+  await sendEmail(to, firstPayment ? `Booking confirmed: care for ${careFor}, ${offer.reference}` : `Payment received for month ${month}: care for ${careFor}`, kitEmail({
+    eyebrow: firstPayment ? "Booking confirmed" : "Payment received",
     title: firstPayment ? `Thank you, ${first}` : `Thank you for month ${month}`,
     standfirst: `${amount} received for ${careFor}'s care`,
     preheader: firstPayment ? "Your payment is in. Here is what happens next." : `Your payment for month ${month} is in.`,
     bodyHtml: [
       kitParagraph(firstPayment
-        ? `${first}, thank you. We have received your payment, and ${careFor}'s care is booked.`
+        ? `${first}, thank you. We have received your payment, and this email confirms ${careFor}'s care is booked.`
         : `${first}, thank you. We have received your payment for month ${month} of ${careFor}'s care.`),
       kitFacts(facts),
+      ...(firstPayment
+        ? [kitParagraph(copy
+            ? "Your signed agreement is attached: the offer you accepted, your care schedule and the terms of care, with your signature. Please keep it."
+            : "Your signed agreement can be downloaded from your offer page at any time.")]
+        : []),
       ...(firstPayment ? [kitSubhead("What happens next"), kitSteps(next), ...monthlyNote] : []),
-      kitParagraph("Paystack also emails you a receipt. Keep this email as our confirmation."),
+      kitParagraph("Paystack also emails you a receipt for the payment."),
       kitParagraph(WHATSAPP_LINE),
     ].join(""),
-  }));
+  }), copy ? { filename: `Medic Connect care agreement ${offer.reference} signed.pdf`, content: copy } : undefined);
 
   const staff = Deno.env.get("NOTIFICATION_EMAIL") ?? "";
   await sendEmail(staff, `Payment received: ${careFor}, ${amount} (${forWhat.toLowerCase()})`, kitEmail({
@@ -248,7 +270,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
     bodyHtml: [
       kitFacts(facts),
       kitParagraph(firstPayment
-        ? "The family has been thanked and told what happens next. Confirm the booking in writing, arrange the introduction and set the day care starts on the record."
+        ? `The family has been thanked and sent ${copy ? "their signed agreement as confirmation of the booking" : "confirmation of the booking (no signed copy was kept, so it was not attached)"}. Get in touch within one working day to plan day 0, and set the day care starts on the record.`
         : "The family has been thanked."),
       kitButton("Open the record", `${SITE_URL}/admin/clients/${offer.client_id}?tab=commercial`),
     ].join(""),

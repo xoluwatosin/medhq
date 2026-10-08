@@ -16,7 +16,7 @@ import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION, type TermsClause } from "@/conten
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
-import { buildOfferPdf, downloadOfferPdf } from "@/lib/offer-pdf";
+import { downloadOfferPdf, offerPdfBase64 } from "@/lib/offer-pdf";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
   naira, newbornLiveInTemplate, offerGaps, optionTotals,
@@ -37,6 +37,7 @@ interface OfferRow {
   accepted_payment: string | null;
   accepted_name: string | null;
   accepted_at: string | null;
+  accepted_signature: string | null;
   withdrawn_reason: string | null;
   created_at: string;
   invoice_id: string | null;
@@ -57,13 +58,6 @@ const inDays = (n: number) => {
   d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 };
-
-const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
-  const r = new FileReader();
-  r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
-  r.onerror = () => reject(r.error);
-  r.readAsDataURL(blob);
-});
 
 const whatsappHref = (number: string, text: string) =>
   `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
@@ -137,11 +131,12 @@ export default function CareOfferSection({
     accepted_payment: o.accepted_payment as "monthly" | "upfront" | null,
     accepted_name: o.accepted_name,
     accepted_at: o.accepted_at,
+    accepted_signature: o.accepted_signature,
     pay_url: o.pay_url,
   });
   const makePdf = async (offer: OfferRow): Promise<string | null> => {
     try {
-      return await blobToBase64(await buildOfferPdf(asView(offer)));
+      return await offerPdfBase64(asView(offer));
     } catch {
       return null;
     }
@@ -353,6 +348,7 @@ export default function CareOfferSection({
               accepted_payment: previewing.accepted_payment as "monthly" | "upfront" | null,
               accepted_name: previewing.accepted_name,
               accepted_at: previewing.accepted_at,
+              accepted_signature: previewing.accepted_signature,
             }}
           />
         </div>

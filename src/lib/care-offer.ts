@@ -62,6 +62,10 @@ export interface OfferView {
   pay_url?: string | null;
   /** Whether the first payment (or the upfront one) has been received. */
   first_paid?: boolean;
+  /** The family's drawn signature (a PNG data URL), once accepted. */
+  accepted_signature?: string | null;
+  /** Whether the signed copy of the agreement has been kept. */
+  signed_copy?: boolean;
 }
 
 export type PaymentPlan = "monthly" | "upfront";

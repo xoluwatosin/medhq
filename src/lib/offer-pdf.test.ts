@@ -20,6 +20,7 @@ const offer = (status: OfferView["status"] = "sent"): OfferView => {
     accepted_payment: status === "accepted" ? "upfront" : null,
     accepted_name: status === "accepted" ? "Ndidi Carey" : null,
     accepted_at: status === "accepted" ? "2026-10-09T10:00:00Z" : null,
+    accepted_signature: status === "accepted" ? `data:image/png;base64,${readFileSync("public/pdf/logo-white.png").toString("base64")}` : null,
   };
 };
 
@@ -38,6 +39,7 @@ describe("care offer PDF", () => {
 
   it("records the acceptance when the offer has been accepted", async () => {
     const blob = await buildOfferPdf(offer("accepted"), fonts as never, images as never);
+    if (process.env.OFFER_PDF_SIGNED_OUT) writeFileSync(process.env.OFFER_PDF_SIGNED_OUT, new Uint8Array(await blob.arrayBuffer()));
     expect(blob.size).toBeGreaterThan(1000);
   });
 });

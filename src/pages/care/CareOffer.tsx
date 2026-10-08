@@ -16,7 +16,8 @@ import {
   OfferOptionCard, OfferPriceNote, OfferSummary, OfferTerms,
 } from "@/components/care/OfferDocument";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadOfferPdf } from "@/lib/offer-pdf";
+import { downloadOfferPdf, offerPdfBase64 } from "@/lib/offer-pdf";
+import SignaturePad from "@/components/contracts/SignaturePad";
 import { formatDate } from "@/lib/format";
 import { chosenFeeRows, firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const [plan, setPlan] = useState<PaymentPlan>("monthly");
   const [agree, setAgree] = useState(false);
   const [name, setName] = useState("");
+  const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
@@ -155,6 +157,25 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   }, [token, preview, paidParam, payParam, returnRef]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // The signed copy of the agreement, made here from the accepted offer and
+  // kept by us; it is emailed to the family once their payment is in. Made
+  // again on a later visit if it did not get through the first time.
+  const keeping = useRef(false);
+  const keepSignedCopy = useCallback(async (o: OfferView) => {
+    if (preview || keeping.current || o.status !== "accepted" || !o.accepted_signature || o.signed_copy) return;
+    keeping.current = true;
+    try {
+      const pdf = await offerPdfBase64(o);
+      const { data } = await supabase.functions.invoke("care-offer", { body: { token, action: "signed_copy", pdf_base64: pdf } });
+      if (data?.ok) setOffer((cur) => (cur ? { ...cur, signed_copy: true } : cur));
+    } catch {
+      // Tried again the next time the page opens.
+    } finally {
+      keeping.current = false;
+    }
+  }, [preview, token]);
+  useEffect(() => { if (offer) void keepSignedCopy(offer); }, [offer, keepSignedCopy]);
 
   /** Off to a Paystack checkout made just now; Paystack brings them back here. */
   const startPay = useCallback(async (which: string) => {
@@ -256,7 +277,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
     setBusy(true);
     setProblem(null);
     const { data, error: e } = await supabase.functions.invoke("care-offer", {
-      body: { token, action: "accept", option, payment: plan, agree, name },
+      body: { token, action: "accept", option, payment: plan, agree, name, signature },
     });
     setBusy(false);
     if (e || !data?.ok) {
@@ -295,7 +316,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const acceptedPlan = (offer.accepted_payment ?? plan) as PaymentPlan;
   const firstPaid = !!offer.first_paid;
   const due = chosen ? firstPayment(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan) : 0;
-  const ready = !!option && agree && name.trim().includes(" ") && name.trim().length >= 3;
+  const ready = !!option && agree && name.trim().includes(" ") && name.trim().length >= 3 && !!signature;
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
   const viewingOption = c.options[Math.min(viewing, c.options.length - 1)];
@@ -462,13 +483,13 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Thank you, {first}</h2>
           <p className="mt-3 text-[15.5px] leading-[1.6] text-ink">
             You chose <b>{chosen.title.toLowerCase()}</b>, paying {acceptedPlan === "upfront" ? `all ${c.months} months upfront` : "monthly"}.
-            Accepted by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}. We have emailed you a copy.
+            Signed by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}.
           </p>
         </div>
         {returned && returned.month && returned.month > 1 && (
           <p role="status" className="border-l-4 border-brand bg-tint px-4 py-3 text-[15px] font-bold leading-[1.55] text-navy">
             {returned.paid
-              ? `Thank you. Your payment for month ${returned.month} has been received, and we have emailed you a confirmation.`
+              ? `Thank you. Your payment for month ${returned.month} has been received, and we have emailed you a receipt.`
               : `We have not had confirmation of your payment for month ${returned.month} from Paystack yet. If you paid, it can take a few minutes: open this page again shortly.`}
           </p>
         )}
@@ -478,7 +499,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white text-navy"><Check className="h-5 w-5" aria-hidden="true" /></span>
               <div>
                 <p className="text-[18px] font-extrabold leading-tight">Payment received, thank you</p>
-                <p className="mt-1 text-[14.5px] leading-[1.5] text-body-navy">Your care is booked. We have emailed you a confirmation.</p>
+                <p className="mt-1 text-[14.5px] leading-[1.5] text-body-navy">Your care is booked. We have emailed you your signed agreement to confirm it.</p>
               </div>
             </div>
             <div className="p-4 sm:p-5"><OfferFeeTable rows={chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan)} caption="Your fees" /></div>
@@ -526,9 +547,11 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           <OfferLabel>What happens next</OfferLabel>
           <ol className="mt-3 flex flex-col gap-3">
             {[
-              "We confirm your booking in writing.",
-              "We arrange a meeting and introduction with your nurse.",
-              "Care starts once your first payment is received.",
+              ...(firstPaid
+                ? ["We have emailed you your signed agreement, confirming your booking."]
+                : ["Once your payment is received, we email you your signed agreement to confirm your booking."]),
+              "We get in touch within one working day to plan day 0 with you.",
+              "You meet your nurse, and we agree your care plan together before care starts.",
               ...(acceptedPlan === "monthly" ? [`For each month after, we email you a payment link five days before it is due, with the bank details too.`] : []),
             ].map((t, i) => (
               <li key={t} className="flex gap-3">
@@ -607,6 +630,12 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           />
         </label>
 
+        <div>
+          <p className="text-[16px] font-extrabold text-navy">Your signature</p>
+          <p className="mb-3 mt-1 text-[14.5px] leading-[1.55] text-body">Signing here is the same as signing on paper. Your signed copy is emailed to you once your payment is in.</p>
+          <SignaturePad onChange={setSignature} />
+        </div>
+
         {chosen && (
           <p className="text-[14.5px] leading-[1.55] text-body">
             As soon as you accept, you can pay your {plan === "upfront" ? "payment" : "first payment"} of <b className="text-navy">{naira(firstPayment(chosen, c.months, c.upfrontDiscountPercent, plan))}</b> online with Paystack or by bank transfer.
@@ -624,7 +653,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
         : (
           <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>
-            {busy ? "Accepting" : !option ? "Choose an option first" : `Accept ${chosen?.title.toLowerCase() ?? ""}`}
+            {busy ? "Accepting" : !option ? "Choose an option first" : !signature ? "Sign to accept" : `Sign and accept ${chosen?.title.toLowerCase() ?? ""}`}
           </button>
         ))
     : (

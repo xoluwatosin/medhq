@@ -408,14 +408,6 @@ export async function buildOfferPdf(
     y += 13;
   }
 
-  /* ---- Acceptance, when accepted ---- */
-  if (offer.status === "accepted" && offer.accepted_name) {
-    const chosen = c.options.find((o) => o.id === offer.accepted_option);
-    part("Accepted", "Your acceptance", 20);
-    para(`${chosen?.title ?? "Option"}, paying ${offer.accepted_payment === "upfront" ? `all ${c.months} months upfront` : "monthly"}. Accepted online by ${offer.accepted_name}${offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}, under ${offer.terms_version}.`, { size: 10, colour: C.ink, after: 3 });
-    if (chosen) feeTable(chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, (offer.accepted_payment ?? "monthly") as PaymentPlan));
-  }
-
   /* ---- Terms ---- */
   part("The agreement", "Terms of care", 20);
   para(offer.terms_version, { size: 9, weight: "bold", colour: C.label, after: 2 });
@@ -433,11 +425,68 @@ export async function buildOfferPdf(
     y += 1.5;
   }
 
+  /* ---- Signed, when accepted ---- */
+  if (offer.status === "accepted" && offer.accepted_name) {
+    const chosen = c.options.find((o) => o.id === offer.accepted_option);
+    part("Signed", "Your acceptance", 70);
+    para(`I accept this offer, its fees and the terms of care above. I understand the details of my care plan, such as the daily routine, supplies and emergency plan, will be agreed with me before care starts.`, { size: 10, colour: C.ink, after: 3 });
+    if (chosen) feeTable(chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, (offer.accepted_payment ?? "monthly") as PaymentPlan));
+    y += 4;
+    const boxH = 34;
+    ensure(boxH + 22);
+    const half = W / 2;
+    stroke(C.navy, 0.5);
+    doc.rect(M, y, W, boxH + 14);
+    // The signature, as drawn, on its signing line.
+    if (offer.accepted_signature) {
+      try {
+        const props = doc.getImageProperties(offer.accepted_signature);
+        const h = boxH - 6;
+        const w = Math.min(half - 8, (props.width / props.height) * h);
+        doc.addImage(offer.accepted_signature, "PNG", M + 4, y + 3, w, h);
+      } catch {
+        // A signature that cannot be drawn leaves the typed name to stand.
+      }
+    }
+    stroke(C.line, 0.4);
+    doc.line(M + 4, y + boxH, M + half - 4, y + boxH);
+    font("bold", 8, C.label);
+    doc.text("Signature", M + 4, y + boxH + 5);
+    font("extrabold", 10.5, C.navy);
+    doc.text(offer.accepted_name, M + 4, y + boxH + 10.5);
+    const rx = M + half + 4;
+    const facts: [string, string][] = [
+      ["Signed on", offer.accepted_at ? formatDate(offer.accepted_at) : ""],
+      ["Option", chosen?.title ?? ""],
+      ["Paying", offer.accepted_payment === "upfront" ? `All ${c.months} months upfront` : "Monthly"],
+      ["Terms", offer.terms_version],
+    ];
+    facts.forEach(([k, v], i) => {
+      font("bold", 8, C.label);
+      doc.text(k, rx, y + 6 + i * 10);
+      font("bold", 9.5, C.ink);
+      doc.text(doc.splitTextToSize(v, half - 10)[0] ?? "", rx, y + 10.5 + i * 10);
+    });
+    y += boxH + 18;
+    para(`Signed online on the Medic Connect website, with reference ${offer.reference}.`, { size: 8.5, colour: C.label });
+  }
+
   footer();
   return doc.output("blob");
 }
 
 export const offerPdfName = (reference: string) => `Medic Connect care offer ${reference}.pdf`;
+
+/** The PDF as base64, to email or to keep as the signed copy. */
+export async function offerPdfBase64(offer: OfferView): Promise<string> {
+  const blob = await buildOfferPdf(offer);
+  return new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
 
 export async function downloadOfferPdf(offer: OfferView) {
   const blob = await buildOfferPdf(offer);

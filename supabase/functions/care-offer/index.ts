@@ -1,7 +1,8 @@
-// The family's side of a care offer: open it, accept it, and pay.
+// The family's side of a care offer: open it, sign and accept it, and pay.
 //
 // Anyone holding a live link can read the offer it was sent for. Accepting
-// records the option, how the family will pay, the name they typed, the time,
+// records the option, how the family will pay, the name they typed, the
+// signature they drew, the time,
 // where it came from and the terms version, then tells staff and sends the
 // family a confirmation with the payment details. Accepting does not start
 // care: staff confirm in writing and arrange the introduction first.
@@ -10,6 +11,10 @@
 // family back to this page; the payment is then confirmed with Paystack and
 // the family thanked by email. Opening the page also checks, so a payment is
 // never missed if the family closes Paystack before it sends them back.
+//
+// Straight after accepting, the family's page makes the signed copy of the
+// agreement and hands it back here to keep. Once the first payment is in, it
+// is emailed to them as our written confirmation of the booking.
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
 import { naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
@@ -30,7 +35,13 @@ type Offer = {
   terms_version: string; terms: unknown; expires_at: string | null; first_opened_at: string | null;
   accepted_option: string | null; accepted_payment: string | null; accepted_name: string | null; accepted_at: string | null;
   invoice_id: string | null; pay_url: string | null;
+  accepted_signature: string | null; signed_pdf_path: string | null;
 };
+
+/** A drawn signature: a PNG, of a sensible size. */
+const SIGNATURE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+const MAX_SIGNATURE = 400_000;
+const MAX_PDF_BASE64 = 6_000_000;
 
 type Db = SupabaseClient;
 
@@ -45,6 +56,7 @@ const view = async (db: Db, o: Offer) => {
     reference: o.reference, status: o.status, content: o.content, terms_version: o.terms_version, terms: o.terms,
     expires_at: o.expires_at, accepted_option: o.accepted_option, accepted_payment: o.accepted_payment,
     accepted_name: o.accepted_name, accepted_at: o.accepted_at, pay_url: o.pay_url ? "pay" : null, first_paid: firstPaid,
+    accepted_signature: o.status === "accepted" ? o.accepted_signature : null, signed_copy: !!o.signed_pdf_path,
   };
 };
 
@@ -101,7 +113,9 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const plain = typeof body?.token === "string" ? body.token.trim().toUpperCase() : "";
-    const action = ["accept", "pay", "confirm"].includes(body?.action) ? body.action as "accept" | "pay" | "confirm" : "load";
+    const action = ["accept", "pay", "confirm", "signed_copy"].includes(body?.action)
+      ? body.action as "accept" | "pay" | "confirm" | "signed_copy"
+      : "load";
     if (!OFFER_TOKEN.test(plain)) return json({ error: "This link is not valid" }, 404);
 
     const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -133,6 +147,28 @@ Deno.serve(async (req) => {
       if (current.invoice_id) await confirmCarePayment(db, current.invoice_id);
       current = ((await db.from("care_offers").select("*").eq("id", o.id).maybeSingle()).data as Offer | null) ?? current;
       return json({ ok: true, offer: await view(db, current) });
+    }
+
+    // The signed copy, made by the family's page from the accepted offer. Kept
+    // once; it is what we send them when their payment is in.
+    if (action === "signed_copy") {
+      if (o.status !== "accepted" || !o.accepted_signature) return json({ error: "Accept the offer first" }, 409);
+      if (o.signed_pdf_path) return json({ ok: true, already: true });
+      const b64 = typeof body?.pdf_base64 === "string" ? body.pdf_base64 : "";
+      if (!b64 || b64.length > MAX_PDF_BASE64) return json({ error: "The signed copy could not be kept" }, 400);
+      let bytes: Uint8Array;
+      try {
+        bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+      } catch {
+        return json({ error: "The signed copy could not be kept" }, 400);
+      }
+      if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") return json({ error: "The signed copy could not be kept" }, 400);
+      const path = `${o.id}/${o.reference} signed.pdf`;
+      const { error: upError } = await db.storage.from("care-agreements").upload(path, bytes, { contentType: "application/pdf", upsert: false });
+      if (upError && !/exists/i.test(upError.message)) throw upError;
+      await db.from("care_offers").update({ signed_pdf_path: path }).eq("id", o.id).is("signed_pdf_path", null);
+      await db.from("care_activity").insert({ client_id: o.client_id, action: "offer_signed_copy_kept", detail: { offer_id: o.id, reference: o.reference }, actor_id: null });
+      return json({ ok: true });
     }
 
     if (action === "pay" || action === "confirm") {
@@ -175,6 +211,8 @@ Deno.serve(async (req) => {
     if (body?.agree !== true) return json({ error: "Please confirm you have read the terms" }, 400);
     const name = typeof body?.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
     if (name.length < 3 || name.length > 120 || !name.includes(" ")) return json({ error: "Type your full name, first and last" }, 400);
+    const signature = typeof body?.signature === "string" ? body.signature : "";
+    if (!SIGNATURE.test(signature) || signature.length > MAX_SIGNATURE) return json({ error: "Please sign in the box" }, 400);
 
     const { data: accepted, error: acceptError } = await db
       .from("care_offers")
@@ -183,6 +221,7 @@ Deno.serve(async (req) => {
         accepted_option: option.id,
         accepted_payment: payment,
         accepted_name: name,
+        accepted_signature: signature,
         accepted_at: new Date().toISOString(),
         accepted_ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null,
         accepted_user_agent: (req.headers.get("user-agent") ?? "").slice(0, 400) || null,
@@ -197,7 +236,7 @@ Deno.serve(async (req) => {
 
     await db.from("care_activity").insert({
       client_id: o.client_id, action: "offer_accepted",
-      detail: { offer_id: o.id, reference: o.reference, option: option.id, payment, name, terms_version: o.terms_version },
+      detail: { offer_id: o.id, reference: o.reference, option: option.id, payment, name, signed: true, terms_version: o.terms_version },
       actor_id: null,
     });
 
@@ -209,7 +248,7 @@ Deno.serve(async (req) => {
     const facts = [
       { label: "Option", value: option.title },
       { label: "Payment", value: payment === "upfront" ? `All ${months} months upfront, ${naira(t.upfront)} (a ${pct}% discount, saving ${naira(t.saving)})` : `Monthly, ${naira(t.monthly)} a month` },
-      { label: "Accepted by", value: name },
+      { label: "Signed by", value: name },
       { label: "Terms", value: o.terms_version },
     ];
 
@@ -221,7 +260,7 @@ Deno.serve(async (req) => {
       standfirst: `${o.reference}, ${o.content?.preparedFor ?? ""}`,
       bodyHtml: [
         kitFacts(facts),
-        kitParagraph(`First payment due: ${naira(due)}. ${a.pay_url ? "The family can pay it online from the offer page." : "The payment could not be set up; it is tried again when the family opens the offer."} Confirm acceptance in writing and arrange the introduction.`),
+        kitParagraph(`First payment due: ${naira(due)}. ${a.pay_url ? "The family can pay it online from the offer page." : "The payment could not be set up; it is tried again when the family opens the offer."} Once the first payment is in, the family is emailed their signed copy as our written confirmation.`),
         kitButton("Open the record", `${SITE_URL}/admin/clients/${o.client_id}?tab=commercial`),
       ].join(""),
     }));
@@ -253,7 +292,7 @@ Deno.serve(async (req) => {
             { label: "Account number", value: String(pay.accountNumber ?? "") },
             { label: "Reference", value: o.reference },
           ]),
-          kitParagraph("We will confirm your booking in writing and arrange a meeting and introduction with your nurse before the first shift. Care starts once the first payment is received."),
+          kitParagraph("Once your payment is received, we email you your signed agreement to confirm your booking, and we will be in touch to plan day 0 with you: meeting your nurse and agreeing your care plan before care starts."),
           kitButton("View your offer", `${SITE_URL}/o/${plain}`),
           kitParagraph("Need another way to pay? Reply to this email, or WhatsApp us on +234 812 698 8237 and we will arrange it."),
         ].join(""),
