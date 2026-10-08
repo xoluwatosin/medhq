@@ -179,7 +179,14 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
   font("bold", 9, C.white);
   doc.text(offer.reference, PAGE_W - M, 20, { align: "right" });
   font("extrabold", 21, C.white);
-  doc.text(`Your care offer for ${c.careFor}`, M, 34);
+  const lead = "Your care offer for ";
+  doc.text(lead, M, 34);
+  // The person receiving care, on a brand blue block.
+  const nx = M + doc.getTextWidth(lead);
+  const nw = doc.getTextWidth(c.careFor);
+  fill(C.brand);
+  doc.rect(nx - 1.5, 26.6, nw + 3, 10, "F");
+  doc.text(c.careFor, nx, 34);
   font("normal", 10, C.white);
   doc.text(`Prepared for ${c.preparedFor}`, M, 41);
   y = 56;

@@ -54,8 +54,9 @@ const Splash = ({ first, careFor, artSrc, onOpen }: { first: string; careFor: st
       <h1 className="mt-5 animate-in fade-in slide-in-from-bottom-3 text-[36px] font-extrabold leading-[1.04] tracking-[-0.045em] text-white duration-700 sm:text-[52px]">
         Thank you, {first},<br />for choosing Medic Connect
       </h1>
-      <p className="mt-5 animate-in fade-in text-[18px] font-bold leading-[1.4] text-body-navy delay-200 duration-700 sm:text-[21px]">
-        Your care offer for {careFor}
+      <p className="mt-6 animate-in fade-in text-[19px] font-bold leading-[1.5] text-body-navy delay-200 duration-700 sm:text-[22px]">
+        Your care offer for{" "}
+        <span className="inline-block -rotate-1 bg-brand px-2.5 py-0.5 text-[24px] font-extrabold tracking-[-0.03em] text-white shadow-[4px_4px_0_rgba(255,255,255,0.18)] sm:text-[28px]">{careFor}</span>
       </p>
       <button
         type="button"
@@ -270,7 +271,9 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">
-            {c.options.length > 1 ? `${c.options.length === 2 ? "Two" : c.options.length} ways to care for ${c.careFor}` : "The care we are offering"}
+            {c.options.length > 1
+              ? <>{c.options.length === 2 ? "Two" : c.options.length} ways to care for <span className="bg-brand px-1.5 text-white">{c.careFor}</span></>
+              : "The care we are offering"}
           </h2>
           {c.options.length > 1 && <p className="mt-2 text-[15px] leading-[1.55] text-body">Look at each, then choose the one that suits your family. You can change your mind before you accept.</p>}
         </div>
