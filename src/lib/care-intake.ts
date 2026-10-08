@@ -338,6 +338,9 @@ export const stepProblems = (
         problems[`${r.id}.approxAge`] = "Enter an approximate age in years";
       }
       if (!r.dobKnown) problems[`${r.id}.dobKnown`] = "Enter a date of birth, or an approximate age";
+      if (r.isEnquirer && r.expectedBirth) {
+        problems[`${r.id}.dobKnown`] = "If the care is for your baby, go back and choose Another person";
+      }
       if (r.services.length === 0) {
         problems[`${r.id}.services`] = "Choose the support this person needs";
       }

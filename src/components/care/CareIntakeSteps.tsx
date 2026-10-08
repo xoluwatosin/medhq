@@ -37,6 +37,9 @@ const Field = ({
 
 const textClass = "h-11 w-full rounded-lg border-line bg-white px-3.5 text-[16px]";
 
+// Services for a baby or child, which a parent arranges for someone else.
+const CHILD_SERVICES = ["newborn", "paediatric", "additional_needs", "nanny"];
+
 const Pick = ({
   label, help, selected, onClick,
 }: { label: string; help?: string; selected: boolean; onClick: () => void }) => (
@@ -269,11 +272,15 @@ export const CareIntakeFlow = ({
             selected={r.dobKnown === "no"}
             onClick={() => setRecipient(r.id, { dobKnown: "no", expectedBirth: false, dateOfBirth: undefined })}
           />
-          <Pick
-            label="Not born yet"
-            selected={r.dobKnown === "yes" && !!r.expectedBirth}
-            onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: true, approxAge: null })}
-          />
+          {/* Only someone else can be not born yet: a parent arranging care
+              for their baby chooses Another person. */}
+          {!r.isEnquirer && (
+            <Pick
+              label="Not born yet"
+              selected={r.dobKnown === "yes" && !!r.expectedBirth}
+              onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: true, approxAge: null })}
+            />
+          )}
         </div>
         {problem(`${r.id}.dobKnown`) && (
           <p className="mt-1 text-[15px] font-medium text-warn-ink">{problem(`${r.id}.dobKnown`)}</p>
@@ -331,6 +338,12 @@ export const CareIntakeFlow = ({
         </div>
         {problem(`${r.id}.services`) && (
           <p className="mt-1.5 text-[15px] font-medium text-warn-ink">{problem(`${r.id}.services`)}</p>
+        )}
+        {r.isEnquirer && r.services.some((v) => CHILD_SERVICES.includes(v)) && (
+          <p className="mt-2 text-[15px] leading-snug text-warn-ink">
+            Is this care for your baby or child? Go back, choose Another person, and add them by name.
+            For a baby not born yet, use Baby and your family name.
+          </p>
         )}
       </div>
 

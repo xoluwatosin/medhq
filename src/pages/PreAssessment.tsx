@@ -754,6 +754,28 @@ const PreAssessment = () => {
         stepKey="welcome"
       >
         <span className="sr-only">Ready when you are.</span>
+        {!topUp && (
+          <p className="mt-4 text-[15px] leading-snug text-body">
+            Not right?{" "}
+            <button
+              type="button"
+              className="font-semibold text-brand underline underline-offset-2"
+              onClick={() => {
+                // Back to who the care is for. Answers already given are kept.
+                setResponses((prev) => {
+                  const held = (prev.care_intake as CareIntake | undefined) ?? intake;
+                  const next = { ...held, confirmed: false };
+                  autosave.queue("care_intake", next);
+                  return { ...prev, care_intake: next };
+                });
+                void autosave.flush();
+                window.scrollTo({ top: 0 });
+              }}
+            >
+              Change who the care is for
+            </button>
+          </p>
+        )}
       </Question>,
       {
         footer: (
