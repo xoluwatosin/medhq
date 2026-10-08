@@ -127,6 +127,7 @@ const Terms = lazyPage(() => import("./pages/Terms"));
 const PreAssessment = lazyPage(() => import("./pages/PreAssessment"));
 const CareOnboarding = lazyPage(() => import("./pages/CareOnboarding"));
 const CareProposalView = lazyPage(() => import("./pages/care/CareProposalView"));
+const CareOffer = lazyPage(() => import("./pages/care/CareOffer"));
 const CareInvitation = lazyPage(() => import("./pages/care/CareInvitation"));
 const CareHome = lazyPage(() => import("./pages/care/CareHome"));
 
@@ -256,6 +257,7 @@ const App = () => (
             <Route path="/care/start/:token" element={<CareOnboarding />} />
             <Route path="/pre-assessment/:token" element={<PreAssessment />} />
             <Route path="/care/proposal" element={<CareProposalView />} />
+            <Route path="/care/offer/:token" element={<CareOffer />} />
             <Route path="/care/invitation/:token" element={<CareInvitation />} />
             <Route path="/care" element={<CareHome />} />
 

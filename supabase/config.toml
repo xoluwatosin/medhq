@@ -72,3 +72,9 @@ verify_jwt = false
 # checks the service key, a run key or an admin login itself
 [functions.notify-relink]
 verify_jwt = false
+
+[functions.care-offer]
+verify_jwt = false
+
+[functions.care-offer-send]
+verify_jwt = true

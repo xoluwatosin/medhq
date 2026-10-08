@@ -54,6 +54,7 @@ import AssessmentSection from "@/components/admin/care/AssessmentSection";
 import ClinicalReviewSection from "@/components/admin/care/ClinicalReviewSection";
 import CarePlanSection from "@/components/admin/care/CarePlanSection";
 import CareProposalSection from "@/components/admin/care/CareProposalSection";
+import CareOfferSection from "@/components/admin/care/CareOfferSection";
 import CareFinanceSection from "@/components/admin/care/CareFinanceSection";
 import { AccessSection } from "@/components/admin/care/AccessSection";
 import {
@@ -1159,6 +1160,13 @@ const ClientRecord = () => {
               />
             </div>
           </MuSection>
+          <CareOfferSection
+            clientId={String(id)}
+            careFor={String(client.full_name)}
+            preparedFor={primary?.full_name ?? ""}
+            location={area || "Lagos"}
+            start="To agree with you. We arrange a meeting and introduction with your nurse before the first shift."
+          />
           <PayersSection clientId={String(id)} />
           <CareFinanceSection clientId={String(id)} contacts={contacts} />
           </>
