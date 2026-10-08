@@ -51,9 +51,10 @@ const Splash = ({ first, careFor, artSrc, onOpen }: { first: string; careFor: st
     </div>
     <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-5 pb-6 pt-10 sm:px-8">
       <span className="inline-flex animate-in fade-in duration-500"><NotchTag tone="white" size="sm">Care offer</NotchTag></span>
-      <h1 className="mt-5 animate-in fade-in slide-in-from-bottom-3 text-[36px] font-extrabold leading-[1.04] tracking-[-0.045em] text-white duration-700 sm:text-[52px]">
+      {/* A heading by role, not an h1, so the admin preview's heading styles never recolour it. */}
+      <p role="heading" aria-level={1} className="mt-5 animate-in fade-in slide-in-from-bottom-3 text-[36px] font-extrabold leading-[1.04] tracking-[-0.045em] text-white duration-700 sm:text-[52px]">
         Thank you, {first},<br />for choosing Medic Connect
-      </h1>
+      </p>
       <p className="mt-5 animate-in fade-in text-[18px] font-bold leading-[1.4] text-body-navy delay-200 duration-700 sm:text-[21px]">
         Your care offer for {careFor}
       </p>
@@ -85,7 +86,7 @@ const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => vo
     <div className="relative mx-auto flex h-[60px] max-w-3xl items-center gap-3 px-4 sm:h-[68px] sm:px-8">
       <img src={logoWhite} alt="Medic Connect" className="h-[22px] w-auto shrink-0 sm:h-7" />
       <span aria-hidden="true" className="h-7 w-px shrink-0 bg-white/25" />
-      <h1 className="line-clamp-2 min-w-0 flex-1 text-[14px] font-extrabold leading-[1.2] tracking-[-0.02em] text-white sm:text-[17px]">{title}</h1>
+      <p role="heading" aria-level={1} className="line-clamp-2 min-w-0 flex-1 text-[14px] font-extrabold leading-[1.2] tracking-[-0.02em] text-white sm:text-[17px]">{title}</p>
       {artSrc && <img src={artSrc} alt="" aria-hidden="true" className="h-[50px] w-auto shrink-0 self-end object-contain object-bottom sm:h-[60px]" />}
       {onPdf && (
         <button type="button" onClick={onPdf} disabled={making} aria-label="Download as PDF" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 border-2 border-outline-navy px-2.5 text-[13px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy disabled:opacity-60">
@@ -151,15 +152,29 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   // The part showing stays in view in the row of parts.
   useEffect(() => {
     const chip = railRef.current?.querySelector<HTMLElement>('[aria-current="step"]');
-    chip?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    const rail = railRef.current;
+    // Sideways only, so the page itself stays where it is.
+    if (chip && rail) rail.scrollTo({ left: chip.offsetLeft - (rail.clientWidth - chip.clientWidth) / 2, behavior: "smooth" });
   }, [step]);
 
   const go = (n: number) => {
     const next = Math.max(0, Math.min(STEPS.length - 1, n));
     setStep(next);
     setSeen((s) => (s.includes(next) ? s : [...s, next]));
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Every new part starts at the top: of the window on the family's page,
+  // and of the preview panel when staff look at it from the record.
+  const topRef = useRef<HTMLDivElement>(null);
+  const toTop = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    let el = topRef.current?.parentElement ?? null;
+    while (el) {
+      if (el.scrollHeight > el.clientHeight && /(auto|scroll)/.test(getComputedStyle(el).overflowY)) el.scrollTop = 0;
+      el = el.parentElement;
+    }
+  }, []);
+  useEffect(() => { toTop(); }, [step, opened, toTop]);
 
   const downloadPdf = async () => {
     if (!offer) return;
@@ -191,7 +206,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       return;
     }
     setOffer(data.offer as OfferView);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    toTop();
   };
 
   const seo = <SEO title="Your care offer | Medic Connect" description="Your care offer from Medic Connect" path="/care/offer" noindex />;
@@ -464,14 +479,14 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
           first={first}
           careFor={c.careFor}
           artSrc={art.postnatalSpecialist}
-          onOpen={() => { setOpened(true); if (accepted) setStep(STEPS.length - 1); window.scrollTo({ top: 0 }); }}
+          onOpen={() => { setOpened(true); if (accepted) setStep(STEPS.length - 1); }}
         />
       </>
     );
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-card">
+    <div ref={topRef} className="flex min-h-dvh flex-col bg-card">
       {seo}
       <Cap title={`Your care offer for ${c.careFor}`} onPdf={() => void downloadPdf()} making={making} artSrc={current.art} />
 

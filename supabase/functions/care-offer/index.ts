@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
             { label: "Reference", value: o.reference },
           ]),
           kitParagraph("We will confirm your booking in writing and arrange a meeting and introduction with your nurse before the first shift. Care starts once the first payment is received."),
-          kitButton("View your offer", `${SITE_URL}/care/offer/${plain}`),
+          kitButton("View your offer", `${SITE_URL}/o/${plain}`),
           kitParagraph("Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237."),
         ].join(""),
       }));

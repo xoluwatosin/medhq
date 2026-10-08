@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       offer_id: offer.id, token_hash: await offerTokenHash(plain), channel, created_by: callerId,
     });
     if (linkError) throw linkError;
-    const link = `${SITE_URL}/care/offer/${plain}`;
+    const link = `${SITE_URL}/o/${plain}`;
 
     const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
     const months = Number(content.months ?? 0);

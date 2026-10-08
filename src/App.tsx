@@ -258,6 +258,7 @@ const App = () => (
             <Route path="/pre-assessment/:token" element={<PreAssessment />} />
             <Route path="/care/proposal" element={<CareProposalView />} />
             <Route path="/care/offer/:token" element={<CareOffer />} />
+            <Route path="/o/:token" element={<CareOffer />} />
             <Route path="/care/invitation/:token" element={<CareInvitation />} />
             <Route path="/care" element={<CareHome />} />
 
