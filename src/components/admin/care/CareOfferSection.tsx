@@ -147,7 +147,8 @@ export default function CareOfferSection({
     if (gaps.length) return toast.error(`Still to fill in: ${gaps.join(", ")}`);
     const tab = channel === "whatsapp" ? window.open("about:blank", "_blank") : null;
     setBusy(true);
-    const pdf = channel === "email" ? await makePdf(offer) : null;
+    // WhatsApp sends also email the family, with the PDF, when they have an address.
+    const pdf = channel === "email" || channel === "whatsapp" ? await makePdf(offer) : null;
     if (channel === "email" && !pdf) toast.message("The PDF could not be made, so the email goes without it");
     const { data, error } = await supabase.functions.invoke("care-offer-send", {
       body: { offer_id: offer.id, channel, pdf_base64: pdf },
@@ -165,6 +166,7 @@ export default function CareOfferSection({
       toast.success("Link copied");
     }
     if (channel === "whatsapp") {
+      if (data.emailed) toast.success(`Also emailed to ${data.to}`);
       const url = data.whatsapp_number
         ? whatsappHref(data.whatsapp_number, data.whatsapp_text)
         : `https://wa.me/?text=${encodeURIComponent(data.whatsapp_text)}`;

@@ -73,11 +73,14 @@ Deno.serve(async (req) => {
     const options = (content.options ?? []) as { id: string; title: string; monthly: number }[];
     const careFor = String(content.careFor ?? "your family");
 
+    // The email goes with every email send, and with a WhatsApp send too
+    // when the family has an email address, so they always have it in writing.
+    const sendEmail = channel === "email" || (channel === "whatsapp" && !!email);
     let emailed = false;
     let emailError: string | null = null;
-    if (channel === "email") {
+    if (sendEmail) {
       const key = Deno.env.get("RESEND_API_KEY");
-      if (!key) return json({ error: "Email is not configured" }, 500);
+      if (!key && channel === "email") return json({ error: "Email is not configured" }, 500);
       const pdf = typeof body?.pdf_base64 === "string" && body.pdf_base64.length < 12_000_000 ? body.pdf_base64 : null;
       // A short, warm note: what is inside, and the way in. The prices and the
       // steps are in the offer itself and in the PDF.
@@ -93,7 +96,7 @@ Deno.serve(async (req) => {
         preheader: "Everything in one place, ready when you are",
         bodyHtml: offerEmailBody({ first, careFor, optionCount: options.length, link, validUntil }),
       });
-      const res = await fetch("https://api.resend.com/emails", {
+      const res = !key ? null : await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -105,8 +108,8 @@ Deno.serve(async (req) => {
           ...(pdf ? { attachments: [{ filename: `Care offer for ${careFor}, Medic Connect.pdf`, content: pdf }] } : {}),
         }),
       });
-      emailed = res.ok;
-      if (!res.ok) emailError = `The email could not be sent (${res.status})`;
+      emailed = !!res?.ok;
+      if (!emailed) emailError = `The email could not be sent${res ? ` (${res.status})` : ""}`;
     }
 
     if (channel !== "email" || emailed) {
@@ -115,7 +118,7 @@ Deno.serve(async (req) => {
       }
       await db.from("care_activity").insert({
         client_id: offer.client_id, action: "offer_sent",
-        detail: { offer_id: offer.id, reference: offer.reference, channel, to: channel === "email" ? email : null },
+        detail: { offer_id: offer.id, reference: offer.reference, channel, to: emailed ? email : null, emailed },
         actor_id: callerId,
       });
     } else {
@@ -126,7 +129,7 @@ Deno.serve(async (req) => {
       first && first !== "Hello" ? `Hello ${first} 👋` : "Hello 👋",
       `Thank you for talking with us about ${careFor}. Your care offer is ready${options.length === 2 ? ", with both options side by side" : options.length > 2 ? ", with the options side by side" : ""}, so you can take your time with it.`,
       `Here it is: ${link}`,
-      "You can read it, download the PDF, and when you are ready, accept and pay right there. If you would like a copy by email too, just say.",
+      `You can read it, download the PDF, and when you are ready, accept and pay right there.${emailed ? " We have also emailed you a copy." : " If you would like a copy by email too, just say."}`,
       "Any questions at all, just reply here. 💙\nThe Medic Connect team",
     ].join("\n\n");
 
@@ -137,7 +140,7 @@ Deno.serve(async (req) => {
       whatsapp_text: channel === "whatsapp" ? whatsappText : null,
       whatsapp_number: channel === "whatsapp" ? String(contact?.whatsapp || contact?.phone || "") : null,
       emailed,
-      to: channel === "email" ? email : null,
+      to: emailed ? email : null,
     });
   } catch (e) {
     console.error("care-offer-send failed", e instanceof Error ? e.message : e);
