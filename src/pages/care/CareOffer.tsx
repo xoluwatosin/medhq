@@ -415,6 +415,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
               "We confirm your booking in writing.",
               "We arrange a meeting and introduction with your nurse.",
               "Care starts once your first payment is received.",
+              ...(acceptedPlan === "monthly" ? [`For each month after, we email you a payment link five days before it is due, with the bank details too.`] : []),
             ].map((t, i) => (
               <li key={t} className="flex gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-navy text-[13px] font-extrabold text-white">{i + 1}</span>
@@ -491,16 +492,16 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
 
   const primary = isLast
     ? (accepted && payWay === "paystack" && payUrl
-        ? <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "flex-1 sm:flex-none")}>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></a>
+        ? <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></a>
         : accepted || !open
-        ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
+        ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
         : (
-          <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(requestPrimary, "flex-1 sm:flex-none")}>
+          <button type="button" disabled={!ready || busy} onClick={() => void accept()} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>
             {busy ? "Accepting" : !option ? "Choose an option first" : `Accept ${chosen?.title.toLowerCase() ?? ""}`}
           </button>
         ))
     : (
-      <button type="button" onClick={() => go(step + 1)} className={cn(requestPrimary, "flex-1 sm:flex-none")}>
+      <button type="button" onClick={() => go(step + 1)} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>
         {step === 0 ? "See the options" : `Next: ${STEPS[step + 1].short.toLowerCase()}`} <ArrowRight className="h-4 w-4" />
       </button>
     );
@@ -549,7 +550,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         </ol>
       </nav>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-6 sm:px-8 sm:pt-8">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-6 sm:px-8 sm:pt-8 md:pb-24">
         {pdfError && <p role="alert" className="mb-4 border-l-4 border-destructive bg-tint px-4 py-3 text-[14.5px] font-bold text-ink">{pdfError}</p>}
         <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-brand">{current.label}</p>
         <div key={current.id} className="animate-in fade-in slide-in-from-right-4 duration-300">{body[current.id]}</div>
@@ -559,10 +560,10 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       </main>
 
       {/* Back and Next, always within reach of a thumb. */}
-      <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-navy bg-card pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+      <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-navy bg-card pb-[max(12px,env(safe-area-inset-bottom))] pt-3 md:py-2">
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-4 sm:justify-between sm:px-8">
           {step > 0 ? (
-            <button type="button" onClick={() => go(step - 1)} className={cn(requestSecondary, "px-4")} aria-label="Back">
+            <button type="button" onClick={() => go(step - 1)} className={cn(requestSecondary, "px-4 md:min-h-10 md:px-3 md:text-[14px]")} aria-label="Back">
               <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
             </button>
           ) : <span className="hidden sm:block" />}

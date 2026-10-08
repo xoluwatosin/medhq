@@ -11,6 +11,7 @@ import { MuEmpty, MuRow, MuSection, MuStatus } from "@/components/admin/mu/MuShe
 import { art } from "@/components/mc/art";
 import { cxInputClass } from "@/components/candidate/primitives";
 import CareOffer from "@/pages/care/CareOffer";
+import CareOfferPayments from "@/components/admin/care/CareOfferPayments";
 import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION, type TermsClause } from "@/content/care/newborn-terms";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,9 @@ interface OfferRow {
   accepted_at: string | null;
   withdrawn_reason: string | null;
   created_at: string;
+  invoice_id: string | null;
+  pay_url: string | null;
+  care_starts_on: string | null;
 }
 
 const STATUS: Record<OfferRow["status"], { label: string; tone: "neutral" | "good" | "warning" | "bad" | "info" }> = {
@@ -133,6 +137,7 @@ export default function CareOfferSection({
     accepted_payment: o.accepted_payment as "monthly" | "upfront" | null,
     accepted_name: o.accepted_name,
     accepted_at: o.accepted_at,
+    pay_url: o.pay_url,
   });
   const makePdf = async (offer: OfferRow): Promise<string | null> => {
     try {
@@ -213,8 +218,8 @@ export default function CareOfferSection({
                     o.expires_at ? `valid until ${formatDate(o.expires_at)}` : null,
                   ].filter(Boolean).join(". ");
             return (
+              <div key={o.id}>
               <MuRow
-                key={o.id}
                 title={o.reference}
                 state={state}
                 status={<MuStatus label={STATUS[o.status].label} tone={STATUS[o.status].tone} />}
@@ -238,6 +243,18 @@ export default function CareOfferSection({
                   </div>
                 }
               />
+              {o.status === "accepted" && (o.accepted_payment === "monthly" || o.accepted_payment === "upfront") && (
+                <CareOfferPayments
+                  offerId={o.id}
+                  payment={o.accepted_payment}
+                  months={o.content.months}
+                  startsOn={o.care_starts_on}
+                  firstPayUrl={o.pay_url}
+                  firstInvoiceId={o.invoice_id}
+                  onChanged={() => void load()}
+                />
+              )}
+              </div>
             );
           })}
         </div>

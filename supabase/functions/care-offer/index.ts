@@ -7,9 +7,8 @@
 // care: staff confirm in writing and arrange the introduction first.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
-import { naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
+import { createCareInvoice, naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
-import { hostedLink, kobo, mapStatus } from "../_shared/paystack-invoice.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,8 +40,6 @@ const view = (o: Offer) => ({
  */
 async function ensurePaymentLink(db: ReturnType<typeof createClient>, o: Offer): Promise<Offer> {
   if (o.status !== "accepted" || o.pay_url) return o;
-  const key = Deno.env.get("PAYSTACK_SECRET_KEY");
-  if (!key) return o;
   const options = (o.content?.options ?? []) as { id: string; title: string; monthly: number }[];
   const option = options.find((x) => x.id === o.accepted_option);
   if (!option) return o;
@@ -50,86 +47,21 @@ async function ensurePaymentLink(db: ReturnType<typeof createClient>, o: Offer):
   const pct = Number(o.content?.upfrontDiscountPercent ?? 0);
   const t = optionTotals(option, months, pct);
   const upfront = o.accepted_payment === "upfront";
-  const amount = upfront ? t.upfront : t.monthly;
   const careFor = String(o.content?.careFor ?? "");
   const service = String(o.content?.serviceTitle ?? "Care");
-  const description = upfront
-    ? `${service}, ${option.title}, for ${careFor}: all ${months} months paid upfront (${pct}% discount, saving ${naira(t.saving)})`
-    : `${service}, ${option.title}, for ${careFor}: first month`;
-
-  const { data: contact } = await db
-    .from("client_contacts").select("id, full_name, first_name, last_name, email, phone")
-    .eq("client_id", o.client_id).eq("is_primary", true).maybeSingle();
-  const email = String(contact?.email ?? "").trim().toLowerCase();
-  if (!email) return o;
-  const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "");
-  const last = String(contact?.last_name || String(contact?.full_name ?? "").split(" ").slice(1).join(" ") || "");
-
-  const call = async (path: string, payload: unknown) => {
-    const res = await fetch(`https://api.paystack.co${path}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const out = await res.json().catch(() => ({}));
-    return { ok: res.ok && out?.status !== false, body: out };
-  };
-  try {
-    const customer = await call("/customer", { email, first_name: first || undefined, last_name: last || undefined, phone: contact?.phone || undefined });
-    const request = await call("/paymentrequest", {
-      customer: customer.body?.data?.customer_code ?? email,
-      description: `Care offer ${o.reference} from Medic Connect`,
-      line_items: [{ name: description, amount: kobo(amount), quantity: 1 }],
-      currency: "NGN",
-      draft: false,
-      send_notification: false,
-      has_invoice: true,
-    });
-    if (!request.ok) {
-      console.error("care-offer paystack", request.body?.message);
-      return o;
-    }
-    const data = request.body.data;
-    const code = String(data?.request_code ?? "");
-    if (!code) return o;
-    const { data: invoice, error } = await db.from("paystack_invoices").insert({
-      invoice_number: `MC-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
-      request_code: code,
-      offline_reference: data?.offline_reference ?? null,
-      hosted_link: hostedLink(code),
-      paystack_id: data?.id ?? null,
-      client_id: o.client_id,
-      recipient_contact_id: contact?.id ?? null,
-      client_name: String(contact?.full_name ?? `${first} ${last}`).trim() || email,
-      client_first_name: first || null,
-      client_last_name: last || null,
-      client_email: email,
-      client_phone: contact?.phone ?? null,
-      vat_rate: 0,
-      subtotal: amount,
-      vat_amount: 0,
-      total: amount,
-      notes: `Care offer ${o.reference}`,
-      status: mapStatus(data?.status),
-      sent_at: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
-    }).select("id").single();
-    if (error) throw error;
-    await db.from("paystack_invoice_lines").insert({
-      invoice_id: invoice.id, position: 0, description, quantity: 1, unit_price: amount, line_total: amount,
-    });
-    const { data: updated } = await db.from("care_offers")
-      .update({ invoice_id: invoice.id, pay_url: hostedLink(code) })
-      .eq("id", o.id).is("pay_url", null).select("*").maybeSingle();
-    await db.from("care_activity").insert({
-      client_id: o.client_id, action: "invoice_issued",
-      detail: { invoice_id: invoice.id, request_code: code, offer_id: o.id, amount }, actor_id: null,
-    });
-    return (updated as Offer | null) ?? { ...o, invoice_id: invoice.id, pay_url: hostedLink(code) };
-  } catch (e) {
-    console.error("care-offer payment link failed", e instanceof Error ? e.message : e);
-    return o;
-  }
+  const made = await createCareInvoice(db, {
+    clientId: o.client_id,
+    reference: o.reference,
+    amount: upfront ? t.upfront : t.monthly,
+    description: upfront
+      ? `${service}, ${option.title}, for ${careFor}: all ${months} months paid upfront (${pct}% discount, saving ${naira(t.saving)})`
+      : `${service}, ${option.title}, for ${careFor}: month 1 of ${months}`,
+  });
+  if (!made) return o;
+  const { data: updated } = await db.from("care_offers")
+    .update({ invoice_id: made.invoiceId, pay_url: made.payUrl })
+    .eq("id", o.id).is("pay_url", null).select("*").maybeSingle();
+  return (updated as Offer | null) ?? { ...o, invoice_id: made.invoiceId, pay_url: made.payUrl };
 }
 
 async function sendEmail(to: string, subject: string, html: string) {

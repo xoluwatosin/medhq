@@ -78,3 +78,6 @@ verify_jwt = false
 
 [functions.care-offer-send]
 verify_jwt = true
+
+[functions.care-offer-billing]
+verify_jwt = false
