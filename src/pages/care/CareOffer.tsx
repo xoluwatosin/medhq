@@ -41,36 +41,67 @@ const errorFrom = async (data: { error?: string } | null, e: unknown, fallback: 
   return data?.error ?? body?.error ?? fallback;
 };
 
-/** The navy cap: the site's hero in small. */
-const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => void; making?: boolean; artSrc?: string }) => (
-  <header className="relative overflow-hidden bg-navy pt-[max(12px,env(safe-area-inset-top))]">
-    <Watermark glyph="o" size={300} opacity={0.12} className="-right-[110px] -top-[60px]" />
-    <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 sm:px-8">
-      <img src={logoWhite} alt="Medic Connect" className="h-7 w-auto sm:h-8" />
-      {onPdf && (
-        <button type="button" onClick={onPdf} disabled={making} className="inline-flex min-h-10 items-center gap-1.5 border-2 border-outline-navy px-3 text-[13.5px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy disabled:opacity-60">
-          <Download className="h-4 w-4" aria-hidden="true" /> {making ? "Making PDF" : "PDF"}
-        </button>
-      )}
+/** The first screen: a thank you, on the site's navy with its watermark. */
+const Splash = ({ first, careFor, artSrc, onOpen }: { first: string; careFor: string; artSrc: string; onOpen: () => void }) => (
+  <div className="relative flex min-h-dvh flex-col overflow-hidden bg-navy pt-[max(16px,env(safe-area-inset-top))]">
+    <Watermark glyph="o" size={620} opacity={0.12} className="-right-[260px] -top-[120px]" />
+    <Watermark glyph="o" size={360} opacity={0.08} className="-bottom-[140px] -left-[160px]" />
+    <div className="relative mx-auto w-full max-w-3xl px-5 sm:px-8">
+      <img src={logoWhite} alt="Medic Connect" className="h-8 w-auto sm:h-9" />
     </div>
-    <div className="relative mx-auto flex max-w-3xl items-end px-4 sm:px-8">
-      <div className="min-w-0 flex-1 pb-6 pt-5 pr-[86px] sm:pb-8 sm:pr-0">
-        <span className="inline-flex"><NotchTag tone="white" size="sm">Care offer</NotchTag></span>
-        <h1 className="mt-3 text-[25px] font-extrabold leading-[1.08] tracking-[-0.04em] text-white sm:text-[34px]">{title}</h1>
-      </div>
-      {artSrc && (
-        <img src={artSrc} alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-3 h-[92px] w-auto object-contain object-bottom sm:static sm:h-[130px]" />
+    <div className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-5 pb-6 pt-10 sm:px-8">
+      <span className="inline-flex animate-in fade-in duration-500"><NotchTag tone="white" size="sm">Care offer</NotchTag></span>
+      <h1 className="mt-5 animate-in fade-in slide-in-from-bottom-3 text-[36px] font-extrabold leading-[1.04] tracking-[-0.045em] text-white duration-700 sm:text-[52px]">
+        Thank you, {first},<br />for choosing Medic Connect
+      </h1>
+      <p className="mt-5 animate-in fade-in text-[18px] font-bold leading-[1.4] text-body-navy delay-200 duration-700 sm:text-[21px]">
+        Your care offer for {careFor}
+      </p>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="group mt-9 inline-flex items-center gap-4 self-start animate-in fade-in delay-300 duration-700"
+        aria-label="Open your care offer"
+      >
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-navy shadow-[0_0_0_8px_rgba(255,255,255,0.12)] transition-transform group-hover:translate-x-1 group-active:scale-95">
+          <ArrowRight className="h-7 w-7" aria-hidden="true" />
+        </span>
+        <span className="text-[16px] font-extrabold text-white">Open your offer</span>
+      </button>
+    </div>
+    <img
+      src={artSrc}
+      alt=""
+      aria-hidden="true"
+      className="pointer-events-none relative ml-auto mr-4 h-[210px] w-auto object-contain object-bottom sm:mr-[10%] sm:h-[280px]"
+    />
+  </div>
+);
+
+/** Once the offer is open: one slim bar with the logo, the heading, a small picture and the PDF. */
+const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => void; making?: boolean; artSrc?: string }) => (
+  <header className="relative overflow-hidden bg-navy pt-[env(safe-area-inset-top)]">
+    <Watermark glyph="o" size={160} opacity={0.12} className="-right-[50px] -top-[50px]" />
+    <div className="relative mx-auto flex h-[60px] max-w-3xl items-center gap-3 px-4 sm:h-[68px] sm:px-8">
+      <img src={logoWhite} alt="Medic Connect" className="h-[22px] w-auto shrink-0 sm:h-7" />
+      <span aria-hidden="true" className="h-7 w-px shrink-0 bg-white/25" />
+      <h1 className="line-clamp-2 min-w-0 flex-1 text-[14px] font-extrabold leading-[1.2] tracking-[-0.02em] text-white sm:text-[17px]">{title}</h1>
+      {artSrc && <img src={artSrc} alt="" aria-hidden="true" className="h-[50px] w-auto shrink-0 self-end object-contain object-bottom sm:h-[60px]" />}
+      {onPdf && (
+        <button type="button" onClick={onPdf} disabled={making} aria-label="Download as PDF" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 border-2 border-outline-navy px-2.5 text-[13px] font-extrabold text-white transition-colors hover:bg-white hover:text-navy disabled:opacity-60">
+          <Download className="h-4 w-4" aria-hidden="true" /> <span className="hidden min-[420px]:inline">{making ? "…" : "PDF"}</span>
+        </button>
       )}
     </div>
   </header>
 );
 
-/** With `preview`, staff see exactly what the family will see; nothing is loaded or accepted. */
 const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const { token = "" } = useParams();
   const [offer, setOffer] = useState<OfferView | null>(preview ?? null);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+  const [opened, setOpened] = useState(false);
   const [viewing, setViewing] = useState(0);
   const [option, setOption] = useState<string | null>(null);
   const [plan, setPlan] = useState<PaymentPlan>("monthly");
@@ -210,7 +241,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
     welcome: (
       <div className="flex flex-col gap-6">
         <div>
-          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Hello {first}</h2>
+          <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-navy sm:text-[28px]">Your offer at a glance</h2>
           <p className="mt-3 text-[16px] leading-[1.65] text-ink">{c.intro}</p>
         </div>
         {!accepted && !open && (
@@ -424,6 +455,20 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         {step === 0 ? "See the options" : `Next: ${STEPS[step + 1].short.toLowerCase()}`} <ArrowRight className="h-4 w-4" />
       </button>
     );
+
+  if (!opened) {
+    return (
+      <>
+        {seo}
+        <Splash
+          first={first}
+          careFor={c.careFor}
+          artSrc={art.postnatalSpecialist}
+          onOpen={() => { setOpened(true); if (accepted) setStep(STEPS.length - 1); window.scrollTo({ top: 0 }); }}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-card">
