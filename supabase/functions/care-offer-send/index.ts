@@ -89,8 +89,8 @@ Deno.serve(async (req) => {
         title: "Your care offer is here",
         accent: "here",
         art: KIT_ART.nurse,
-        standfirst: `${content.serviceTitle ?? "Care"} for ${careFor}, all in one place`,
-        preheader: `Your care offer for ${careFor} is ready when you are`,
+        standfirst: `${content.serviceTitle ?? "Care"}, all in one place`,
+        preheader: "Everything in one place, ready when you are",
         bodyHtml: offerEmailBody({ first, careFor, optionCount: options.length, link, validUntil }),
       });
       const res = await fetch("https://api.resend.com/emails", {

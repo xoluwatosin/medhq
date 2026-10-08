@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
       await sendEmail(to, `Thank you for accepting your care offer for ${o.content?.careFor ?? "your family"}`, kitEmail({
         eyebrow: "Care offer",
         title: "Thank you, your choice is recorded",
-        standfirst: `${o.content?.serviceTitle ?? "Care"} for ${o.content?.careFor ?? ""}`,
+        standfirst: String(o.content?.serviceTitle ?? "Care"),
         bodyHtml: [
           kitParagraph(`${first}, thank you. Here is what you accepted.`),
           kitFacts(facts),

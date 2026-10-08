@@ -35,8 +35,8 @@ const tile = (art: KitArt, title: string, lineHtml: string) => `
 export function offerEmailBody(o: { first: string; careFor: string; optionCount: number; link: string; validUntil: string | null }) {
   const careFor = taped(o.careFor);
   const ways = o.optionCount > 1
-    ? `${["", "", "Two", "Three", "Four"][o.optionCount] ?? o.optionCount} ways we can care for ${careFor}, side by side`
-    : `How we will care for ${careFor}`;
+    ? `${["", "", "Two", "Three", "Four"][o.optionCount] ?? o.optionCount} ways we can help, side by side`
+    : "The care we are offering, in full";
   return `
   <p style="font-family:${F};font-size:22px;font-weight:800;letter-spacing:-0.02em;color:${KIT.navy};margin:0 0 10px;">${o.first && o.first !== "Hello" ? `Hello ${esc(o.first)},` : "Hello,"}</p>
   <p style="font-family:${F};font-size:16px;line-height:1.7;color:${KIT.body};margin:0 0 26px;">Thank you for talking with us about ${careFor}. We have put everything together in one place, so you can take your time with it.</p>

@@ -246,12 +246,12 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
   await sendEmail(to, firstPayment ? `You are all booked in: care for ${careFor}` : `Thank you: month ${month} of ${careFor}'s care is paid`, kitEmail({
     eyebrow: firstPayment ? "Booking confirmed" : "Payment received",
     title: firstPayment ? `Thank you, ${first}` : `Thank you for month ${month}`,
-    standfirst: `${amount} received for ${careFor}'s care`,
+    standfirst: `${amount} received`,
     preheader: firstPayment ? "Your payment is in. Here is what happens next." : `Your payment for month ${month} is in.`,
     bodyHtml: [
       kitParagraph(firstPayment
-        ? `${first}, thank you. We have received your payment, and this email confirms ${careFor}'s care is booked.`
-        : `${first}, thank you. We have received your payment for month ${month} of ${careFor}'s care.`),
+        ? `${first}, thank you. We have received your payment, and this email confirms your booking.`
+        : `${first}, thank you. We have received your payment for month ${month}.`),
       kitFacts(facts),
       ...(firstPayment
         ? [kitParagraph(copy

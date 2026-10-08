@@ -119,10 +119,10 @@ Deno.serve(async (req) => {
       const pay = o.content?.payment ?? {};
       const sent = await sendEmail(to, `${careFor}'s care: next month's payment`, kitEmail({
         eyebrow: "Care payment",
-        title: `Month ${row.number} of ${months} for ${careFor}`,
+        title: `Month ${row.number} of ${months}`,
         standfirst: `${naira(Number(row.amount))}, due ${longDate(row.due_on)}`,
         bodyHtml: [
-          kitParagraph(`${first}, here is the payment for the next month of ${careFor}'s care. It is due on ${longDate(row.due_on)}.`),
+          kitParagraph(`${first}, here is the payment for the next month of care. It is due on ${longDate(row.due_on)}.`),
           kitParagraph("Pay online by card, bank transfer or USSD through Paystack:"),
           kitButton(`Pay ${naira(Number(row.amount))} with Paystack`, made.payUrl),
           kitSubhead("Or pay by bank transfer"),
