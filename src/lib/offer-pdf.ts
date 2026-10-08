@@ -306,7 +306,18 @@ export async function buildOfferPdf(offer: OfferView, loadFont: FontLoader = bro
     const chosen = c.options.find((o) => o.id === offer.accepted_option) ?? null;
     const plan = offer.status === "accepted" ? (offer.accepted_payment ?? null) : null;
     const labelW = 42;
-    for (const row of scheduleRows(c, offer.reference, chosen, plan)) {
+    const all = scheduleRows(c, offer.reference, chosen, plan);
+    let shownLater = false;
+    eyebrow("What you agree to now");
+    for (const row of all) {
+      if (row.later && !shownLater) {
+        shownLater = true;
+        stroke(C.line, 0.3);
+        doc.line(M, y, M + W, y);
+        y += 6;
+        eyebrow("What we agree with you before care starts");
+        para("These are part of your care plan. We go through them with you at the introduction, and nothing here is charged without your agreement.", { size: 9, after: 2 });
+      }
       const h = row.lines.reduce((sum, l) => sum + measure(l, 9.5, W - labelW - 4) + 1, 0) + 4;
       ensure(Math.min(h, 40));
       stroke(C.line, 0.3);

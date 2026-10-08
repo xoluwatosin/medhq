@@ -519,7 +519,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         <label className="flex cursor-pointer items-start gap-3 border-2 border-navy bg-tint p-4">
           <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--brand))]" />
           <span className="text-[15px] leading-[1.55] text-ink">
-            I have read my care schedule, the offer and the <button type="button" onClick={() => go(3)} className="font-extrabold text-brand underline underline-offset-2">terms of care</button>, and I accept them.
+            I accept this offer, its fees and the <button type="button" onClick={() => go(3)} className="font-extrabold text-brand underline underline-offset-2">terms of care</button>. I understand the details of my care plan, such as the daily routine, supplies and emergency plan, will be agreed with me before care starts.
           </span>
         </label>
 

@@ -77,9 +77,21 @@ export const upfrontLine = (t: { upfront: number; saving: number }, months: numb
   `Pay all ${months} months upfront: ${naira(t.upfront)}. That is a ${discountPercent}% discount, saving you ${naira(t.saving)}.`;
 
 /** The care schedule's rows, in words, for the page and the PDF alike. */
+export interface ScheduleRow {
+  label: string;
+  lines: string[];
+  /** Agreed with the family in the care plan before care starts, not now. */
+  later?: boolean;
+}
+
+/**
+ * The care schedule. What the family agrees to by accepting is kept apart
+ * from what is only proposed and agreed with them in the care plan before
+ * care starts, so accepting never commits them to details not yet discussed.
+ */
 export const scheduleRows = (
   content: OfferContent, reference: string, option: OfferOption | null, plan: PaymentPlan | null,
-): { label: string; lines: string[] }[] => {
+): ScheduleRow[] => {
   const months = content.months;
   const pct = content.upfrontDiscountPercent;
   const fees = (o: OfferOption): string[] => {
@@ -91,24 +103,31 @@ export const scheduleRows = (
     return [`Monthly: ${monthly}`, `Upfront: ${upfront}`];
   };
   const options = option ? [option] : content.options;
-  return [
+  const now: ScheduleRow[] = [
     { label: "Reference", lines: [`${reference}. This care schedule forms part of your agreement with the terms of care.`] },
     { label: "Care for", lines: [content.careFor] },
     { label: "Arranged by", lines: [`${content.preparedFor}, the parent or guardian making care decisions and responsible for payment, unless agreed otherwise in writing.`] },
     { label: "Where", lines: [content.location] },
-    { label: "Starts", lines: [`${content.start}, after a meeting and introduction with your nurse. We confirm the exact date with you in writing.`] },
-    { label: "Length", lines: [`${months} months from the day care starts, ending on the matching date ${months} months later unless extended in writing.`] },
+    { label: "Starts", lines: [`${content.start}, after a meeting and introduction with your nurse.`] },
+    { label: "Length", lines: [`${months} months from the day care starts, unless extended in writing.`] },
     ...options.map((o) => ({ label: option ? "Care" : `Care: ${o.title}`, lines: [`${o.title}. ${o.staffing}`] })),
-    ...options.map((o) => ({ label: option ? "Rota and rest" : `Rota and rest: ${o.title}`, lines: o.rota?.length ? o.rota : [o.summary] })),
-    { label: "Days off and relief", lines: ["Days off are arranged around your family and the nurse: one day a week, or two days together every two weeks. A relief nurse we provide covers them, at no extra cost."] },
     { label: "Responsibilities", lines: [`As listed under Your nurse's responsibilities. Not included: ${content.notIncluded.map((x) => x.charAt(0).toLowerCase() + x.slice(1)).join(", ")}.`] },
+    { label: "Days off and relief", lines: ["Live-in nurses have regular days off. A relief nurse we provide covers them, at no extra cost."] },
     ...options.map((o) => ({ label: option ? "Fees" : `Fees: ${o.title}`, lines: fees(o) })),
     { label: "Your home provides", lines: content.familyProvides },
-    ...(content.supplies?.length ? [{ label: "Supplies", lines: content.supplies }] : []),
-    ...(content.assessment ? [{ label: "Assessment", lines: [content.assessment] }] : []),
-    { label: "Daily updates", lines: [`A daily record of feeds, sleep and nappies, shared with ${content.preparedFor} by WhatsApp each day. A weekly review by our clinical lead.`] },
-    { label: "Contacts", lines: ["Our team: +234 812 698 8237 and hello@medicconnect.co, every day from 7am to 10pm.", "Before care starts we agree an emergency plan with you: who to call, the hospital to use and how to get there."] },
+    { label: "Daily updates", lines: [`A daily record of feeds, sleep and nappies, shared with ${content.preparedFor} each day. A weekly review by our clinical lead.`] },
+    { label: "Contacts", lines: ["Our team: +234 812 698 8237 and hello@medicconnect.co, every day from 7am to 10pm."] },
   ];
+  const later: ScheduleRow[] = [
+    { label: "Start date", lines: ["The exact day care starts, once you know when the baby will be home."] },
+    ...options.map((o) => ({ label: option ? "Daily routine" : `Daily routine: ${o.title}`, lines: ["Proposed, to agree with you:", ...(o.rota?.length ? o.rota : [o.summary])], later: true })),
+    { label: "Days off", lines: ["Which days, for example one day a week or two days together every two weeks, to suit your family and the nurse."] },
+    { label: "Supplies", lines: content.supplies?.length ? content.supplies : ["Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment. Nothing is bought or charged without your agreement."] },
+    { label: "Baby's needs", lines: [content.assessment || "Your nurse and our clinical lead go through the baby's needs with you at the introduction.", "Feeding, sleep and any medical instructions from the hospital."] },
+    { label: "Emergency plan", lines: ["Who to call, the hospital to use and how to get there, at any time of day or night."] },
+    { label: "Updates", lines: ["How you would like your daily updates, for example by WhatsApp, and who else should receive them."] },
+  ].map((r) => ({ ...r, later: true }));
+  return [...now, ...later];
 };
 
 /** The first payment due for the plan chosen. */
@@ -210,9 +229,8 @@ export const newbornLiveInTemplate = (args: {
     "Bathroom access",
   ],
   supplies: [
-    "Your family provides the baby's formula, bottles, nappies, wipes and toiletries.",
-    "Your nurse brings her own uniform and basic items such as gloves.",
-    "Anything else, such as equipment or medicines, is agreed with you in advance, with any cost stated before it is bought.",
+    "Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment.",
+    "Nothing is bought or charged without your agreement.",
   ],
   assessment: "No care needs assessment is needed for this care. Your nurse and our clinical lead will go through the baby's needs with you at the introduction.",
   payment: { bankName: "", accountName: "Medic Connect Limited", accountNumber: "" },

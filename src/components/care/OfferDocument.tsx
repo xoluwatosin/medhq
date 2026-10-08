@@ -170,18 +170,31 @@ export const OfferBankDetails = ({ reference, content, amount }: { reference: st
 
 export const OfferSchedule = ({
   content, reference, option, plan,
-}: { content: OfferContent; reference: string; option: OfferOption | null; plan: PaymentPlan | null }) => (
-  <dl className="border-2 border-navy bg-card">
-    {scheduleRows(content, reference, option, plan).map((row, i) => (
-      <div key={row.label} className={cn("grid gap-1 px-4 py-3 sm:grid-cols-[170px_1fr] sm:gap-4 sm:px-5", i > 0 && "border-t border-line")}>
-        <dt className="text-[13px] font-bold text-label">{row.label}</dt>
-        <dd className="flex flex-col gap-1.5 text-[14.5px] leading-[1.55] text-ink">
-          {row.lines.map((l) => <span key={l}>{l}</span>)}
-        </dd>
-      </div>
-    ))}
-  </dl>
-);
+}: { content: OfferContent; reference: string; option: OfferOption | null; plan: PaymentPlan | null }) => {
+  const rows = scheduleRows(content, reference, option, plan);
+  const group = (title: string, note: string, list: typeof rows) => (
+    <div>
+      <p className="text-[15px] font-extrabold text-navy">{title}</p>
+      <p className="mt-1 text-[14px] leading-[1.5] text-body">{note}</p>
+      <dl className="mt-3 border-2 border-navy bg-card">
+        {list.map((row, i) => (
+          <div key={row.label} className={cn("grid gap-1 px-4 py-3 sm:grid-cols-[170px_1fr] sm:gap-4 sm:px-5", i > 0 && "border-t border-line")}>
+            <dt className="text-[13px] font-bold text-label">{row.label}</dt>
+            <dd className="flex flex-col gap-1.5 text-[14.5px] leading-[1.55] text-ink">
+              {row.lines.map((l) => <span key={l}>{l}</span>)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+  return (
+    <div className="flex flex-col gap-6">
+      {group("What you agree to now", "By accepting, you agree to these.", rows.filter((r) => !r.later))}
+      {group("What we agree with you before care starts", "These are part of your care plan. We go through them with you at the introduction, and nothing here is charged without your agreement.", rows.filter((r) => r.later))}
+    </div>
+  );
+};
 
 export const OfferTerms = ({ terms, version, expanded = false }: { terms: TermsClause[]; version: string; expanded?: boolean }) => {
   const [open, setOpen] = useState<number | null>(null);
