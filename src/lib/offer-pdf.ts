@@ -284,6 +284,31 @@ export async function buildOfferPdf(
     y += h;
   }
 
+  /* ---- How it works, before the family has accepted ---- */
+  if (offer.status !== "accepted") {
+    part("How it works", "From this offer to your first day", 40);
+    const validUntil = offer.expires_at ? ` It is valid until ${formatDate(offer.expires_at)}.` : "";
+    const steps: [string, string][] = [
+      ["Read your offer", `Compare the options, your care schedule and the terms of care.${validUntil}`],
+      ["Choose and sign", "On your offer page, pick the option that suits you and how you would like to pay, then sign with your finger or mouse."],
+      ["Pay", `Online with Paystack (card, bank transfer or USSD), or by bank transfer. Monthly, with the first month before care starts${c.upfrontDiscountPercent > 0 ? `, or all ${c.months} months upfront with a ${c.upfrontDiscountPercent}% discount` : ""}.`],
+      ["Your booking is confirmed", "Once your payment is in, we email you your signed agreement to keep."],
+      ["We plan day 0 with you", "Within one working day, we get in touch to arrange meeting your nurse and to agree your care plan before care starts."],
+    ];
+    steps.forEach(([title, detail], i) => {
+      const h = 5 + measure(detail, 9.5, W - 14) + 3;
+      ensure(h);
+      fill(i === 0 ? C.brand : C.navy);
+      doc.rect(M, y, 8, 8, "F");
+      font("extrabold", 8.5, C.white);
+      doc.text(String(i + 1).padStart(2, "0"), M + 4, y + 5.4, { align: "center" });
+      const top = y;
+      para(title, { size: 11, weight: "extrabold", colour: C.navy, x: M + 13, w: W - 13, lead: 1.2, after: 0.5 });
+      para(detail, { size: 9.5, colour: C.body, x: M + 13, w: W - 13, after: 0 });
+      y = Math.max(y, top + 8) + 3.5;
+    });
+  }
+
   /* ---- Options ---- */
   part("Your options", c.options.length > 1 ? "Compare the options" : "The care we are offering", 60);
   const optionBox = (o: OfferOption) => {

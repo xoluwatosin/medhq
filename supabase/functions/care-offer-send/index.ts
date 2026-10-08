@@ -4,8 +4,8 @@
 // very same document the family will see. Sending fixes the offer: from here
 // on its words and prices cannot change.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { kitEmail, kitButton, kitParagraph, kitSteps, kitSubhead, kitTable } from "../_shared/kit-email.ts";
-import { naira, newOfferSecret, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
+import { KIT_ART, kitEmail, kitButton, kitList, kitParagraph } from "../_shared/kit-email.ts";
+import { newOfferSecret, offerTokenHash } from "../_shared/care-offer.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 
 const corsHeaders = {
@@ -69,8 +69,6 @@ Deno.serve(async (req) => {
     const link = `${SITE_URL}/o/${plain}`;
 
     const first = String(contact?.first_name || String(contact?.full_name ?? "").split(" ")[0] || "Hello");
-    const months = Number(content.months ?? 0);
-    const pct = Number(content.upfrontDiscountPercent ?? 0);
     const options = (content.options ?? []) as { id: string; title: string; monthly: number }[];
     const careFor = String(content.careFor ?? "your family");
 
@@ -80,33 +78,30 @@ Deno.serve(async (req) => {
       const key = Deno.env.get("RESEND_API_KEY");
       if (!key) return json({ error: "Email is not configured" }, 500);
       const pdf = typeof body?.pdf_base64 === "string" && body.pdf_base64.length < 12_000_000 ? body.pdf_base64 : null;
+      // A short, warm note: what is inside, and the way in. The prices and the
+      // steps are in the offer itself and in the PDF.
+      const validUntil = offer.expires_at
+        ? new Date(offer.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : null;
       const html = kitEmail({
         eyebrow: "Care offer",
         title: `Your care offer for ${careFor}`,
-        standfirst: `${content.serviceTitle ?? "Care"}, ${months} months`,
-        preheader: options.length > 1 ? `${options.length} options to compare, then sign and pay online` : "Your offer: read it, sign and pay online",
+        accent: "care",
+        art: KIT_ART.nurse,
+        standfirst: `${content.serviceTitle ?? "Care"}, prepared for you`,
+        preheader: `Your care offer for ${careFor} is ready to read`,
         bodyHtml: [
-          kitParagraph(`${first}, thank you for talking with us. Here is our offer for ${careFor}${options.length > 1 ? `, with ${options.length} options to compare` : ""}. Everything is on one page: read it, choose, sign and pay, all from your phone.`),
-          // Fees as a table: one column per option.
-          kitTable(
-            ["Fees", ...options.map((o) => o.title)],
-            [
-              ["A month", ...options.map((o) => naira(o.monthly))],
-              [`${months} months, paid monthly`, ...options.map((o) => naira(optionTotals(o, months, pct).total))],
-              ...(pct > 0 ? [[`${months} months upfront (${pct}% discount)`, ...options.map((o) => naira(optionTotals(o, months, pct).upfront))]] : []),
-            ],
-            ["left", ...options.map(() => "right" as const)],
-          ),
-          kitButton("View your offer", link),
-          kitSubhead("How it works"),
-          kitSteps([
-            { title: "Read your offer", detail: `Compare the options, your care schedule and the terms of care.${offer.expires_at ? ` It is valid until ${new Date(offer.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.` : ""}` },
-            { title: "Choose and sign", detail: "Pick the option that suits you and how you would like to pay, then sign on the page with your finger or mouse." },
-            { title: "Pay", detail: `Online with Paystack (card, bank transfer or USSD), or by bank transfer. Pay monthly, with the first month before care starts${pct > 0 ? `, or all ${months} months upfront and save ${pct}%` : ""}.` },
-            { title: "Your booking is confirmed", detail: "Once your payment is in, we email you your signed agreement to keep." },
-            { title: "We plan day 0 with you", detail: "Within one working day, we get in touch to arrange meeting your nurse and to agree your care plan before care starts." },
+          kitParagraph(`${first}, thank you for talking with us. Your care offer for ${careFor} is ready.`),
+          kitParagraph("Inside, you will find:"),
+          kitList([
+            options.length > 1 ? `The ${["", "", "two", "three", "four"][options.length] ?? options.length} ways we can care for ${careFor}, side by side` : `How we will care for ${careFor}`,
+            "Your care schedule, and what we agree with you before care starts",
+            "Our terms of care",
+            "How to accept, and what happens next",
           ]),
-          kitParagraph("The offer is attached as a PDF to read at your own pace. Questions? Reply to this email, or call or WhatsApp us on +234 812 698 8237."),
+          kitButton("View your care offer", link),
+          kitParagraph(`We have attached it as a PDF too, to read at your own pace${validUntil ? `. It is valid until ${validUntil}` : ""}.`),
+          kitParagraph("Any questions at all, reply to this email, or call or WhatsApp us on +234 812 698 8237. We are happy to talk it through."),
         ].join(""),
       });
       const res = await fetch("https://api.resend.com/emails", {
