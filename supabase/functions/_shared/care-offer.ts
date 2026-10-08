@@ -23,7 +23,10 @@ export const naira = (n: number) => `₦${Math.round(n).toLocaleString("en-NG")}
 
 export function optionTotals(option: OfferOption, months: number, discountPercent: number) {
   const total = option.monthly * months;
-  const upfront = Math.round((total * (100 - discountPercent)) / 100 / 1000) * 1000;
+  // Rounded down, so the discount is never smaller than promised: to the
+  // nearest ₦1,000 on larger sums, to the nearest ₦10 on small ones.
+  const step = total >= 100_000 ? 1000 : 10;
+  const upfront = Math.floor((total * (100 - discountPercent)) / 100 / step) * step;
   return { monthly: option.monthly, total, upfront, saving: total - upfront };
 }
 
