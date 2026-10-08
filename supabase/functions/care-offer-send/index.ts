@@ -4,7 +4,8 @@
 // very same document the family will see. Sending fixes the offer: from here
 // on its words and prices cannot change.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { KIT_ART, kitEmail, kitButton, kitList, kitParagraph } from "../_shared/kit-email.ts";
+import { KIT_ART, kitEmail } from "../_shared/kit-email.ts";
+import { offerEmailBody } from "../_shared/care-offer-email.ts";
 import { newOfferSecret, offerTokenHash } from "../_shared/care-offer.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 
@@ -85,24 +86,12 @@ Deno.serve(async (req) => {
         : null;
       const html = kitEmail({
         eyebrow: "Care offer",
-        title: `Your care offer for ${careFor}`,
-        accent: "care",
+        title: "Your care offer is here",
+        accent: "here",
         art: KIT_ART.nurse,
-        standfirst: `${content.serviceTitle ?? "Care"}, prepared for you`,
-        preheader: `Your care offer for ${careFor} is ready to read`,
-        bodyHtml: [
-          kitParagraph(`${first}, thank you for talking with us. Your care offer for ${careFor} is ready.`),
-          kitParagraph("Inside, you will find:"),
-          kitList([
-            options.length > 1 ? `The ${["", "", "two", "three", "four"][options.length] ?? options.length} ways we can care for ${careFor}, side by side` : `How we will care for ${careFor}`,
-            "Your care schedule, and what we agree with you before care starts",
-            "Our terms of care",
-            "How to accept, and what happens next",
-          ]),
-          kitButton("View your care offer", link),
-          kitParagraph(`We have attached it as a PDF too, to read at your own pace${validUntil ? `. It is valid until ${validUntil}` : ""}.`),
-          kitParagraph("Any questions at all, reply to this email, or call or WhatsApp us on +234 812 698 8237. We are happy to talk it through."),
-        ].join(""),
+        standfirst: `${content.serviceTitle ?? "Care"} for ${careFor}, all in one place`,
+        preheader: `Your care offer for ${careFor} is ready when you are`,
+        bodyHtml: offerEmailBody({ first, careFor, optionCount: options.length, link, validUntil }),
       });
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",

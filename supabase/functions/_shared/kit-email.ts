@@ -243,7 +243,7 @@ export function kitEmail(o: KitEmailOptions): string {
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>@media (max-width:620px){.mc-card{padding:26px 20px !important;}.mc-band{padding:20px 20px 0 !important;}.mc-title{font-size:26px !important;}.mc-art{max-width:72px !important;}.mc-logo{width:124px !important;}.mc-fcol{display:block !important;width:100% !important;padding:0 0 22px !important;}}</style>
+<style>@media (max-width:620px){.mc-card{padding:26px 20px !important;}.mc-band{padding:20px 20px 0 !important;}.mc-title{font-size:26px !important;}.mc-art{max-width:72px !important;}.mc-logo{width:124px !important;}.mc-fcol{display:block !important;width:100% !important;padding:0 0 22px !important;}.mc-tile{height:auto !important;}.mc-tiles{margin:0 0 14px !important;width:100% !important;}.mc-tiles .mc-fcol{padding:0 0 10px !important;}}</style>
 </head><body style="margin:0;padding:0;background:${KIT.page};">
 ${preheader}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${KIT.page};padding:24px 12px 40px;">
