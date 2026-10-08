@@ -1,13 +1,19 @@
-// The family's side of a care offer: open it, and accept it.
+// The family's side of a care offer: open it, accept it, and pay.
 //
 // Anyone holding a live link can read the offer it was sent for. Accepting
 // records the option, how the family will pay, the name they typed, the time,
 // where it came from and the terms version, then tells staff and sends the
 // family a confirmation with the payment details. Accepting does not start
 // care: staff confirm in writing and arrange the introduction first.
-import { createClient } from "npm:@supabase/supabase-js@2";
+//
+// Paying opens a Paystack checkout made there and then, which brings the
+// family back to this page; the payment is then confirmed with Paystack and
+// the family thanked by email. Opening the page also checks, so a payment is
+// never missed if the family closes Paystack before it sends them back.
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { kitEmail, kitButton, kitFacts, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
-import { createCareInvoice, naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
+import { naira, OFFER_TOKEN, offerTokenHash, optionTotals } from "../_shared/care-offer.ts";
+import { confirmCarePayment, createCareInvoice, startCareCheckout } from "../_shared/care-payment.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 
 const corsHeaders = {
@@ -26,11 +32,24 @@ type Offer = {
   invoice_id: string | null; pay_url: string | null;
 };
 
-const view = (o: Offer) => ({
-  reference: o.reference, status: o.status, content: o.content, terms_version: o.terms_version, terms: o.terms,
-  expires_at: o.expires_at, accepted_option: o.accepted_option, accepted_payment: o.accepted_payment,
-  accepted_name: o.accepted_name, accepted_at: o.accepted_at, pay_url: o.pay_url,
-});
+type Db = SupabaseClient;
+
+/** What the family's page shows, with whether the first payment is in. */
+const view = async (db: Db, o: Offer) => {
+  let firstPaid = false;
+  if (o.invoice_id) {
+    const { data } = await db.from("paystack_invoices").select("status").eq("id", o.invoice_id).maybeSingle();
+    firstPaid = data?.status === "paid";
+  }
+  return {
+    reference: o.reference, status: o.status, content: o.content, terms_version: o.terms_version, terms: o.terms,
+    expires_at: o.expires_at, accepted_option: o.accepted_option, accepted_payment: o.accepted_payment,
+    accepted_name: o.accepted_name, accepted_at: o.accepted_at, pay_url: o.pay_url ? "pay" : null, first_paid: firstPaid,
+  };
+};
+
+/** Which payment: "1" is the first (or the upfront one), "M2" onwards a later month. */
+const PAYMENT = /^(1|M\d{1,2})$/;
 
 /**
  * The Paystack invoice for what the family accepted: the first month, or
@@ -38,7 +57,7 @@ const view = (o: Offer) => ({
  * undoes the acceptance, and the next time the page opens it is tried again.
  * Paystack payments mark the invoice paid through the existing webhook.
  */
-async function ensurePaymentLink(db: ReturnType<typeof createClient>, o: Offer): Promise<Offer> {
+async function ensurePaymentLink(db: Db, o: Offer, plain: string): Promise<Offer> {
   if (o.status !== "accepted" || o.pay_url) return o;
   const options = (o.content?.options ?? []) as { id: string; title: string; monthly: number }[];
   const option = options.find((x) => x.id === o.accepted_option);
@@ -56,6 +75,7 @@ async function ensurePaymentLink(db: ReturnType<typeof createClient>, o: Offer):
     description: upfront
       ? `${service}, ${option.title}, for ${careFor}: all ${months} months paid upfront (${pct}% discount, saving ${naira(t.saving)})`
       : `${service}, ${option.title}, for ${careFor}: month 1 of ${months}`,
+    payUrl: `${SITE_URL}/o/${plain}?pay=1`,
   });
   if (!made) return o;
   const { data: updated } = await db.from("care_offers")
@@ -81,7 +101,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const plain = typeof body?.token === "string" ? body.token.trim().toUpperCase() : "";
-    const action = body?.action === "accept" ? "accept" : "load";
+    const action = ["accept", "pay", "confirm"].includes(body?.action) ? body.action as "accept" | "pay" | "confirm" : "load";
     if (!OFFER_TOKEN.test(plain)) return json({ error: "This link is not valid" }, 404);
 
     const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -107,11 +127,43 @@ Deno.serve(async (req) => {
         await db.from("care_offers").update({ first_opened_at: now }).eq("id", o.id).is("first_opened_at", null);
         await db.from("care_activity").insert({ client_id: o.client_id, action: "offer_opened", detail: { offer_id: o.id, reference: o.reference }, actor_id: null });
       }
-      return json({ ok: true, offer: view(await ensurePaymentLink(db, o)) });
+      let current = await ensurePaymentLink(db, o, plain);
+      // A payment made but not yet recorded (the family closed Paystack
+      // before it sent them back) is picked up here.
+      if (current.invoice_id) await confirmCarePayment(db, current.invoice_id);
+      current = ((await db.from("care_offers").select("*").eq("id", o.id).maybeSingle()).data as Offer | null) ?? current;
+      return json({ ok: true, offer: await view(db, current) });
+    }
+
+    if (action === "pay" || action === "confirm") {
+      if (o.status !== "accepted") return json({ error: "Accept the offer first" }, 409);
+      const which = typeof body?.payment === "string" && PAYMENT.test(body.payment) ? body.payment as string : "1";
+      let invoiceId: string | null = null;
+      let month: number | null = null;
+      if (which === "1") {
+        invoiceId = (await ensurePaymentLink(db, o, plain)).invoice_id;
+      } else {
+        month = Number(which.slice(1));
+        const { data: inst } = await db.from("care_offer_instalments").select("invoice_id").eq("offer_id", o.id).eq("number", month).maybeSingle();
+        invoiceId = inst?.invoice_id ?? null;
+      }
+      if (!invoiceId) return json({ error: "This payment is not ready yet. Message us and we will help." }, 409);
+
+      if (action === "confirm") {
+        const reference = typeof body?.reference === "string" ? body.reference.slice(0, 120) : null;
+        const paid = await confirmCarePayment(db, invoiceId, reference);
+        const fresh = ((await db.from("care_offers").select("*").eq("id", o.id).maybeSingle()).data as Offer | null) ?? o;
+        return json({ ok: true, paid, month, offer: await view(db, fresh) });
+      }
+
+      const started = await startCareCheckout(db, invoiceId, `${SITE_URL}/o/${plain}?paid=${which}`, { offer_id: o.id, month });
+      if (!started) return json({ error: "Paystack could not be reached. Please try again, or pay by bank transfer." }, 502);
+      if ("paid" in started) return json({ ok: true, paid: true });
+      return json({ ok: true, url: started.url });
     }
 
     // Accept.
-    if (o.status === "accepted") return json({ ok: true, offer: view(await ensurePaymentLink(db, o)), already: true });
+    if (o.status === "accepted") return json({ ok: true, offer: await view(db, await ensurePaymentLink(db, o, plain)), already: true });
     if (o.expires_at && new Date(o.expires_at) < new Date()) {
       return json({ error: "This offer has expired. Contact us and we will send you an up-to-date one." }, 410);
     }
@@ -141,7 +193,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (acceptError) throw acceptError;
     if (!accepted) return json({ error: "This offer can no longer be accepted. Contact us and we will help." }, 409);
-    const a = await ensurePaymentLink(db, accepted as Offer);
+    const a = await ensurePaymentLink(db, accepted as Offer, plain);
 
     await db.from("care_activity").insert({
       client_id: o.client_id, action: "offer_accepted",
@@ -169,7 +221,7 @@ Deno.serve(async (req) => {
       standfirst: `${o.reference}, ${o.content?.preparedFor ?? ""}`,
       bodyHtml: [
         kitFacts(facts),
-        kitParagraph(`First payment due: ${naira(due)}. ${a.pay_url ? "A Paystack payment link was made for it." : "The Paystack link could not be made; it is tried again when the family opens the offer."} Confirm acceptance in writing and arrange the introduction.`),
+        kitParagraph(`First payment due: ${naira(due)}. ${a.pay_url ? "The family can pay it online from the offer page." : "The payment could not be set up; it is tried again when the family opens the offer."} Confirm acceptance in writing and arrange the introduction.`),
         kitButton("Open the record", `${SITE_URL}/admin/clients/${o.client_id}?tab=commercial`),
       ].join(""),
     }));
@@ -208,7 +260,7 @@ Deno.serve(async (req) => {
       }));
     }
 
-    return json({ ok: true, offer: view(a) });
+    return json({ ok: true, offer: await view(db, a) });
   } catch (e) {
     console.error("care-offer failed", e instanceof Error ? e.message : e);
     return json({ error: "Something went wrong. Please try again, or contact us." }, 500);

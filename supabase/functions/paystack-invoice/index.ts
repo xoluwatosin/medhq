@@ -9,6 +9,7 @@ import {
   paystackLineItems,
   type InvoiceLineInput,
 } from "../_shared/paystack-invoice.ts";
+import { confirmCarePayment } from "../_shared/care-payment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -193,6 +194,12 @@ serve(async (req) => {
       const { data: invoice } = await admin
         .from("paystack_invoices").select("*").eq("id", id).maybeSingle();
       if (!invoice) return json({ error: "Invoice not found" }, 404);
+      // A care payment paid through checkout is checked by its reference.
+      if (!invoice.request_code && invoice.paystack_reference && action === "verify") {
+        await confirmCarePayment(admin as never, id);
+        const { data: updated } = await admin.from("paystack_invoices").select("*").eq("id", id).single();
+        return json({ invoice: updated });
+      }
       if (!invoice.request_code) return json({ error: "This invoice is not on Paystack" }, 400);
 
       if (action === "archive") {

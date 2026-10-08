@@ -60,6 +60,8 @@ export interface OfferView {
   accepted_at: string | null;
   /** Paystack payment link for the first payment, made when the offer is accepted. */
   pay_url?: string | null;
+  /** Whether the first payment (or the upfront one) has been received. */
+  first_paid?: boolean;
 }
 
 export type PaymentPlan = "monthly" | "upfront";

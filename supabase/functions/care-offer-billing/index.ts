@@ -1,14 +1,17 @@
 // Monthly care payments, made and sent before they are due.
 //
-// Runs each morning. Every monthly payment due within five days that has no
-// Paystack link yet gets one, and the family is emailed the amount, the due
-// date, a Pay with Paystack button and the bank details. Staff can also bill
+// Runs each morning. Every monthly payment due within five days that has not
+// been billed is filed as an invoice, and the family is emailed the amount,
+// the due date, a Pay with Paystack button (a fresh link to their offer page,
+// which opens the checkout) and the bank details. The run also asks Paystack
+// about any care payment still unpaid, so none is missed if a webhook is. Staff can also bill
 // one payment straight away from the client record. A payment is claimed
 // before Paystack is called, so two runs never bill it twice; if Paystack
 // fails, the claim is released and the next run tries again.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { kitButton, kitEmail, kitFacts, kitList, kitParagraph, kitSubhead } from "../_shared/kit-email.ts";
-import { createCareInvoice, naira } from "../_shared/care-offer.ts";
+import { naira, newOfferSecret, offerTokenHash } from "../_shared/care-offer.ts";
+import { confirmCarePayment, createCareInvoice } from "../_shared/care-payment.ts";
 import { SITE_URL } from "../_shared/site-url.ts";
 
 const corsHeaders = {
@@ -90,11 +93,17 @@ Deno.serve(async (req) => {
       const option = ((o.content?.options ?? []) as { id: string; title: string }[]).find((x) => x.id === o.accepted_option);
       const careFor = String(o.content?.careFor ?? "");
       const service = String(o.content?.serviceTitle ?? "Care");
-      const made = await createCareInvoice(db, {
+      // A fresh link to the offer page, which opens the checkout for this month.
+      const plain = `${o.reference}-${newOfferSecret()}`;
+      const { error: linkError } = await db.from("care_offer_links").insert({
+        offer_id: o.id, token_hash: await offerTokenHash(plain), channel: "email", created_by: actor,
+      });
+      const made = linkError ? null : await createCareInvoice(db, {
         clientId: o.client_id,
         reference: o.reference,
         amount: Number(row.amount),
         description: `${service}${option ? `, ${option.title}` : ""}, for ${careFor}: month ${row.number} of ${months}, from ${longDate(row.due_on)}`,
+        payUrl: `${SITE_URL}/o/${plain}?pay=M${row.number}`,
       });
       if (!made) {
         await db.from("care_offer_instalments").update({ issued_at: null }).eq("id", row.id);
@@ -135,6 +144,20 @@ Deno.serve(async (req) => {
       billed.push(`${o.reference} month ${row.number}${sent ? "" : " (email not sent)"}`);
     }
 
+    // Any care payment still unpaid is checked with Paystack; a payment found
+    // is recorded and the family thanked.
+    let confirmed = 0;
+    if (!single) {
+      const { data: offers } = await db.from("care_offers").select("invoice_id").eq("status", "accepted").not("invoice_id", "is", null);
+      const { data: months } = await db.from("care_offer_instalments").select("invoice_id").not("invoice_id", "is", null);
+      const ids = [...new Set([...(offers ?? []), ...(months ?? [])].map((r: { invoice_id: string }) => r.invoice_id))];
+      if (ids.length) {
+        const { data: unpaid } = await db.from("paystack_invoices").select("id").in("id", ids).neq("status", "paid")
+          .or("paystack_reference.not.is.null,request_code.not.is.null");
+        for (const inv of unpaid ?? []) if (await confirmCarePayment(db, inv.id)) confirmed++;
+      }
+    }
+
     // Staff hear about every run that did something.
     const staff = Deno.env.get("NOTIFICATION_EMAIL") ?? "";
     if (staff && (billed.length || failed.length)) {
@@ -148,7 +171,7 @@ Deno.serve(async (req) => {
         ].join(""),
       }));
     }
-    return json({ ok: true, billed, failed });
+    return json({ ok: true, billed, failed, confirmed });
   } catch (e) {
     console.error("care-offer-billing failed", e instanceof Error ? e.message : e);
     return json({ error: "Billing run failed" }, 500);

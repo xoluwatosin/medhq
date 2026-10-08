@@ -4,7 +4,7 @@
 // reachable, one part on screen, and Back and Next at the foot. No account is
 // needed; the link is the key.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Download, MessageCircle } from "lucide-react";
 import SEO from "@/components/SEO";
 import { NotchTag, Watermark } from "@/components/mc/brand";
@@ -98,6 +98,12 @@ const Cap = ({ title, onPdf, making, artSrc }: { title: string; onPdf?: () => vo
 
 const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const { token = "" } = useParams();
+  const [search] = useSearchParams();
+  // Back from Paystack: ?paid=1 (or M2 and on) with Paystack's own reference.
+  // From an email's Pay button: ?pay=1 (or M2 and on) opens the checkout.
+  const [payParam] = useState(() => (preview ? null : search.get("pay")));
+  const [paidParam] = useState(() => (preview ? null : search.get("paid")));
+  const [returnRef] = useState(() => search.get("reference") ?? search.get("trxref"));
   const [offer, setOffer] = useState<OfferView | null>(preview ?? null);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
@@ -113,6 +119,10 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [payWay, setPayWay] = useState<"paystack" | "bank">("paystack");
   const [seen, setSeen] = useState<number[]>([0]);
+  const [paying, setPaying] = useState(false);
+  const [payProblem, setPayProblem] = useState<string | null>(null);
+  /** The payment just made, once Paystack has sent the family back. */
+  const [returned, setReturned] = useState<{ paid: boolean; month: number | null } | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLOListElement>(null);
 
@@ -121,17 +131,60 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
       setOption(preview.accepted_option ?? (preview.content.options.length === 1 ? preview.content.options[0].id : null));
       return;
     }
-    const { data, error: e } = await supabase.functions.invoke("care-offer", { body: { token, action: "load" } });
+    const returning = !!paidParam;
+    const { data, error: e } = await supabase.functions.invoke("care-offer", {
+      body: returning
+        ? { token, action: "confirm", payment: paidParam, reference: returnRef }
+        : { token, action: "load" },
+    });
     if (e || !data?.ok) {
       setError(await errorFrom(data, e, "We could not open this offer."));
       return;
     }
     const o = data.offer as OfferView;
+    if (returning || payParam) {
+      // Straight to the booking, without the welcome screen.
+      setOpened(true);
+      setStep(STEPS.length - 1);
+      setSeen(STEPS.map((_, i) => i));
+      if (returning) setReturned({ paid: !!data.paid, month: data.month ?? null });
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     setOffer(o);
     setOption((current) => current ?? o.accepted_option ?? (o.content.options.length === 1 ? o.content.options[0].id : null));
-  }, [token, preview]);
+  }, [token, preview, paidParam, payParam, returnRef]);
 
   useEffect(() => { void load(); }, [load]);
+
+  /** Off to a Paystack checkout made just now; Paystack brings them back here. */
+  const startPay = useCallback(async (which: string) => {
+    if (preview) {
+      setPayProblem("This is a preview. Paying only works from the family's link.");
+      return;
+    }
+    setPaying(true);
+    setPayProblem(null);
+    const { data, error: e } = await supabase.functions.invoke("care-offer", { body: { token, action: "pay", payment: which } });
+    if (data?.ok && data.url) {
+      window.location.assign(data.url as string);
+      return;
+    }
+    setPaying(false);
+    if (data?.ok && data.paid) {
+      void load();
+      return;
+    }
+    setPayProblem(await errorFrom(data, e, "Paystack could not be opened. Please try again, or pay by bank transfer."));
+  }, [preview, token, load]);
+
+  // An email's Pay button: once the offer is open, go straight to Paystack.
+  const autoPaid = useRef(false);
+  useEffect(() => {
+    if (!payParam || autoPaid.current || !offer || offer.status !== "accepted") return;
+    if (payParam === "1" && offer.first_paid) return;
+    autoPaid.current = true;
+    void startPay(payParam);
+  }, [payParam, offer, startPay]);
 
   // The accessibility button keeps clear of the Back and Next bar, measured
   // once the bar is on screen (it is not there on the welcome screen).
@@ -240,7 +293,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   const open = offerOpen(offer);
   const chosen = c.options.find((o) => o.id === (accepted ? offer.accepted_option : option)) ?? null;
   const acceptedPlan = (offer.accepted_payment ?? plan) as PaymentPlan;
-  const payUrl = offer.pay_url ?? c.payment.payOnlineUrl ?? null;
+  const firstPaid = !!offer.first_paid;
   const due = chosen ? firstPayment(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan) : 0;
   const ready = !!option && agree && name.trim().includes(" ") && name.trim().length >= 3;
   const current = STEPS[step];
@@ -412,25 +465,44 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
             Accepted by {offer.accepted_name}{offer.accepted_at ? ` on ${formatDate(offer.accepted_at)}` : ""}. We have emailed you a copy.
           </p>
         </div>
+        {returned && returned.month && returned.month > 1 && (
+          <p role="status" className="border-l-4 border-brand bg-tint px-4 py-3 text-[15px] font-bold leading-[1.55] text-navy">
+            {returned.paid
+              ? `Thank you. Your payment for month ${returned.month} has been received, and we have emailed you a confirmation.`
+              : `We have not had confirmation of your payment for month ${returned.month} from Paystack yet. If you paid, it can take a few minutes: open this page again shortly.`}
+          </p>
+        )}
+        {firstPaid ? (
+          <div className="border-2 border-navy bg-card">
+            <div className="flex items-start gap-3 bg-navy px-4 py-4 text-white sm:px-5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white text-navy"><Check className="h-5 w-5" aria-hidden="true" /></span>
+              <div>
+                <p className="text-[18px] font-extrabold leading-tight">Payment received, thank you</p>
+                <p className="mt-1 text-[14.5px] leading-[1.5] text-body-navy">Your care is booked. We have emailed you a confirmation.</p>
+              </div>
+            </div>
+            <div className="p-4 sm:p-5"><OfferFeeTable rows={chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan)} caption="Your fees" /></div>
+          </div>
+        ) : (
         <div>
           <OfferLabel>{acceptedPlan === "upfront" ? "Your payment" : "Your first payment"}</OfferLabel>
+          {returned && !returned.paid && returned.month === null && (
+            <p role="status" className="mt-3 border-l-4 border-brand bg-tint px-4 py-3 text-[14.5px] leading-[1.55] text-ink">
+              We have not had confirmation of your payment from Paystack yet. If you paid, it can take a few minutes: open this page again shortly. If you did not finish paying, you can try again below.
+            </p>
+          )}
           <div className="mt-3"><OfferFeeTable rows={chosenFeeRows(chosen, c.months, c.upfrontDiscountPercent, acceptedPlan)} caption="Your fees" /></div>
           <p className="mt-3 text-[14.5px] text-body">Choose how you would like to pay {naira(due)}.</p>
           <div className="mt-4 flex flex-col gap-2.5">
-            <Choice label="Pay online with Paystack" blurb="Card, bank transfer or USSD. Paid instantly and confirmed automatically." selected={payWay === "paystack"} onClick={() => setPayWay("paystack")} />
+            <Choice label="Pay online with Paystack" blurb="Card, bank transfer or USSD. Paid instantly and confirmed automatically, then you come straight back here." selected={payWay === "paystack"} onClick={() => setPayWay("paystack")} />
             <Choice label="Pay by bank transfer" blurb="Send it from your bank to ours, using your reference." selected={payWay === "bank"} onClick={() => setPayWay("bank")} />
           </div>
           {payWay === "paystack" && (
             <div className="mt-4">
-              {payUrl ? (
-                <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "w-full sm:w-auto")}>
-                  Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" />
-                </a>
-              ) : (
-                <p className="border-l-4 border-brand bg-tint px-4 py-3 text-[14.5px] leading-[1.55] text-ink">
-                  Your payment link is being prepared. Open this page again in a few minutes, or pay by bank transfer now.
-                </p>
-              )}
+              <button type="button" disabled={paying} onClick={() => void startPay("1")} className={cn(requestPrimary, "w-full sm:w-auto")}>
+                {paying ? "Opening Paystack" : <>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></>}
+              </button>
+              {payProblem && <p className="mt-3 text-[14.5px] font-bold text-destructive" role="alert">{payProblem}</p>}
             </div>
           )}
           {payWay === "bank" && (
@@ -445,6 +517,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
             <MessageCircle className="h-4 w-4" /> Need another way to pay? Message us
           </a>
         </div>
+        )}
         <details className="border-2 border-navy bg-card">
           <summary className="cursor-pointer px-4 py-3 text-[15px] font-extrabold text-navy">Your care schedule</summary>
           <div className="border-t-2 border-navy"><OfferSchedule content={c} reference={offer.reference} option={chosen} plan={acceptedPlan} /></div>
@@ -545,8 +618,8 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   };
 
   const primary = isLast
-    ? (accepted && payWay === "paystack" && payUrl
-        ? <a href={payUrl} target="_blank" rel="noreferrer" className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></a>
+    ? (accepted && !firstPaid && payWay === "paystack"
+        ? <button type="button" disabled={paying} onClick={() => void startPay("1")} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}>{paying ? "Opening Paystack" : <>Pay {naira(due)} with Paystack <ArrowRight className="h-4 w-4" /></>}</button>
         : accepted || !open
         ? <a href={WHATSAPP} className={cn(requestPrimary, "flex-1 sm:flex-none md:min-h-10 md:px-4 md:text-[14px]")}><MessageCircle className="h-4 w-4" /> Questions? WhatsApp us</a>
         : (
