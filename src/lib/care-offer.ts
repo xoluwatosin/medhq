@@ -143,7 +143,7 @@ export const offerWords = (content: Pick<OfferContent, "kind" | "carer" | "careF
       : "Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment. Nothing is bought or charged without your agreement.",
     needsLabel: elder ? "Care needs" : "Baby's needs",
     needsDetail: elder
-      ? "Medicines, diet, mobility, memory and any instructions from their doctor."
+      ? "Medicines, diet, mobility, memory and any instructions from the doctor."
       : "Feeding, sleep and any medical instructions from the hospital.",
     needsFallback: elder
       ? `Your ${carer} and our clinical lead go through ${content.careFor}'s needs with you before care starts.`
@@ -195,7 +195,7 @@ export const scheduleRows = (
   const later: ScheduleRow[] = [
     { label: "Start date", lines: [w.startDate] },
     ...options.map((o) => ({ label: option ? "Daily routine" : `Daily routine: ${o.title}`, lines: ["Proposed, to agree with you:", ...(o.rota?.length ? o.rota : [o.summary])], later: true })),
-    { label: "Days off", lines: [`Which days, for example one day a week or two days together every two weeks. A relief ${w.carer} we provide covers them, at no extra cost.`] },
+    { label: "Days off", lines: [`${content.kind === "eldercare" ? "For live-in care: which" : "Which"} days, for example one day a week or two days together every two weeks. A relief ${w.carer} we provide covers them, at no extra cost.`] },
     { label: "Supplies", lines: content.supplies?.length ? content.supplies : [w.supplies] },
     { label: w.needsLabel, lines: [content.assessment || w.needsFallback, w.needsDetail] },
     { label: "Emergency plan", lines: ["Who to call, the hospital to use and how to get there, at any time of day or night."] },
