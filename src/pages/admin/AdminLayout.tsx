@@ -1,6 +1,7 @@
 import { Outlet, Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBell } from "@/components/admin/notifications/NotificationBell";
 import { LogOut, ArrowLeft, Menu, Search, UserCog, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -349,6 +350,8 @@ const AdminLayout = () => {
               <Button variant="ghost" size="icon" className="sm:hidden" aria-label="Search admin" onClick={() => setSearchOpen(true)}>
                 <Search className="h-5 w-5" />
               </Button>
+
+              <NotificationBell />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

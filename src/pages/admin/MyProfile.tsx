@@ -4,6 +4,7 @@
 // narrow: their own details, the paperwork we need from them, and the contract
 // they are on, read in full and signed here with an audit trail behind it.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Briefcase, CalendarDays, CheckCircle2, Download, Loader2, Mail, MapPin, Phone, Save,
@@ -48,6 +49,14 @@ const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
 
 const MyProfile = () => {
+  // Notifications link here with ?tab= (leave, reviews) or ?person= (someone in your team).
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") ?? "details";
+  const setParam = (key: string, value: string | null) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (value) next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
   const { user, adminDisplayName } = useAuth();
   const { toast } = useToast();
   const [person, setPerson] = useState<any>(null);
@@ -192,9 +201,9 @@ const MyProfile = () => {
       />
 
       {/* Managers see what is waiting for them first. Renders nothing for anyone without a team. */}
-      {person.is_staff && <MyTeam myPersonId={person.id} />}
+      {person.is_staff && <MyTeam myPersonId={person.id} openPersonId={params.get("person")} onClosePerson={() => setParam("person", null)} />}
 
-      <Tabs defaultValue="details">
+      <Tabs value={tab} onValueChange={(v) => setParam("tab", v === "details" ? null : v)}>
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="details">Details</TabsTrigger>
           {person.is_staff && <TabsTrigger value="leave">Leave</TabsTrigger>}

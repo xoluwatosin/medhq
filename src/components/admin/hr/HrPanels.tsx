@@ -537,13 +537,23 @@ export const Reviews = ({
 
 /* ---- My team ------------------------------------------------------------- */
 
-export const MyTeam = ({ myPersonId }: { myPersonId: string | null }) => {
+export const MyTeam = ({ myPersonId, openPersonId, onClosePerson }: {
+  myPersonId: string | null;
+  /** Opens this person's sheet once the team has loaded, e.g. from a notification. */
+  openPersonId?: string | null;
+  onClosePerson?: () => void;
+}) => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [open, setOpen] = useState<TeamMember | null>(null);
   const load = useCallback(async () => {
     try { setTeam(await loadMyTeam()); } catch { setTeam([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!openPersonId) return;
+    const member = team.find((t) => t.id === openPersonId);
+    if (member) setOpen(member);
+  }, [openPersonId, team]);
   const direct = useMemo(() => team.filter((t) => t.direct), [team]);
   if (team.length === 0) return null;
 
@@ -577,7 +587,7 @@ export const MyTeam = ({ myPersonId }: { myPersonId: string | null }) => {
         {direct.length === 0 && <p className="mt-2 text-[13px] text-muted-foreground">No one reports to you directly.</p>}
       </MuSection>
 
-      <CareSheet open={!!open} onOpenChange={(v) => { if (!v) { setOpen(null); void load(); } }} title={open?.full_name ?? ""} description={open?.job_title ?? undefined}>
+      <CareSheet open={!!open} onOpenChange={(v) => { if (!v) { setOpen(null); onClosePerson?.(); void load(); } }} title={open?.full_name ?? ""} description={open?.job_title ?? undefined}>
         {open && (
           <div className="-mx-1 flex flex-col gap-6 [&_section]:shadow-none">
             <PersonLeave personId={open.id} />
