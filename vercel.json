@@ -108,6 +108,30 @@
   ],
   "rewrites": [
     {
+      "source": "/o/:token",
+      "destination": "/share/offer"
+    },
+    {
+      "source": "/care/offer/:token",
+      "destination": "/share/offer"
+    },
+    {
+      "source": "/pre-assessment/:token",
+      "destination": "/share/pre-assessment"
+    },
+    {
+      "source": "/care/start/:token",
+      "destination": "/share/care-start"
+    },
+    {
+      "source": "/care/invitation/:token",
+      "destination": "/share/care-invitation"
+    },
+    {
+      "source": "/contract/:token",
+      "destination": "/share/contract"
+    },
+    {
       "source": "/(.*)",
       "destination": "/app"
     }

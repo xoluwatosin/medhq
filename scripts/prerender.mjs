@@ -34,6 +34,57 @@ const log = (...a) => console.log("[prerender]", ...a);
 const shell = readFileSync(join(DIST, existsSync(join(DIST, "app.html")) ? "app.html" : "index.html"), "utf8");
 writeFileSync(join(DIST, "app.html"), shell);
 
+// Private links sent to families (offers, forms, invitations) and to staff
+// (contracts) are never pre-rendered, so their previews used to show the
+// plain site card. Each kind gets its own small page: the shell with its own
+// title, line and picture. vercel.json points those links at these pages; the
+// app still reads the link itself, so nothing about the page changes.
+// Written here first with the site card, so the pages always exist; the
+// pictures are drawn later, once Chrome is up.
+const PRIVATE_LINKS = [
+  { name: "offer", title: "Your care offer is ready", pill: "Just for your family", art: "obj-envelope-heart",
+    line: "Your options, care schedule and terms in one place. Choose, sign and pay right on the page." },
+  { name: "pre-assessment", title: "A few questions before your visit", pill: "Saves as you go", art: "obj-clipboard-checks",
+    line: "Tell us about the care you need, so we arrive prepared. Your answers save as you go." },
+  { name: "care-start", title: "Tell us who the care is for", pill: "Just for your family", art: "obj-hands-heart",
+    line: "A few details about the person receiving care, before your pre-assessment." },
+  { name: "care-invitation", title: "Follow your family’s care", pill: "Private and secure", art: "obj-house-heart",
+    line: "Your invitation to see your family's care with Medic Connect." },
+  { name: "contract", title: "Your contract is ready to sign", pill: "Sign on your phone", art: "obj-signed-contract",
+    line: "Read and sign your offer of employment with Medic Connect." },
+];
+
+const privateShell = (link, image) => {
+  const t = esc(`${link.title} | Medic Connect`);
+  const d = esc(link.line);
+  const tags = [
+    `<title>${t}</title>`,
+    `<meta name="description" content="${d}" />`,
+    `<meta name="robots" content="noindex, nofollow" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="Medic Connect" />`,
+    `<meta property="og:title" content="${esc(link.title)}" />`,
+    `<meta property="og:description" content="${d}" />`,
+    `<meta property="og:image" content="${image}">`,
+    `<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">`,
+    `<meta property="og:image:alt" content="${esc(link.title)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${esc(link.title)}" />`,
+    `<meta name="twitter:description" content="${d}" />`,
+    `<meta name="twitter:image" content="${image}">`,
+  ].join("\n    ");
+  return shell
+    .replace(SHELL_TITLE, "")
+    .replace(/<meta name="description"[^>]*>/, "")
+    .replace(/<meta (?:property="og:[^"]+"|name="twitter:[^"]+")[^>]*>\s*/g, "")
+    .replace("<head>", `<head>\n    ${tags}`);
+};
+
+const writePrivateShell = (link, image) => {
+  mkdirSync(join(DIST, "share"), { recursive: true });
+  writeFileSync(join(DIST, "share", `${link.name}.html`), privateShell(link, image));
+};
+
 const paths = [...readFileSync(join(DIST, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)]
   .map((m) => m[1].replace(SITE, "") || "/")
   .filter((p, i, all) => all.indexOf(p) === i);
@@ -206,6 +257,37 @@ const withShareCard = async (browser, base, html, path, picture, pictureIsArt) =
   }
 };
 
+// The built file for a piece of art, e.g. "obj-envelope-heart" to assets/obj-envelope-heart-AbC123.webp.
+const builtArt = (name) => {
+  try {
+    const file = readdirSync(join(DIST, "assets")).find((f) => f.startsWith(`${name}-`) && /\.(webp|png)$/.test(f));
+    return file ? `assets/${file}` : null;
+  } catch { return null; }
+};
+
+const privateCard = async (browser, base, link) => {
+  const picture = builtArt(link.art);
+  const page = await browser.newPage();
+  try {
+    await page.setViewport({ width: 1200, height: 630 });
+    await page.goto(`${base}/__card`);
+    await page.setContent(cardHtml(base, { title: link.title, price: link.pill, picture, art: true, logo: LOGO }), { waitUntil: "load", timeout: 15_000 });
+    await page.evaluate(() => document.fonts.ready);
+    const shot = await page.screenshot({ type: "png" });
+    const sharp = (await import("sharp")).default;
+    const card = await sharp(shot).flatten({ background: "#26306B" }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+    mkdirSync(join(DIST, "og"), { recursive: true });
+    writeFileSync(join(DIST, "og", `link-${link.name}.jpg`), card);
+    writePrivateShell(link, `${SITE}/og/link-${link.name}.jpg?v=${createHash("sha1").update(card).digest("hex").slice(0, 8)}`);
+    return true;
+  } catch (e) {
+    log(`kept the site card for the ${link.name} link: ${String(e?.message ?? e).split("\n")[0]}`);
+    return false;
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+};
+
 const launch = async () => {
   const puppeteer = (await import("puppeteer-core")).default;
   if (process.env.PRERENDER_CHROME) {
@@ -312,6 +394,7 @@ const renderOne = async (browser, base, path) => {
 };
 
 const main = async () => {
+  for (const link of PRIVATE_LINKS) writePrivateShell(link, DEFAULT_SHARE);
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;
   let browser;
@@ -321,6 +404,10 @@ const main = async () => {
     log("Chrome did not start, so pages stay as the shell:", String(e?.message ?? e).split("\n")[0]);
     return;
   }
+  // One at a time: drawn all at once, a slow build machine can time out.
+  const cards = [];
+  for (const link of PRIVATE_LINKS) cards.push(await privateCard(browser, base, link));
+  log(`${cards.filter(Boolean).length} of ${PRIVATE_LINKS.length} private link cards drawn.`);
   const queue = [...paths];
   const results = [];
   await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
