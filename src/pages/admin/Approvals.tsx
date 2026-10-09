@@ -20,6 +20,8 @@ interface PendingItem {
   created_by_name: string | null;
   approval_status: string;
   created_at: string;
+  status?: string;
+  published_at?: string | null;
   type: "blog" | "campaign";
 }
 
@@ -33,7 +35,7 @@ const Approvals = () => {
   const fetchPending = async () => {
     const db = adminDb();
     const [blogRes, campaignRes] = await Promise.all([
-      db.from("blog_posts").select("id, title, created_by_name, approval_status, created_at").eq("approval_status", "pending"),
+      db.from("blog_posts").select("id, title, created_by_name, approval_status, created_at, status, published_at").eq("approval_status", "pending"),
       db.from("campaigns").select("id, title, created_by_name, approval_status, created_at").eq("approval_status", "pending"),
     ]);
     const failed = blogRes.error || campaignRes.error;
@@ -52,8 +54,11 @@ const Approvals = () => {
     const table = item.type === "blog" ? "blog_posts" : "campaigns";
     const updateData: Record<string, unknown> = { approval_status: "approved", approval_note: null };
     if (item.type === "blog") {
-      updateData.status = "published";
-      updateData.published_at = new Date().toISOString();
+      // A post scheduled for later, or already live, keeps its date; anything else goes live now.
+      const later = !!item.published_at && new Date(item.published_at) > new Date();
+      const keepDate = later || (item.status === "published" && !!item.published_at);
+      updateData.status = later ? "scheduled" : "published";
+      updateData.published_at = keepDate ? item.published_at : new Date().toISOString();
     }
     const { error } = await adminDb().from(table).update(updateData).eq("id", item.id);
     if (error) {
@@ -69,7 +74,8 @@ const Approvals = () => {
         toast({ title: "Campaign sent", description: `Delivered to ${data?.totalSent ?? 0} recipients.` });
       }
     } else {
-      toast({ title: "Published", description: `"${item.title || "Untitled"}" is live on The Bridge.` });
+      const later = !!item.published_at && new Date(item.published_at) > new Date();
+      toast({ title: later ? "Scheduled" : "Published", description: later ? `"${item.title || "Untitled"}" goes live on ${new Date(item.published_at as string).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.` : `"${item.title || "Untitled"}" is live on The Bridge.` });
     }
     setItems((prev) => prev.filter((i) => i.id !== item.id));
     setProcessing(null);

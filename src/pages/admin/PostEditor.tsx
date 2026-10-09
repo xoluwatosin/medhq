@@ -283,7 +283,9 @@ const PostEditor = () => {
     }
 
     // Approval workflow: if user requires approval and trying to publish
-    if (requiresBlogApproval && !isSuperAdmin && publishStatus === "published") {
+    // The database applies the same rule, so this only keeps the screen honest.
+    const goingLive = publishStatus === "published" || publishStatus === "scheduled";
+    if (requiresBlogApproval && !isSuperAdmin && goingLive) {
       postData.status = "draft";
       postData.approval_status = "pending";
       postData.approval_note = null;
@@ -300,7 +302,7 @@ const PostEditor = () => {
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
     } else {
-      const submittedForApproval = requiresBlogApproval && !isSuperAdmin && publishStatus === "published";
+      const submittedForApproval = requiresBlogApproval && !isSuperAdmin && goingLive;
       toast({ title: submittedForApproval ? "Submitted for approval" : publishStatus === "published" ? "Published" : publishStatus === "scheduled" ? "Scheduled" : "Saved as draft" });
       navigate("/admin/posts");
     }
