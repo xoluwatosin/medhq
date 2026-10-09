@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
               accountNumber: String(pay.accountNumber ?? ""), reference: o.reference,
             },
           }),
-          `<p style="font-family:${KIT.font};font-size:15.5px;line-height:1.7;color:${KIT.body};margin:0 0 22px;">As soon as your payment is in, we email you your signed agreement and get in touch to plan day 0: meeting your nurse and agreeing your care plan.</p>`,
+          `<p style="font-family:${KIT.font};font-size:15.5px;line-height:1.7;color:${KIT.body};margin:0 0 22px;">As soon as your payment is in, we email you your signed agreement and get in touch to plan day 0: meeting your ${String(o.content?.carer ?? "nurse")} and agreeing your care plan.</p>`,
           softButton("View your offer", `${SITE_URL}/o/${plain}`),
           signOff("Need another way to pay? Reply or WhatsApp us and we will arrange it."),
         ].join(""),

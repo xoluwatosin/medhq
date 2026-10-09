@@ -239,7 +239,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
     eyebrow: firstPayment ? "Booking confirmed" : "Payment received",
     title: firstPayment ? "You are all booked in" : `Month ${month}, all paid`,
     accent: firstPayment ? "booked" : "paid",
-    art: KIT_ART.nurse,
+    art: c.kind === "eldercare" ? KIT_ART.caregiver : KIT_ART.nurse,
     standfirst: firstPayment ? "Your payment is in, and your care is confirmed" : "Thank you, your payment is in",
     preheader: firstPayment ? "Your payment is in. Here is what happens next." : `Your payment for month ${month} is in.`,
     bodyHtml: [
@@ -259,7 +259,7 @@ export async function thankForCarePayment(db: SupabaseClient, invoiceId: string)
       ...(firstPayment
         ? [stepTiles("What happens next", [
             { art: KIT_ART.calendar, title: "We plan day 0 with you", line: "We will be in touch within one working day." },
-            { art: KIT_ART.coordinator, title: "You meet your nurse", line: "An introduction before the first shift." },
+            { art: KIT_ART.coordinator, title: `You meet your ${String(c.carer ?? "nurse")}`, line: "An introduction before care starts." },
             { art: KIT_ART.carePlan, title: "We agree your care plan together", line: "The daily routine, supplies, days off and emergency plan." },
             { art: KIT_ART.shield, title: "Care starts", line: String(c.start ?? "On the agreed date.") },
           ])]

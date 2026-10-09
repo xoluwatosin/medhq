@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, Minus } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { feeRows, naira, optionTotals, scheduleRows, type FeeRow, type OfferContent, type OfferOption, type PaymentPlan } from "@/lib/care-offer";
+import { feeRows, naira, offerWords, optionTotals, scheduleRows, type FeeRow, type OfferContent, type OfferOption, type PaymentPlan } from "@/lib/care-offer";
 import type { TermsClause } from "@/content/care/newborn-terms";
 import { cn } from "@/lib/utils";
 
@@ -286,7 +286,7 @@ const OfferDocument = ({
       <div className="mt-4"><OfferPriceNote /></div>
     </Part>
 
-    <Part label="What is included" title="Your nurse's responsibilities"><OfferIncluded content={content} /></Part>
+    <Part label="What is included" title={offerWords(content).duties}><OfferIncluded content={content} /></Part>
     <Part label="Your care schedule" title="Care schedule">
       <OfferSchedule content={content} reference={reference} option={content.options.find((o) => o.id === chosenOption) ?? null} plan={null} />
     </Part>

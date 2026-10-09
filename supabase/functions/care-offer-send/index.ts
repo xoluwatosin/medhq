@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         eyebrow: "Care offer",
         title: "Your care offer is here",
         accent: "here",
-        art: KIT_ART.nurse,
+        art: content.kind === "eldercare" ? KIT_ART.caregiver : KIT_ART.nurse,
         standfirst: `${content.serviceTitle ?? "Care"}, all in one place`,
         preheader: "Everything in one place, ready when you are",
         bodyHtml: offerEmailBody({ first, careFor, optionCount: options.length, link, validUntil }),

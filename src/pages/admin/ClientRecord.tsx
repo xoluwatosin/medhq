@@ -178,7 +178,7 @@ const ClientRecord = () => {
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [client, setClient] = useState<Record<string, unknown> | null>(null);
-  const [service, setService] = useState<{ name: string; questionnaire_section: string | null } | null>(null);
+  const [service, setService] = useState<{ name: string; slug?: string | null; questionnaire_section: string | null } | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [doc, setDoc] = useState<CareDoc | null>(null);
   const [definition, setDefinition] = useState<CareDefinition | null>(null);
@@ -219,7 +219,7 @@ const ClientRecord = () => {
 
   const load = useCallback(async () => {
     const [clientRes, contactRes, docRes, defRes, bandRes, tokenRes, flagRes, actRes] = await Promise.all([
-      adminDb().from("clients").select("*, services(name, questionnaire_section, home_assessment)").eq("id", id).maybeSingle(),
+      adminDb().from("clients").select("*, services(name, slug, questionnaire_section, home_assessment)").eq("id", id).maybeSingle(),
       adminDb().from("client_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
       adminDb().from("care_documents").select("*").eq("client_id", id).eq("kind", "pre_assessment")
         .order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -232,7 +232,7 @@ const ClientRecord = () => {
     ]);
 
     const row = clientRes.data as
-      (Record<string, unknown> & { services?: { name: string; questionnaire_section: string | null } | null }) | null;
+      (Record<string, unknown> & { services?: { name: string; slug?: string | null; questionnaire_section: string | null } | null }) | null;
     setClient(row);
     setLoadFailed(Boolean(clientRes.error));
     setService(row?.services ?? null);
@@ -1165,7 +1165,10 @@ const ClientRecord = () => {
             careFor={String(client.full_name)}
             preparedFor={primary?.full_name ?? ""}
             location={area || "Lagos"}
-            start="To agree with you. We arrange a meeting and introduction with your nurse before the first shift."
+            kind={service?.slug === "eldercare" ? "eldercare" : "newborn"}
+            start={service?.slug === "eldercare"
+              ? "After the home assessment, on a date we agree with you. We introduce you to your caregiver first."
+              : "To agree with you. We arrange a meeting and introduction with your nurse before the first shift."}
           />
           <PayersSection clientId={String(id)} />
           <CareFinanceSection clientId={String(id)} contacts={contacts} />

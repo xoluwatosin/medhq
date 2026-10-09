@@ -28,6 +28,10 @@ export interface OfferPayment {
 }
 
 export interface OfferContent {
+  /** Which kind of care, for the wording; offers made before this was kept are newborn care. */
+  kind?: "newborn" | "eldercare";
+  /** What the family calls the person giving care, e.g. nurse or caregiver. */
+  carer?: string;
   preparedFor: string;
   careFor: string;
   serviceTitle: string;
@@ -41,7 +45,7 @@ export interface OfferContent {
   notIncluded: string[];
   howItWorks: string[];
   familyProvides: string[];
-  /** Who supplies what for the baby, for the care schedule. */
+  /** Who supplies what for the person receiving care, for the care schedule. */
   supplies?: string[];
   assessment: string;
   payment: OfferPayment;
@@ -120,6 +124,33 @@ export const chosenFeeRows = (option: OfferOption, months: number, discountPerce
   ];
 };
 
+/** The words that change with the kind of care, so one offer page serves every service. */
+export const offerWords = (content: Pick<OfferContent, "kind" | "carer" | "careFor">) => {
+  const elder = content.kind === "eldercare";
+  const carer = content.carer || (elder ? "caregiver" : "nurse");
+  return {
+    carer,
+    /** "Your nurse's responsibilities", "Your caregiver's responsibilities". */
+    duties: `Your ${carer}'s responsibilities`,
+    arrangedBy: elder
+      ? "the family member arranging care and responsible for payment. Care decisions are made with the person receiving care, or with someone with lawful authority to decide for them."
+      : "the parent or guardian making care decisions and responsible for payment, unless agreed otherwise in writing.",
+    startDate: elder
+      ? "The exact day, after the home assessment and the introduction."
+      : "The exact day, once you know when the baby will be home.",
+    supplies: elder
+      ? "Who provides continence products, toiletries, mobility aids and any equipment, such as a commode or shower chair. Nothing is bought or charged without your agreement."
+      : "Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment. Nothing is bought or charged without your agreement.",
+    needsLabel: elder ? "Care needs" : "Baby's needs",
+    needsDetail: elder
+      ? "Medicines, diet, mobility, memory and any instructions from their doctor."
+      : "Feeding, sleep and any medical instructions from the hospital.",
+    needsFallback: elder
+      ? `Your ${carer} and our clinical lead go through ${content.careFor}'s needs with you before care starts.`
+      : "Your nurse and our clinical lead go through the baby's needs with you at the introduction.",
+  };
+};
+
 /** The care schedule's rows, in words, for the page and the PDF alike. */
 export interface ScheduleRow {
   label: string;
@@ -147,25 +178,26 @@ export const scheduleRows = (
     return [`Monthly: ${monthly}`, `Upfront: ${upfront}`];
   };
   const options = option ? [option] : content.options;
+  const w = offerWords(content);
   // A short record: each fact once. What the rest of the offer already sets
   // out (the duties, the option in full) is referred to, not retold.
   const now: ScheduleRow[] = [
     { label: "Reference", lines: [`${reference}, part of your agreement with the terms of care.`] },
-    { label: "Arranged by", lines: [`${content.preparedFor}, the parent or guardian making care decisions and responsible for payment, unless agreed otherwise in writing.`] },
+    { label: "Arranged by", lines: [`${content.preparedFor}, ${w.arrangedBy}`] },
     { label: "Care for", lines: [`${content.careFor}, at home in ${content.location}.`] },
     ...options.map((o) => ({ label: option ? "Care" : `Care: ${o.title}`, lines: [o.staffing] })),
-    { label: "Starts", lines: [`${content.start}, for ${months} months, after a meeting and introduction with your nurse. Longer only if agreed in writing.`] },
-    { label: "Duties", lines: ["As set out in Your nurse's responsibilities."] },
+    { label: "Starts", lines: [`${content.start}, for ${months} months, after a meeting and introduction with your ${w.carer}. Longer only if agreed in writing.`] },
+    { label: "Duties", lines: [`As set out in ${w.duties}.`] },
     ...options.map((o) => ({ label: option ? "Fees" : `Fees: ${o.title}`, lines: fees(o) })),
     { label: "Your home provides", lines: content.familyProvides },
     { label: "Contacts", lines: ["+234 812 698 8237 and hello@medicconnect.co, every day from 7am to 10pm."] },
   ];
   const later: ScheduleRow[] = [
-    { label: "Start date", lines: ["The exact day, once you know when the baby will be home."] },
+    { label: "Start date", lines: [w.startDate] },
     ...options.map((o) => ({ label: option ? "Daily routine" : `Daily routine: ${o.title}`, lines: ["Proposed, to agree with you:", ...(o.rota?.length ? o.rota : [o.summary])], later: true })),
-    { label: "Days off", lines: ["Which days, for example one day a week or two days together every two weeks. A relief nurse we provide covers them, at no extra cost."] },
-    { label: "Supplies", lines: content.supplies?.length ? content.supplies : ["Who provides the baby's formula, bottles, nappies, wipes and toiletries, and any equipment. Nothing is bought or charged without your agreement."] },
-    { label: "Baby's needs", lines: [content.assessment || "Your nurse and our clinical lead go through the baby's needs with you at the introduction.", "Feeding, sleep and any medical instructions from the hospital."] },
+    { label: "Days off", lines: [`Which days, for example one day a week or two days together every two weeks. A relief ${w.carer} we provide covers them, at no extra cost.`] },
+    { label: "Supplies", lines: content.supplies?.length ? content.supplies : [w.supplies] },
+    { label: w.needsLabel, lines: [content.assessment || w.needsFallback, w.needsDetail] },
     { label: "Emergency plan", lines: ["Who to call, the hospital to use and how to get there, at any time of day or night."] },
     { label: "Updates", lines: ["How you would like your daily record and updates, for example by WhatsApp, and who else should receive them."] },
   ].map((r) => ({ ...r, later: true }));
@@ -189,6 +221,8 @@ export const newbornLiveInTemplate = (args: {
   start: string;
   months: number;
 }): OfferContent => ({
+  kind: "newborn",
+  carer: "nurse",
   preparedFor: args.preparedFor,
   careFor: args.careFor,
   serviceTitle: "Live-in newborn care",
@@ -277,6 +311,115 @@ export const newbornLiveInTemplate = (args: {
   assessment: "No care needs assessment is needed for this care. Your nurse and our clinical lead will go through the baby's needs with you at the introduction.",
   payment: { bankName: "Providus Bank", accountName: "Medic Connect Limited", accountNumber: "1307500114" },
 });
+
+/** Published eldercare fees, from the site's fee list (PUB-COMPANION-4H, PUB-LIVE-IN, PUB-ASSESSMENT). */
+export const ELDERCARE_FEES = { companionVisit: 18000, visitsPerMonth: 13, liveIn: 300000, assessment: 35000 } as const;
+
+/**
+ * Eldercare and companion care, offered as morning visits or a live-in
+ * caregiver, at the published prices. A home assessment comes first, as the
+ * eldercare page promises. Staff check every line before sending.
+ */
+export const eldercareTemplate = (args: {
+  preparedFor: string;
+  careFor: string;
+  location: string;
+  start: string;
+  months: number;
+}): OfferContent => {
+  const visits = ELDERCARE_FEES.companionVisit * ELDERCARE_FEES.visitsPerMonth;
+  return {
+    kind: "eldercare",
+    carer: "caregiver",
+    preparedFor: args.preparedFor,
+    careFor: args.careFor,
+    serviceTitle: "Eldercare and companion care",
+    intro: `Thank you for asking us to care for ${args.careFor}. Here are two ways we can help, at home. Both use trained caregivers, checked by us and supervised by our clinical lead, and both start with a home assessment so the care fits ${args.careFor}'s needs. Choose the one that suits your family, then accept below.`,
+    location: args.location,
+    start: args.start,
+    months: args.months,
+    upfrontDiscountPercent: 5,
+    options: [
+      {
+        id: "morning_visits",
+        title: "Companion visits, three mornings a week",
+        staffing: "A trained caregiver visits for 4 hours, three mornings a week.",
+        monthly: visits,
+        summary: `Your caregiver helps ${args.careFor} start the day well: washing and dressing, breakfast, medicines on time, a walk or exercises, and good company. You get a note on WhatsApp after every visit.`,
+        goodFor: [
+          "Someone who is mostly independent but needs help in the mornings",
+          "Family nearby who cover evenings and nights",
+          "The lower monthly cost",
+        ],
+        rota: [
+          "Three mornings a week, for example Monday, Wednesday and Friday, 8am to 12 noon.",
+          "Each visit: a check-in, washing and dressing, breakfast to their diet, morning medicines as prescribed, a walk or exercises, then a note to you on WhatsApp.",
+          "The days and times are agreed with you at the introduction.",
+        ],
+        consider: [
+          `Between visits, ${args.careFor} is on their own or with family.`,
+          `Charged at a fixed monthly fee: 13 visits of 4 hours at ₦18,000 each, the average month. A visit we cancel is refunded.`,
+        ],
+      },
+      {
+        id: "live_in",
+        title: "One live-in caregiver",
+        staffing: "A trained caregiver lives in, with a relief caregiver on their days off.",
+        monthly: ELDERCARE_FEES.liveIn,
+        summary: `Your caregiver is there through the day and helps at night if needed, with 8 hours of protected rest each night, so ${args.careFor} is never left alone for long.`,
+        goodFor: [
+          "Someone who needs help through the day, every day",
+          "Reassurance that someone is always at home",
+          "Families who live far away or abroad",
+        ],
+        rota: [
+          "Your caregiver is on duty through the day, about 7am to 7pm, and helps at night if needed.",
+          "They have 8 hours of protected rest each night, for example 10pm to 6am. If help is needed most nights, we review the rota with you.",
+          "Daily breaks and handovers are agreed with you at the introduction.",
+        ],
+        consider: [
+          "Your caregiver is not awake all night. If someone awake at night is needed, we add a night caregiver at a price agreed with you first.",
+          "Your home provides a private room for the caregiver. Their days off are arranged around your family and the caregiver, and a relief caregiver we provide covers them.",
+        ],
+      },
+    ],
+    included: [
+      "Personal care: washing, bathing, dressing, grooming and help with the toilet and continence",
+      "Meals and drinks prepared to their diet, and help with eating if needed",
+      "Medicine reminders and help taking prescribed medicines, as set out in the care plan",
+      "Help moving around safely, gentle exercise and fall prevention",
+      "Companionship: conversation, walks, hobbies and keeping in touch with family",
+      "Their laundry and keeping their room tidy",
+      "Going with them to appointments within care hours, by agreement",
+      "A note to you on WhatsApp after every visit, or each day for live-in care",
+      "A care plan reviewed by our clinical lead every month, sooner if needs change",
+      "A replacement caregiver if the usual one is unwell, and a new match within 72 hours if it is not the right fit",
+    ],
+    notIncluded: [
+      "Clinical nursing tasks, such as injections, wound care or catheter care (we can add a nurse, priced separately)",
+      "Cooking and cleaning for the household",
+      "General housework",
+      "Care for other members of the household",
+    ],
+    howItWorks: [
+      "First, a home assessment by our care coordinator, reviewed by our clinical lead.",
+      "Before the first visit or shift, we arrange a meeting and introduction with your caregiver.",
+      "Our team is available every day from 7am to 10pm. Your care schedule includes an emergency plan for any time of night.",
+      "Care fees are paid monthly in advance, with the first month paid before care starts. Or pay for all months upfront and save.",
+    ],
+    familyProvides: [
+      "For live-in care, a private room for the caregiver to sleep and keep their things",
+      "For live-in care, meals and drinking water",
+      "Safe access to the home and to what is needed for care",
+    ],
+    supplies: [
+      "Who provides continence products, toiletries, mobility aids and any equipment, such as a commode or shower chair.",
+      "Nothing is bought or charged without your agreement.",
+    ],
+    assessment: `A one-off home assessment is needed before care starts. It costs ₦35,000, paid separately, and is carried out by our care coordinator and reviewed by our clinical lead. It shapes ${args.careFor}'s care plan. If it shows different needs, we offer you a revised care offer before anything starts.`,
+    payment: { bankName: "Providus Bank", accountName: "Medic Connect Limited", accountNumber: "1307500114" },
+  };
+};
 
 /** What still has to be filled in before an offer can be sent. */
 export const offerGaps = (content: OfferContent): string[] => {

@@ -13,13 +13,14 @@ import { cxInputClass } from "@/components/candidate/primitives";
 import CareOffer from "@/pages/care/CareOffer";
 import CareOfferPayments from "@/components/admin/care/CareOfferPayments";
 import { NEWBORN_TERMS, NEWBORN_TERMS_VERSION, type TermsClause } from "@/content/care/newborn-terms";
+import { ELDERCARE_TERMS, ELDERCARE_TERMS_VERSION } from "@/content/care/eldercare-terms";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
 import { downloadOfferPdf, offerPdfBase64 } from "@/lib/offer-pdf";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
-  naira, newbornLiveInTemplate, offerGaps, optionTotals,
+  eldercareTemplate, naira, newbornLiveInTemplate, offerGaps, optionTotals,
   type OfferContent, type OfferOption,
 } from "@/lib/care-offer";
 
@@ -67,14 +68,19 @@ const Area = ({ value, onChange, rows = 4 }: { value: string; onChange: (v: stri
 );
 
 export default function CareOfferSection({
-  clientId, careFor, preparedFor, location, start,
+  clientId, careFor, preparedFor, location, start, kind = "newborn",
 }: {
   clientId: string;
   careFor: string;
   preparedFor: string;
   location: string;
   start: string;
+  kind?: "newborn" | "eldercare";
 }) {
+  // The terms that go with an offer follow the kind of care it is for.
+  const termsFor = (k?: string) => (k === "eldercare"
+    ? { terms: ELDERCARE_TERMS, version: ELDERCARE_TERMS_VERSION }
+    : { terms: NEWBORN_TERMS, version: NEWBORN_TERMS_VERSION });
   const [offers, setOffers] = useState<OfferRow[]>([]);
   const [editing, setEditing] = useState<{ id: string | null; content: OfferContent; validUntil: string } | null>(null);
   const [previewing, setPreviewing] = useState<OfferRow | null>(null);
@@ -93,7 +99,9 @@ export default function CareOfferSection({
 
   const startNew = () => setEditing({
     id: null,
-    content: newbornLiveInTemplate({ preparedFor, careFor, location, start, months: 4 }),
+    content: kind === "eldercare"
+      ? eldercareTemplate({ preparedFor, careFor, location, start, months: 3 })
+      : newbornLiveInTemplate({ preparedFor, careFor, location, start, months: 4 }),
     validUntil: inDays(14),
   });
 
@@ -111,8 +119,8 @@ export default function CareOfferSection({
     const { error } = editing.id
       ? await adminDb().from("care_offers").update({ content: editing.content, expires_at: expires }).eq("id", editing.id)
       : await adminDb().rpc("care_offer_create", {
-          _client_id: clientId, _content: editing.content, _terms_version: NEWBORN_TERMS_VERSION,
-          _terms: NEWBORN_TERMS, _expires_at: expires,
+          _client_id: clientId, _content: editing.content, _terms_version: termsFor(editing.content.kind).version,
+          _terms: termsFor(editing.content.kind).terms, _expires_at: expires,
         });
     setBusy(false);
     if (error) return toast.error(careErrorMessage(error, "Could not save the offer"));
@@ -316,7 +324,7 @@ export default function CareOfferSection({
               <CareField label="Account name"><input className={cxInputClass()} value={e.payment.accountName} onChange={(v) => set({ payment: { ...e.payment, accountName: v.target.value } })} /></CareField>
               <CareField label="Pay online link (optional)" help="A Paystack invoice link, once issued"><input className={cxInputClass()} value={e.payment.payOnlineUrl ?? ""} onChange={(v) => set({ payment: { ...e.payment, payOnlineUrl: v.target.value.trim() || undefined } })} /></CareField>
             </div>
-            <p className="text-[13px] text-body">Terms attached: {NEWBORN_TERMS_VERSION}. No VAT is charged.</p>
+            <p className="text-[13px] text-body">Terms attached: {termsFor(editing?.content.kind).version}. No VAT is charged.</p>
             {offerGaps(e).length > 0 && <p className="text-[13px] font-bold text-destructive">Before sending: {offerGaps(e).join(", ")}</p>}
           </div>
         )}

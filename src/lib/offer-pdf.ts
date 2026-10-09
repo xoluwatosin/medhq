@@ -10,7 +10,7 @@
 // email both come from here.
 import { GState, jsPDF } from "jspdf";
 import {
-  chosenFeeRows, feeRows, naira, optionTotals, scheduleRows,
+  chosenFeeRows, feeRows, naira, offerWords, optionTotals, scheduleRows,
   type FeeRow, type OfferContent, type OfferOption, type OfferView, type PaymentPlan,
 } from "@/lib/care-offer";
 import { formatDate } from "@/lib/format";
@@ -293,7 +293,7 @@ export async function buildOfferPdf(
       ["Choose and sign", "On your offer page, pick the option that suits you and how you would like to pay, then sign with your finger or mouse."],
       ["Pay", `Online with Paystack (card, bank transfer or USSD), or by bank transfer. Monthly, with the first month before care starts${c.upfrontDiscountPercent > 0 ? `, or all ${c.months} months upfront with a ${c.upfrontDiscountPercent}% discount` : ""}.`],
       ["Your booking is confirmed", "Once your payment is in, we email you your signed agreement to keep."],
-      ["We plan day 0 with you", "Within one working day, we get in touch to arrange meeting your nurse and to agree your care plan before care starts."],
+      ["We plan day 0 with you", `Within one working day, we get in touch to arrange meeting your ${offerWords(c).carer} and to agree your care plan before care starts.`],
     ];
     steps.forEach(([title, detail], i) => {
       const h = 5 + measure(detail, 9.5, W - 14) + 3;
@@ -384,7 +384,7 @@ export async function buildOfferPdf(
   para("These are the full prices. Nothing is added for nights, public holidays, travel to and from your home, or administration. No VAT is charged.", { size: 9.5, after: 2 });
 
   /* ---- Responsibilities ---- */
-  part("What is included", "Your nurse's responsibilities");
+  part("What is included", offerWords(c).duties);
   bullets(c.included);
   y += 3;
   eyebrow("Not included");

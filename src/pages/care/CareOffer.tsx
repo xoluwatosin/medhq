@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { downloadOfferPdf, offerPdfBase64 } from "@/lib/offer-pdf";
 import SignaturePad from "@/components/contracts/SignaturePad";
 import { formatDate } from "@/lib/format";
-import { chosenFeeRows, firstPayment, naira, offerOpen, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
+import { chosenFeeRows, firstPayment, naira, offerOpen, offerWords, optionTotals, type OfferView, type PaymentPlan } from "@/lib/care-offer";
 import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 
@@ -34,6 +34,14 @@ const STEPS: { id: StepId; short: string; label: string; art: string }[] = [
   { id: "terms", short: "Terms", label: "The agreement", art: art.objSignedContract },
   { id: "accept", short: "Accept", label: "Accept", art: art.objHandshake },
 ];
+
+// Eldercare offers swap the baby pictures for ones of older people and their care.
+const ELDER_ART: Partial<Record<StepId, string>> = {
+  welcome: art.charCaregiver,
+  options: art.elderWomanAdire,
+  schedule: art.objPillOrganiser,
+};
+const stepArt = (s: (typeof STEPS)[number], kind?: string) => (kind === "eldercare" ? ELDER_ART[s.id] ?? s.art : s.art);
 
 const errorFrom = async (data: { error?: string } | null, e: unknown, fallback: string) => {
   const ctx = (e as { context?: Response } | null)?.context;
@@ -456,7 +464,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
             : <div>{chooseButton(scheduleOption.id)}</div>
         )}
         <div>
-          <OfferLabel>Your nurse's responsibilities</OfferLabel>
+          <OfferLabel>{offerWords(c).duties}</OfferLabel>
           <div className="mt-3"><OfferIncluded content={c} /></div>
         </div>
         <div>
@@ -551,7 +559,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
                 ? ["We have emailed you your signed agreement, confirming your booking."]
                 : ["Once your payment is received, we email you your signed agreement to confirm your booking."]),
               "We get in touch within one working day to plan day 0 with you.",
-              "You meet your nurse, and we agree your care plan together before care starts.",
+              `You meet your ${offerWords(c).carer}, and we agree your care plan together before care starts.`,
               ...(acceptedPlan === "monthly" ? [`For each month after, we email you a payment link five days before it is due, with the bank details too.`] : []),
             ].map((t, i) => (
               <li key={t} className="flex gap-3">
@@ -669,7 +677,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
         <Splash
           first={first}
           careFor={c.careFor}
-          artSrc={art.postnatalSpecialist}
+          artSrc={c.kind === "eldercare" ? art.charCaregiver : art.postnatalSpecialist}
           onOpen={() => { setOpened(true); if (accepted) setStep(STEPS.length - 1); }}
         />
       </>
@@ -679,7 +687,7 @@ const CareOffer = ({ preview }: { preview?: OfferView } = {}) => {
   return (
     <div ref={topRef} className="flex min-h-dvh flex-col bg-card">
       {seo}
-      <Cap title={`Your care offer for ${c.careFor}`} onPdf={() => void downloadPdf()} making={making} artSrc={current.art} />
+      <Cap title={`Your care offer for ${c.careFor}`} onPdf={() => void downloadPdf()} making={making} artSrc={stepArt(current, c.kind)} />
 
       {/* Where they are, and every part one tap away. */}
       <nav aria-label="Parts of the offer" className="sticky top-0 z-20 border-b-2 border-navy bg-card">
