@@ -158,12 +158,14 @@ export interface MenuChapter {
 }
 
 export const MenuSheet = ({
-  open, onOpenChange, chapters, onReview,
+  open, onOpenChange, chapters, onReview, staff,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   chapters: MenuChapter[];
   onReview?: () => void;
+  /** Filled in by staff with the family: no "contact us" help. */
+  staff?: boolean;
 }) => (
   <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent side="right" className="cx-family flex w-[88vw] max-w-sm flex-col gap-0 overflow-y-auto rounded-none border-l-2 border-navy p-0 [&>button]:right-3 [&>button]:top-[max(14px,env(safe-area-inset-top))] [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-none [&>button]:text-white [&>button]:opacity-100 [&>button>svg]:h-6 [&>button>svg]:w-6">
@@ -216,14 +218,14 @@ export const MenuSheet = ({
         )}
       </ol>
       <div className="mt-auto flex flex-col gap-2 border-t-2 border-navy px-5 py-5 pb-[max(20px,env(safe-area-inset-bottom))]">
-        <a
+        {!staff && <a
           href={HELP_WHATSAPP}
           target="_blank"
           rel="noreferrer"
           className="inline-flex min-h-12 items-center gap-3 text-[15px] font-extrabold text-navy"
         >
           <MessageCircle className="h-5 w-5 text-brand" aria-hidden="true" /> Questions? WhatsApp us
-        </a>
+        </a>}
         <button
           type="button"
           onClick={() => { onOpenChange(false); window.dispatchEvent(new CustomEvent("medic:open-accessibility")); }}
@@ -231,9 +233,11 @@ export const MenuSheet = ({
         >
           <Type className="h-5 w-5 text-brand" aria-hidden="true" /> Text size and reading aloud
         </button>
-        <p className="mt-1 text-[13.5px] leading-[1.5] text-label">
-          Or call us on {HELP_PHONE}, 7am to 10pm every day.
-        </p>
+        {!staff && (
+          <p className="mt-1 text-[13.5px] leading-[1.5] text-label">
+            Or call us on {HELP_PHONE}, 7am to 10pm every day.
+          </p>
+        )}
       </div>
     </SheetContent>
   </Sheet>

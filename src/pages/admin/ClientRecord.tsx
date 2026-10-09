@@ -290,6 +290,13 @@ const ClientRecord = () => {
   }, [id, isCoordinator]);
 
   useEffect(() => { void load(); }, [load]);
+  // "Fill in now" opens the form in another tab. Coming back here reloads the
+  // record, so the answers just sent show without a manual refresh.
+  useEffect(() => {
+    const onShow = () => { if (document.visibilityState === "visible") void load(); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [load]);
 
   // A form that comes back while the record is open should land on the screen.
   const reloadTimer = useRef<number | null>(null);

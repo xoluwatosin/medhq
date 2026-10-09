@@ -63,6 +63,28 @@ const inDays = (n: number) => {
 const whatsappHref = (number: string, text: string) =>
   `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
 
+/**
+ * A whole-number box that can be cleared while typing. A type="number" input
+ * bound straight to Number() turns an empty box back into a 0 that cannot be
+ * deleted; this keeps digits only, shows naira with separators, and reads an
+ * empty box as 0 (which the checks before sending then catch).
+ */
+const WholeNumber = ({
+  value, onChange, money, max,
+}: { value: number; onChange: (n: number) => void; money?: boolean; max?: number }) => (
+  <input
+    inputMode="numeric"
+    className={cxInputClass()}
+    value={value > 0 ? (money ? value.toLocaleString("en-NG") : String(value)) : ""}
+    placeholder={money ? "e.g. 300,000" : undefined}
+    onChange={(ev) => {
+      const digits = ev.target.value.replace(/\D/g, "").slice(0, money ? 9 : 3);
+      const n = digits ? Number(digits) : 0;
+      onChange(max !== undefined ? Math.min(n, max) : n);
+    }}
+  />
+);
+
 const Area = ({ value, onChange, rows = 4 }: { value: string; onChange: (v: string) => void; rows?: number }) => (
   <textarea rows={rows} className={`${cxInputClass()} min-h-0 py-2 text-[14px]`} value={value} onChange={(e) => onChange(e.target.value)} />
 );
@@ -272,7 +294,7 @@ export default function CareOfferSection({
         open={!!editing}
         onOpenChange={(v) => { if (!v) setEditing(null); }}
         title={editing?.id ? "Edit offer" : "New care offer"}
-        description="Live-in newborn care, one nurse or two. Check every line: this is exactly what the family will read."
+        description={`${editing?.content.kind === "eldercare" ? "Eldercare: companion visits or a live-in caregiver" : "Live-in newborn care: one nurse or two"}. Check every line: this is exactly what the family will read. Paying online is offered on the family's page automatically.`}
         onSave={() => void save()}
         saveLabel="Save draft"
         saving={busy}
@@ -284,8 +306,8 @@ export default function CareOfferSection({
               <CareField label="Care for"><input className={cxInputClass()} value={e.careFor} onChange={(v) => set({ careFor: v.target.value })} /></CareField>
               <CareField label="Where"><input className={cxInputClass()} value={e.location} onChange={(v) => set({ location: v.target.value })} /></CareField>
               <CareField label="Valid until"><input type="date" className={cxInputClass()} value={editing.validUntil} onChange={(v) => setEditing({ ...editing, validUntil: v.target.value })} /></CareField>
-              <CareField label="Months"><input type="number" min={1} className={cxInputClass()} value={e.months} onChange={(v) => set({ months: Number(v.target.value) })} /></CareField>
-              <CareField label="Upfront discount (%)"><input type="number" min={0} max={20} className={cxInputClass()} value={e.upfrontDiscountPercent} onChange={(v) => set({ upfrontDiscountPercent: Number(v.target.value) })} /></CareField>
+              <CareField label="Months"><WholeNumber value={e.months} max={24} onChange={(n) => set({ months: n })} /></CareField>
+              <CareField label="Upfront discount (%)" help="Leave empty for no discount"><WholeNumber value={e.upfrontDiscountPercent} max={20} onChange={(n) => set({ upfrontDiscountPercent: n })} /></CareField>
             </div>
             <CareField label="Starts"><Area rows={2} value={e.start} onChange={(v) => set({ start: v })} /></CareField>
             <CareField label="Opening words"><Area rows={4} value={e.intro} onChange={(v) => set({ intro: v })} /></CareField>
@@ -296,8 +318,8 @@ export default function CareOfferSection({
                 <div key={o.id} className="flex flex-col gap-3 border border-line p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <CareField label={`Option ${i + 1}`}><input className={cxInputClass()} value={o.title} onChange={(v) => setOption(i, { title: v.target.value })} /></CareField>
-                    <CareField label="A month (₦)" help={`${naira(t.total)} in total, ${naira(t.upfront)} upfront`}>
-                      <input type="number" min={0} step={5000} className={cxInputClass()} value={o.monthly} onChange={(v) => setOption(i, { monthly: Number(v.target.value) })} />
+                    <CareField label="A month (₦)" help={o.monthly > 0 ? `${naira(t.total)} in total, ${naira(t.upfront)} upfront` : "The monthly fee"}>
+                      <WholeNumber money value={o.monthly} onChange={(n) => setOption(i, { monthly: n })} />
                     </CareField>
                   </div>
                   <CareField label="Who is in the home"><Area rows={2} value={o.staffing} onChange={(v) => setOption(i, { staffing: v })} /></CareField>
@@ -312,6 +334,23 @@ export default function CareOfferSection({
               );
             })}
 
+            {e.options.length < 3 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 self-start"
+                onClick={() => {
+                  const last = e.options[e.options.length - 1];
+                  const fresh: OfferOption = last
+                    ? { ...last, id: `option_${Date.now().toString(36)}`, title: `${last.title} (copy)` }
+                    : { id: `option_${Date.now().toString(36)}`, title: "", staffing: "", monthly: 0, summary: "", goodFor: [], consider: [], rota: [] };
+                  set({ options: [...e.options, fresh] });
+                }}
+              >
+                <Plus className="mr-1.5 h-4 w-4" /> Add an option
+              </Button>
+            )}
+
             <CareField label="Included" help="One per line"><Area rows={6} value={e.included.join("\n")} onChange={(v) => set({ included: lines(v) })} /></CareField>
             <CareField label="Not included" help="One per line"><Area value={e.notIncluded.join("\n")} onChange={(v) => set({ notIncluded: lines(v) })} /></CareField>
             <CareField label="Your home provides" help="One per line"><Area value={e.familyProvides.join("\n")} onChange={(v) => set({ familyProvides: lines(v) })} /></CareField>
@@ -322,7 +361,6 @@ export default function CareOfferSection({
               <CareField label="Bank"><input className={cxInputClass()} value={e.payment.bankName} onChange={(v) => set({ payment: { ...e.payment, bankName: v.target.value } })} /></CareField>
               <CareField label="Account number"><input inputMode="numeric" className={cxInputClass()} value={e.payment.accountNumber} onChange={(v) => set({ payment: { ...e.payment, accountNumber: v.target.value.replace(/\D/g, "").slice(0, 10) } })} /></CareField>
               <CareField label="Account name"><input className={cxInputClass()} value={e.payment.accountName} onChange={(v) => set({ payment: { ...e.payment, accountName: v.target.value } })} /></CareField>
-              <CareField label="Pay online link (optional)" help="A Paystack invoice link, once issued"><input className={cxInputClass()} value={e.payment.payOnlineUrl ?? ""} onChange={(v) => set({ payment: { ...e.payment, payOnlineUrl: v.target.value.trim() || undefined } })} /></CareField>
             </div>
             <p className="text-[13px] text-body">Terms attached: {termsFor(editing?.content.kind).version}. No VAT is charged.</p>
             {offerGaps(e).length > 0 && <p className="text-[13px] font-bold text-destructive">Before sending: {offerGaps(e).join(", ")}</p>}

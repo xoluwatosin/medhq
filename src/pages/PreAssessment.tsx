@@ -13,7 +13,7 @@
 // see what we hold about them without asking anyone.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ChevronDown, Loader2, Pencil } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Loader2, Pencil } from "lucide-react";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { FormPage, PrimaryAction, SecondaryAction } from "@/components/request/FormSurface";
@@ -634,6 +634,7 @@ const PreAssessment = () => {
           onOpenChange={setMenuOpen}
           chapters={menuChapters}
           onReview={() => goTo("review")}
+          staff={staffFill}
         />
       )}
     </>
@@ -758,6 +759,34 @@ const PreAssessment = () => {
                 Cancel
               </SecondaryAction>
             </>
+          ),
+        },
+      );
+    }
+
+    // Staff who filled it in with the family get a hand-back, not the family's thank-you.
+    if (staffFill && !amending) {
+      const who = intake.recipients.map((r) => recipientName(r)).filter(Boolean).join(" and ");
+      return shell(
+        <div className="animate-in fade-in duration-300">
+          <span className="flex h-12 w-12 items-center justify-center bg-brand text-white">
+            <Check className="h-7 w-7" strokeWidth={3} aria-hidden="true" />
+          </span>
+          <h2 className="mt-5 text-[30px] font-extrabold leading-[1.04] tracking-[-0.045em] text-navy">Sent</h2>
+          <p className="mt-3 text-[16px] leading-[1.6] text-body">
+            The answers{who ? ` for ${who}` : ""} are on the client record, and the next step there is to book the assessment visit.
+            {fillerFirst ? ` ${fillerFirst} has not been emailed.` : ""}
+          </p>
+          <p className="mt-3 text-[15px] leading-[1.6] text-body">
+            This staff link stops working at the end of the working day.
+          </p>
+        </div>,
+        {
+          heading: "Pre-assessment sent",
+          footer: (
+            <PrimaryAction onClick={() => { window.close(); window.setTimeout(() => window.location.assign("/admin/clients"), 300); }}>
+              Close and go back to the record
+            </PrimaryAction>
           ),
         },
       );
