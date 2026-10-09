@@ -51,10 +51,15 @@ const blankForm = {
 // Note: StaffRow has no staff_end_date field, so "on notice / leaving" is
 // derived only from staff_status (on_notice or exited) as the register
 // currently exposes no separate leaving date to check.
-type ViewId = "active" | "pending" | "compliance" | "contracts" | "leaving" | "all";
+type ViewId = "structure" | "office" | "field" | "active" | "pending" | "compliance" | "contracts" | "leaving" | "all";
 
 const matchesView = (r: StaffRow, view: ViewId): boolean => {
   switch (view) {
+    case "structure":
+    case "office":
+      return r.work_setting === "office" && r.staff_status !== "exited";
+    case "field":
+      return r.work_setting === "field" && r.staff_status !== "exited";
     case "active":
       return r.staff_status === "active";
     case "pending":
@@ -71,12 +76,68 @@ const matchesView = (r: StaffRow, view: ViewId): boolean => {
   }
 };
 
+/**
+ * Who reports to whom, for the office team. Each person sits under their
+ * manager; anyone with no manager on the register starts a branch.
+ */
+const OrgChart = ({ rows }: { rows: StaffRow[] }) => {
+  const people = rows.filter((r) => r.work_setting === "office" && r.staff_status !== "exited");
+  const ids = new Set(people.map((r) => r.id));
+  const childrenOf = (id: string) => people.filter((r) => r.reports_to === id);
+  const roots = people.filter((r) => !r.reports_to || !ids.has(r.reports_to));
+  const unplaced = rows.filter((r) => !r.work_setting && r.staff_status !== "exited");
+
+  const Node = ({ person, depth }: { person: StaffRow; depth: number }): JSX.Element => {
+    const team = childrenOf(person.id);
+    return (
+      <li className={depth > 0 ? "relative pl-6 before:absolute before:left-2 before:top-0 before:h-7 before:w-3 before:border-b-2 before:border-l-2 before:border-navy/25" : ""}>
+        <Link
+          to={`/admin/workforce/${person.id}`}
+          className="inline-flex min-w-[240px] max-w-full flex-col border-2 border-navy bg-card px-4 py-3 shadow-offset-sm transition-colors hover:bg-tint"
+        >
+          <span className="truncate text-[15px] font-extrabold tracking-[-0.02em] text-navy">{person.full_name || "Name not recorded"}</span>
+          <span className="truncate text-[13px] text-muted-foreground">{person.job_title || "No job title yet"}</span>
+          {team.length > 0 && (
+            <span className="mt-1 text-[12px] font-bold text-brand">{team.length === 1 ? "1 reports to them" : `${team.length} report to them`}</span>
+          )}
+        </Link>
+        {team.length > 0 && (
+          <ul className="mt-3 flex flex-col gap-3 border-l-2 border-navy/25 pl-0 ml-2">
+            {team.map((r) => <Node key={r.id} person={r} depth={depth + 1} />)}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
+  return (
+    <MuSection
+      title="Office structure"
+      description="Who reports to whom. Set it from each person’s record: Works in, then Reports to."
+    >
+      {people.length === 0 ? (
+        <MuEmpty art={art.objHandshake} title="No office team yet" description="Mark people as working in the office on their record to see them here." />
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {roots.map((r) => <Node key={r.id} person={r} depth={0} />)}
+        </ul>
+      )}
+      {unplaced.length > 0 && (
+        <p className="mt-6 border-l-4 border-brand bg-tint px-4 py-3 text-[13.5px] leading-relaxed text-body">
+          <b className="text-navy">Not placed yet: </b>
+          {unplaced.map((r) => r.full_name).join(", ")}. Open their record and set Works in to Office or Field.
+        </p>
+      )}
+    </MuSection>
+  );
+};
+
 const Workforce = () => {
   const { toast } = useToast();
   const [rows, setRows] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<ViewId>("active");
+  const [view, setView] = useState<ViewId>("structure");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(blankForm);
@@ -110,9 +171,11 @@ const Workforce = () => {
 
   const viewTabs = useMemo(() => {
     const counts: Record<ViewId, number> = {
-      active: 0, pending: 0, compliance: 0, contracts: 0, leaving: 0, all: rows.length,
+      structure: 0, office: 0, field: 0, active: 0, pending: 0, compliance: 0, contracts: 0, leaving: 0, all: rows.length,
     };
     for (const r of rows) {
+      if (matchesView(r, "office")) counts.office += 1;
+      if (matchesView(r, "field")) counts.field += 1;
       if (matchesView(r, "active")) counts.active += 1;
       if (matchesView(r, "pending")) counts.pending += 1;
       if (matchesView(r, "compliance")) counts.compliance += 1;
@@ -120,6 +183,9 @@ const Workforce = () => {
       if (matchesView(r, "leaving")) counts.leaving += 1;
     }
     return [
+      { id: "structure", label: "Structure" },
+      { id: "office", label: "Office", count: counts.office },
+      { id: "field", label: "Field", count: counts.field },
       { id: "active", label: "Active", count: counts.active },
       { id: "pending", label: "Pending onboarding", count: counts.pending },
       { id: "compliance", label: "Compliance action", count: counts.compliance },
@@ -289,6 +355,11 @@ const Workforce = () => {
         </div>
       </MuToolbar>
 
+      {view === "structure" ? (
+        loading
+          ? <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          : <OrgChart rows={rows} />
+      ) : (
       <MuSection title="Staff register" padded={false} id="workforce-register">
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
@@ -338,6 +409,7 @@ const Workforce = () => {
           </ul>
         )}
       </MuSection>
+      )}
     </MuPage>
   );
 };

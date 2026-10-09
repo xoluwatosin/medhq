@@ -70,7 +70,18 @@ export interface StaffRow {
   docs_required: number;
   docs_accepted: number;
   docs_missing: number;
+  /** Office (the back office) or field (contracted carers and nurses on shifts). */
+  work_setting: WorkSetting | null;
+  /** The staff member this person reports to. */
+  reports_to: string | null;
 }
+
+export type WorkSetting = "office" | "field";
+
+export const WORK_SETTING_LABELS: Record<WorkSetting, string> = {
+  office: "Office",
+  field: "Field",
+};
 
 export interface Contract {
   id: string;
@@ -115,10 +126,33 @@ export interface EmergencyContact {
 }
 
 export async function loadStaff(): Promise<StaffRow[]> {
-  const { data, error } = await db().rpc("mu_staff_list");
+  // The register, then where each person works and who they report to.
+  const [{ data, error }, { data: structure, error: structureError }] = await Promise.all([
+    db().rpc("mu_staff_list"),
+    db().from("mu_people").select("id, work_setting, reports_to").eq("is_staff", true),
+  ]);
   if (error) throw error;
-  return (data ?? []) as StaffRow[];
+  if (structureError) throw structureError;
+  const byId = new Map(((structure ?? []) as { id: string; work_setting: WorkSetting | null; reports_to: string | null }[])
+    .map((row) => [row.id, row]));
+  return ((data ?? []) as Omit<StaffRow, "work_setting" | "reports_to">[]).map((row) => ({
+    ...row,
+    work_setting: byId.get(row.id)?.work_setting ?? null,
+    reports_to: byId.get(row.id)?.reports_to ?? null,
+  }));
 }
+
+/** Everyone who reports to a person, directly or through others: they can never be that person's manager. */
+export const reportsBelow = (rows: Pick<StaffRow, "id" | "reports_to">[], personId: string): Set<string> => {
+  const below = new Set<string>();
+  const walk = (id: string) => {
+    for (const r of rows) {
+      if (r.reports_to === id && !below.has(r.id)) { below.add(r.id); walk(r.id); }
+    }
+  };
+  walk(personId);
+  return below;
+};
 
 export async function binContract(contractId: string, binned = true) {
   const { data, error } = await db().rpc("mu_bin_contract", {

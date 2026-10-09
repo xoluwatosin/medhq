@@ -38,7 +38,8 @@ import {
 import {
   CONTRACT_STATUS_LABELS, Contract, EMPLOYMENT_TYPE_LABELS, EmergencyContact,
   PAY_FREQUENCIES, PAY_FREQUENCY_LABELS, STAFF_STATUS_LABELS,
-   createContract, issueContract, loadContracts, loadEmergencyContacts, setContractStatus,
+   createContract, issueContract, loadContracts, loadEmergencyContacts, loadStaff, reportsBelow, setContractStatus,
+  WORK_SETTING_LABELS, type StaffRow,
 } from "@/lib/staff";
 
 import AccessAreas from "@/components/admin/AccessAreas";
@@ -78,6 +79,8 @@ const WorkforceStaff = () => {
   const [activity, setActivity] = useState<any[]>([]);
   const [acceptedOffer, setAcceptedOffer] = useState<any>(null);
   const [access, setAccess] = useState<any>(null);
+  // Everyone on the register, for "reports to" and the people who report here.
+  const [staff, setStaff] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [tab, setTab] = useState("overview");
@@ -105,6 +108,7 @@ const WorkforceStaff = () => {
       adminDb().from("mu_offers").select("*").eq("person_id", id).eq("status", "accepted").eq("kind", "role").order("responded_at", { ascending: false }).limit(1),
     ]);
     setPerson(p);
+    loadStaff().then(setStaff).catch(() => setStaff([]));
     setContracts(cs);
     setContacts(ecs);
     setActivity(act ?? []);
@@ -151,6 +155,8 @@ const WorkforceStaff = () => {
         staff_status: person.staff_status,
         staff_start_date: person.staff_start_date || null,
         staff_end_date: person.staff_end_date || null,
+        work_setting: person.work_setting || null,
+        reports_to: person.reports_to || null,
         state: person.state,
         lga: person.lga,
       })
@@ -428,6 +434,30 @@ const WorkforceStaff = () => {
                 />
               </div>
               <div className="space-y-1.5">
+                <SelectField
+                  label="Works in"
+                  value={person.work_setting || ""}
+                  onChange={(v) => patchPerson({ work_setting: v || null })}
+                  placeholder="Not set"
+                  options={Object.entries(WORK_SETTING_LABELS).map(([k, v]) => ({ value: k, label: k === "office" ? `${v} (back office)` : `${v} (shifts and visits)` }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <SelectField
+                  label="Reports to"
+                  value={person.reports_to || ""}
+                  onChange={(v) => patchPerson({ reports_to: v || null })}
+                  placeholder="No one (top of the structure)"
+                  options={[
+                    ...staff
+                      // Not themselves, and no one who already reports to them.
+                      .filter((r) => r.id !== person.id && !reportsBelow(staff, person.id).has(r.id))
+                      .filter((r) => r.staff_status !== "exited")
+                      .map((r) => ({ value: r.id, label: [r.full_name, r.job_title].filter(Boolean).join(", ") })),
+                  ]}
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label>Start date</Label>
                 <Input type="date" value={person.staff_start_date || ""} onChange={(e) => patchPerson({ staff_start_date: e.target.value })} />
               </div>
@@ -445,6 +475,23 @@ const WorkforceStaff = () => {
               </div>
             </div>
           </MuSection>
+
+          {(() => {
+            const team = staff.filter((r) => r.reports_to === person.id);
+            if (team.length === 0) return null;
+            return (
+              <MuSection title="Reports to them" description="Changed from each person’s own record.">
+                <ul className="divide-y divide-line-soft">
+                  {team.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <Link to={`/admin/workforce/${r.id}`} className="min-w-0 truncate text-[14.5px] font-bold text-brand">{r.full_name}</Link>
+                      <span className="shrink-0 text-[13px] text-muted-foreground">{r.job_title || "No job title"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </MuSection>
+            );
+          })()}
 
           {id && <ClinicalAssessorPanel personId={id} />}
 
