@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { isSuperAdmin } from "../_shared/super-admin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   hostedLink,
@@ -63,7 +64,7 @@ serve(async (req) => {
     const action = String(payload?.action || "");
 
     if (action === "issue") {
-      const { data: superAdmin } = await admin.rpc("is_super_admin", { _user_id: user.id });
+      const superAdmin = isSuperAdmin(user.id);
       const { data: permission } = await admin.from("admin_permissions").select("permissions,is_active").eq("user_id", user.id).maybeSingle();
       const canManageCareFinance = superAdmin === true || (permission?.is_active !== false && Array.isArray(permission?.permissions) && permission.permissions.includes("care_coordinator"));
       if (!canManageCareFinance) return json({ error: "You do not have permission to issue Care invoices" }, 403);

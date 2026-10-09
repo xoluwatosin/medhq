@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isSuperAdmin } from "../_shared/super-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,9 +32,7 @@ Deno.serve(async (req) => {
 
     // Privilege gate: only the super admin may force-sign-out other admins.
     // Mirrors invite-admin and admin-password-reset.
-    const { data: isSuper, error: superErr } = await adminClient
-      .rpc("is_super_admin", { _user_id: user.id });
-    if (superErr || isSuper !== true) {
+    if (!isSuperAdmin(user.id)) {
       return new Response(JSON.stringify({ error: "Forbidden: Super admin only" }), {
         status: 403,
         headers: corsHeaders,

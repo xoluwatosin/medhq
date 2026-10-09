@@ -255,11 +255,30 @@ const WorkforceStaff = () => {
 
   const savePerms = async (next: string[]) => {
     if (!access) return;
+    const before: string[] = Array.isArray(access.permissions) ? access.permissions : [];
     setAccess({ ...access, permissions: next });
-    await adminDb()
+    const { error } = await adminDb()
       .from("admin_permissions")
       .update({ permissions: next, updated_at: new Date().toISOString() })
       .eq("id", access.id);
+    if (error) {
+      setAccess({ ...access, permissions: before });
+      toast({ title: "Could not change access", description: error.message, variant: "destructive" });
+      return;
+    }
+    // Logged like a change made from People and access, so every change is in one history.
+    if (user) {
+      await adminDb().from("admin_access_log").insert({
+        actor_user_id: user.id,
+        actor_email: user.email ?? "",
+        target_user_id: access.user_id,
+        target_email: access.email,
+        action: "areas_changed",
+        permissions_before: before,
+        permissions_after: next,
+        note: "Changed from the staff record",
+      });
+    }
   };
 
   if (loading) {
