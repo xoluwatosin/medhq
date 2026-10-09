@@ -74,6 +74,8 @@ export interface StaffRow {
   work_setting: WorkSetting | null;
   /** The staff member this person reports to. */
   reports_to: string | null;
+  probation_end: string | null;
+  probation_status: string | null;
 }
 
 export type WorkSetting = "office" | "field";
@@ -129,16 +131,18 @@ export async function loadStaff(): Promise<StaffRow[]> {
   // The register, then where each person works and who they report to.
   const [{ data, error }, { data: structure, error: structureError }] = await Promise.all([
     db().rpc("mu_staff_list"),
-    db().from("mu_people").select("id, work_setting, reports_to").eq("is_staff", true),
+    db().from("mu_people").select("id, work_setting, reports_to, probation_end, probation_status").eq("is_staff", true),
   ]);
   if (error) throw error;
   if (structureError) throw structureError;
-  const byId = new Map(((structure ?? []) as { id: string; work_setting: WorkSetting | null; reports_to: string | null }[])
-    .map((row) => [row.id, row]));
-  return ((data ?? []) as Omit<StaffRow, "work_setting" | "reports_to">[]).map((row) => ({
+  type Structure = Pick<StaffRow, "id" | "work_setting" | "reports_to" | "probation_end" | "probation_status">;
+  const byId = new Map(((structure ?? []) as Structure[]).map((row) => [row.id, row]));
+  return ((data ?? []) as Omit<StaffRow, keyof Omit<Structure, "id">>[]).map((row) => ({
     ...row,
     work_setting: byId.get(row.id)?.work_setting ?? null,
     reports_to: byId.get(row.id)?.reports_to ?? null,
+    probation_end: byId.get(row.id)?.probation_end ?? null,
+    probation_status: byId.get(row.id)?.probation_status ?? null,
   }));
 }
 

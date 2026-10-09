@@ -32,6 +32,7 @@ import {
   STAFF_STATUS_LABELS, loadContracts,
 } from "@/lib/staff";
 import ContractDocument from "@/components/contracts/ContractDocument";
+import { Checklists, MyLeave, MyTeam, Reviews } from "@/components/admin/hr/HrPanels";
 import SignaturePad from "@/components/contracts/SignaturePad";
 import { blobToBase64, contractToPdfBlob, downloadBlob } from "@/lib/contract-pdf";
 import {
@@ -190,14 +191,30 @@ const MyProfile = () => {
         }
       />
 
+      {/* Managers see what is waiting for them first. Renders nothing for anyone without a team. */}
+      {person.is_staff && <MyTeam myPersonId={person.id} />}
+
       <Tabs defaultValue="details">
-        <TabsList className="w-full justify-start">
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="details">Details</TabsTrigger>
+          {person.is_staff && <TabsTrigger value="leave">Leave</TabsTrigger>}
+          {person.is_staff && <TabsTrigger value="reviews">Reviews</TabsTrigger>}
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="contract">Contract</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-4">
+        {person.is_staff && (
+          <TabsContent value="leave" className="mt-4">
+            <MyLeave personId={person.id} />
+          </TabsContent>
+        )}
+        {person.is_staff && (
+          <TabsContent value="reviews" className="mt-4">
+            <Reviews personId={person.id} manage={false} myPersonId={person.id} />
+          </TabsContent>
+        )}
+
+        <TabsContent value="details" className="mt-4 space-y-6">
           <MuSection title="Your details" description="Tell your manager if anything is wrong.">
             <MuFieldGrid columns={3}>
               <MuField label="Name" value={person.full_name} />
@@ -220,8 +237,15 @@ const MyProfile = () => {
                 icon={MapPin}
                 value={[person.lga, person.state].filter(Boolean).join(", ")}
               />
+              {person.is_staff && person.probation_end && (
+                <MuField
+                  label="Probation"
+                  value={`${person.probation_status === "passed" ? "Passed" : person.probation_status === "extended" ? "Extended to" : "Ends"} ${format(new Date(`${person.probation_end}T12:00:00`), "d MMM yyyy")}`}
+                />
+              )}
             </MuFieldGrid>
           </MuSection>
+          {person.is_staff && <Checklists personId={person.id} manage={false} />}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">

@@ -24,6 +24,7 @@ import {
   MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus, MuToolbar, MuTone,
 } from "@/components/admin/mu/MuShell";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
+import { HrAttention } from "@/components/admin/hr/HrPanels";
 import {
   CONTRACT_STATUS_LABELS, EMPLOYMENT_TYPE_LABELS, STAFF_STATUS_LABELS, StaffRow, loadStaff,
 } from "@/lib/staff";
@@ -358,7 +359,7 @@ const Workforce = () => {
       {view === "structure" ? (
         loading
           ? <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          : <OrgChart rows={rows} />
+          : <><HrAttention people={rows} /><OrgChart rows={rows} /></>
       ) : (
       <MuSection title="Staff register" padded={false} id="workforce-register">
         {loading ? (

@@ -43,6 +43,8 @@ import {
 } from "@/lib/staff";
 
 import AccessAreas from "@/components/admin/AccessAreas";
+import { Checklists, PersonLeave, Reviews } from "@/components/admin/hr/HrPanels";
+import { PROBATION_LABELS } from "@/lib/hr";
 import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { returnToTalent } from "@/lib/lifecycle";
 import { ACCESS_DELEGATE_PERMISSION } from "@/lib/admin-access";
@@ -81,6 +83,9 @@ const WorkforceStaff = () => {
   const [access, setAccess] = useState<any>(null);
   // Everyone on the register, for "reports to" and the people who report here.
   const [staff, setStaff] = useState<StaffRow[]>([]);
+  // The signed-in admin's own staff record, so they are never asked to review themselves.
+  const [myPersonId, setMyPersonId] = useState<string | null>(null);
+  const [savingHr, setSavingHr] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [tab, setTab] = useState("overview");
@@ -109,6 +114,10 @@ const WorkforceStaff = () => {
     ]);
     setPerson(p);
     loadStaff().then(setStaff).catch(() => setStaff([]));
+    if (user) {
+      adminDb().from("mu_people").select("id").eq("auth_user_id", user.id).maybeSingle()
+        .then(({ data: mine }: { data: { id: string } | null }) => setMyPersonId(mine?.id ?? null));
+    }
     setContracts(cs);
     setContacts(ecs);
     setActivity(act ?? []);
@@ -363,6 +372,7 @@ const WorkforceStaff = () => {
           <option value="overview">Overview</option>
           <option value="documents">Documents</option>
           <option value="contract">Contract</option>
+          <option value="hr">HR</option>
           <option value="access">Access</option>
           <option value="activity">Activity</option>
         </select>
@@ -373,6 +383,7 @@ const WorkforceStaff = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="contract">Contract</TabsTrigger>
+          <TabsTrigger value="hr">HR</TabsTrigger>
           <TabsTrigger value="access">Access</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
@@ -644,6 +655,60 @@ const WorkforceStaff = () => {
         </TabsContent>
 
         {/* ------------------------------------------------------------- */}
+        <TabsContent value="hr" className="mt-4 space-y-6">
+          <MuSection
+            title="Probation and leave"
+            description="The probation outcome is set by sharing a probation review. Annual leave is counted in working days."
+            actions={
+              <Button
+                size="sm"
+                disabled={savingHr}
+                onClick={async () => {
+                  setSavingHr(true);
+                  const { error } = await adminDb().from("mu_people").update({
+                    probation_end: person.probation_end || null,
+                    probation_status: person.probation_status || null,
+                    annual_leave_days: person.annual_leave_days === "" || person.annual_leave_days == null ? null : Number(person.annual_leave_days),
+                  }).eq("id", person.id);
+                  setSavingHr(false);
+                  toast(error ? { title: "Could not save", description: error.message, variant: "destructive" } : { title: "Saved" });
+                }}
+              >
+                {savingHr ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save
+              </Button>
+            }
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Probation ends</Label>
+                <Input type="date" value={person.probation_end || ""} onChange={(e) => patchPerson({ probation_end: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <SelectField
+                  label="Probation"
+                  value={person.probation_status || ""}
+                  placeholder="Not recorded"
+                  onChange={(v) => patchPerson({ probation_status: v || null })}
+                  options={Object.entries(PROBATION_LABELS).map(([value, label]) => ({ value, label }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Annual leave a year (working days)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={person.annual_leave_days ?? ""}
+                  onChange={(e) => patchPerson({ annual_leave_days: e.target.value.replace(/[^\d.]/g, "") })}
+                  placeholder="e.g. 20"
+                />
+              </div>
+            </div>
+          </MuSection>
+          {id && <PersonLeave personId={id} />}
+          {id && <Reviews personId={id} manage myPersonId={myPersonId} />}
+          {id && <Checklists personId={id} manage />}
+        </TabsContent>
+
         <TabsContent value="access" className="mt-4 space-y-6">
           {!access ? (
             <MuSection
