@@ -758,6 +758,8 @@ export const readAnswer = (
   if (typeof value === "object") {
     const obj = value as Record<string, unknown>;
     if (field.type === "upload" || obj.path) return "A file was uploaded with this answer";
+    // An area reads as people say it: "Ikeja, Lagos".
+    if (field.type === "lga" && (obj.lga || obj.state)) return [obj.lga, obj.state].filter(Boolean).map(String).join(", ");
     if (field.type === "measurement") {
       // A measurement is never read without the unit it was recorded in.
       return (field.measures ?? [])

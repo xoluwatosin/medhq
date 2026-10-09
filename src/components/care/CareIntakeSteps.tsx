@@ -478,8 +478,8 @@ export const CareIntakeFlow = ({
           </div>
         ))}
         <p className="text-[15px] leading-relaxed text-body">
-          The questions that follow are organised for the request and for each care recipient,
-          based on the services selected above.
+          Next, a few questions about each person, then when and where we visit. Your
+          answers save as you go.
         </p>
       </div>
     );
@@ -487,8 +487,9 @@ export const CareIntakeFlow = ({
 
   return (
     <FormPage
-      eyebrow="Pre-assessment"
+      eyebrow="Before your visit"
       title="Before your visit"
+      heading="Who the care is for"
       step={null}
       rail={
         <nav aria-label="Opening stages" className="mb-4">
@@ -513,23 +514,23 @@ export const CareIntakeFlow = ({
                       window.scrollTo({ top: 0 });
                     }}
                     className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[14px] font-bold transition-colors",
+                      "flex h-9 w-9 shrink-0 items-center justify-center border-2 text-[14px] font-extrabold transition-colors",
                       current
                         ? "border-navy bg-navy text-primary-foreground"
                         : complete
-                          ? "border-brand/40 bg-tint text-navy"
-                          : "border-line bg-background text-label",
-                      reachable && "cursor-pointer hover:border-brand",
+                          ? "border-brand bg-brand text-white"
+                          : "border-navy/20 bg-background text-label",
+                      reachable && "cursor-pointer hover:border-navy",
                     )}
                   >
                     {number}
                   </button>
-                  {number < 5 && <span aria-hidden className={cn("mx-2 h-px flex-1", complete ? "bg-brand/40" : "bg-line")} />}
+                  {number < 5 && <span aria-hidden className={cn("mx-1.5 h-[3px] flex-1", complete ? "bg-brand" : "bg-navy/10")} />}
                 </li>
               );
             })}
           </ol>
-          <p className="mt-2 text-right text-[12px] text-muted-foreground">Stage {currentStage} of 5</p>
+          <p className="label-caps mt-2.5 text-[11px] text-label">Step {currentStage} of 5</p>
         </nav>
       }
       footer={

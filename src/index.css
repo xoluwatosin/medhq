@@ -455,6 +455,46 @@ All colors MUST be HSL.
   .cx-portal .cx-section-head { border-top: 4px solid hsl(var(--navy)); padding-top: 18px; margin-top: 10px; }
   @media (min-width: 768px) { .cx-portal .cx-section-head h2.cx-heading { font-size: 28px; } }
 
+  /* The family question pages (pre-assessment, its intake, care details) in
+     the house style: square choices with a hard navy offset that turn tint
+     with a blue offset when picked, firm 2px fields at 16px so phones never
+     zoom, and generous touch targets. Scoped to .cx-family, so the admin and
+     assessor screens that share these controls are untouched. */
+  .cx-family .cx-control, .cx-family .cx-chip { border-radius: 0; }
+  .cx-family button.cx-control[aria-pressed],
+  .cx-family button.cx-control[role="checkbox"] {
+    min-height: 54px; padding: 13px 16px; font-size: 16px; font-weight: 700; line-height: 1.35;
+    border: 2px solid hsl(var(--navy)); background-color: #fff; color: hsl(var(--ink));
+    box-shadow: 3px 3px 0 hsl(var(--navy));
+    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+  }
+  .cx-family button.cx-control[aria-pressed]:hover,
+  .cx-family button.cx-control[role="checkbox"]:hover { background-color: hsl(var(--tint) / 0.6); }
+  .cx-family button.cx-control[aria-pressed]:active,
+  .cx-family button.cx-control[role="checkbox"]:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 hsl(var(--navy)); }
+  .cx-family button.cx-control[aria-pressed="true"],
+  .cx-family button.cx-control[role="checkbox"][aria-checked="true"] {
+    background-color: hsl(var(--tint)); color: hsl(var(--navy)); font-weight: 800;
+    box-shadow: 3px 3px 0 hsl(var(--brand));
+  }
+  .cx-family button.cx-control[aria-pressed] .cx-chip,
+  .cx-family button.cx-control[role="checkbox"] .cx-chip { height: 22px; width: 22px; border-width: 2px; border-color: hsl(var(--navy)); }
+  .cx-family :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-family button[role="combobox"] {
+    border-radius: 0; border: 2px solid hsl(var(--navy)); background-color: #fff; font-size: 16px; color: hsl(var(--ink));
+  }
+  .cx-family :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select),
+  .cx-family button[role="combobox"] { min-height: 52px; }
+  .cx-family textarea { padding: 12px 14px; line-height: 1.55; }
+  .cx-family :is(input, textarea, select):focus,
+  .cx-family button[role="combobox"]:focus { border-color: hsl(var(--brand)); outline: none; box-shadow: 0 0 0 3px hsl(var(--brand) / 0.22); }
+  .cx-family select {
+    appearance: none; padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2326306B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .cx-family ::placeholder { color: hsl(var(--label)); }
+
   /* Long text on the public site (privacy, terms): the kit's reading measure,
      body grey at 16 to 17px, navy headings opened by a hairline. */
   .kit-prose { max-width: 760px; color: hsl(var(--body)); font-size: 16px; line-height: 1.7; }

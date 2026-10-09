@@ -75,6 +75,15 @@ export const AccessibilityPanel = () => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
   const hidden = pathname.startsWith("/admin") || pathname.startsWith("/portal");
+  // On the question pages the options open from the page's own menu instead of
+  // a floating button, so nothing sits over the answers.
+  const inMenu = pathname.startsWith("/pre-assessment") || pathname.startsWith("/care/start");
+
+  useEffect(() => {
+    const openPanel = () => setOpen(true);
+    window.addEventListener("medic:open-accessibility", openPanel);
+    return () => window.removeEventListener("medic:open-accessibility", openPanel);
+  }, []);
 
   useEffect(() => {
     const held = read();
@@ -124,6 +133,7 @@ export const AccessibilityPanel = () => {
 
   return (
     <>
+      {!inMenu && (
       <DraggableControl storageKey="mc_a11y_btn_pos" defaultCorner="bottom-left">
         <Button
           ref={triggerRef}
@@ -135,6 +145,7 @@ export const AccessibilityPanel = () => {
           <Accessibility className="h-6 w-6" aria-hidden />
         </Button>
       </DraggableControl>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent

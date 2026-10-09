@@ -21,7 +21,10 @@ const LiveChatButton = () => {
     pathname.startsWith("/claim") ||
     // A care offer has its own WhatsApp link and a Back and Next bar here.
     pathname.startsWith("/care/offer") ||
-    pathname.startsWith("/o/")
+    pathname.startsWith("/o/") ||
+    // The question pages carry help in their own menu, so nothing floats over the answers.
+    pathname.startsWith("/pre-assessment") ||
+    pathname.startsWith("/care/start")
   ) return null;
 
   return (

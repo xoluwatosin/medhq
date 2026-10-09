@@ -13,19 +13,21 @@
 // see what we hold about them without asking anyone.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Loader2, Pencil } from "lucide-react";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
+import { FormPage, PrimaryAction, SecondaryAction } from "@/components/request/FormSurface";
 import {
-  FormCard, FormPage, PrimaryAction, SecondaryAction, SectionRail,
-} from "@/components/request/FormSurface";
+  ChapterCover, HELP_PHONE, MenuChapter, MenuSheet, Thanks, Welcome,
+} from "@/components/care/PreAssessmentParts";
+import { art } from "@/components/mc/art";
 import { Question } from "@/components/request/RequestShell";
 import CareFieldInput from "@/components/care/CareFieldInput";
 import { CareIntakeFlow } from "@/components/care/CareIntakeSteps";
 import { SaveState, useAutosave } from "@/components/field";
 import { cn } from "@/lib/utils";
 import {
-  applicableSections, buildContext, CareDefinition, CareField, CareOption, CareResponses,
+  applicableSections, buildContext, CareCondition, CareDefinition, CareField, CareOption, CareResponses,
   CareSection, fieldVisible, isAnswered, pruneHiddenFieldAnswers, readAnswer, withDerived,
 } from "@/lib/care";
 import {
@@ -34,6 +36,9 @@ import {
 } from "@/lib/care-intake";
 import { buildItinerary, ItineraryPage } from "@/lib/care-itinerary";
 import { resolveCopy, voiceFor } from "@/lib/care-copy";
+import {
+  ChapterKey, chapterLine, chapterOf, chapterTitle, inChapterOrder, minutesFor,
+} from "@/lib/care-chapters";
 
 interface LoadResult {
   frozen: boolean;
@@ -59,7 +64,7 @@ interface LoadResult {
 }
 
 /** A page in the flow, and the person it is being asked about. */
-type FlowPage = ItineraryPage & { recipientId: string | null; who: string | null };
+type FlowPage = ItineraryPage & { recipientId: string | null; who: string | null; chapter?: ChapterKey };
 
 /** One block of answers in review: the request, or one care recipient. */
 interface AnswerGroup {
@@ -82,6 +87,7 @@ const PreAssessment = () => {
   const [submitting, setSubmitting] = useState(false);
   const [consentWarning, setConsentWarning] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // A correction to answers already sent, allowed until the visit opens.
   const [amending, setAmending] = useState<{ recipientId: string | null; sectionId: string } | null>(null);
   const [amendDraft, setAmendDraft] = useState<CareResponses>({});
@@ -232,8 +238,9 @@ const PreAssessment = () => {
     [data, sectionsFor, topUp, coversServices],
   );
 
-  // Request first, then each person in turn. A top-up carries neither: the
-  // shared answers stand, and it asks about one person only.
+  // Each person in turn, then what is asked once for the whole request. A
+  // top-up carries no request questions: the shared answers stand, and it asks
+  // about one person only.
   const groups = useMemo<AnswerGroup[]>(() => {
     if (!data || !intakeDone) return [];
     if (topUp && !topUpPerson) return [];
@@ -241,9 +248,7 @@ const PreAssessment = () => {
     const requestSections = topUp
       ? []
       : sectionsForRecipient(first).filter((s) => sectionScope(s.id) === "request");
-    const out: AnswerGroup[] = [
-      { recipientId: null, label: null, sections: requestSections, answers: responses },
-    ];
+    const out: AnswerGroup[] = [];
     const asked = topUp && data.covers_recipient_key
       ? intake.recipients.filter((r) => r.id === data.covers_recipient_key)
       : intake.recipients;
@@ -255,39 +260,58 @@ const PreAssessment = () => {
         answers: routingAnswers(r),
       });
     }
+    out.push({ recipientId: null, label: null, sections: requestSections, answers: responses });
     return out;
   }, [data, intake, intakeDone, responses, routingAnswers, sectionsForRecipient, topUp, topUpPerson]);
 
+  // A first name for the chapter titles, or null when the person answering is
+  // the one receiving care.
+  const firstNameOf = useCallback((recipientId: string | null): string | null => {
+    const r = intake.recipients.find((x) => x.id === recipientId);
+    if (!r || r.isEnquirer) return null;
+    return r.firstName?.trim() || recipientName(r) || null;
+  }, [intake]);
+  const several = intake.recipients.length > 1;
+
   // Worked out again on every answer, because one answer can open or close a
-  // whole section partway through.
+  // whole section partway through. The sections are laid out in chapters, and
+  // each chapter opens with a page of its own.
   const pages = useMemo<FlowPage[]>(() => {
     if (groups.length === 0) return [];
     const out: FlowPage[] = [{ key: "welcome", kind: "welcome", fields: [], recipientId: null, who: null }];
     for (const group of groups) {
-      if (group.sections.length === 0) continue;
-      const built = buildItinerary(group.sections, group.answers)
-        .filter((p) => p.kind === "cover" || p.kind === "questions");
+      const sections = inChapterOrder(group.sections.filter((s) => chapterOf(s.id) !== null));
+      if (sections.length === 0) continue;
+      const built = buildItinerary(sections, group.answers).filter((p) => p.kind === "questions");
+      let open: ChapterKey | null = null;
       for (const p of built) {
+        const chapter = chapterOf(p.sectionId ?? "") ?? "about";
+        if (chapter !== open) {
+          open = chapter;
+          out.push({
+            key: `${group.recipientId ?? "request"}:chapter:${chapter}`,
+            kind: "cover",
+            fields: [],
+            recipientId: group.recipientId,
+            who: group.label,
+            chapter,
+          });
+        }
         out.push({
           ...p,
           key: group.recipientId ? `${group.recipientId}:${p.key}` : p.key,
           recipientId: group.recipientId,
           who: group.label,
+          chapter,
         });
       }
     }
     out.push({ key: "review", kind: "review", fields: [], recipientId: null, who: null });
-    // Numbered across the whole flow, so the family sees one run of sections.
     const covers = out.filter((p) => p.kind === "cover");
-    covers.forEach((cover, i) => { cover.sectionNumber = i + 1; cover.sectionCount = covers.length; });
+    let number = 0;
     for (const p of out) {
-      if (p.kind !== "questions") continue;
-      const cover = covers.find((c) =>
-        c.sectionId === p.sectionId &&
-        c.presentationId === p.presentationId &&
-        c.recipientId === p.recipientId);
-      p.sectionNumber = cover?.sectionNumber;
-      p.sectionCount = covers.length;
+      if (p.kind === "cover") number += 1;
+      if (p.kind === "cover" || p.kind === "questions") { p.sectionNumber = number; p.sectionCount = covers.length; }
     }
     return out;
   }, [groups]);
@@ -295,12 +319,15 @@ const PreAssessment = () => {
   // Resume near where this link was left. A page that no longer applies falls
   // back to the start of the flow.
   const resumed = useRef(false);
+  const [returning, setReturning] = useState(false);
   useEffect(() => {
     if (resumed.current || !data || pages.length === 0) return;
     resumed.current = true;
     const saved = data.position ?? null;
     const key = saved?.page ?? null;
-    setPageKey(pages.find((p) => p.key === key)?.key ?? "welcome");
+    const found = pages.find((p) => p.key === key)?.key ?? null;
+    setReturning(!!found && found !== "welcome");
+    setPageKey(found ?? "welcome");
   }, [data, pages]);
 
   const index = Math.max(pages.findIndex((p) => p.key === pageKey), 0);
@@ -337,6 +364,21 @@ const PreAssessment = () => {
     for (const group of groups) for (const s of group.sections) map[s.id] = s;
     return map;
   }, [groups]);
+
+  // The questions an answer can open. Such a question is never skipped past
+  // on its own, because what it opens appears on the same screen.
+  const opensFollowUps = useMemo(() => {
+    const named = new Set<string>();
+    const walk = (c: CareCondition | undefined) => {
+      if (!c) return;
+      if (c.field) named.add(c.field);
+      c.allOf?.forEach(walk);
+      c.anyOf?.forEach(walk);
+      walk(c.not);
+    };
+    for (const section of data?.definition.sections ?? []) for (const f of section.fields) walk(f.showWhen);
+    return named;
+  }, [data]);
 
   const bandOptions = useMemo<CareOption[]>(
     () => (data?.budget_bands ?? []).map((b) => ({ value: b.value, label: b.label })),
@@ -411,6 +453,12 @@ const PreAssessment = () => {
     const next = pages[Math.min(index + 1, pages.length - 1)];
     if (next) goTo(next.key);
   };
+  // A single choice moves on by itself, a moment after it is picked. The
+  // latest pages are read when it fires, not the ones it was set up with.
+  const nextRef = useRef(goNext);
+  nextRef.current = goNext;
+  const advanceTimer = useRef<number | null>(null);
+  useEffect(() => () => { if (advanceTimer.current) window.clearTimeout(advanceTimer.current); }, []);
 
   const goBack = () => {
     const previous = pages[Math.max(index - 1, 0)];
@@ -432,7 +480,7 @@ const PreAssessment = () => {
     setSubmitting(false);
     if (result?.ok) {
       setConsentWarning(false);
-      setData((prev) => (prev ? { ...prev, frozen: true, submitted_at: new Date().toISOString() } : prev));
+      setData((prev) => (prev ? { ...prev, frozen: true, submitted_at: new Date().toISOString(), amendable: true } : prev));
       window.scrollTo({ top: 0 });
     } else {
       setConsentWarning(true);
@@ -475,38 +523,37 @@ const PreAssessment = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-card">
-        <Loader2 className="h-6 w-6 animate-spin text-navy" />
+      <div className="flex min-h-dvh items-center justify-center bg-navy" role="status">
+        <Loader2 className="h-7 w-7 animate-spin text-white" aria-hidden="true" />
+        <span className="sr-only">Opening your questions</span>
       </div>
     );
   }
 
   const seo = (
-    <>
-      <SEO
-        title="Medic Connect | Before your visit"
-        description="Please complete these questions before your care assessment."
-        path="/pre-assessment"
-        breadcrumbs={[]}
-        noindex
-      />
-      {staffFill && (
-        <div className="sticky top-0 z-50 bg-navy px-4 py-2 text-center text-[13px] font-semibold text-white">
-          You are filling this in with the family. Ask each question as it is written.
-        </div>
-      )}
-    </>
+    <SEO
+      title="Medic Connect | Before your visit"
+      description="Please complete these questions before your care assessment."
+      path="/pre-assessment"
+      breadcrumbs={[]}
+      noindex
+    />
   );
+  const staffBanner = staffFill ? (
+    <div className="sticky top-0 z-50 bg-brand px-4 py-2 text-center text-[13px] font-bold text-white">
+      You are filling this in with the family. Ask each question as it is written.
+    </div>
+  ) : null;
 
   if (error || !data) {
     return (
       <>
         {seo}
-        <FormPage eyebrow="Pre-assessment" title="Before your visit">
+        <FormPage eyebrow="Before your visit" title="Before your visit">
           <Question heading="We could not open this form" stepKey="error">
-            <p className="text-[15px] leading-relaxed text-body">{error}</p>
-            <p className="mt-3 text-[15px] leading-relaxed text-body">
-              Call us on +234 812 698 8237 and we will send a new link.
+            <p className="text-[16px] leading-relaxed text-body">{error}</p>
+            <p className="mt-3 text-[16px] leading-relaxed text-body">
+              Call or WhatsApp us on {HELP_PHONE} and we will send a new link.
             </p>
           </Question>
         </FormPage>
@@ -515,71 +562,144 @@ const PreAssessment = () => {
   }
 
   interface ShellOptions {
-    step?: number | null;
-    total?: number;
+    heading?: React.ReactNode;
+    progress?: number | null;
     chip?: React.ReactNode;
     status?: React.ReactNode;
-    rail?: React.ReactNode;
     footer?: React.ReactNode;
+    menu?: boolean;
   }
+
+  // Who and what the page is for, for the art and the welcome.
+  const firstRecipient = intake.recipients[0] ?? null;
+  const mainService = firstRecipient ? sectionKeysFor(firstRecipient)[0] ?? data.context.service_key : data.context.service_key;
+  const serviceArt = (() => {
+    switch (mainService) {
+      case "eldercare": return art.elderWomanAdire;
+      case "postnatal_mother": case "postnatal_baby": case "newborn": return art.postnatalSpecialist;
+      case "antenatal": return art.midwifePregnantBp;
+      case "nanny": return art.nannyReading;
+      case "paediatric": case "additional_needs": return art.therapistBoyBlocks;
+      case "post_surgical": return art.manCrutches;
+      default: return art.charCaregiver;
+    }
+  })();
+  const chapterArt: Record<ChapterKey, string> = {
+    about: art.objHandsHeart,
+    health: art.objStethoscope,
+    daily: mainService === "eldercare" ? art.objWalkingFrame : art.objMeal,
+    support: art.objPhoneChat,
+    when: art.objCalendar,
+  };
+  const fillerFirst = (intake.enquirer.firstName || data.filler.name?.split(" ")[0] || "").trim() || null;
+
+  const covers = pages.filter((p) => p.kind === "cover");
+  const titleOf = (p: FlowPage) => chapterTitle(p.chapter ?? "about", firstNameOf(p.recipientId));
+  const whoOf = (p: FlowPage) => (several && p.recipientId ? p.who : null);
+
+  // Where each chapter stands, for the menu.
+  const chapterState = (cover: FlowPage): "done" | "current" | "todo" => {
+    if (page?.chapter === cover.chapter && page?.recipientId === cover.recipientId && page.kind !== "review") return "current";
+    const asked = pages.filter((p) => p.kind === "questions" && p.chapter === cover.chapter && p.recipientId === cover.recipientId);
+    const answered = asked.some((p) => p.fields.some((f) => isAnswered(responses[scopedKey(p.recipientId, f.id)])));
+    return answered ? "done" : "todo";
+  };
+  const menuChapters: MenuChapter[] = covers.map((c) => ({
+    key: c.key,
+    title: titleOf(c),
+    who: whoOf(c),
+    state: chapterState(c),
+    onGo: () => goTo(c.key),
+  }));
 
   const shell = (children: React.ReactNode, options: ShellOptions = {}) => (
     <>
       {seo}
+      {staffBanner}
       <FormPage
-        eyebrow="Pre-assessment"
+        eyebrow="Before your visit"
         title="Before your visit"
-        step={options.step ?? null}
-        total={options.total ?? 0}
+        heading={options.heading}
+        progress={options.progress ?? null}
         chip={options.chip}
         status={options.status}
-        rail={options.rail}
         footer={options.footer}
+        onMenu={options.menu ? () => setMenuOpen(true) : undefined}
       >
         {children}
       </FormPage>
+      {options.menu && (
+        <MenuSheet
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          chapters={menuChapters}
+          onReview={() => goTo("review")}
+        />
+      )}
     </>
   );
 
-  /** One care recipient's answers, or the request's, written out. */
-  const groupAnswers = (group: AnswerGroup, onEdit?: (sectionId: string) => void) =>
-    group.sections.map((s) => {
-      const shown = s.fields
-        .filter((f) => fieldVisible(f, group.answers))
-        .filter((f) => isAnswered(responses[scopedKey(group.recipientId, f.id)]));
-      if (shown.length === 0) return null;
-      return (
-        <FormCard key={`${group.recipientId ?? "request"}:${s.id}`}>
-          <div className="flex items-start justify-between gap-4">
-            <h2 className="text-[16px] font-bold leading-snug text-navy">{say(s.title)}</h2>
-            {onEdit && (
-              <button
-                type="button"
-                onClick={() => onEdit(s.id)}
-                className="shrink-0 text-[15px] font-semibold text-brand underline"
-              >
-                Edit
-              </button>
-            )}
+  /** One care recipient's answers, or the request's, written out by chapter. */
+  const groupAnswers = (group: AnswerGroup, onEdit?: (sectionId: string) => void) => {
+    const byChapter = new Map<ChapterKey, CareSection[]>();
+    for (const s of inChapterOrder(group.sections)) {
+      const chapter = chapterOf(s.id);
+      if (!chapter) continue;
+      byChapter.set(chapter, [...(byChapter.get(chapter) ?? []), s]);
+    }
+    return [...byChapter.entries()].map(([chapter, sections]) => {
+      const blocks = sections.map((s) => {
+        const shown = s.fields
+          .filter((f) => fieldVisible(f, group.answers))
+          .filter((f) => f.type !== "checkbox")
+          .filter((f) => isAnswered(responses[scopedKey(group.recipientId, f.id)]));
+        if (shown.length === 0) return null;
+        return (
+          <div key={s.id} className="border-t border-hairline-warm pt-4 first:border-t-0 first:pt-0">
+            <div className="flex items-start justify-between gap-4">
+              {/* A section named like its chapter would say the same thing twice. */}
+              {say(s.title)?.toLowerCase() === chapterTitle(chapter, firstNameOf(group.recipientId)).toLowerCase()
+                ? <span />
+                : <h3 className="text-[13px] font-extrabold uppercase tracking-[0.08em] text-label">{say(s.title)}</h3>}
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(s.id)}
+                  className="-mt-1 inline-flex min-h-9 shrink-0 items-center gap-1.5 text-[14px] font-extrabold text-brand"
+                  aria-label={`Change ${say(s.title)}`}
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Change
+                </button>
+              )}
+            </div>
+            <dl className="mt-2 flex flex-col">
+              {shown.map((f) => (
+                <div key={f.id} className="py-2">
+                  <dt className="text-[14px] font-bold leading-snug text-body">{say(f.record)}</dt>
+                  <dd className="mt-0.5 whitespace-pre-line text-[16px] font-semibold leading-relaxed text-ink">
+                    {readAnswer(resolved(f), responses[scopedKey(group.recipientId, f.id)], bandLabels)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <dl className="mt-2 flex flex-col divide-y divide-hairline-warm">
-            {shown.map((f) => (
-              <div key={f.id} className="py-2.5">
-                <dt className="text-[15px] font-semibold text-body">{say(f.record)}</dt>
-                <dd className="mt-1 whitespace-pre-line text-[16px] leading-relaxed text-ink">
-                  {readAnswer(resolved(f), responses[scopedKey(group.recipientId, f.id)], bandLabels)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </FormCard>
+        );
+      }).filter(Boolean);
+      if (blocks.length === 0) return null;
+      return (
+        <section key={`${group.recipientId ?? "request"}:${chapter}`} className="border-2 border-navy bg-card p-4 shadow-offset-sm sm:p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <img src={chapterArt[chapter]} alt="" aria-hidden="true" className="h-10 w-10 shrink-0 object-contain" />
+            <h2 className="text-[19px] font-extrabold leading-tight tracking-[-0.035em] text-navy">
+              {chapterTitle(chapter, firstNameOf(group.recipientId))}
+              {several && group.label && chapter !== "when" && <span className="ml-2 text-[13px] font-bold tracking-normal text-label">{group.label}</span>}
+            </h2>
+          </div>
+          <div className="flex flex-col gap-4">{blocks}</div>
+        </section>
       );
     });
-
-  const groupHeading = (group: AnswerGroup) =>
-    group.label && (
-      <p className="label-caps mt-6 text-[12px] text-label">{group.label}</p>
-    );
+  };
 
   /* ---- Sent, and read back ------------------------------------------- */
 
@@ -596,17 +716,17 @@ const PreAssessment = () => {
     if (editing && editingGroup) {
       return shell(
         <Question heading={say(editing.title)} stepKey={editing.id}>
-          <div className="flex flex-col gap-5">
+          <div className="mt-2 flex flex-col gap-8">
             {editing.fields
               .filter((f) => fieldVisible(f, editingGroup.answers))
               .map((field) => {
                 const key = scopedKey(editingGroup.recipientId, field.id);
                 return (
-                  <div key={key} className="border-t border-hairline-warm pt-5 first:border-t-0 first:pt-0">
+                  <div key={key}>
                     {field.type !== "checkbox" && (
-                      <p className="text-[16px] font-semibold leading-snug text-ink">{say(field.asked)}</p>
+                      <p className="text-[19px] font-extrabold leading-[1.2] tracking-[-0.03em] text-navy">{say(field.asked)}</p>
                     )}
-                    <div className={field.type === "checkbox" ? "" : "mt-3"}>
+                    <div className={field.type === "checkbox" ? "" : "mt-4"}>
                       <CareFieldInput
                         field={field}
                         value={key in amendDraft ? amendDraft[key] : responses[key]}
@@ -624,10 +744,11 @@ const PreAssessment = () => {
               })}
           </div>
           {amendError && (
-            <p className="mt-4 text-[15px] font-semibold leading-relaxed text-warn-ink">{amendError}</p>
+            <p className="mt-5 border-l-4 border-price bg-tint px-4 py-3 text-[15px] font-bold leading-relaxed text-navy">{amendError}</p>
           )}
         </Question>,
         {
+          heading: "Change an answer",
           footer: (
             <>
               <PrimaryAction onClick={saveAmendment} disabled={amendSaving}>
@@ -642,40 +763,53 @@ const PreAssessment = () => {
       );
     }
 
-    return shell(
+    return (
       <>
-        <Question
-          heading="Thank you, we have your answers"
-          help={canAmend
-            ? "You can still change these answers until the assessment visit. After that, changes are made with the nurse on the day."
-            : data.definition.closing ??
-              "Changes are now made with the nurse on the day. Call us on +234 812 698 8237 if something urgent has changed."}
-          stepKey="sent"
+        {seo}
+        <Thanks
+          first={fillerFirst}
+          art={serviceArt}
+          staffBanner={staffBanner}
+          steps={[
+            { title: "We call you to book the visit", line: "We arrange a time for the home assessment that suits you." },
+            { title: "The assessment visit", line: "We go through these answers with you, see the home and agree what care is needed." },
+            { title: "Your care offer", line: "We send you the options and prices, ready for you to choose." },
+          ]}
         >
           {amendNote && (
-            <p className="mb-3 rounded-xl border border-hairline-warm bg-tint/50 p-3.5 text-[15px] font-semibold leading-relaxed text-navy">
-              {amendNote}
-            </p>
+            <p className="mt-8 border-l-4 border-brand bg-tint px-4 py-3.5 text-[15px] font-bold leading-relaxed text-navy">{amendNote}</p>
           )}
-          {groups.map((group) => (
-            <div key={group.recipientId ?? "request"}>
-              {groupHeading(group)}
-              {groupAnswers(
-                group,
-                canAmend
-                  ? (sectionId) => {
-                      setAmendDraft({});
-                      setAmendError(null);
-                      setAmendNote(null);
-                      setAmending({ recipientId: group.recipientId, sectionId });
-                      window.scrollTo({ top: 0 });
-                    }
-                  : undefined,
-              )}
+          <details className="group mt-10 border-t-4 border-navy pt-4" open={!!amendNote}>
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[18px] font-extrabold tracking-[-0.03em] text-navy [&::-webkit-details-marker]:hidden">
+              See your answers
+              <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <p className="mt-2 text-[15px] leading-[1.6] text-body">
+              {canAmend
+                ? "You can still change these until the assessment visit. After that, changes are made with us on the day."
+                : `Changes are now made with us on the day. Call us on ${HELP_PHONE} if something urgent has changed.`}
+            </p>
+            <div className="mt-5 flex flex-col gap-5">
+              {groups.map((group) => (
+                <div key={group.recipientId ?? "request"} className="flex flex-col gap-5">
+                  {groupAnswers(
+                    group,
+                    canAmend
+                      ? (sectionId) => {
+                          setAmendDraft({});
+                          setAmendError(null);
+                          setAmendNote(null);
+                          setAmending({ recipientId: group.recipientId, sectionId });
+                          window.scrollTo({ top: 0 });
+                        }
+                      : undefined,
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </Question>
-      </>,
+          </details>
+        </Thanks>
+      </>
     );
   }
 
@@ -685,6 +819,7 @@ const PreAssessment = () => {
     return (
       <>
         {seo}
+        {staffBanner}
         <CareIntakeFlow
           intake={intake}
           seeded={!!data.intake_seed}
@@ -710,7 +845,7 @@ const PreAssessment = () => {
   if (topUp && !topUpPerson) {
     return shell(
       <Question heading="We could not match these questions to the care recipient" stepKey="unmatched">
-        <p className="text-[15px] leading-relaxed text-body">
+        <p className="text-[16px] leading-relaxed text-body">
           No answers have been changed. Please ask Medic Connect to send a new link for the correct person.
         </p>
       </Question>,
@@ -719,26 +854,36 @@ const PreAssessment = () => {
 
   /* ---- Still being answered ------------------------------------------- */
 
-  const renderField = (field: CareField) => {
+  const questionCount = (list: FlowPage[]) =>
+    list.reduce((n, p) => n + p.fields.filter((f) => f.type !== "checkbox").length, 0);
+
+  const renderField = (field: CareField, onlyOne: boolean) => {
     // A tick box carries its own wording, so heading it as well would say the
     // same thing twice.
     const selfLabelled = field.type === "checkbox";
     const key = scopedKey(page?.recipientId ?? null, field.id);
+    const autoAdvance = onlyOne && (field.type === "choice" || field.type === "yes_no") && !opensFollowUps.has(field.id);
     return (
-      <div key={key} className="border-t border-hairline-warm pt-5 first:border-t-0 first:pt-0">
+      <fieldset key={key} className="min-w-0 border-t-2 border-hairline-warm pt-7 first:border-t-0 first:pt-0">
         {!selfLabelled && (
-          <>
-            <p className="text-[15px] font-semibold leading-snug text-ink">{say(field.asked)}</p>
-            {field.help && <p className="mt-1 text-[13px] leading-relaxed text-body">{say(field.help)}</p>}
-          </>
+          <legend className="contents">
+            <span className="block text-[21px] font-extrabold leading-[1.18] tracking-[-0.035em] text-navy sm:text-[24px]">{say(field.asked)}</span>
+          </legend>
         )}
-        <div className={selfLabelled ? "" : "mt-3"}>
+        {!selfLabelled && field.help && <p className="mt-2 text-[15px] leading-[1.55] text-body">{say(field.help)}</p>}
+        <div className={selfLabelled ? "" : "mt-5"}>
           <CareFieldInput
             field={field}
             value={responses[key]}
             options={optionsFor(field)}
             prefilled={field.prefill ? data.prefill[field.prefill] ?? "" : undefined}
-            onChange={(value) => setAnswer(key, value)}
+            onChange={(value) => {
+              setAnswer(key, value);
+              if (autoAdvance && value !== null && value !== undefined && value !== "") {
+                if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
+                advanceTimer.current = window.setTimeout(() => { void nextRef.current(); }, 380);
+              }
+            }}
             token={token}
             recipientId={page?.recipientId ?? null}
             responses={page?.recipientId
@@ -747,75 +892,63 @@ const PreAssessment = () => {
             knownPeople={knownPeople}
           />
         </div>
-      </div>
+      </fieldset>
     );
   };
 
   if (!page || page.kind === "welcome") {
-    return shell(
-      <Question
-        heading={topUp
-          ? `A few more questions${topUpName ? ` about ${topUpName}` : ""}`
-          : "Before your assessment"}
-        help={topUp
-          ? "A service has been added since you answered. These are the only questions it brings with it. Everything you have already told us stands."
-          : data.definition.opening ??
-            "These questions help our care team understand what is needed and prepare for the assessment. Your answers save as you go, so you can leave and return using the same link."}
-        stepKey="welcome"
-      >
-        <span className="sr-only">Ready when you are.</span>
-        {!topUp && (
-          <p className="mt-4 text-[15px] leading-snug text-body">
-            Not right?{" "}
-            <button
-              type="button"
-              className="font-semibold text-brand underline underline-offset-2"
-              onClick={() => {
-                // Back to who the care is for. Answers already given are kept.
-                setResponses((prev) => {
-                  const held = (prev.care_intake as CareIntake | undefined) ?? intake;
-                  const next = { ...held, confirmed: false };
-                  autosave.queue("care_intake", next);
-                  return { ...prev, care_intake: next };
-                });
-                void autosave.flush();
-                window.scrollTo({ top: 0 });
-              }}
-            >
-              Change who the care is for
-            </button>
-          </p>
-        )}
-      </Question>,
-      {
-        footer: (
-          <PrimaryAction onClick={() => { void goNext(); }}>
-            {topUp ? "Start" : "Start pre-assessment"}
-          </PrimaryAction>
-        ),
-      },
+    const asked = pages.filter((p) => p.kind === "questions");
+    const minutes = minutesFor(questionCount(asked));
+    const only = intake.recipients.length === 1 ? intake.recipients[0] : null;
+    const name = only && !only.isEnquirer ? firstNameOf(only.id) : null;
+    const self = !!only?.isEnquirer;
+    const asksMedicines = asked.some((p) => p.fields.some((f) => f.id === "regular_medicines"));
+    const chapterNames = [...new Set(covers.map((c) => (several && c.recipientId ? `${titleOf(c)}` : titleOf(c))))];
+    return (
+      <>
+        {seo}
+        <Welcome
+          staffBanner={staffBanner}
+          greeting={fillerFirst ? `Hello ${fillerFirst},` : "Hello,"}
+          heading={topUp
+            ? `A few more questions${topUpName ? ` about ${topUpName}` : ""}`
+            : self ? "A few questions about your care"
+            : name ? `A few questions about ${name}’s care`
+            : "A few questions about your family’s care"}
+          lead={topUp
+            ? "A service has been added since you answered. These are the only questions it brings with it. Everything you have already told us stands."
+            : `Your answers help us prepare, so the assessment visit can focus on ${self ? "you" : name ?? "your family"} and the right care.`}
+          minutes={minutes}
+          chapters={chapterNames}
+          haveReady={asksMedicines
+            ? self
+              ? "your medicines, or a photo of the boxes, and your doctor’s details."
+              : `${name ? `${name}’s` : "their"} medicines, or a photo of the boxes, and ${name ? "their" : "their"} doctor’s details.`
+            : null}
+          art={serviceArt}
+          startLabel={returning ? "Carry on" : "Let’s begin"}
+          onStart={() => {
+            const saved = data.position?.page ?? null;
+            if (returning && saved && pages.some((p) => p.key === saved)) goTo(saved);
+            else void goNext();
+          }}
+          onChangeWho={topUp ? undefined : () => {
+            // Back to who the care is for. Answers already given are kept.
+            setResponses((prev) => {
+              const held = (prev.care_intake as CareIntake | undefined) ?? intake;
+              const next = { ...held, confirmed: false };
+              autosave.queue("care_intake", next);
+              return { ...prev, care_intake: next };
+            });
+            void autosave.flush();
+            window.scrollTo({ top: 0 });
+          }}
+        />
+      </>
     );
   }
 
-  const covers = pages.filter((p) => p.kind === "cover");
-
-  // Every section on the rail is reachable: answers are saved as they are
-  // given, so moving about cannot lose anything.
-  const answeredNumbers = covers
-    .filter((cover) => (sectionById[cover.sectionId ?? ""]?.fields ?? []).some(
-      (f) => isAnswered(responses[scopedKey(cover.recipientId, f.id)]),
-    ))
-    .map((cover) => cover.sectionNumber ?? 0);
-
-  const rail = (
-    <SectionRail
-      count={covers.length}
-      current={page.sectionNumber ?? 1}
-      answered={answeredNumbers}
-      onSelect={(n) => { const target = covers[n - 1]; if (target) goTo(target.key); }}
-    />
-  );
-
+  const progress = pages.length > 1 ? index / (pages.length - 1) : 0;
   const status = (
     <SaveState
       status={autosave.status}
@@ -823,59 +956,36 @@ const PreAssessment = () => {
       onRetry={() => { void autosave.retry(); }}
     />
   );
-
-  const chip = `${page.who ? `${page.who} · ` : ""}${say(page.title ?? sectionById[page.sectionId ?? ""]?.title) ?? ""}`;
+  const backButton = (
+    <SecondaryAction onClick={goBack} label="Back">
+      <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+    </SecondaryAction>
+  );
 
   if (page.kind === "cover") {
-    const section = sectionById[page.sectionId ?? ""];
-    const started = (page.fields.length ? page.fields : section?.fields ?? []).some(
-      (f) => isAnswered(responses[scopedKey(page.recipientId, f.id)]),
-    );
-    const questionPages = pages.filter((candidate) =>
-      candidate.kind === "questions" &&
-      candidate.recipientId === page.recipientId &&
-      candidate.sectionId === page.sectionId &&
-      candidate.presentationId === page.presentationId);
-    const questionCount = questionPages.reduce(
-      (count, candidate) => count + candidate.fields.filter((field) => field.type !== "checkbox").length,
-      0,
-    );
+    const inChapter = pages.filter((p) =>
+      p.kind === "questions" && p.chapter === page.chapter && p.recipientId === page.recipientId);
+    const started = inChapter.some((p) => p.fields.some((f) => isAnswered(responses[scopedKey(p.recipientId, f.id)])));
     return shell(
-      <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-        <div className="relative -mx-5 overflow-hidden bg-navy px-5 py-7 text-white sm:-mx-8 sm:px-8">
-          <span aria-hidden className="pointer-events-none absolute -right-8 -top-10 text-[128px] font-black leading-none text-white/[0.07]">{page.sectionNumber}</span>
-          <span aria-hidden className="pointer-events-none absolute -bottom-12 left-1/3 h-28 w-28 rounded-full border-[18px] border-white/[0.06]" />
-          <div className="relative flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-[15px] font-bold text-white">
-              {page.sectionNumber}
-            </span>
-            <p className="label-caps on-emphasis-label text-[11px]">
-              {page.who ? `${page.who} · ` : ""}Section {page.sectionNumber} of {page.sectionCount}
-            </p>
-          </div>
-          <h2 className="relative mt-3 text-[19px] font-bold leading-tight text-white">{say(page.title ?? section?.title)}</h2>
-        </div>
-        <div className="pt-4">
-          {section?.intro && (
-            <p className="text-[14px] leading-relaxed text-body">{say(section.intro)}</p>
-          )}
-          <p className="mt-2 text-[13px] text-muted-foreground">
-            {questionCount === 1 ? "1 question in this section." : `${questionCount} questions in this section.`}
-          </p>
-        </div>
-      </div>,
+      <ChapterCover
+        number={page.sectionNumber ?? 1}
+        count={page.sectionCount ?? covers.length}
+        who={whoOf(page)}
+        title={titleOf(page)}
+        line={chapterLine(page.chapter ?? "about", firstNameOf(page.recipientId))}
+        questions={questionCount(inChapter)}
+        art={chapterArt[page.chapter ?? "about"]}
+      />,
       {
-        step: (page.sectionNumber ?? 1) - 1,
-        total: page.sectionCount ?? covers.length,
-        chip,
-        status,
-        rail,
+        heading: titleOf(page),
+        progress,
+        menu: true,
         footer: (
           <>
             <PrimaryAction onClick={() => { void goNext(); }}>
-              {started ? "Continue" : "Start section"}
+              {started ? "Carry on" : "Start"} <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </PrimaryAction>
-            {index > 1 && <SecondaryAction onClick={goBack}>Back</SecondaryAction>}
+            {backButton}
           </>
         ),
       },
@@ -883,79 +993,119 @@ const PreAssessment = () => {
   }
 
   if (page.kind === "review") {
+    // Questions that matter to the visit, left unanswered: pointed to, never forced.
+    const missing = pages
+      .filter((p) => p.kind === "questions")
+      .flatMap((p) => p.fields
+        .filter((f) => f.required && f.type !== "checkbox" && !isAnswered(responses[scopedKey(p.recipientId, f.id)]))
+        .map((f) => ({ key: `${p.key}:${f.id}`, page: p.key, label: f.record, who: whoOf(p) })));
+    const requestGroup = groups.find((g) => g.recipientId === null);
+    const consentFields = (requestGroup?.sections.find((s) => s.id === "consent")?.fields ?? [])
+      .filter((f) => fieldVisible(f, responses));
     return shell(
-      <Question
-        heading="Check your answers"
-        help="Read this through before you send it. You can go back and change anything."
-        stepKey="review"
-      >
-        {groups.map((group) => (
-          <div key={group.recipientId ?? "request"}>
-            {groupHeading(group)}
-            {groupAnswers(group, (sectionId) =>
-              {
+      <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+        <h2 className="text-[30px] font-extrabold leading-[1.04] tracking-[-0.045em] text-navy sm:text-[38px]">Check and send</h2>
+        <p className="mt-3 text-[16px] leading-[1.6] text-body">
+          Read your answers through. Tap Change on anything you want to put right.
+        </p>
+
+        {missing.length > 0 && (
+          <div className="mt-6 border-l-4 border-brand bg-tint px-4 py-4">
+            <p className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">
+              {missing.length === 1 ? "One question we would like answered" : `${missing.length} questions we would like answered`}
+            </p>
+            <p className="mt-1 text-[14.5px] leading-[1.5] text-body">You can still send without them, and we will ask at the visit.</p>
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {missing.map((m) => (
+                <li key={m.key}>
+                  <button type="button" onClick={() => goTo(m.page)} className="inline-flex min-h-9 items-center gap-1.5 text-left text-[15px] font-extrabold text-brand underline underline-offset-2">
+                    {m.who ? `${m.who}: ` : ""}{say(m.label)} <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-7 flex flex-col gap-5">
+          {groups.map((group) => (
+            <div key={group.recipientId ?? "request"} className="flex flex-col gap-5">
+              {groupAnswers(group, (sectionId) => {
                 const target = pages.find((candidate) =>
-                  candidate.kind === "cover" && candidate.sectionId === sectionId && candidate.recipientId === group.recipientId);
+                  candidate.kind === "questions" && candidate.sectionId === sectionId && candidate.recipientId === group.recipientId);
                 if (target) goTo(target.key);
               })}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
+
+        {consentFields.length > 0 && (
+          <section className="mt-8 border-2 border-navy bg-tint p-4 sm:p-5">
+            <h2 className="text-[19px] font-extrabold tracking-[-0.035em] text-navy">Before you send</h2>
+            <div className="mt-4 flex flex-col gap-3">
+              {consentFields.map((field) => (
+                <CareFieldInput
+                  key={field.id}
+                  field={{ ...field, asked: say(field.asked) }}
+                  value={responses[field.id]}
+                  options={[]}
+                  onChange={(value) => { setAnswer(field.id, value); setConsentWarning(false); }}
+                />
+              ))}
+            </div>
+            {data.definition.privacyUrl && (
+              <a href={data.definition.privacyUrl} className="mt-4 inline-block text-[14.5px] font-bold text-brand underline underline-offset-2" target="_blank" rel="noreferrer">
+                How we look after your information
+              </a>
+            )}
+          </section>
+        )}
         {consentWarning && (
-          <p className="mt-4 text-[15px] font-semibold leading-relaxed text-warn-ink">
-            Please tick the boxes in the last section before sending this.
+          <p role="alert" className="mt-4 border-l-4 border-price bg-tint px-4 py-3 text-[15px] font-bold leading-relaxed text-navy">
+            Please tick the boxes above before sending.
           </p>
         )}
         {submitError && (
-          <p className="mt-4 text-[15px] font-semibold leading-relaxed text-warn-ink">
+          <p role="alert" className="mt-4 border-l-4 border-price bg-tint px-4 py-3 text-[15px] font-bold leading-relaxed text-navy">
             Your latest answers have not saved yet. Check your connection and try again.
           </p>
         )}
-      </Question>,
+      </div>,
       {
-        rail,
+        heading: "Check and send",
+        progress: 1,
+        status,
+        menu: true,
         footer: (
           <>
             <PrimaryAction onClick={submit} disabled={submitting}>
               {submitting ? "Sending" : "Send my answers"}
             </PrimaryAction>
-            <SecondaryAction onClick={goBack}>Back</SecondaryAction>
+            {backButton}
           </>
         ),
       },
     );
   }
 
+  const answeredHere = page.fields.some((f) => isAnswered(responses[scopedKey(page.recipientId, f.id)]));
+  const stop = say(page.title ?? sectionById[page.sectionId ?? ""]?.title);
   return shell(
-    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-      {(page.partCount ?? 1) > 1 && (
-        <p className="mb-2 text-[13px] text-muted-foreground">
-          Part {page.partNumber} of {page.partCount}
-        </p>
-      )}
-      <div className="flex flex-col gap-4">{page.fields.map(renderField)}</div>
-
-      <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
-        Leave anything you are unsure about. The nurse will go through it with you on the day.
-        {data.definition.privacyUrl && (
-          <>
-            {" "}
-            <a href={data.definition.privacyUrl} className="font-semibold text-brand underline" target="_blank" rel="noreferrer">
-              How we look after your information
-            </a>
-          </>
-        )}
-      </p>
+    <div key={page.key} className="animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="flex flex-col gap-9">{page.fields.map((f) => renderField(f, page.fields.length === 1))}</div>
     </div>,
     {
-      step: (page.sectionNumber ?? 1) - 1,
-      total: page.sectionCount ?? covers.length,
-      chip,
+      heading: titleOf(page),
+      progress,
+      chip: `${whoOf(page) ? `${whoOf(page)} · ` : ""}${stop ?? ""}`,
       status,
-      rail,
+      menu: true,
       footer: (
         <>
-          <PrimaryAction onClick={() => { void goNext(); }}>Continue</PrimaryAction>
-          <SecondaryAction onClick={goBack}>Back</SecondaryAction>
+          <PrimaryAction quiet={!answeredHere} onClick={() => { void goNext(); }}>
+            {answeredHere ? <>Continue <ArrowRight className="h-5 w-5" aria-hidden="true" /></> : "Skip for now"}
+          </PrimaryAction>
+          {backButton}
         </>
       ),
     },
