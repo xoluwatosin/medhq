@@ -79,6 +79,8 @@ export default function CareOfferSection({
   const [editing, setEditing] = useState<{ id: string | null; content: OfferContent; validUntil: string } | null>(null);
   const [previewing, setPreviewing] = useState<OfferRow | null>(null);
   const [withdrawing, setWithdrawing] = useState<OfferRow | null>(null);
+  /** A WhatsApp send that is ready: opened from a real tap, so phones hand it to the app. */
+  const [whatsapp, setWhatsapp] = useState<{ url: string; text: string; number: string; emailedTo: string | null } | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -145,7 +147,6 @@ export default function CareOfferSection({
   const send = async (offer: OfferRow, channel: "email" | "whatsapp" | "copied") => {
     const gaps = offerGaps(offer.content);
     if (gaps.length) return toast.error(`Still to fill in: ${gaps.join(", ")}`);
-    const tab = channel === "whatsapp" ? window.open("about:blank", "_blank") : null;
     setBusy(true);
     // WhatsApp sends also email the family, with the PDF, when they have an address.
     const pdf = channel === "email" || channel === "whatsapp" ? await makePdf(offer) : null;
@@ -155,7 +156,6 @@ export default function CareOfferSection({
     });
     setBusy(false);
     if (error || !data?.ok) {
-      tab?.close();
       const ctx = (error as { context?: Response } | null)?.context;
       const body = ctx && typeof ctx.json === "function" ? await ctx.json().catch(() => null) : null;
       return toast.error(data?.error ?? body?.error ?? "Could not send the offer");
@@ -166,11 +166,14 @@ export default function CareOfferSection({
       toast.success("Link copied");
     }
     if (channel === "whatsapp") {
-      if (data.emailed) toast.success(`Also emailed to ${data.to}`);
-      const url = data.whatsapp_number
-        ? whatsappHref(data.whatsapp_number, data.whatsapp_text)
-        : `https://wa.me/?text=${encodeURIComponent(data.whatsapp_text)}`;
-      if (tab) tab.location.href = url; else window.open(url, "_blank");
+      setWhatsapp({
+        url: data.whatsapp_number
+          ? whatsappHref(data.whatsapp_number, data.whatsapp_text)
+          : `https://wa.me/?text=${encodeURIComponent(data.whatsapp_text)}`,
+        text: data.whatsapp_text,
+        number: String(data.whatsapp_number ?? ""),
+        emailedTo: data.emailed ? data.to : null,
+      });
     }
     void load();
   };
@@ -330,6 +333,39 @@ export default function CareOfferSection({
         saveDisabled={!reason.trim()}
       >
         <CareField label="Reason"><Area rows={3} value={reason} onChange={setReason} /></CareField>
+      </CareSheet>
+
+      <CareSheet
+        open={!!whatsapp}
+        onOpenChange={(v) => { if (!v) setWhatsapp(null); }}
+        title="Ready to send on WhatsApp"
+        description={whatsapp?.number ? `To ${whatsapp.number}. WhatsApp opens with the message filled in; check it and press send.` : "No WhatsApp number is saved, so WhatsApp will ask you to choose the chat."}
+      >
+        {whatsapp && (
+          <div className="flex flex-col gap-4">
+            {whatsapp.emailedTo && <p className="text-[13.5px] font-bold text-navy">The offer has also been emailed to {whatsapp.emailedTo}.</p>}
+            <a
+              href={whatsapp.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => window.setTimeout(() => setWhatsapp(null), 400)}
+              className="inline-flex min-h-12 items-center justify-center gap-2 bg-[#25D366] px-5 text-[16px] font-extrabold text-white"
+            >
+              <MessageCircle className="h-5 w-5" /> Open WhatsApp
+            </a>
+            <div>
+              <p className="mb-1.5 text-[12.5px] font-bold text-label">The message</p>
+              <pre className="whitespace-pre-wrap border border-line bg-desk/40 p-3 font-sans text-[13.5px] leading-[1.55] text-ink">{whatsapp.text}</pre>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void navigator.clipboard.writeText(whatsapp.text).then(() => toast.success("Message copied")).catch(() => undefined)}
+            >
+              <Copy className="mr-1.5 h-4 w-4" /> Copy the message instead
+            </Button>
+          </div>
+        )}
       </CareSheet>
 
       {previewing && (
