@@ -338,5 +338,5 @@ END;
 $function$;
 
 -- Schedules (UTC): emails every five minutes, reminders at 07:50 Lagos time.
--- SELECT cron.schedule('staff-notifications-email', '*/5 * * * *', 'select private.staff_notifications_dispatch();');
--- SELECT cron.schedule('hr-daily-reminders', '50 6 * * *', 'select private.hr_daily_reminders();');
+SELECT cron.schedule('staff-notifications-email', '*/5 * * * *', 'select private.staff_notifications_dispatch();');
+SELECT cron.schedule('hr-daily-reminders', '50 6 * * *', 'select private.hr_daily_reminders();');
