@@ -75,7 +75,13 @@ Deno.serve(async (req) => {
 
     // The email goes with every email send, and with a WhatsApp send too
     // when the family has an email address, so they always have it in writing.
-    const sendEmail = channel === "email" || (channel === "whatsapp" && !!email);
+    // Never twice by accident: a WhatsApp send skips the email if this offer
+    // has already been emailed to the family.
+    const { data: earlier } = await db.from("care_activity").select("detail")
+      .eq("client_id", offer.client_id).eq("action", "offer_sent").contains("detail", { offer_id: offer.id });
+    const emailedBefore = (earlier ?? []).some((a: { detail: Record<string, unknown> | null }) =>
+      a.detail?.channel === "email" || a.detail?.emailed === true);
+    const sendEmail = channel === "email" || (channel === "whatsapp" && !!email && !emailedBefore);
     let emailed = false;
     let emailError: string | null = null;
     if (sendEmail) {
@@ -129,7 +135,7 @@ Deno.serve(async (req) => {
       first && first !== "Hello" ? `Hello ${first} 👋` : "Hello 👋",
       `Thank you for talking with us about ${careFor}. Your care offer is ready${options.length === 2 ? ", with both options side by side" : options.length > 2 ? ", with the options side by side" : ""}, so you can take your time with it.`,
       `Here it is: ${link}`,
-      `You can read it, download the PDF, and when you are ready, accept and pay right there.${emailed ? " We have also emailed you a copy." : " If you would like a copy by email too, just say."}`,
+      `You can read it, download the PDF, and when you are ready, accept and pay right there.${emailed || (emailedBefore && !!email) ? " We have also emailed you a copy." : " If you would like a copy by email too, just say."}`,
       "Any questions at all, just reply here. 💙\nThe Medic Connect team",
     ].join("\n\n");
 
