@@ -14,6 +14,7 @@ The current system (public site, intake, pre-assessment, assessor, admin, Match 
 - New screens are visible only to people holding the new capability or grant. Everyone else sees what they see today.
 - A safety net comes before any feature work: CI on every pull request (lint, typecheck, unit tests, build), Vercel preview deploys, and a staging Supabase built from the migrations and filled with made-up test data. No live data, scrubbed or not, is ever copied out of production. Every migration runs on staging with the SQL tests in `supabase/tests/` before production, and production is backed up before each migration.
 - Small slices, each tested end to end on staging before release.
+- Every change reaches `main` through a pull request that passes the **Typecheck, test, build** check. Merging deploys the website (Vercel) and any changed edge functions straight away, but nothing applies migrations. So every database change is additive (new tables, columns and functions; nothing removed or renamed), it is applied to live first, and the code that uses it merges after.
 
 ---
 
@@ -380,7 +381,7 @@ Upcoming shifts and offers; availability and leave; timesheet with confirm or di
 ## 11. Build order
 
 0. Safety net: CI, preview deploys, staging database and restore. Changes nothing live. CI is in `.github/workflows/ci.yml`: typecheck, unit tests and build on every pull request; lint runs on changed files only and warns, because the codebase carries existing lint errors.
-1. Care-worker capability grants (Tranche 2) so a test worker exists.
+1. Care-worker capability grants (Tranche 2) so a test worker exists. Rule: the workforce app is open to a person only while they are in the Workforce, work in the field, hold the `care_worker` capability and have a sign-in. An assignment never grants access; it decides which care they see. Built in `20261010120000_care_worker_access.sql` with `supabase/tests/care_worker_access.sql`; admins grant it on the Workforce staff page.
 2. Delivery data: observations, interventions, monitoring (7.5D and 7.5E), database only.
 3. Schedule and visits: roster with recurring patterns and primary carer, visit records, check-in and check-out with location levels 1 and 2, Workforce app "My visits".
 4. Today board and live alerts, location levels 3 and 4, emergency button.
