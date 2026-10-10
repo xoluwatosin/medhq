@@ -9,6 +9,7 @@ import { CxAuthShell } from "@/components/candidate/CxAuthShell";
 import { usePortalMode } from "@/hooks/usePortalMode";
 import { myCareAssignments, type CareWorkerAssignment } from "@/lib/lifecycle";
 import { MyVisits } from "@/components/workforce/MyVisits";
+import { appArt } from "@/components/mc/app-art";
 
 const dateLabel = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -31,7 +32,12 @@ const CareAssignments = () => {
   if (failed) return <p className="text-[15px] text-white/90">Your care could not be loaded. Try again shortly.</p>;
   if (!items) return <p className="text-[15px] text-white/80">Loading your care</p>;
   if (items.length === 0) {
-    return <p className="text-[15px] text-white/90">You are not assigned to any care yet. Your coordinator will be in touch.</p>;
+    return (
+      <div className="flex flex-col items-center gap-2 py-2 text-center">
+        <img src={appArt.workforceWelcome} alt="" className="h-40 w-40 bg-tint object-contain p-2" />
+        <p className="text-[15px] text-white/90">You are not assigned to any care yet. Your coordinator will be in touch.</p>
+      </div>
+    );
   }
 
   return (

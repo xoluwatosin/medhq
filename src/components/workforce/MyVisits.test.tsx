@@ -86,6 +86,6 @@ describe("MyVisits", () => {
   it("says when there is nothing booked", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
     render(<MyVisits />);
-    await waitFor(() => expect(screen.getByText("No visits booked in the next seven days.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("No visits booked in the next seven days")).toBeTruthy());
   });
 });

@@ -7,6 +7,8 @@ import {
   canCheckIn, checkIn, checkOut, lagosDayKey, mapsUrl, myVisits, newEventId, nextVisit,
   readDeviceLocation, type CareVisit,
 } from "@/lib/visits";
+import { AppIcon } from "@/components/mc/AppIcon";
+import { appArt } from "@/components/mc/app-art";
 import { EmergencyButton } from "./EmergencyButton";
 import { JourneyControl } from "./JourneyControl";
 
@@ -74,21 +76,21 @@ const VisitTicket = ({ visit, onChanged }: { visit: CareVisit; onChanged: (v: Ca
       {visit.access_notes && <p className="mt-1 text-[14px] text-white/80">Access: {visit.access_notes}</p>}
       {visit.notes && <p className="mt-2 text-[14px]">{visit.notes}</p>}
       {map && (
-        <a className="mt-2 inline-block text-[14px] font-bold underline" href={map} target="_blank" rel="noreferrer">
-          Open in Maps
+        <a className="mt-2 inline-flex items-center gap-1.5 text-[14px] font-bold underline" href={map} target="_blank" rel="noreferrer">
+          <AppIcon name="location-on" />Open in Maps
         </a>
       )}
 
-      <div className="mt-4 border-t border-dashed border-white/50 pt-4">
+      <div className="mt-4 border-t border-white/50 pt-4">
         {visit.status === "scheduled" && <JourneyControl visit={visit} />}
         {visit.status === "scheduled" && (canCheckIn(visit) ? (
           <button
             type="button"
             disabled={busy !== null}
             onClick={() => act("in")}
-            className="w-full bg-white py-3 text-[16px] font-bold text-navy disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 bg-white py-3 text-[16px] font-bold text-navy disabled:opacity-60"
           >
-            {busy === "in" ? "Checking in" : "Check in"}
+            <AppIcon name="check-in" />{busy === "in" ? "Checking in" : "Check in"}
           </button>
         ) : (
           <p className="text-[14px] text-white/80">Check-in opens an hour before the visit.</p>
@@ -111,9 +113,9 @@ const VisitTicket = ({ visit, onChanged }: { visit: CareVisit; onChanged: (v: Ca
               type="button"
               disabled={busy !== null}
               onClick={() => act("out")}
-              className="w-full bg-white py-3 text-[16px] font-bold text-navy disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 bg-white py-3 text-[16px] font-bold text-navy disabled:opacity-60"
             >
-              {busy === "out" ? "Checking out" : "Check out"}
+              <AppIcon name="check-out" />{busy === "out" ? "Checking out" : "Check out"}
             </button>
           </div>
         )}
@@ -166,7 +168,11 @@ export const MyVisits = () => {
     <div className="space-y-5">
       <p className="text-[15px] font-bold text-white">My visits</p>
       {next ? <VisitTicket key={next.id} visit={next} onChanged={replace} /> : (
-        <p className="text-[15px] text-white/90">No visits booked in the next seven days.</p>
+        <div className="flex flex-col items-center gap-2 py-2 text-center">
+          <img src={appArt.workforceNoVisitsToday} alt="" className="h-40 w-40 bg-tint object-contain p-2" />
+          <p className="text-[15px] font-bold text-white">No visits booked in the next seven days</p>
+          <p className="text-[14px] text-white/80">Your coordinator adds your visits here. Check back later.</p>
+        </div>
       )}
       <EmergencyButton visitId={visits.find((v) => v.status === "in_progress")?.id ?? null} />
       {Object.entries(byDay).map(([day, list]) => (
