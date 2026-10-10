@@ -12,7 +12,7 @@ The current system (public site, intake, pre-assessment, assessor, admin, Match 
 
 - Additive only. New work arrives as new tables, functions, routes and pages. Existing flows change only when that change is the reviewed purpose of the work.
 - New screens are visible only to people holding the new capability or grant. Everyone else sees what they see today.
-- A safety net comes before any feature work: CI on every pull request (lint, typecheck, unit tests, build), Vercel preview deploys, and a staging Supabase restored from a pseudonymised copy of live data with `scripts/migration/restore.sh`. Every migration runs on staging with the SQL tests in `supabase/tests/` before production, and production is backed up before each migration.
+- A safety net comes before any feature work: CI on every pull request (lint, typecheck, unit tests, build), Vercel preview deploys, and a staging Supabase built from the migrations and filled with made-up test data. No live data, scrubbed or not, is ever copied out of production. Every migration runs on staging with the SQL tests in `supabase/tests/` before production, and production is backed up before each migration.
 - Small slices, each tested end to end on staging before release.
 
 ---
