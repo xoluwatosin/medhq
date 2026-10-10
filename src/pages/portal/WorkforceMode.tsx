@@ -1,6 +1,6 @@
 // The boundary between Talent and Workforce for the same sign-in. Field carers
-// with the care_worker capability see the care they are assigned to; shifts,
-// visits and earnings are the next builds. Everyone else in the Workforce sees
+// with the care_worker capability see their visits and the care they are
+// assigned to; earnings are a later build. Everyone else in the Workforce sees
 // where they stand rather than candidate screens.
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import { Helmet } from "react-helmet-async";
 import { CxAuthShell } from "@/components/candidate/CxAuthShell";
 import { usePortalMode } from "@/hooks/usePortalMode";
 import { myCareAssignments, type CareWorkerAssignment } from "@/lib/lifecycle";
+import { MyVisits } from "@/components/workforce/MyVisits";
 
 const dateLabel = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -47,7 +48,7 @@ const CareAssignments = () => {
           </li>
         ))}
       </ul>
-      <p className="text-[14px] text-white/80">Your shifts, visits and earnings will appear here next.</p>
+      <p className="text-[14px] text-white/80">Your earnings will appear here later.</p>
     </div>
   );
 };
@@ -77,6 +78,7 @@ const WorkforceMode = () => {
         <meta name="robots" content="noindex" />
       </Helmet>
       <div className="space-y-5">
+        {mode.care_worker && <MyVisits />}
         {mode.care_worker && <CareAssignments />}
         {mode.assessor && (
           <p className="text-[15px] text-white/90">
