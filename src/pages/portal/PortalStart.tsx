@@ -10,6 +10,7 @@ import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { CxJoinShell, CxJoinAside } from "@/components/candidate/CxJoinShell";
+import { art } from "@/components/mc/art";
 import { CxCard, CxButton, CxField, cxInputClass } from "@/components/candidate/primitives";
 import { NIGERIA_STATES, getLGAsForState } from "@/lib/nigeria-locations";
 import { professionsForTrack } from "@/lib/professions";
@@ -185,10 +186,12 @@ const PortalStart = () => {
       <CxJoinShell
         title={firstName ? `${firstName}, four quick answers` : "Four quick answers"}
         eyebrow="Finish your profile"
+        step={2}
         aside={
           <CxJoinAside
             eyebrow="Finish your profile"
             heading="Four answers, and the work can find you."
+            art={art.nurseStreetMap}
             lede="These four decide which roles you are put forward for, and which questions we ask you afterwards. You tell us directly, so we never have to guess them from a document."
             items={[
               { title: "Your route", body: "Clinical, support, non-clinical or student. It sets what we ask of you." },

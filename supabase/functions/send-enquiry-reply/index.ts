@@ -6,7 +6,7 @@
 // attached. Every send is written down, so nobody is sent the same guide twice.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { kitEmail, kitParagraph, kitSubhead, kitFacts, kitList, kitButton } from "../_shared/kit-email.ts";
+import { KIT_ART, kitEmail, kitParagraph, kitSubhead, kitFacts, kitSteps, kitButton } from "../_shared/kit-email.ts";
 import { emailTags } from "../_shared/email-tags.ts";
 
 const corsHeaders = {
@@ -35,6 +35,88 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+const SITE = "https://medicconnect.co";
+
+// The care team hears about every new care request once: who it is for, the
+// care asked for and how soon, and a link to the record. Contact details stay
+// in the admin. Never blocks the family's own reply.
+async function notifyStaff(
+  db: ReturnType<typeof admin>,
+  enquiry: Record<string, any>,
+  resendKey: string,
+) {
+  const to = Deno.env.get("NOTIFICATION_EMAIL");
+  const answers = (enquiry.answers ?? {}) as Record<string, unknown>;
+  if (!to || !("kind_of_care" in answers || "for_whom" in answers)) return;
+
+  // Claim the notice first, so two calls never send it twice.
+  const { data: claimed } = await db
+    .from("contact_submissions")
+    .update({ staff_notified_at: new Date().toISOString() })
+    .eq("id", enquiry.id)
+    .is("staff_notified_at", null)
+    .select("id, care_client_id")
+    .maybeSingle();
+  if (!claimed) return;
+
+  const text = (k: string) => (typeof answers[k] === "string" ? String(answers[k]).trim() : "");
+  const first = String(enquiry.first_name || enquiry.name || "Someone").trim().split(" ")[0];
+  const self = /^for (me|themselves)$/i.test(text("for_whom"));
+  const who = text("who_needs_care").replace(/^themselves, /i, "");
+  const kind = text("kind_of_care") || enquiry.service || "Care";
+  const soon = text("how_soon");
+
+  // The website asks who the care is for by kind of person, not by name.
+  const forWhom = self
+    ? first
+    : `${who ? who.charAt(0).toUpperCase() + who.slice(1).toLowerCase() : "Someone"} (via ${first})`;
+  const subject = ["New care request:", [forWhom, kind, soon.toLowerCase()].filter(Boolean).join(", ")].join(" ");
+  const link = claimed.care_client_id
+    ? `${SITE}/admin/clients/${claimed.care_client_id}`
+    : `${SITE}/admin/enquiries`;
+
+  const bodyHtml = [
+    kitFacts([
+      { label: "Care for", value: self ? `${first}, for themselves` : `${who || "Someone"}, arranged by ${first}` },
+      { label: "Care asked for", value: kind },
+      ...(soon ? [{ label: "How soon", value: soon }] : []),
+      ...(text("confirmed_from_page") ? [{ label: "From the page", value: text("confirmed_from_page") }] : []),
+    ]),
+    kitParagraph(claimed.care_client_id
+      ? "The record is in Care, with the family's reply already sent."
+      : "This request could not be filed in Care by itself. Route it from Enquiries."),
+    kitButton("Open the record", link),
+  ].join("");
+
+  const html = kitEmail({
+    eyebrow: "Care request",
+    title: `${forWhom}: ${kind.toLowerCase()}`,
+    accent: "request",
+    art: KIT_ART.coordinator,
+    standfirst: soon ? `Needed ${soon.toLowerCase()}.` : "A new request from the website.",
+    preheader: subject,
+    bodyHtml,
+    footnote: "Sent to the care team for every new care request.",
+  });
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "Medic Connect <hello@medicconnect.co>",
+      to: [to],
+      subject,
+      html,
+      tags: emailTags("care-request-staff"),
+    }),
+  });
+  if (!res.ok) {
+    console.error("staff notice", res.status, await res.text());
+    // Let the next call try again.
+    await db.from("contact_submissions").update({ staff_notified_at: null }).eq("id", enquiry.id);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -56,6 +138,12 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (eErr) throw eErr;
     if (!enquiry) return json({ error: "Enquiry not found" }, 404);
+
+    try {
+      await notifyStaff(db, enquiry, RESEND_API_KEY);
+    } catch (err) {
+      console.error("staff notice", err);
+    }
     if (!enquiry.email) return json({ error: "No email address on the enquiry" }, 400);
 
     // Suppressed addresses are never written to again.
@@ -116,26 +204,29 @@ Deno.serve(async (req) => {
 
     const bodyHtml = [
       kitParagraph(`Dear ${first},`),
-      kitParagraph(line?.reply_intro || "Thank you for getting in touch with Medic Connect."),
+      kitParagraph(line?.reply_intro || "Thank you for getting in touch with Medic Connect. Here is what happens from here."),
+      kitSubhead("What happens next"),
+      kitSteps([
+        { title: "We'll be in touch", detail: "A care coordinator calls or messages you on WhatsApp, usually the same working day." },
+        { title: "Care needs", detail: "A paid **₦35,000** assessment may be required. If it is, a nurse visits the home for about ninety minutes." },
+        { title: "A match", detail: "A carer chosen for the plan and the person. You see their profile before care begins." },
+        { title: "Care begins", detail: "On the days you agree, with your coordinator alongside." },
+      ]),
       kitSubhead("What you told us"),
       kitFacts(facts),
-      kitSubhead("What happens next"),
-      kitList([
-        "A care adviser calls you, usually the same working day, to understand the situation properly.",
-        "We book a care needs assessment at home. It costs ₦35,000 and takes about ninety minutes.",
-        "A nurse assesses the person, the home and the risks, and writes a care plan with you.",
-        "We match carers to that plan, share their profiles with you, and agree a start date.",
-      ]),
       kitParagraph(line?.reply_outro || "The guide attached takes you through the assessment, our services and how our pricing is structured."),
       brochureUrl ? kitButton("Open your guide", brochureUrl) : "",
       kitParagraph("If anything changes, or it becomes urgent, reply to this email or message us on WhatsApp on +234 812 698 8237."),
+      kitParagraph("The Medic Connect care team"),
     ].join("");
 
     const html = kitEmail({
       eyebrow: "Care enquiry",
-      title: "What happens next",
+      title: "Your request is in",
+      accent: "request",
+      art: KIT_ART.coordinator,
       standfirst: `Your enquiry about ${lineName.toLowerCase()}.`,
-      preheader: subject,
+      preheader: "A care coordinator will be in touch, usually the same working day.",
       bodyHtml,
       footnote: "Medic Connect Limited, 145 Igbosere Road, Lagos Island, Nigeria.",
     });

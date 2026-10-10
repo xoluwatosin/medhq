@@ -8,12 +8,11 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { MuEmpty, MuLoadError, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
 import { adminDb } from "@/lib/admin-utils";
 import {
   EVIDENCE_STATES, INDEX_STATES, PAGE_TYPES, PAGE_TYPE_LABELS, PUBLICATION_STATES,
@@ -64,6 +63,7 @@ const SeoPagesRegister = () => {
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState({ page_key: "", path: "", page_type: "service", estate: "families", title: "" });
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -72,6 +72,7 @@ const SeoPagesRegister = () => {
       .select("id, page_key, path, page_type, estate, audience, priority, index_state, publication_state, evidence_state, clinical_requirement, title")
       .order("priority", { ascending: true, nullsFirst: false })
       .order("path", { ascending: true });
+    setLoadError(Boolean(error));
     if (error) {
       toast.error("Could not load SEO pages");
       setLoading(false);
@@ -139,34 +140,30 @@ const SeoPagesRegister = () => {
     onChange: (next: string) => void,
     options: Array<{ value: string; label: string }>,
   ) => (
-    <div key={id} className="min-w-[9rem] flex-1">
-      <Label htmlFor={id} className="sr-only">{name}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="h-10 text-sm"><SelectValue placeholder={name} /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ANY}>{name}: all</SelectItem>
-          {options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    </div>
+    <SelectField
+      key={id}
+      name={id}
+      label={name}
+      hideLabel
+      value={value}
+      onChange={(next) => onChange(next || ANY)}
+      placeholder={`${name}: all`}
+      options={[{ value: ANY, label: `${name}: all` }, ...options]}
+      className="min-w-[9rem] flex-1"
+    />
   );
 
   return (
-    <div>
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+    <div className="space-y-3">
+      <MuToolbar>
+        <div className="flex flex-1 flex-wrap gap-2">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search pages"
           aria-label="Search pages"
-          className="h-10 sm:max-w-xs"
+          className="h-10 min-w-[12rem] flex-[2]"
         />
-        <Button type="button" onClick={() => setCreating(true)} className="h-10 sm:ml-auto">
-          <Plus className="mr-1.5 h-4 w-4" /> New page
-        </Button>
-      </div>
-
-      <div className="mb-3 flex flex-wrap gap-2">
         {filter("filter-index", "Index", indexState, setIndexState, INDEX_STATES.map((value) => ({ value, label: label(value) })))}
         {filter("filter-publication", "Publication", publication, setPublication, PUBLICATION_STATES.map((value) => ({ value, label: label(value) })))}
         {filter("filter-estate", "Estate", estate, setEstate, estates.map((value) => ({ value, label: label(value) })))}
@@ -178,10 +175,29 @@ const SeoPagesRegister = () => {
           { value: "not_required", label: "Factual" },
           { value: "undecided", label: "Not classified" },
         ])}
-      </div>
+        </div>
+        <Button type="button" onClick={() => setCreating(true)} className="h-10 shrink-0">
+          <Plus className="mr-1.5 h-4 w-4" /> New page
+        </Button>
+      </MuToolbar>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : loadError ? (
+        <MuLoadError what="the SEO pages" onRetry={() => void load()} />
+      ) : visible.length === 0 ? (
+        <MuSection padded={false}>
+          {rows.length === 0 ? (
+            <MuEmpty
+              art={art.objFolderDocuments}
+              title="No SEO pages yet"
+              description="Add a page to govern its title, index state and evidence."
+              action={<Button type="button" onClick={() => setCreating(true)}><Plus className="mr-1.5 h-4 w-4" />New page</Button>}
+            />
+          ) : (
+            <MuEmpty art={art.objMagnifier} title="No matching pages" description="Try a different search or clear a filter." />
+          )}
+        </MuSection>
       ) : (
         <>
           <ConsoleTable
@@ -211,7 +227,7 @@ const SeoPagesRegister = () => {
             rows={visible.map((row) => ({
               key: row.id,
               title: pageName(row),
-              state: `${row.path} · ${label(row.publication_state)} · ${label(row.evidence_state)} evidence`,
+              state: `${row.path}, ${label(row.publication_state)}, ${label(row.evidence_state)} evidence`,
               status: <Status label={label(row.index_state)} tone={indexTone(row.index_state)} />,
               to: `/admin/seo/pages/${row.id}`,
             }))}
@@ -235,15 +251,12 @@ const SeoPagesRegister = () => {
               <Label htmlFor="new-page-title">Title</Label>
               <Input id="new-page-title" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
             </div>
-            <div>
-              <Label htmlFor="new-page-type">Page type</Label>
-              <Select value={draft.page_type} onValueChange={(value) => setDraft({ ...draft, page_type: value })}>
-                <SelectTrigger id="new-page-type"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAGE_TYPES.map((value) => <SelectItem key={value} value={value}>{label(value, PAGE_TYPE_LABELS)}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              label="Page type"
+              value={draft.page_type}
+              onChange={(value) => { if (value) setDraft({ ...draft, page_type: value }); }}
+              options={PAGE_TYPES.map((value) => ({ value, label: label(value, PAGE_TYPE_LABELS) }))}
+            />
             <div>
               <Label htmlFor="new-page-estate">Estate</Label>
               <Input id="new-page-estate" value={draft.estate} onChange={(event) => setDraft({ ...draft, estate: event.target.value })} />

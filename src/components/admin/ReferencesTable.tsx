@@ -13,7 +13,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
-import { MuStatus, MuTone } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuStatus, MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface Referee {
   id: string;
@@ -98,13 +99,13 @@ const ReferencesTable = ({ personId }: { personId: string }) => {
   const copy = (r: Referee) => {
     const line = [r.referee_name, r.job_title, r.organisation, r.email, r.phone]
       .filter(Boolean)
-      .join(" · ");
+      .join(", ");
     navigator.clipboard?.writeText(line);
     toast({ title: "Contact copied" });
   };
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="border border-border bg-card">
+    <Collapsible open={open} onOpenChange={setOpen} className="border border-line bg-card">
       <CollapsibleTrigger asChild>
         <button className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
           <span className="flex items-center gap-2 text-[13.5px] font-medium">
@@ -121,11 +122,15 @@ const ReferencesTable = ({ personId }: { personId: string }) => {
 
       <CollapsibleContent>
         {rows.length === 0 ? (
-          <p className="border-t border-border px-4 py-4 text-[13px] text-muted-foreground">
-            The candidate has not given us anybody yet. Two people who managed them is what we ask for.
-          </p>
+          <div className="border-t border-line">
+            <MuEmpty
+              art={art.objHandshake}
+              title="No referees yet"
+              description="The candidate has not given us anybody yet. Two people who managed them is what we ask for."
+            />
+          </div>
         ) : (
-          <div className="border-t border-border">
+          <div className="border-t border-line">
             <Table>
               <TableHeader>
                 <TableRow>

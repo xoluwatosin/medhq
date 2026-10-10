@@ -7,14 +7,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  ChevronLeft, Copy, Mail, MessageCircle, Pencil, Plus, ShieldAlert, Wallet,
+  ChevronLeft, Copy, Mail, MessageCircle, Pencil, Plus, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cxInputClass } from "@/components/candidate/primitives";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,17 +20,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   applicableSections, buildContext, CareDefinition, CareField, CareResponses,
   CareSection, fieldVisible, isAnswered, readAnswer, SERVICE_KEY_BY_SECTION,
-  createCarePerson,
+  createCarePerson, withDerived,
 } from "@/lib/care";
 import {
-  answersForRecipient, CareIntake, IntakeRecipient, recipientName, scopedKey,
+  answersForRecipient, CareIntake, emptyIntake, intakeRoutingAnswers, IntakeRecipient, recipientName, scopedKey,
   sectionKeysFor, sectionScope,
 } from "@/lib/care-intake";
+import { resolveCopy, voiceFor, type CopyVoice } from "@/lib/care-copy";
 import {
   MuEmpty, MuHero, MuHeroStrip, MuPage, MuRecordNav, MuRow, MuSection, MuTable,
 } from "@/components/admin/mu/MuShell";
-import { PhoneField, Status } from "@/components/field";
-import { careFlagTone, careStageLabel, careStageTone } from "@/lib/care-status";
+import { PhoneField, SelectField, Status } from "@/components/field";
+import { art } from "@/components/mc/art";
+import { careFlagTone, careStageLabel, careStageTone, clientStatusOf } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, SEX_TERMS, STATE_TERMS, ageText, lgaTerms, lgaLabel, relationshipLabel,
   sexLabel, stateLabel, languageLabels,
@@ -43,6 +42,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import WorkSection from "@/components/admin/care/WorkSection";
 import GroupSection from "@/components/admin/care/GroupSection";
 import LinkedPeople from "@/components/admin/care/LinkedPeople";
+import HomeSection from "@/components/admin/care/HomeSection";
+import CareRoute, { type CareRouteId } from "@/components/admin/care/CareRoute";
+import PossibleDuplicates from "@/components/admin/care/PossibleDuplicates";
+import PayersSection from "@/components/admin/care/PayersSection";
+import { homeOverview, linkScope, type HomeOverview, type LinkScope } from "@/lib/care-records";
 import RecordLifecycle from "@/components/admin/care/RecordLifecycle";
 
 import LanguageCodes from "@/components/admin/care/LanguageCodes";
@@ -50,6 +54,7 @@ import AssessmentSection from "@/components/admin/care/AssessmentSection";
 import ClinicalReviewSection from "@/components/admin/care/ClinicalReviewSection";
 import CarePlanSection from "@/components/admin/care/CarePlanSection";
 import CareProposalSection from "@/components/admin/care/CareProposalSection";
+import CareOfferSection from "@/components/admin/care/CareOfferSection";
 import CareFinanceSection from "@/components/admin/care/CareFinanceSection";
 import { AccessSection } from "@/components/admin/care/AccessSection";
 import {
@@ -97,6 +102,8 @@ interface TokenRow {
   first_opened_at: string | null;
   submitted_at: string | null;
   delivery_method: string | null;
+  /** Set when staff opened the form to fill it in with the family. */
+  filled_by_staff: string | null;
   created_at: string;
 }
 
@@ -119,11 +126,42 @@ const TAB_ALIASES: Record<string, string> = {
   money: "commercial",
   finance: "commercial",
   tasks: "work",
-  questionnaire: "link",
+  questionnaire: "responses",
+  link: "responses",
   history: "activity",
 };
 
 const dateOf = (value: string | null | undefined) => (value ? formatDate(value) : null);
+
+type AnswerGroup = {
+  key: string;
+  recipientId: string | null;
+  name: string | null;
+  /** Who answered for this person, from the intake. */
+  answeredBy: string | null;
+  sections: CareSection[];
+  answers: CareResponses;
+  /** Staff read section titles about this person by name. */
+  voice: CopyVoice;
+};
+
+/**
+ * Questions the family was not asked because the intake already settled them.
+ * The record still shows the answer, marked as coming from the intake, so a
+ * reader never mistakes a skipped question for a missing answer.
+ */
+const IMPLIED: Record<string, (answers: CareResponses) => string | null> = {
+  is_parent_guardian: (a) =>
+    a.intake_filler_parent === "yes"
+      ? `Yes, ${String(a.intake_relationship ?? "parent").toLowerCase()}`
+      : a.intake_parent_on_request === "yes"
+        ? "The baby's mother is on this request"
+        : a.intake_relationship
+          ? `No, ${String(a.intake_relationship).toLowerCase()}`
+          : null,
+  pn_delivery_date: (a) => (a.intake_newborn_dob ? dateOf(String(a.intake_newborn_dob)) : null),
+  pn_baby_name: (a) => (a.recipient_first_name ? String(a.recipient_first_name) : null),
+};
 
 const whatsappHref = (number: string, text: string) =>
   `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
@@ -138,8 +176,9 @@ const ClientRecord = () => {
   const [params, setParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [client, setClient] = useState<Record<string, unknown> | null>(null);
-  const [service, setService] = useState<{ name: string; questionnaire_section: string | null } | null>(null);
+  const [service, setService] = useState<{ name: string; slug?: string | null; questionnaire_section: string | null } | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [doc, setDoc] = useState<CareDoc | null>(null);
   const [definition, setDefinition] = useState<CareDefinition | null>(null);
@@ -148,6 +187,7 @@ const ClientRecord = () => {
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [flags, setFlags] = useState<FlagRow[]>([]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [home, setHome] = useState<HomeOverview | null>(null);
   const [amendments, setAmendments] = useState<AmendmentRow[]>([]);
   const [revisionEvents, setRevisionEvents] = useState<RevisionEventRow[]>([]);
   const [commercial, setCommercial] = useState<Record<string, unknown> | null>(null);
@@ -179,7 +219,7 @@ const ClientRecord = () => {
 
   const load = useCallback(async () => {
     const [clientRes, contactRes, docRes, defRes, bandRes, tokenRes, flagRes, actRes] = await Promise.all([
-      adminDb().from("clients").select("*, services(name, questionnaire_section)").eq("id", id).maybeSingle(),
+      adminDb().from("clients").select("*, services(name, slug, questionnaire_section, home_assessment)").eq("id", id).maybeSingle(),
       adminDb().from("client_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
       adminDb().from("care_documents").select("*").eq("client_id", id).eq("kind", "pre_assessment")
         .order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -192,8 +232,9 @@ const ClientRecord = () => {
     ]);
 
     const row = clientRes.data as
-      (Record<string, unknown> & { services?: { name: string; questionnaire_section: string | null } | null }) | null;
+      (Record<string, unknown> & { services?: { name: string; slug?: string | null; questionnaire_section: string | null } | null }) | null;
     setClient(row);
+    setLoadFailed(Boolean(clientRes.error));
     setService(row?.services ?? null);
     setContacts((contactRes.data ?? []) as unknown as Contact[]);
     const document = (docRes.data ?? null) as unknown as CareDoc | null;
@@ -227,6 +268,7 @@ const ClientRecord = () => {
     setTokens((tokenRes.data ?? []) as unknown as TokenRow[]);
     setFlags((flagRes.data ?? []) as unknown as FlagRow[]);
     setActivity((actRes.data ?? []) as unknown as ActivityRow[]);
+    setHome(await homeOverview(String(id)).catch(() => null));
 
     if (document) {
       const [amendmentResult, revisionResult] = await Promise.all([
@@ -248,6 +290,13 @@ const ClientRecord = () => {
   }, [id, isCoordinator]);
 
   useEffect(() => { void load(); }, [load]);
+  // "Fill in now" opens the form in another tab. Coming back here reloads the
+  // record, so the answers just sent show without a manual refresh.
+  useEffect(() => {
+    const onShow = () => { if (document.visibilityState === "visible") void load(); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [load]);
 
   // A form that comes back while the record is open should land on the screen.
   const reloadTimer = useRef<number | null>(null);
@@ -286,14 +335,22 @@ const ClientRecord = () => {
   const responses = doc?.responses ?? {};
   const outstanding = doc?.outstanding_required ?? [];
   const openFlags = flags.filter((f) => !f.cleared_at);
-  const liveToken = tokens.find((t) => !t.revoked_at && !t.submitted_at && new Date(t.expires_at) > new Date());
+  const liveToken = tokens.find((t) =>
+    !t.filled_by_staff && !t.revoked_at && !t.submitted_at && new Date(t.expires_at) > new Date());
+  const [liveScope, setLiveScope] = useState<LinkScope | null>(null);
+  const liveTokenId = liveToken?.id;
+  useEffect(() => {
+    setLiveScope(null);
+    if (!liveTokenId) return;
+    let live = true;
+    linkScope(liveTokenId).then((s) => { if (live) setLiveScope(s); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [liveTokenId]);
 
   // Answers are held per care recipient (r1__question), exactly as the family
   // gave them, plus the request-wide answers under their plain identifiers.
   // The record is read back the same way, one person at a time.
-  const answerGroups = useMemo<
-    { key: string; recipientId: string | null; name: string | null; sections: CareSection[]; answers: CareResponses }[]
-  >(() => {
+  const answerGroups = useMemo<AnswerGroup[]>(() => {
     if (!definition) return [];
     const clientGroup = (client?.client_group as string | null) ?? null;
     const fallbackKey = service?.questionnaire_section
@@ -307,20 +364,19 @@ const ClientRecord = () => {
         definition,
         buildContext(definition, { clientGroup, serviceKey: fallbackKey, responses }),
       );
-      return [{ key: "all", recipientId: null, name: null, sections, answers: responses }];
+      return [{ key: "all", recipientId: null, name: null, answeredBy: null, sections, answers: responses, voice: voiceFor(responses) }];
     }
 
-    const groups: { key: string; recipientId: string | null; name: string | null; sections: CareSection[]; answers: CareResponses }[] = [];
+    const groups: AnswerGroup[] = [];
     const requestWide = new Map<string, CareSection>();
 
     for (const r of recipients) {
       const answers: CareResponses = {
-        ...answersForRecipient(responses, r.id),
-        who_for: r.isEnquirer ? "myself" : "someone_else",
-        recipient_first_name: r.firstName,
-        dob_known: r.dobKnown ?? null,
-        date_of_birth: r.dateOfBirth ?? null,
-        approx_age: r.approxAge ?? null,
+        ...withDerived({
+          ...answersForRecipient(responses, r.id),
+          ...intakeRoutingAnswers({ ...emptyIntake(), recipients }, r),
+          service_requested: sectionKeysFor(r)[0] ?? fallbackKey ?? null,
+        }, { recordedService: fallbackKey ?? null }),
       } as CareResponses;
       const keys = sectionKeysFor(r);
       const found = new Map<string, CareSection>();
@@ -337,22 +393,33 @@ const ClientRecord = () => {
         if (sectionScope(section.id) === "request") requestWide.set(section.id, section);
         else own.push(section);
       }
+      const name = recipientName(r) || "Care recipient";
+      const relationship = r.relationship === "Other" ? r.relationshipOther : r.relationship;
       groups.push({
         key: r.id,
         recipientId: r.id,
-        name: recipientName(r) || "Care recipient",
+        name,
+        answeredBy: r.isEnquirer
+          ? "Answered by the person receiving care"
+          : relationship
+            ? `Answered by ${name}'s ${relationship.toLowerCase()}`
+            : null,
         sections: own,
         answers,
+        voice: { ...voiceFor({ ...answers, who_for: "someone_else" }, name), parent: false },
       });
     }
 
+    // The arrangements for the whole request read first, then each person.
     if (requestWide.size > 0) {
-      groups.push({
+      groups.unshift({
         key: "request",
         recipientId: null,
         name: "This request",
+        answeredBy: null,
         sections: [...requestWide.values()],
         answers: responses,
+        voice: voiceFor({ who_for: "someone_else" }, recipients.length === 1 ? recipientName(recipients[0]) : null),
       });
     }
     return groups;
@@ -412,6 +479,32 @@ const ClientRecord = () => {
     else toast.success("Link ready");
     void logActivity(resend ? "link_resent" : "link_sent", { method });
     void load();
+  };
+
+  // Staff fill the form in with the family, on a call or in person. The form
+  // opens in a new tab on a link of its own that lasts a working day and
+  // continues the family's draft if they started one.
+  const fillNow = async () => {
+    const tab = window.open("about:blank", "_blank");
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("care-token-create", {
+      body: {
+        client_id: id,
+        contact_id: primary?.id ?? null,
+        filler_type: primary?.relationship_code === "self" ? "client" : "family_member",
+        staff_fill: true,
+      },
+    });
+    setBusy(false);
+    if (error || !data?.ok) {
+      tab?.close();
+      toast.error(data?.error ?? "Could not open the form");
+      return;
+    }
+    const url = `/pre-assessment/${data.token}?staff=1`;
+    if (tab) tab.location.href = url;
+    else window.location.assign(url);
+    void logActivity("pre_assessment_staff_opened", { contact: primary?.full_name ?? null });
   };
 
   const revokeLink = async () => {
@@ -541,7 +634,9 @@ const ClientRecord = () => {
   };
 
   const openSectionEdit = (sectionId: string, fields: CareField[], recipientId: string | null) => {
-    const title = sections.find((s) => s.id === sectionId)?.title ?? "Answers";
+    const group = answerGroups.find((g) => g.recipientId === recipientId);
+    const raw = sections.find((s) => s.id === sectionId)?.title;
+    const title = raw ? resolveCopy(raw, group?.voice ?? voiceFor({})) : "Answers";
     const current: CareResponses = {};
     for (const field of fields) {
       const key = scopedKey(recipientId, field.id);
@@ -599,7 +694,21 @@ const ClientRecord = () => {
   };
 
   if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading client</p>;
-  if (!client) return <p className="py-10 text-center text-sm text-muted-foreground">Client not found</p>;
+  if (!client && loadFailed) {
+    return <p className="py-10 text-center text-sm text-muted-foreground">This client could not be loaded. Refresh to try again.</p>;
+  }
+  if (!client) {
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Client not found"
+          description="This record may have been merged or removed."
+          action={<Button asChild variant="outline"><Link to="/admin/clients">Back to clients</Link></Button>}
+        />
+      </div>
+    );
+  }
 
   const stage = String(client.stage ?? "");
   const stateCode = (client.state_code as string | null) ?? null;
@@ -609,7 +718,7 @@ const ClientRecord = () => {
 
   const navGroups = [
     { label: "Record", items: [
-      { value: "overview", label: "Overview" }, { value: "group", label: "Household" }, { value: "work", label: "Tasks" },
+      { value: "overview", label: "Overview" }, { value: "group", label: "Family" }, { value: "work", label: "Tasks" },
     ] },
     { label: "Care journey", items: [
       { value: "responses", label: "Pre-assessment", count: outstanding.length || null },
@@ -619,7 +728,7 @@ const ClientRecord = () => {
       { value: "care-plan", label: "Working plan" }, { value: "proposal", label: "Client proposal" },
     ] },
     { label: "People and access", items: [
-      { value: "contacts", label: "Contacts" }, { value: "link", label: "Pre-assessment link" }, { value: "access", label: "Access" },
+      { value: "contacts", label: "Contacts" }, { value: "access", label: "Access" },
     ] },
     ...(isCoordinator ? [{ label: "Finance", items: [{ value: "commercial", label: "Finance" }] }] : []),
     { label: "Record history", items: [{ value: "activity", label: "Activity" }] },
@@ -639,7 +748,12 @@ const ClientRecord = () => {
         title={String(client.full_name)}
         subtitle={service?.name ?? "No service set"}
         facts={[
-          { label: "Stage", value: careStageLabel(stage) },
+          {
+            label: "Status",
+            value: clientStatusOf(stage).id === "pending"
+              ? `Pending: ${careStageLabel(stage).toLowerCase()}`
+              : clientStatusOf(stage).label,
+          },
           { label: "Age", value: ageText(client.date_of_birth as string | null, client.date_of_birth_is_estimated as boolean | null) },
           { label: "Area", value: area || undefined },
           { label: "Main contact", value: primary?.full_name },
@@ -663,6 +777,13 @@ const ClientRecord = () => {
         strip={
           <MuHeroStrip
             items={[
+              ...(client.paused_at ? [{
+                label: "On hold",
+                sentence: [
+                  (client.paused_reason as string | null) ?? "",
+                  client.paused_until ? `Comes off hold on ${dateOf(String(client.paused_until))}.` : "Taken off hold by hand.",
+                ].filter(Boolean).join(" "),
+              }] : []),
               {
                 label: "Pre-assessment",
                 sentence: doc?.submitted_at
@@ -670,18 +791,6 @@ const ClientRecord = () => {
                   : doc
                     ? "Started, not sent back yet."
                     : "Not answered yet.",
-              },
-              {
-                label: "Outstanding",
-                sentence: outstanding.length
-                  ? `${outstanding.length} question${outstanding.length === 1 ? "" : "s"} left unanswered.`
-                  : "Nothing left unanswered.",
-              },
-              {
-                label: "Flags",
-                sentence: openFlags.length
-                  ? `${openFlags.length} flag${openFlags.length === 1 ? "" : "s"} still open.`
-                  : "No open flags.",
               },
             ]}
           />
@@ -716,6 +825,30 @@ const ClientRecord = () => {
           </MuSection>
         )}
 
+        {tab === "overview" && (
+          <CareRoute
+            clientId={String(id)}
+            route={(client.care_route as CareRouteId | null) ?? null}
+            startsAt={(client.care_starts_at as "home" | "hospital" | null) ?? null}
+            preliminary={(client.preliminary as Record<string, string | boolean> | null) ?? {}}
+            serviceName={service?.name ?? null}
+            assessmentRequired={(client.services as { home_assessment?: string } | null)?.home_assessment === "required"}
+            assessmentDecision={(client.assessment_decision as "needed" | "not_needed" | null) ?? null}
+            assessmentReason={(client.assessment_reason as string | null) ?? null}
+            canEdit={isCoordinator}
+            onChanged={() => { void load(); }}
+          />
+        )}
+        {tab === "overview" && <PossibleDuplicates clientId={String(id)} />}
+        {tab === "overview" && (
+          <HomeSection
+            clientId={String(id)}
+            clientName={String(client.full_name ?? "")}
+            home={home}
+            canEdit={isCoordinator}
+            onChanged={() => { void load(); }}
+          />
+        )}
         {tab === "overview" && <LinkedPeople clientId={String(id)} />}
 
         {tab === "group" && (
@@ -729,7 +862,9 @@ const ClientRecord = () => {
           <AssessmentSection
             clientId={String(id)}
             canArrange={isCoordinator}
-            preAssessmentReturned={![
+            // Booking is open once the form is back, or once staff have
+            // decided an assessment is needed.
+            preAssessmentReturned={client.assessment_decision === "needed" || ![
               "enquiry", "awaiting_pre_assessment", "pre_assessment_sent", "callback_due",
             ].includes(stage)}
             onChanged={() => { void load(); }}
@@ -781,7 +916,6 @@ const ClientRecord = () => {
 
                 { label: "Area", value: area },
                 { label: "Address", value: (client.address_line as string | null) ?? "" },
-                { label: "Stage", value: careStageLabel(stage) },
                 { label: "Created", value: dateOf(client.created_at as string) ?? "" },
               ]}
               emptyLabel="Not answered"
@@ -791,8 +925,88 @@ const ClientRecord = () => {
 
         {tab === "responses" && (
           <>
+            {doc?.status !== "submitted" && (
+            <MuSection title="Pre-assessment form" description={`Send the family a link, or fill it in with them on a call. Links read ${reference}-XXXX.`}>
+              {liveToken ? (
+                <div className="flex flex-col gap-3">
+                  <MuTable
+                    rows={[
+                      { label: "Link", value: liveScope?.kind === "top_up" ? "Follow-up" : "Pre-assessment" },
+                      {
+                        label: "Sent to",
+                        value: liveScope?.sent_to
+                          ? `${liveScope.sent_to.full_name}${liveScope.sent_to.relationship ? `, ${liveScope.sent_to.relationship}` : ""}`
+                          : primary?.full_name ?? "The main contact",
+                      },
+                      ...(liveScope && liveScope.covers.length > 0 ? [{ label: "Covers", value: liveScope.covers.join(", ") }] : []),
+                      { label: "Expires", value: dateOf(liveToken.expires_at) },
+                      { label: "Opened", value: liveToken.first_opened_at ? "Yes" : "Not yet" },
+                      ...(liveScope?.gives_portal_access ? [{ label: "Portal", value: "Can follow the request once sent back" }] : []),
+                    ]}
+                  />
+                  {link && (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input readOnly value={link} className="min-w-0 flex-1 border border-line-soft bg-muted px-3 py-2 text-xs" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11"
+                        onClick={() => { void navigator.clipboard.writeText(link); toast.success("Link copied"); }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" /> Copy
+                      </Button>
+                      {primary?.whatsapp && (
+                        <a
+                          className="inline-flex h-11 items-center justify-center border border-line px-4 text-sm font-semibold"
+                          href={whatsappHref(primary.whatsapp, `Here are the questions before your visit: ${link}`)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="h-11" disabled={busy} onClick={() => sendLink("email")}>
+                      <Mail className="mr-2 h-4 w-4" /> Email the link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy}
+                            onClick={() => sendLink("email", true)}>
+                      Send again
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={() => sendLink("whatsapp")}>
+                      <MessageCircle className="mr-2 h-4 w-4" /> Get link for WhatsApp
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={revokeLink}>
+                      Withdraw link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy || !primary} onClick={fillNow}>
+                      Fill in now
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-[14.5px] text-foreground">
+                    {primary
+                      ? `No live link. It will be sent to ${primary.full_name}.`
+                      : "No live link. Add a main contact on the Contacts tab first."}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="h-11" disabled={busy || !primary} onClick={createLink}>
+                      Create link
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" disabled={busy || !primary} onClick={fillNow}>
+                      Fill in now
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </MuSection>
+            )}
             {outstanding.length > 0 && (
-              <MuSection title="Still unanswered" description="Required is a flag, not a block. These came back empty.">
+              <MuSection title="Still unanswered">
                 <ul className="flex flex-col gap-1.5">
                   {outstanding.map((item) => (
                     <li key={item.id} className="text-[14.5px] text-foreground">{item.record}</li>
@@ -803,28 +1017,32 @@ const ClientRecord = () => {
 
             {!doc ? (
               <MuSection padded={false}>
-                <MuEmpty title="Nothing answered yet" description="Send the pre-assessment link from the Pre-assessment link tab." />
+                <MuEmpty art={art.objClipboard} title="Nothing answered yet" description="Send the family the link above, or fill it in with them now." />
               </MuSection>
             ) : (
               answerGroups.map((group) => {
                 const visible = group.sections
                   .map((section) => ({
                     section,
-                    fields: section.fields.filter((f) => fieldVisible(f, group.answers)),
+                    fields: section.fields.filter((f) =>
+                      fieldVisible(f, group.answers) || (!isAnswered(group.answers[f.id]) && IMPLIED[f.id]?.(group.answers))),
                   }))
                   .filter((entry) => entry.fields.length > 0);
                 if (visible.length === 0) return null;
                 return (
                   <div key={group.key} className="flex flex-col gap-4">
                     {group.name && (
-                      <h3 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {group.name}
-                      </h3>
+                      <div>
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
+                          {group.name}
+                        </h3>
+                        {group.answeredBy && <p className="mt-1 text-[13px] text-muted-foreground">{group.answeredBy}</p>}
+                      </div>
                     )}
                     {visible.map(({ section, fields }) => (
                       <MuSection
                         key={`${group.key}-${section.id}`}
-                        title={section.title}
+                        title={resolveCopy(section.title, group.voice)}
                         actions={
                           <CareEditButton
                             label="Correct answers"
@@ -838,14 +1056,17 @@ const ClientRecord = () => {
                             const amendment = amendmentFor(scopedKey(group.recipientId, field.id));
                             const value = group.answers[field.id];
                             const answered = isAnswered(value);
+                            const implied = answered ? null : IMPLIED[field.id]?.(group.answers) ?? null;
                             return {
                               label: field.record,
                               value: (
-                                <span className={cn(!answered && "text-muted-foreground")}>
-                                  {readAnswer(field, value, bandLabels)}
+                                <span className={cn(!answered && !implied && "text-muted-foreground")}>
+                                  {implied ?? readAnswer(field, value, bandLabels)}
                                 </span>
                               ),
-                              note: amendment
+                              note: implied
+                                ? "From the intake. The family was not asked this again."
+                                : amendment
                                 ? `What the family said stands. Corrected to ${readAnswer(field, amendment.corrected_value, bandLabels)} by ${amendment.amended_by_name ?? "an administrator"} on ${dateOf(amendment.created_at)}. Reason: ${amendment.reason}`
                                 : undefined,
                             };
@@ -859,10 +1080,10 @@ const ClientRecord = () => {
 
             )}
             {revisionEvents.length > 0 && (
-              <MuSection title="Revision history" description="The original submission and every later change remain on the record." padded={false}>
+              <MuSection title="Revision history" padded={false}>
                 <div className="divide-y divide-line-soft">
                   {revisionEvents.map((event) => (
-                    <MuRow key={event.id} title={event.event === "submitted" ? "Form submitted" : event.event === "reopened" ? "Form reopened" : event.event === "revision_submitted" ? "Changes submitted" : "Delivery retried"} state={<div className="space-y-1"><p>{`${event.actor_name ?? (event.actor_kind === "family" ? "Family" : "System")} on ${dateOf(event.created_at)}${event.reason ? ` · ${event.reason}` : ""}`}</p>{event.changed_fields?.map((change) => <p key={`${event.id}-${change.field_id}`} className="text-foreground"><span className="font-semibold">{revisionFieldLabel(change.field_id)}:</span> {String(change.previous_value ?? "Not answered")} → {String(change.new_value ?? "Not answered")}</p>)}</div>} />
+                    <MuRow key={event.id} title={event.event === "submitted" ? "Form submitted" : event.event === "reopened" ? "Form reopened" : event.event === "revision_submitted" ? "Changes submitted" : "Delivery retried"} state={<div className="space-y-1"><p>{`${event.actor_name ?? (event.actor_kind === "family" ? "Family" : "System")} on ${dateOf(event.created_at)}${event.reason ? `. Reason: ${event.reason}` : ""}`}</p>{event.changed_fields?.map((change) => <p key={`${event.id}-${change.field_id}`} className="text-foreground"><span className="font-semibold">{revisionFieldLabel(change.field_id)}:</span> {String(change.previous_value ?? "Not answered")} → {String(change.new_value ?? "Not answered")}</p>)}</div>} />
                   ))}
                 </div>
               </MuSection>
@@ -892,7 +1113,7 @@ const ClientRecord = () => {
             padded={false}
           >
             {contacts.length === 0 ? (
-              <MuEmpty title="No contacts" description="Add the person we speak to about this client." />
+              <MuEmpty art={art.objPhoneChat} title="No contacts yet" description="Add the person we speak to about this client." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {contacts.map((c) => (
@@ -923,108 +1144,40 @@ const ClientRecord = () => {
           </MuSection>
         )}
 
-        {tab === "link" && (
-          <MuSection title="Pre-assessment link" description={`Links read ${reference}-XXXX and expire after 90 days.`}>
-            {liveToken ? (
-              <div className="flex flex-col gap-3">
-                <p className="text-[14.5px] text-foreground">
-                  A link is live for {primary?.full_name ?? "the main contact"}.
-                  It expires {dateOf(liveToken.expires_at)}.
-                  {liveToken.first_opened_at ? " It has been opened." : " It has not been opened yet."}
-                </p>
-                {link && (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input readOnly value={link} className="min-w-0 flex-1 border border-line-soft bg-muted px-3 py-2 text-xs" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11"
-                      onClick={() => { void navigator.clipboard.writeText(link); toast.success("Link copied"); }}
-                    >
-                      <Copy className="mr-2 h-4 w-4" /> Copy
-                    </Button>
-                    {primary?.whatsapp && (
-                      <a
-                        className="inline-flex h-11 items-center justify-center border border-line px-4 text-sm font-semibold"
-                        href={whatsappHref(primary.whatsapp, `Here are the questions before your visit: ${link}`)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open WhatsApp
-                      </a>
-                    )}
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" className="h-11" disabled={busy} onClick={() => sendLink("email")}>
-                    <Mail className="mr-2 h-4 w-4" /> Email the link
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy}
-                          onClick={() => sendLink("email", true)}>
-                    Send again
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={() => sendLink("whatsapp")}>
-                    <MessageCircle className="mr-2 h-4 w-4" /> Get link for WhatsApp
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={revokeLink}>
-                    Withdraw link
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <p className="text-[14.5px] text-foreground">
-                  {primary
-                    ? `No live link. It will be sent to ${primary.full_name}.`
-                    : "No live link. Add a main contact on the Contacts tab first."}
-                </p>
-                <Button type="button" className="h-11 self-start" disabled={busy || !primary} onClick={createLink}>
-                  Create link
-                </Button>
-              </div>
-            )}
-          </MuSection>
-        )}
-
         {tab === "access" && (
           <AccessSection clientId={id!} canAdminister={isCoordinator} onChanged={() => void load()} />
         )}
 
         {tab === "commercial" && isCoordinator && (
           <>
-          <MuSection title="Commercial details" description="Only coordinators can see or change this.">
+          <MuSection title="Commercial details" description="Coordinators only. Not shown on the pre-assessment or to clinical reviewers.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[13.5px] font-medium text-muted-foreground">Budget band</span>
-                <Select
-                  value={String(commercial?.budget_band_id ?? "")}
-                  onValueChange={(v) => saveCommercial({ budget_band_id: v })}
-                >
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Not set" /></SelectTrigger>
-                  <SelectContent>
-                    {bands.map((b) => <SelectItem key={b.id} value={b.id}>{b.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[13.5px] font-medium text-muted-foreground">Assessment fee</span>
-                <Select
-                  value={String(commercial?.assessment_fee_state ?? "unpaid")}
-                  onValueChange={(v) => saveCommercial({ assessment_fee_state: v })}
-                >
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["unpaid", "paid", "waived"].map((s) => (
-                      <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
+              <SelectField
+                label="Budget band"
+                value={String(commercial?.budget_band_id ?? "")}
+                placeholder="Not set"
+                onChange={(v) => { if (v) saveCommercial({ budget_band_id: v }); }}
+                options={bands.map((b) => ({ value: b.id, label: b.label }))}
+              />
+              <SelectField
+                label="Assessment fee"
+                value={String(commercial?.assessment_fee_state ?? "unpaid")}
+                onChange={(v) => { if (v) saveCommercial({ assessment_fee_state: v }); }}
+                options={["unpaid", "paid", "waived"].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
+              />
             </div>
-            <p className="mt-4 flex items-center gap-2 text-[13.5px] text-muted-foreground">
-              <Wallet className="h-4 w-4" /> Nothing here is shown on the pre-assessment or to a clinical reviewer.
-            </p>
           </MuSection>
+          <CareOfferSection
+            clientId={String(id)}
+            careFor={String(client.full_name)}
+            preparedFor={primary?.full_name ?? ""}
+            location={area || "Lagos"}
+            kind={service?.slug === "eldercare" ? "eldercare" : "newborn"}
+            start={service?.slug === "eldercare"
+              ? "After the home assessment, on a date we agree with you. We introduce you to your caregiver first."
+              : "To agree with you. We arrange a meeting and introduction with your nurse before the first shift."}
+          />
+          <PayersSection clientId={String(id)} />
           <CareFinanceSection clientId={String(id)} contacts={contacts} />
           </>
         )}
@@ -1032,7 +1185,7 @@ const ClientRecord = () => {
         {tab === "activity" && (
           <MuSection title="Activity" padded={false}>
             {activity.length === 0 ? (
-              <MuEmpty title="No activity" description="Anything done on this record is listed here." />
+              <MuEmpty art={art.objClipboardChecks} title="No activity yet" description="Anything done on this record is listed here." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {activity.map((a) => (
@@ -1057,6 +1210,14 @@ const ClientRecord = () => {
         description="What we hold about the person receiving care."
         onSave={saveClient}
       >
+        {home && home.housemates.length > 0 && (
+          <div className="border-2 border-navy bg-tint/40 p-3">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Shared address</p>
+            <p className="mt-1 text-[13.5px] text-body">
+              A new address also applies to {home.housemates.map((m) => m.full_name).join(", ")}. If only this client moved, use Lives somewhere else first.
+            </p>
+          </div>
+        )}
         {[
           { key: "first_name", label: "First name" },
           { key: "last_name", label: "Last name" },
@@ -1144,10 +1305,13 @@ const ClientRecord = () => {
               </CareFormRow>
             ))}
             <SearchableSelect
-              label="Relationship"
+              label="This contact is the client's"
               value={editingContact.relationship_code ?? ""}
               onChange={(v) => setEditingContact({ ...editingContact, relationship_code: v })}
-              options={RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label }))}
+              options={[
+                ...(editingContact.relationship_code === "self" ? [{ value: "self", label: "Self" }] : []),
+                ...RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label })),
+              ]}
             />
             {editingContact.relationship_code === "other" && (
               <CareFormRow label="Relationship, in their words">

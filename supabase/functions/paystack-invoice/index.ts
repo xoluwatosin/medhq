@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { isSuperAdmin } from "../_shared/super-admin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   hostedLink,
@@ -9,6 +10,7 @@ import {
   paystackLineItems,
   type InvoiceLineInput,
 } from "../_shared/paystack-invoice.ts";
+import { confirmCarePayment } from "../_shared/care-payment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,7 +64,7 @@ serve(async (req) => {
     const action = String(payload?.action || "");
 
     if (action === "issue") {
-      const { data: superAdmin } = await admin.rpc("is_super_admin", { _user_id: user.id });
+      const superAdmin = isSuperAdmin(user.id);
       const { data: permission } = await admin.from("admin_permissions").select("permissions,is_active").eq("user_id", user.id).maybeSingle();
       const canManageCareFinance = superAdmin === true || (permission?.is_active !== false && Array.isArray(permission?.permissions) && permission.permissions.includes("care_coordinator"));
       if (!canManageCareFinance) return json({ error: "You do not have permission to issue Care invoices" }, 403);
@@ -193,6 +195,12 @@ serve(async (req) => {
       const { data: invoice } = await admin
         .from("paystack_invoices").select("*").eq("id", id).maybeSingle();
       if (!invoice) return json({ error: "Invoice not found" }, 404);
+      // A care payment paid through checkout is checked by its reference.
+      if (!invoice.request_code && invoice.paystack_reference && action === "verify") {
+        await confirmCarePayment(admin as never, id);
+        const { data: updated } = await admin.from("paystack_invoices").select("*").eq("id", id).single();
+        return json({ invoice: updated });
+      }
       if (!invoice.request_code) return json({ error: "This invoice is not on Paystack" }, 400);
 
       if (action === "archive") {

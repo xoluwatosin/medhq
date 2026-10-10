@@ -5,15 +5,18 @@
 // it is what stops each page inventing its own arrangement of loose text.
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import AdminBand, { BAND_INNER, InBandSlot } from "./AdminBand";
+import KitPillHeading from "@/components/kit/KitPillHeading";
+import { NotchTag } from "@/components/mc/brand";
 import { ArrowLeft, ChevronDown, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const MuPage = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div className={cn("space-y-8 pb-10", className)}>{children}</div>
 );
 
+/** Every admin page opens with the navy band (see AdminBand). */
 export const MuPageHeader = ({
   title,
   description,
@@ -21,29 +24,33 @@ export const MuPageHeader = ({
   breadcrumb,
   backTo,
   backLabel = "Back",
+  id,
+  eyebrow,
+  art,
 }: {
+  /** For aria-labelledby on the page's main region. */
+  id?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
   breadcrumb?: ReactNode;
   backTo?: string;
   backLabel?: string;
+  eyebrow?: string;
+  /** A character for this page; null for none. Defaults to the area's. */
+  art?: string | null;
 }) => (
-  <header className="space-y-3">
-    {breadcrumb}
-    {backTo && (
-      <Button variant="ghost" size="sm" asChild className="-ml-3">
-        <Link to={backTo}><ArrowLeft className="mr-2 h-4 w-4" />{backLabel}</Link>
-      </Button>
-    )}
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="max-w-2xl space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight">{title}</h1>
-        {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
-    </div>
-  </header>
+  <AdminBand
+    id={id}
+    title={title}
+    description={description}
+    actions={actions}
+    breadcrumb={breadcrumb}
+    backTo={backTo}
+    backLabel={backLabel}
+    eyebrow={eyebrow}
+    art={art}
+  />
 );
 
 export interface MuStat {
@@ -52,46 +59,52 @@ export interface MuStat {
   hint?: string;
   icon?: LucideIcon;
   tone?: "default" | "attention";
+  /** Opens the list behind the number. */
+  to?: string;
 }
 
+const TILE_TILTS = [-1.2, 0.9, -0.6, 1.1];
+
+/** Number tiles: cards dropped on the table, the attention ones in blue. */
 export const MuStats = ({ stats, columns = 3 }: { stats: MuStat[]; columns?: 2 | 3 | 4 }) => (
   <div
     className={cn(
-      "grid gap-3",
+      // Two across on a phone, so the numbers do not fill the first screen.
+      "grid grid-cols-2 gap-3 sm:gap-5",
       columns === 2 && "sm:grid-cols-2",
       columns === 3 && "sm:grid-cols-3",
       columns === 4 && "sm:grid-cols-2 lg:grid-cols-4",
     )}
   >
-    {stats.map((s) => (
-      <Card
-        key={s.label}
-        className={cn(
-          "border-border/70 shadow-none",
-          s.tone === "attention" && "border-primary/30 bg-primary/[0.04]",
-        )}
-      >
-        <CardContent className="p-4">
+    {stats.map((s, i) => {
+      const Tile = s.to ? Link : "div";
+      const hot = s.tone === "attention";
+      return (
+        <Tile
+          key={s.label}
+          to={s.to as string}
+          style={{ ["--mc-tilt" as string]: `${TILE_TILTS[i % TILE_TILTS.length]}deg` }}
+          className={cn(
+            "mc-tilt block min-w-0 border-2 border-navy p-3 sm:p-5",
+            hot ? "bg-brand text-white shadow-offset" : "bg-card shadow-offset-blue",
+            s.to && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+          )}
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{s.value}</p>
-              {s.hint && <p className="mt-1 text-xs text-muted-foreground leading-snug">{s.hint}</p>}
+              <p className={cn("text-[10.5px] font-extrabold uppercase tracking-[0.1em] sm:text-[11px] sm:tracking-[0.14em]", hot ? "text-white/80" : "text-label")}>{s.label}</p>
+              <p className={cn("mt-2 text-[28px] font-extrabold sm:text-[34px] leading-none tracking-[-0.04em] tabular-nums", hot ? "text-white" : "text-navy")}>{s.value}</p>
+              {s.hint && <p className={cn("mt-2 text-[12.5px] leading-snug", hot ? "text-white/85" : "text-muted-foreground")}>{s.hint}</p>}
             </div>
             {s.icon && (
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
-                  s.tone === "attention" && "bg-primary/10 text-primary",
-                )}
-              >
-                <s.icon className="h-4 w-4" />
+              <span className={cn("hidden h-10 w-10 shrink-0 items-center justify-center sm:flex", hot ? "bg-white text-brand" : "bg-tint text-navy")}>
+                <s.icon className="h-[18px] w-[18px]" />
               </span>
             )}
           </div>
-        </CardContent>
-      </Card>
-    ))}
+        </Tile>
+      );
+    })}
   </div>
 );
 
@@ -112,11 +125,11 @@ export const MuSection = ({
   className?: string;
   id?: string;
 }) => (
-  <section id={id} className={cn("rounded-none border border-line bg-card", className)}>
+  <section id={id} className={cn("border-2 border-navy bg-card shadow-offset", className)}>
     {(title || actions) && (
-      <div className="flex flex-col gap-3 border-b border-line-soft px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b-2 border-navy px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          {title && <h2 className="text-[16px] font-semibold tracking-[-0.02em]">{title}</h2>}
+          {title && <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">{title}</h2>}
           {description && <p className="max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">{description}</p>}
         </div>
 
@@ -127,31 +140,67 @@ export const MuSection = ({
   </section>
 );
 
+/** The site's section opener: a heavy navy rule, a blue caps label, a heading. */
+export const MuSectionOpener = ({ label, title }: { label: string; title?: string }) => (
+  <div className="pt-2">
+    <hr className="border-t-4 border-navy" />
+    <p className="mt-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-brand">{label}</p>
+    {title && <h2 className="mt-1.5 text-[20px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{title}</h2>}
+  </div>
+);
+
+/** The one place clip art appears in admin: an empty list or record. */
 export const MuEmpty = ({
   icon: Icon,
+  art,
   title,
   description,
   action,
 }: {
   icon?: LucideIcon;
+  /** A clip art object from the site's set, shown on a tint square. */
+  art?: string;
   title: string;
   description?: string;
   action?: ReactNode;
 }) => (
   <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-    {Icon && (
-      <span className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    {art ? (
+      <span className="relative mb-2 block h-[84px] w-[84px]">
+        <span aria-hidden="true" className="absolute bottom-0 right-0 h-[76%] w-[76%] bg-tint" />
+        <img src={art} alt="" className="absolute inset-0 h-full w-full object-contain" />
+      </span>
+    ) : Icon && (
+      <span className="mb-1 flex h-11 w-11 items-center justify-center bg-tint text-navy">
         <Icon className="h-5 w-5" />
       </span>
     )}
-    <p className="text-sm font-medium">{title}</p>
+    <p className="text-[15px] font-extrabold tracking-[-0.01em] text-navy">{title}</p>
     {description && <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{description}</p>}
     {action && <div className="mt-3">{action}</div>}
   </div>
 );
 
+/** A list or record that failed to load. Never an empty state in disguise. */
+export const MuLoadError = ({
+  what,
+  onRetry,
+}: {
+  /** "the enquiries", "this client" */
+  what: string;
+  onRetry?: () => void;
+}) => (
+  <div role="alert" className="flex flex-col items-start gap-3 border-l-4 border-l-destructive bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="text-[15px] font-extrabold text-navy">We could not load {what}</p>
+      <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again. Nothing has been changed.</p>
+    </div>
+    {onRetry && <Button variant="outline" onClick={onRetry}>Try again</Button>}
+  </div>
+);
+
 export const MuToolbar = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col gap-2 rounded-none border border-border/70 bg-muted/30 p-3 lg:flex-row lg:items-center">
+  <div className="flex flex-col gap-2 border border-line bg-tint/40 p-3 lg:flex-row lg:items-center">
     {children}
   </div>
 );
@@ -330,7 +379,7 @@ export const MuStatus = ({
 }) => (
   <span
     className={cn(
-      "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+      "inline-flex shrink-0 items-center gap-1.5 px-2 py-0.5 text-[12px] font-bold",
       TONE_CLASS[tone],
       className,
     )}
@@ -420,18 +469,18 @@ export const MuHero = ({
   /** A figure drawn behind the plate. Callers vary it per record. */
   watermark?: ReactNode;
 }) => (
-  <div className="border border-line">
-    <div className="relative overflow-hidden bg-navy px-5 py-7 sm:px-8 sm:py-8">
+  <InBandSlot>
+  <div>
+    <div className="admin-band relative overflow-hidden bg-navy pb-7 pt-6 sm:pb-8 sm:pt-8">
       {watermark}
+      <div className={BAND_INNER}>
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
-          {eyebrow && (
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted-navy">{eyebrow}</p>
-          )}
-          <h1 className="mt-2 text-[26px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[30px]">
-            {title}
-          </h1>
+          {eyebrow && <span className="inline-flex"><NotchTag tone="white" size="sm">{eyebrow}</NotchTag></span>}
+          <div className="mt-3.5">
+            <KitPillHeading text={title} accent={[title.split(" ").filter(Boolean).length - 1]} align="left" size="md" />
+          </div>
           {subtitle && (
             <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-body-navy">{subtitle}</p>
           )}
@@ -473,9 +522,11 @@ export const MuHero = ({
           ))}
         </dl>
       )}
+      </div>
     </div>
     {strip}
   </div>
+  </InBandSlot>
 );
 
 /** Three plain sentences under the hero, divided by hairlines. */
@@ -484,14 +535,16 @@ export const MuHeroStrip = ({
 }: {
   items: { label: string; sentence: ReactNode }[];
 }) => (
-  <dl className="grid divide-y divide-line-soft border-t border-line bg-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-    {items.map((s) => (
-      <div key={s.label} className="px-5 py-4">
-        <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{s.label}</dt>
-        <dd className="mt-1.5 text-[14.5px] leading-snug text-foreground">{s.sentence}</dd>
-      </div>
-    ))}
-  </dl>
+  <div className="border-b-2 border-navy bg-tint/60">
+    <dl className="mx-auto grid w-full max-w-[1400px] divide-y-2 divide-navy sm:grid-cols-3 sm:divide-x-2 sm:divide-y-0">
+      {items.map((s) => (
+        <div key={s.label} className="px-5 py-4 lg:px-8">
+          <dt className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">{s.label}</dt>
+          <dd className="mt-1.5 text-[14.5px] font-semibold leading-snug text-navy">{s.sentence}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
 );
 
 /**
@@ -538,7 +591,7 @@ export const MuTabRail = ({
       {/* Wider screens: the hairline rail. */}
       <div
         className={cn(
-          "sticky top-0 z-10 -mx-1 hidden overflow-x-auto border-b border-line bg-background/95 px-1 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:block",
+          "-mx-1 hidden overflow-x-auto border-b-2 border-navy bg-background px-1 sm:block",
         )}
         role="tablist"
       >
@@ -554,7 +607,7 @@ export const MuTabRail = ({
                 onClick={() => onChange(t.value)}
                 className={cn(
                   "relative flex min-h-[44px] items-center gap-2 px-3.5 text-[14.5px] tracking-[-0.01em] transition-colors",
-                  isActive ? "font-bold text-foreground" : "font-medium text-muted-foreground hover:text-foreground",
+                  isActive ? "bg-navy font-extrabold text-white" : "font-bold text-navy/70 hover:bg-tint hover:text-navy",
                 )}
               >
                 {t.label}
@@ -645,12 +698,14 @@ export const MuRow = ({
   className?: string;
 }) => (
   <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5", className)}>
-    <div className="min-w-0 flex-1">
+    {/* The text keeps a readable width; on a narrow screen the status and
+        actions wrap below it rather than squeezing it. */}
+    <div className="min-w-[min(100%,15rem)] flex-1">
       <p className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">{title}</p>
       {state && <div className="mt-0.5 text-[13.5px] leading-snug text-muted-foreground">{state}</div>}
     </div>
     {status && <div className="flex shrink-0 items-center gap-2">{status}</div>}
-    {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+    {action && <div className="flex max-w-full shrink-0 items-center gap-2">{action}</div>}
   </div>
 );
 

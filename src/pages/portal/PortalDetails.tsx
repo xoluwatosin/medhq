@@ -20,6 +20,11 @@ import { trackRules } from "@/lib/tracks";
 import { updateOwnProfile } from "@/lib/portal-actions";
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import { usePortal } from "./usePortal";
+import { useAuth } from "@/contexts/AuthContext";
+import AvatarPicker from "@/components/candidate/AvatarPicker";
+import { avatarFor } from "@/components/candidate/avatars";
+import { TRACK_ART_BY_ID } from "@/components/candidate/track-art";
+import { art } from "@/components/mc/art";
 
 const languageList = (value: any): string =>
   Array.isArray(value)
@@ -27,6 +32,11 @@ const languageList = (value: any): string =>
     : typeof value === "string" ? value : "";
 
 const PortalDetails = () => {
+  const { user } = useAuth();
+  // The account holds the choice; a fresh pick shows at once, before the session refreshes.
+  const [picked, setAvatar] = useState<string | null>(null);
+  const avatar = picked ?? (user?.user_metadata as { avatar?: string } | undefined)?.avatar ?? null;
+  const [picking, setPicking] = useState(false);
   const navigate = useNavigate();
   const p = usePortal();
   const person = p.person ?? {};
@@ -96,6 +106,17 @@ const PortalDetails = () => {
       intro="What we hold about you. Correct anything here yourself, and we keep a record of the change."
       footer={<CxButton rank="secondary" full onClick={signOut}><LogOut className="h-4 w-4" />Sign out</CxButton>}
     >
+      {!editing && (
+        <CxCard>
+          <CxRow
+            art={avatarFor(avatar) ?? TRACK_ART_BY_ID[person.track] ?? art.charNurse}
+            title="Your ID character"
+            sentence="The picture on your Medic Connect ID. Pick one that feels like you."
+            right={<CxButton rank="tertiary" onClick={() => setPicking(true)}>Change</CxButton>}
+          />
+        </CxCard>
+      )}
+      <AvatarPicker open={picking} onOpenChange={setPicking} current={avatar} onPicked={setAvatar} />
       {!editing ? (
         <CxCard>
           <CxRows>

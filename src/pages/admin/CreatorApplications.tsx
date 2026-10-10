@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuPage, MuPageHeader, MuStatus, MuToolbar, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Loader2, Archive, Search, ExternalLink } from "lucide-react";
+import { Loader2, Archive, ArchiveRestore, Search, ExternalLink } from "lucide-react";
 import { PAGE_SIZE, adminDb } from "@/lib/admin-utils";
+import { selectAll } from "@/lib/select-all";
 import ExportDropdown from "@/components/admin/ExportDropdown";
 import { format } from "date-fns";
 
@@ -27,11 +29,17 @@ interface CreatorApplication {
   created_at: string;
 }
 
-const statusColors: Record<string, string> = {
-  new: "default",
-  reviewed: "secondary",
-  accepted: "outline",
-  rejected: "destructive",
+const statusTone: Record<string, MuTone> = {
+  new: "info",
+  reviewed: "neutral",
+  accepted: "good",
+  rejected: "warning",
+};
+const STATUS_LABELS: Record<string, string> = {
+  new: "New",
+  reviewed: "Reviewed",
+  accepted: "Accepted",
+  rejected: "Rejected",
 };
 
 const CreatorApplications = () => {
@@ -43,40 +51,94 @@ const CreatorApplications = () => {
   const [page, setPage] = useState(0);
   const { toast } = useToast();
 
+  const fetchData = async () => {
+    const { data, error } = await adminDb()
+      .from("creator_applications")
+      .select("*")
+      .eq("archived", false)
+      .order("created_at", { ascending: false });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else setItems(data || []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await adminDb()
-        .from("creator_applications")
-        .select("*")
-        .eq("archived", false)
-        .order("created_at", { ascending: false });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else setItems(data || []);
-      setLoading(false);
-    };
     fetchData();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
+  // Archived applications are a status-style view, read only when it is chosen.
+  const showingArchived = statusFilter === "archived";
+  const [archived, setArchived] = useState<CreatorApplication[] | null>(null);
+  const [archivedFailed, setArchivedFailed] = useState(false);
+
+  useEffect(() => {
+    if (!showingArchived || archived !== null) return;
+    (async () => {
+      setArchivedFailed(false);
+      try {
+        const rows = await selectAll<CreatorApplication>((from, to) =>
+          adminDb()
+            .from("creator_applications")
+            .select("*")
+            .eq("archived", true)
+            .order("created_at", { ascending: false })
+            .order("id")
+            .range(from, to),
+        );
+        setArchived(rows);
+      } catch (err) {
+        setArchivedFailed(true);
+        setArchived([]);
+        toast({ title: "Could not load archived applications", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+      }
+    })();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [showingArchived, archived]);
+
+  const restoreItem = async (id: string) => {
+    const { error } = await adminDb().from("creator_applications").update({ archived: false }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not restore", description: error.message, variant: "destructive" });
+      return;
+    }
+    setArchived((prev) => (prev ? prev.filter((i) => i.id !== id) : prev));
+    setSelected(null);
+    toast({ title: "Application restored" });
+    void fetchData();
+  };
+
   const updateStatus = async (id: string, status: string) => {
-    await adminDb().from("creator_applications").update({ status }).eq("id", id);
+    const { error } = await adminDb().from("creator_applications").update({ status }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not change the status", description: error.message, variant: "destructive" });
+      return;
+    }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+    setArchived((prev) => (prev ? prev.map((i) => (i.id === id ? { ...i, status } : i)) : prev));
     if (selected?.id === id) setSelected({ ...selected, status });
   };
 
   const archiveItem = async (id: string) => {
-    await adminDb().from("creator_applications").update({ archived: true }).eq("id", id);
+    const { error } = await adminDb().from("creator_applications").update({ archived: true }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not archive", description: error.message, variant: "destructive" });
+      return;
+    }
     setItems((prev) => prev.filter((i) => i.id !== id));
+    // The archived view reads again next time it is chosen.
+    setArchived(null);
     setSelected(null);
     toast({ title: "Application archived" });
   };
 
-  const filtered = items.filter((i) => {
+  const filtered = (showingArchived ? archived ?? [] : items).filter((i) => {
     const matchesSearch =
       !search ||
       [i.name, i.email, i.country].some((f) =>
         f.toLowerCase().includes(search.toLowerCase())
       );
-    const matchesStatus = statusFilter === "all" || i.status === statusFilter;
+    const matchesStatus = showingArchived || statusFilter === "all" || i.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -91,13 +153,14 @@ const CreatorApplications = () => {
     );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-serif font-bold">Creator applications</h1>
-        <ExportDropdown data={filtered} filename="creator-applications" />
-      </div>
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
+    <MuPage>
+      <MuPageHeader
+        title="Creator programme"
+        description="People who asked to make content with Medic Connect."
+        actions={<ExportDropdown data={filtered} filename="creator-applications" />}
+      />
+      <MuToolbar>
+        <div className="relative flex-1 lg:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search name, email, country…"
@@ -106,7 +169,7 @@ const CreatorApplications = () => {
               setSearch(e.target.value);
               setPage(0);
             }}
-            className="pl-9"
+            className="pl-9 bg-background"
           />
         </div>
         <Select
@@ -116,7 +179,7 @@ const CreatorApplications = () => {
             setPage(0);
           }}
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-full bg-background lg:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -125,10 +188,11 @@ const CreatorApplications = () => {
             <SelectItem value="reviewed">Reviewed</SelectItem>
             <SelectItem value="accepted">Accepted</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-      <div className="hidden md:block overflow-x-auto border rounded-lg">
+      </MuToolbar>
+      <div className="hidden md:block overflow-x-auto border border-line bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -141,13 +205,34 @@ const CreatorApplications = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.length === 0 ? (
+            {showingArchived && archived === null ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No creator applications found.
+                <TableCell colSpan={6} className="py-12 text-center">
+                  <Loader2 className="inline h-6 w-6 animate-spin text-primary" />
+                </TableCell>
+              </TableRow>
+            ) : showingArchived && archivedFailed ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                  Archived creator applications could not be loaded. Refresh to try again.
+                </TableCell>
+              </TableRow>
+            ) : paged.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="p-0">
+                  {showingArchived && !search ? (
+                    <MuEmpty
+                      art={art.objFolderDocuments}
+                      title="No archived creator applications"
+                      description="Applications you archive appear here and can be restored."
+                    />
+                  ) : (
+                    <MuEmpty
+                      art={art.objMagnifier}
+                      title="No creator applications found"
+                      description="Try a different search or status."
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
@@ -161,24 +246,37 @@ const CreatorApplications = () => {
                   <TableCell>{item.email}</TableCell>
                   <TableCell>{item.country}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[item.status] as any}>
-                      {item.status}
-                    </Badge>
+                    <MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {format(new Date(item.created_at), "dd MMM yyyy")}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        archiveItem(item.id);
-                      }}
-                    >
-                      <Archive className="h-4 w-4" />
-                    </Button>
+                    {showingArchived ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void restoreItem(item.id);
+                        }}
+                      >
+                        <ArchiveRestore className="h-4 w-4 mr-2" />
+                        Restore
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Archive application"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          archiveItem(item.id);
+                        }}
+                      >
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -188,17 +286,31 @@ const CreatorApplications = () => {
       </div>
 
       <ConsoleMobileList
-        emptyLabel="No creator applications found."
+        emptyLabel={
+          showingArchived && archived === null
+            ? "Loading archived applications"
+            : showingArchived && archivedFailed
+              ? "Archived creator applications could not be loaded."
+              : showingArchived && !search
+                ? "No archived creator applications"
+                : "No creator applications found"
+        }
+        emptyArt={showingArchived && (archived === null || archivedFailed) ? undefined : showingArchived && !search ? art.objFolderDocuments : art.objMagnifier}
         rows={paged.map((item) => ({
           key: item.id,
           title: item.name,
-          state: `${item.country} · ${format(new Date(item.created_at), "dd MMM yyyy")}`,
-          status: <Badge variant={statusColors[item.status] as any}>{item.status}</Badge>,
+          state: (
+            <span className="flex flex-wrap gap-x-3">
+              <span>{item.country}</span>
+              <span>{format(new Date(item.created_at), "dd MMM yyyy")}</span>
+            </span>
+          ),
+          status: <MuStatus tone={statusTone[item.status] ?? "neutral"} label={STATUS_LABELS[item.status] ?? item.status} />,
           onOpen: () => setSelected(item),
         }))}
       />
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -223,7 +335,7 @@ const CreatorApplications = () => {
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Creator Application: {selected?.name}</DialogTitle>
+            <DialogTitle>Creator application from {selected?.name}</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-3 text-sm overflow-hidden break-words">
@@ -258,7 +370,7 @@ const CreatorApplications = () => {
                 </Select>
               </div>
               <div className="pt-2 border-t">
-                <span className="font-medium">Social Links:</span>
+                <span className="font-medium">Social links:</span>
                 <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
                   {selected.social_links}
                 </p>
@@ -278,7 +390,7 @@ const CreatorApplications = () => {
               )}
               {selected.rate_card_url && (
                 <div>
-                  <span className="font-medium">Rate Card:</span>{" "}
+                  <span className="font-medium">Rate card:</span>{" "}
                   <a
                     href={selected.rate_card_url}
                     target="_blank"
@@ -295,11 +407,19 @@ const CreatorApplications = () => {
                   {selected.message}
                 </p>
               </div>
+              {selected.archived && (
+                <div className="flex justify-end pt-2">
+                  <Button variant="outline" onClick={() => void restoreItem(selected.id)}>
+                    <ArchiveRestore className="h-4 w-4 mr-2" />
+                    Restore
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </MuPage>
   );
 };
 

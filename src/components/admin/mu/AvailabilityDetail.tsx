@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminDb } from "@/lib/admin-utils";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { MuStatus } from "./MuShell";
 import {
   BLOCKS,
   BLOCK_LABEL,
@@ -145,22 +146,18 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
 
   return (
     <div className={cn("space-y-5", className)}>
-      <p className="text-sm text-foreground">
-        {counts.free > 0
-          ? `They have said they are free on ${counts.free} of the next ${weeks * 7} days.`
-          : `They have not named a single free day in the next ${weeks * 7} days.`}{" "}
-        {counts.booked > 0 ? `They have said they are booked on ${counts.booked} days. ` : ""}
-        {counts.silent > 0
-          ? `They have said nothing about ${counts.silent} days, which is silence rather than a no.`
-          : "They have answered for every day in this window."}{" "}
-        <span className="text-muted-foreground">{freshnessLabel(lastUpdate)}.</span>
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <MuStatus tone={counts.free > 0 ? "good" : "neutral"} label={`${counts.free} of ${weeks * 7} days free`} />
+        {counts.booked > 0 && <MuStatus tone="warning" label={`${counts.booked} booked`} />}
+        {counts.silent > 0 && <MuStatus label={`${counts.silent} not told us`} />}
+        <MuStatus label={freshnessLabel(lastUpdate)} />
+      </div>
 
       {/* The usual week they told us about, before any single day overrides it. */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Their usual week</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Their usual week</p>
         {weekly.every((w) => !w.blocks) ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">They have not set a usual week, only single days.</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">No usual week set</p>
         ) : (
           <div className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             {weekly.map((w) => {
@@ -169,7 +166,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
                 <div
                   key={w.weekday}
                   className={cn(
-                    "rounded-md border px-2.5 py-1.5 text-xs",
+                    "border px-2.5 py-1.5 text-xs",
                     chips.length ? "border-primary/40 bg-primary/5" : "border-border/60 bg-muted/30",
                   )}
                 >
@@ -190,7 +187,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
 
       {/* Every day, at a glance, with the exact hours on hover. */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
           Next {weeks} weeks, day by day
         </p>
         <div className="mt-2 overflow-x-auto">
@@ -219,7 +216,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
                         key={iso}
                         title={title}
                         className={cn(
-                          "rounded-md border px-1 py-1 text-center",
+                          "border px-1 py-1 text-center",
                           s === "available" && "border-primary/50 bg-primary/10",
                           s === "unavailable" && "border-destructive/40 bg-destructive/10",
                           s === "unknown" && "border-dashed border-border/70 bg-muted/20",
@@ -232,7 +229,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
                             <span
                               key={b.key}
                               className={cn(
-                                "h-1 w-1 rounded-full",
+                                "h-1 w-1",
                                 chips.some((c) => c.key === b.key) ? "bg-primary" : "bg-border",
                               )}
                             />
@@ -248,35 +245,33 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm border border-primary/50 bg-primary/10" /> Free
+            <span className="h-2.5 w-2.5 border border-primary/50 bg-primary/10" /> Free
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm border border-destructive/40 bg-destructive/10" /> Booked
+            <span className="h-2.5 w-2.5 border border-destructive/40 bg-destructive/10" /> Booked
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm border border-dashed border-border/70 bg-muted/20" /> Not told us
+            <span className="h-2.5 w-2.5 border border-dashed border-border/70 bg-muted/20" /> Not told us
           </span>
-          <span>Dots are morning, afternoon, evening, night.</span>
+          <span>Dots: morning, afternoon, evening, night</span>
         </div>
       </div>
 
       {/* The plain list, because a grid is no use when you are typing a shift into a message. */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
           The exact hours they gave
         </p>
         {named.length === 0 ? (
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            They have not named any free hours in this window.
-          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground">No free hours named in this window</p>
         ) : (
-          <ul className="mt-2 divide-y divide-border/60 rounded-md border border-border/60">
+          <ul className="mt-2 divide-y divide-line-soft border border-line">
             {named.slice(0, 60).map(({ date, blocks, source }) => (
               <li key={toISODate(date)} className="flex flex-wrap items-baseline justify-between gap-2 px-3 py-2">
                 <span className="text-sm font-medium text-foreground">{humanDate(date)}</span>
                 <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   {blockChips(blocks).map((c) => (
-                    <span key={c.key} className="rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
+                    <span key={c.key} className="border border-border/70 bg-muted/40 px-2 py-0.5">
                       {c.label} {c.hours}
                     </span>
                   ))}
@@ -287,9 +282,7 @@ const AvailabilityDetail = ({ personId, lastUpdate, weeks = 8, from, className }
           </ul>
         )}
         {named.length > 60 && (
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Showing the first 60 days they named. The rest sit further out than this window.
-          </p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Showing the first 60 days</p>
         )}
       </div>
     </div>

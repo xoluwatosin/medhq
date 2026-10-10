@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -9,9 +7,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { KeyRound, RefreshCw, Send, ShieldCheck, Loader2, Eye } from "lucide-react";
+import { RefreshCw, Send, Loader2 } from "lucide-react";
 import { adminDb, exportToCSV } from "@/lib/admin-utils";
 import { toast } from "sonner";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+
+const HEAD = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
 
 interface KeyRow {
   name: string;
@@ -135,76 +137,62 @@ export default function AlertKeys() {
   const alertKey = keys.find((k) => k.name === "admin_alert_key");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-serif font-bold">Alert keys</h1>
-          <p className="text-sm text-muted-foreground">
-            Generate, rotate and verify the internal run keys that let scheduled jobs raise alerts. Key values are
-            never shown, here or anywhere else.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={() => load()} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" /> Test the alert path
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            This checks that the alert key is valid and that a sign-up failure digest reaches hello@medicconnect.co.
-            A test alert is raised, sent, and closed straight away.
-          </p>
-          <Button onClick={runTest} disabled={testing || !alertKey?.present}>
-            {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-            Send a test alert
+    <MuPage>
+      <MuPageHeader
+        title="Alert keys"
+        description="The run keys scheduled jobs use to raise alerts. Values are never shown."
+        actions={
+          <Button size="sm" variant="outline" onClick={() => load()} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
           </Button>
-          {!alertKey?.present && (
-            <p className="text-sm text-amber-700">No alert key is stored yet. Rotate the alert key first.</p>
-          )}
+        }
+      />
+
+      <MuSection
+        title="Test the alert path"
+        description="Raises, sends and closes a test alert to hello@medicconnect.co."
+      >
+        <div className="space-y-3">
+          {/* Without a key the button says what to do, so nobody has to hover. */}
+          <Button onClick={runTest} disabled={testing || !alertKey?.present}>
+            {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            {alertKey?.present ? "Send a test alert" : "Generate the alert key below first"}
+          </Button>
           {lastTest && (
             <div
-              className={`rounded-md border p-3 text-sm ${
-                lastTest.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"
+              className={`border p-3 text-sm ${
+                lastTest.ok ? "border-line bg-tint text-navy" : "border-warn-line/40 bg-warn-bg text-warn-ink"
               }`}
             >
               {lastTest.message}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <KeyRound className="h-4 w-4" /> Key register
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+      <MuSection title="Key register" padded={false}>
+        {!keys.length && !loading ? (
+          <MuEmpty art={art.objPadlock} title="No keys yet" description="Run keys appear here once they are registered." />
+        ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Key</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Fingerprint</TableHead>
-                <TableHead>Last rotated</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+              <TableRow className="border-line-soft hover:bg-transparent">
+                <TableHead className={HEAD}>Key</TableHead>
+                <TableHead className={HEAD}>State</TableHead>
+                <TableHead className={HEAD}>Fingerprint</TableHead>
+                <TableHead className={HEAD}>Last rotated</TableHead>
+                <TableHead className={`${HEAD} text-right`}>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {keys.map((k) => (
-                <TableRow key={k.name}>
+                <TableRow key={k.name} className="border-line-soft">
                   <TableCell>
                     <p className="font-medium">{KEY_LABELS[k.name]?.title ?? k.name}</p>
                     <p className="text-xs text-muted-foreground">{KEY_LABELS[k.name]?.blurb ?? k.name}</p>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={k.present ? "default" : "destructive"}>{k.present ? "Stored" : "Missing"}</Badge>
+                    <MuStatus label={k.present ? "Stored" : "Missing"} tone={k.present ? "good" : "bad"} />
                   </TableCell>
                   <TableCell className="font-mono text-xs">{k.fingerprint ?? "Not recorded"}</TableCell>
                   <TableCell className="text-sm">{fmt(k.rotated_at)}</TableCell>
@@ -215,63 +203,51 @@ export default function AlertKeys() {
                       onClick={() => setConfirmKey(k.name)}
                       disabled={busy === k.name}
                     >
-                      {busy === k.name ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                      {busy === k.name ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                       {k.present ? "Rotate" : "Generate"}
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {!keys.length && !loading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                    No keys are registered yet.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        )}
+      </MuSection>
 
-      <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Eye className="h-4 w-4" /> Audit trail
-          </CardTitle>
+      <MuSection
+        title="Audit trail"
+        padded={false}
+        actions={
           <Button size="sm" variant="outline" onClick={exportAudit} disabled={!audit.length}>
             Export
           </Button>
-        </CardHeader>
-        <CardContent className="p-0">
+        }
+      >
+        {!audit.length ? (
+          <MuEmpty art={art.objClipboard} title="Nothing recorded yet" description="Key rotations and tests will be listed here." />
+        ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>When</TableHead>
-                <TableHead>Key</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Admin</TableHead>
+              <TableRow className="border-line-soft hover:bg-transparent">
+                <TableHead className={HEAD}>When</TableHead>
+                <TableHead className={HEAD}>Key</TableHead>
+                <TableHead className={HEAD}>Action</TableHead>
+                <TableHead className={HEAD}>Admin</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {audit.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell className="text-sm whitespace-nowrap">{fmt(a.created_at)}</TableCell>
+                <TableRow key={a.id} className="border-line-soft">
+                  <TableCell className="whitespace-nowrap text-sm">{fmt(a.created_at)}</TableCell>
                   <TableCell className="text-sm">{KEY_LABELS[a.key_name]?.title ?? a.key_name}</TableCell>
                   <TableCell className="text-sm">{ACTION_LABELS[a.action] ?? a.action}</TableCell>
                   <TableCell className="text-sm">{a.actor_email ?? "System"}</TableCell>
                 </TableRow>
               ))}
-              {!audit.length && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
-                    Nothing has been recorded yet.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        )}
+      </MuSection>
 
       <AlertDialog open={Boolean(confirmKey)} onOpenChange={(open) => !open && setConfirmKey(null)}>
         <AlertDialogContent>
@@ -288,6 +264,6 @@ export default function AlertKeys() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </MuPage>
   );
 }

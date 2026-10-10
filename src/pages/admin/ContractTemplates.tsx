@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { FileStack, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { ContractTemplate, createTemplate, loadTemplates } from "@/lib/contract-templates";
 
 const ContractTemplates = () => {
@@ -75,7 +76,7 @@ const ContractTemplates = () => {
           </div>
         ) : templates.length === 0 ? (
           <MuEmpty
-            icon={FileStack}
+            art={art.objSignedContract}
             title="No templates yet"
             description="Create one for a role you hire into more than once."
             action={<Button onClick={() => setAdding(true)}><Plus className="mr-2 h-4 w-4" />New template</Button>}
@@ -91,7 +92,7 @@ const ContractTemplates = () => {
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold">{t.name}</p>
                     <p className="text-[13px] text-muted-foreground">
-                      {[t.job_title, t.department, t.contract_type?.replace("_", " ")].filter(Boolean).join(" · ") ||
+                      {[t.job_title, t.department, t.contract_type?.replace("_", " ")].filter(Boolean).join(", ") ||
                         "No role set yet"}
                     </p>
                   </div>

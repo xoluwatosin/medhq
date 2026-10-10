@@ -38,7 +38,7 @@ export const CARE_SERVICES: CareServiceOption[] = [
     sectionKey: "postnatal",
     bands: ["adult"],
   },
-  { value: "newborn", label: "Newborn care", sectionKey: "newborn", bands: ["newborn", "infant"] },
+  { value: "newborn", label: "Newborn care", sectionKey: "newborn", bands: ["newborn", "infant", "expected"] },
   {
     value: "paediatric",
     label: "Paediatric care",
@@ -56,8 +56,9 @@ export const CARE_SERVICES: CareServiceOption[] = [
     label: "Nanny and childcare",
     sectionKey: "nanny",
     // Childcare is for a child. Attaching it to an adult is a conflict the
-    // respondent resolves, exactly as every other age rule is resolved.
-    bands: ["newborn", "infant", "child"],
+    // respondent resolves, exactly as every other age rule is resolved. A
+    // nanny is often arranged before the baby is born.
+    bands: ["newborn", "infant", "child", "expected"],
   },
   { value: "post_surgical", label: "Post-surgical care at home", sectionKey: "post_surgical" },
   { value: "eldercare", label: "Eldercare and companion care", sectionKey: "eldercare", bands: ["older_person", "adult"] },
@@ -82,12 +83,14 @@ export interface IntakePerson {
 export interface IntakeRecipient extends IntakePerson {
   /** Stable within one request, so answers never move between people. */
   id: string;
-  /** Relationship to the person asking. Absent when they are the same person. */
+  /** What the person asking is to this recipient, e.g. "Mother". Absent when they are the same person. */
   relationship?: string;
   relationshipOther?: string;
   /** True when the person asking is also receiving care. */
   isEnquirer?: boolean;
   dobKnown?: "yes" | "no";
+  /** Not born yet: dateOfBirth holds the expected date. */
+  expectedBirth?: boolean;
   dateOfBirth?: string;
   approxAge?: number | null;
   services: string[];
@@ -198,9 +201,16 @@ export const recipientAgeYears = (r: IntakeRecipient, now: Date = new Date()): n
   return Number.isFinite(approx) && approx >= 0 && approx <= 120 ? Math.floor(approx) : null;
 };
 
+/** An expected date more than ten months away is almost certainly a typing slip. */
+const expectedTooFar = (date: string, now: Date = new Date()) => {
+  const due = new Date(`${date.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(due.getTime()) || due.getTime() - now.getTime() > 305 * 86_400_000;
+};
+
 export const recipientBand = (r: IntakeRecipient, now: Date = new Date()): string => {
   const fromDob = ageFromDateOfBirth(r.dateOfBirth, now);
   if (fromDob) return ageBandOf(fromDob.years, fromDob.days);
+  if (r.expectedBirth && r.dateOfBirth) return "expected";
   return ageBandOf(recipientAgeYears(r, now), null);
 };
 
@@ -320,12 +330,17 @@ export const stepProblems = (
         problems[`${r.id}.relationship`] = "Choose a relationship";
       }
       if (r.dobKnown === "yes" && !filled(r.dateOfBirth)) {
-        problems[`${r.id}.dateOfBirth`] = "Enter a date of birth";
+        problems[`${r.id}.dateOfBirth`] = r.expectedBirth ? "Enter the expected date of birth" : "Enter a date of birth";
+      } else if (r.expectedBirth && r.dateOfBirth && expectedTooFar(r.dateOfBirth, now)) {
+        problems[`${r.id}.dateOfBirth`] = "Enter an expected date within the next ten months";
       }
       if (r.dobKnown === "no" && recipientAgeYears(r, now) === null) {
         problems[`${r.id}.approxAge`] = "Enter an approximate age in years";
       }
       if (!r.dobKnown) problems[`${r.id}.dobKnown`] = "Enter a date of birth, or an approximate age";
+      if (r.isEnquirer && r.expectedBirth) {
+        problems[`${r.id}.dobKnown`] = "If the care is for your baby, go back and choose Another person";
+      }
       if (r.services.length === 0) {
         problems[`${r.id}.services`] = "Choose the support this person needs";
       }
@@ -430,6 +445,45 @@ export const answersForRecipient = (
     else if (owner === recipientId) out[fieldId] = value;
   }
   return out;
+};
+
+/** The person asking is this recipient's parent or legal guardian. */
+export const PARENT_RELATIONSHIPS = ["Mother", "Father", "Guardian"];
+
+/**
+ * What the intake already settles about one care recipient, in the terms the
+ * questions' conditions read. The page and the server both build routing from
+ * this, so they always agree on what is asked: a question the intake answers
+ * is not asked again, and a household question is asked once, not per person.
+ * Saved answers never override these facts.
+ */
+/** "Zara", "Taiwo and Kehinde", "Ada, Bola and Chi". */
+export const listOfNames = (names: string[]): string =>
+  names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+
+export const intakeRoutingAnswers = (intake: CareIntake, r: IntakeRecipient): Record<string, unknown> => {
+  const others = intake.recipients.filter((x) => x.id !== r.id);
+  const newborn = others.find((x) => x.services.includes("newborn") && x.dateOfBirth);
+  const babies = others.filter((x) => x.services.includes("newborn")).map((x) => x.firstName.trim()).filter(Boolean);
+  const motherOnRequest = others.some((x) => x.services.includes("postnatal_mother"));
+  return {
+    who_for: r.isEnquirer ? "myself" : "someone_else",
+    recipient_first_name: r.firstName,
+    dob_known: r.expectedBirth ? "expected" : r.dobKnown ?? null,
+    date_of_birth: r.dateOfBirth ?? null,
+    approx_age: r.approxAge ?? null,
+    intake_relationship: r.relationship ?? "",
+    intake_filler_parent: !r.isEnquirer && PARENT_RELATIONSHIPS.includes(r.relationship ?? "") ? "yes" : "no",
+    intake_first_recipient: intake.recipients[0]?.id === r.id ? "yes" : "no",
+    intake_sole_self: intake.recipients.length === 1 && !!r.isEnquirer ? "yes" : "no",
+    intake_newborn_dob: newborn?.dateOfBirth ?? "",
+    // The babies on the request, by name, for questions put to their mother.
+    intake_newborn_names: listOfNames(babies),
+    // A baby whose mother is on the same request: the parent is known, so a
+    // grandmother or aunt arranging omugwo is not asked who holds parental
+    // responsibility.
+    intake_parent_on_request: r.services.includes("newborn") && motherOnRequest ? "yes" : "no",
+  };
 };
 
 /** The questionnaire service key a care recipient's services open. */

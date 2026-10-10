@@ -1,3 +1,4 @@
+import { trackJobApplication } from "@/lib/measurement";
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { MapPin, ArrowLeft, Loader2, Upload, CheckCircle2 } from "lucide-react";
@@ -125,7 +126,7 @@ const MatchmakerApply = () => {
     const next = encodeURIComponent(`/hm/${opp.slug}/apply`);
     return (
       <div className="min-h-dvh bg-background flex flex-col">
-        <SEO title={`Apply — ${opp.title}`} description="Apply through the Healthcare Matchmakers Network." path={`/hm/${opp.slug}/apply`} noindex breadcrumbs={[]} />
+        <SEO title={`Apply: ${opp.title}`} description="Apply through the Healthcare Matchmakers Network." path={`/hm/${opp.slug}/apply`} noindex breadcrumbs={[]} />
         <MedicHeader />
         <main className="flex-1 pt-10 pb-16">
           <div className="max-w-xl mx-auto px-5 sm:px-6">
@@ -237,6 +238,7 @@ const MatchmakerApply = () => {
         landing_path: attr?.landing_path ?? null,
       } as any);
       if (error) throw error;
+      trackJobApplication(opp.slug);
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
@@ -301,7 +303,7 @@ const MatchmakerApply = () => {
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       <SEO
-        title={`Apply — ${opp.title}`}
+        title={`Apply: ${opp.title}`}
         description="Apply through the Healthcare Matchmakers Network."
         path={`/hm/${opp.slug}/apply`}
         noindex
@@ -341,7 +343,7 @@ const MatchmakerApply = () => {
             <div className="kit-curve-sm border border-border bg-background p-8 text-center">
               <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-3" />
               <h2 className="font-serif text-2xl font-semibold">Application submitted</h2>
-              <p className="text-muted-foreground mt-2">Thanks — we'll be in touch if there's a match.</p>
+              <p className="text-muted-foreground mt-2">Thank you. We will be in touch if there is a match.</p>
               <div className="mt-6 flex gap-3 justify-center flex-wrap">
                 <Button variant="outline" asChild><Link to={`/hm/${opp.slug}`}>Back to job details</Link></Button>
                 <Button asChild><Link to="/hm">All opportunities</Link></Button>

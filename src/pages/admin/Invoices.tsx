@@ -1,26 +1,19 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCatalogue } from "@/hooks/useCatalogue";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InvoiceList } from "@/components/admin/invoice/InvoiceList";
 import { InvoiceBuilder } from "@/components/admin/invoice/InvoiceBuilder";
 import { CatalogueTab } from "@/components/admin/invoice/CatalogueTab";
+import { MuPageHeader } from "@/components/admin/mu/MuShell";
 import { BookOpen, FileText, Plus } from "lucide-react";
 
 const Invoices = () => {
-  const { user } = useAuth();
-  const { categories, isLoading, seedDefaults } = useCatalogue();
+  // The catalogue is seeded from the Catalogue tab on request ("Reset to
+  // defaults"), never by opening this screen.
   const [tab, setTab] = useState("invoices");
 
-  useEffect(() => {
-    if (!isLoading && categories.length === 0 && user) {
-      seedDefaults.mutate();
-    }
-  }, [isLoading, categories.length, user]);
-
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Invoices</h1>
+    <div className="space-y-6">
+      <MuPageHeader title="Invoices" description="Raise invoices, send payment links and keep the service catalogue current." />
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>

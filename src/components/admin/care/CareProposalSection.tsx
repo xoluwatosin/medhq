@@ -10,6 +10,7 @@ import { cxInputClass } from "@/components/candidate/primitives";
 import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Status } from "@/components/field";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -102,7 +103,7 @@ const CareProposalSection = ({
     setBusy(false);
   };
 
-  if (loading) return <MuSection title="Care proposal"><MuEmpty title="Loading" /></MuSection>;
+  if (loading) return <MuSection title="Care proposal"><p className="text-sm text-muted-foreground">Loading the care proposal.</p></MuSection>;
 
   const draft = current?.status === "draft";
 
@@ -110,14 +111,15 @@ const CareProposalSection = ({
     <>
       <MuSection
         title="Care proposal"
-        description="This is the version the family reads. Risks and safeguarding notes stay on the operational plan."
+        description="The version the family reads. Risks and safeguarding stay on the working plan."
         actions={current
           ? <Status label={proposalStatusLabel[current.status]} tone={proposalStatusTone(current.status)} />
           : null}
       >
         {!current && (
           <MuEmpty
-            title="No care proposal"
+            art={art.objCarePlan}
+            title="No care proposal yet"
             description={planApproved ? "Prepare one from the approved working plan." : "Approve the current working plan before preparing a client proposal."}
           />
         )}
@@ -128,7 +130,6 @@ const CareProposalSection = ({
               { label: "Version", value: `Version ${current.version}` },
               { label: "Prepared", value: formatDateTime(current.created_at) },
               { label: "Sent", value: current.sent_at ? formatDateTime(current.sent_at) : "" },
-              { label: "People sent to", value: String(sends.length) },
             ]}
           />
         )}
@@ -137,6 +138,7 @@ const CareProposalSection = ({
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <button
                type="button" className={carePrimary} disabled={busy || !planApproved}
+              title={!planApproved ? "Approve the working plan first" : undefined}
               onClick={() => void run(() => draftProposal(clientId), "Care proposal prepared")}
             >
               {current ? "Rebuild from the care plan" : "Prepare care proposal"}
@@ -194,13 +196,13 @@ const CareProposalSection = ({
       )}
 
       {current && (
-        <MuSection title="Comments" description="What the family said about this proposal, and the replies.">
+        <MuSection title="Comments">
           {comments.length === 0
-            ? <MuEmpty title="No comments" />
+            ? <MuEmpty title="No comments yet" description="Comments from the family and your replies appear here." />
             : (
               <div className="flex flex-col gap-3">
                 {comments.map((row) => (
-                  <div key={row.id} className="rounded-none border border-line bg-white p-3">
+                  <div key={row.id} className="border border-line bg-card p-3">
                     <p className="text-[13px] text-body">{formatDateTime(row.created_at)}</p>
                     <p className="mt-1 whitespace-pre-wrap text-[14px] text-ink">{row.body}</p>
                   </div>
@@ -238,7 +240,7 @@ const CareProposalSection = ({
               <MuRow
                 key={row.id}
                 title={`Version ${row.version}`}
-                state={`${proposalStatusLabel[row.status]} · ${formatDateTime(row.sent_at ?? row.created_at)}`}
+                state={`${proposalStatusLabel[row.status]}, ${formatDateTime(row.sent_at ?? row.created_at)}`}
               />
             ))}
           </div>
@@ -287,11 +289,12 @@ const CareProposalSection = ({
         open={withdrawing}
         onOpenChange={(open) => { setWithdrawing(open); if (!open) setReason(""); }}
         title="Withdraw the care proposal"
-        description="The family will no longer be able to open it. Say why."
+        description="The family will no longer be able to open it."
       >
         <textarea
           className={cn(cxInputClass(), "min-h-24")}
           aria-label="Reason for withdrawing"
+          placeholder="Why it is being withdrawn"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />

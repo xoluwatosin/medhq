@@ -29,6 +29,12 @@ export interface Neighbourhood {
   responseLine: string;
   /** Two short FAQs unique to this area */
   faqs: { q: string; a: string }[];
+  /**
+   * Slugs of nearby area pages, linked at the foot of the page. A wider area
+   * links down to the estates inside it (Ikoyi to Banana Island) and the
+   * estate links back up, so the two pages support rather than compete.
+   */
+  nearby?: string[];
 }
 
 export const NEIGHBOURHOODS: Neighbourhood[] = [
@@ -86,6 +92,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "Yes. With your consent we collect the discharge summary, medication list and follow-up dates from the hospital and pick up care the day you come home.",
       },
     ],
+    nearby: ["banana-island", "parkview", "osborne-foreshore", "victoria-island"],
   },
   {
     slug: "lekki",
@@ -142,6 +149,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "For planned deliveries we can have a postnatal nurse in your home the day you come back from hospital. Walk-in requests are usually covered within 48 hours.",
       },
     ],
+    nearby: ["lekki-phase-1", "vgc", "ajah", "ikoyi", "victoria-island"],
   },
   {
     slug: "victoria-island",
@@ -197,6 +205,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "By default our nurses are in clean professional scrubs with ID. For clients who prefer a discreet presence in apartment buildings, plain clothing with visible ID is available on request.",
       },
     ],
+    nearby: ["eko-atlantic", "ikoyi", "lekki-phase-1"],
   },
   {
     slug: "ikeja",
@@ -252,6 +261,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "Yes. With your consent we coordinate with the ward team, collect the discharge plan and start nursing cover the day the patient returns home.",
       },
     ],
+    nearby: ["ikeja-gra", "magodo-gra"],
   },
   {
     slug: "ajah",
@@ -307,6 +317,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "Yes. Live-in nannies are common across Ajah estates. Every nanny goes through background checks, reference verification and a physical guarantor process before deployment.",
       },
     ],
+    nearby: ["vgc", "lekki"],
   },
   {
     slug: "surulere",
@@ -362,6 +373,7 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "Yes. Many families come to us tired. We assess gently, agree the level of cover that takes pressure off the household, and step in with a trained caregiver — daytime, overnight or live-in.",
       },
     ],
+    nearby: ["yaba"],
   },
   {
     slug: "yaba",
@@ -416,6 +428,237 @@ export const NEIGHBOURHOODS: Neighbourhood[] = [
         a: "Yes. Once we have completed the home assessment, we can have a postnatal nurse in your home the day you bring your baby home.",
       },
     ],
+    nearby: ["surulere"],
+  },
+  // --- Estates and districts added October 2026. Hospitals are the ones
+  // already listed for the surrounding area; claims stay within what the site
+  // says elsewhere (most placements confirmed within 48 hours of assessment).
+  {
+    slug: "banana-island",
+    name: "Banana Island",
+    axis: "Island",
+    intro:
+      "Discreet nursing, eldercare and live-in caregivers for Banana Island households, from the first assessment to round-the-clock cover.",
+    landmarks: ["Banana Island residences", "Banana Island apartment towers", "Banana Island foreshore homes", "Ikoyi Link Bridge side"],
+    nearbyHospitals: ["Lagoon Hospitals Ikoyi", "Reddington Hospital", "St. Nicholas Hospital", "First Cardiology"],
+    commonNeeds: [
+      {
+        title: "Live-in care for an ageing parent",
+        description:
+          "A vetted live-in caregiver who fits the household's routine, with nursing visits added when health needs change.",
+      },
+      {
+        title: "Nursing after a hospital stay",
+        description: "Wound care, medicines on time and daily checks for the weeks after discharge, so recovery happens at home.",
+      },
+      {
+        title: "Care run from abroad",
+        description:
+          "Many Banana Island homes are managed by family overseas. We bill them directly and send a WhatsApp note after every visit.",
+      },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      {
+        q: "Can your staff work within the estate's security procedures?",
+        a: "Yes. We share each professional's details in advance so the household and estate security can clear them before the first visit.",
+      },
+      {
+        q: "Do you offer live-in caregivers on Banana Island?",
+        a: "Yes. Live-in, overnight and visiting arrangements are all available, agreed in the care plan after the assessment.",
+      },
+    ],
+    nearby: ["ikoyi", "parkview", "osborne-foreshore"],
+  },
+  {
+    slug: "parkview",
+    name: "Parkview Estate",
+    axis: "Island",
+    intro:
+      "Vetted nurses and caregivers for families in Parkview Estate, Ikoyi: eldercare, recovery after surgery and support for new mothers.",
+    landmarks: ["Parkview Estate homes", "Parkview Estate apartments", "Gerrard Road side", "Ikoyi Club side"],
+    nearbyHospitals: ["Lagoon Hospitals Ikoyi", "Reddington Hospital", "St. Nicholas Hospital", "First Cardiology"],
+    commonNeeds: [
+      {
+        title: "Eldercare that keeps them at home",
+        description: "Companion care, personal care and medication support for older relatives who want to stay in the home they know.",
+      },
+      {
+        title: "Postnatal care and Omugwo",
+        description: "Day or overnight support so a new mother can rest and heal, alongside family rather than instead of them.",
+      },
+      {
+        title: "Recovery after surgery",
+        description: "Skilled nursing for wounds, drains and medicines in the weeks after discharge.",
+      },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      { q: "Do you cover all of Parkview Estate?", a: "Yes. We cover homes and apartments across Parkview, and the rest of Ikoyi." },
+      { q: "Can we meet the carer before they start?", a: "Yes. We introduce the matched carer first, so you can confirm the fit." },
+    ],
+    nearby: ["ikoyi", "banana-island", "osborne-foreshore"],
+  },
+  {
+    slug: "osborne-foreshore",
+    name: "Osborne Foreshore",
+    axis: "Island",
+    intro: "Home nursing, eldercare and live-in caregivers for families in Osborne Foreshore Estate, Phases 1 and 2.",
+    landmarks: ["Osborne Foreshore Estate Phase 1", "Osborne Foreshore Estate Phase 2", "Osborne Road side", "Ikoyi waterfront towers"],
+    nearbyHospitals: ["Lagoon Hospitals Ikoyi", "Reddington Hospital", "St. Nicholas Hospital", "First Cardiology"],
+    commonNeeds: [
+      {
+        title: "Care for an older parent",
+        description: "Visiting or live-in carers for personal care, mobility and company, with a note to family after every visit.",
+      },
+      {
+        title: "Chronic condition support",
+        description: "Nursing visits for blood pressure, diabetes and medicines, with readings recorded each time.",
+      },
+      { title: "Nanny and childcare", description: "Vetted nannies matched to your family, live-in or live-out." },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      {
+        q: "Do you cover both phases of Osborne Foreshore?",
+        a: "Yes. We cover Phase 1, Phase 2 and the apartment towers along the waterfront.",
+      },
+      {
+        q: "Can family abroad arrange and pay for care?",
+        a: "Yes. We bill the family abroad directly and send a WhatsApp note after every visit.",
+      },
+    ],
+    nearby: ["ikoyi", "banana-island", "parkview"],
+  },
+  {
+    slug: "eko-atlantic",
+    name: "Eko Atlantic",
+    axis: "Island",
+    intro: "Nurses, caregivers and nannies for residents of Eko Atlantic City, with care planned around busy households.",
+    landmarks: ["Eko Atlantic City residences", "Eko Pearl Towers", "Azuri Peninsula", "Victoria Island side"],
+    nearbyHospitals: ["Reddington Hospital VI", "Lagoon Hospitals VI", "St. Nicholas Hospital (nearby)"],
+    commonNeeds: [
+      { title: "Nanny and childcare", description: "Vetted nannies for working families, day or live-in, matched to your routine." },
+      { title: "Postnatal support", description: "Day or overnight care for a new mother and baby, so the household can rest." },
+      { title: "Nursing at home", description: "Medicines, injections, wound care and checks, without a trip across the city." },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      { q: "Do you cover apartments in Eko Atlantic?", a: "Yes. We cover the residential towers and homes across Eko Atlantic City." },
+      {
+        q: "Can care fit around our working hours?",
+        a: "Yes. Visits, day cover, nights and live-in arrangements are agreed in the care plan.",
+      },
+    ],
+    nearby: ["victoria-island", "ikoyi"],
+  },
+  {
+    slug: "lekki-phase-1",
+    name: "Lekki Phase 1",
+    axis: "Island",
+    intro: "Postnatal nurses, nannies and home nursing for families across Lekki Phase 1, from Admiralty Way to Fola Osibo.",
+    landmarks: ["Admiralty Way", "Fola Osibo", "Bisola Durosinmi-Etti Drive", "Freedom Way", "Oniru side"],
+    nearbyHospitals: ["Reddington Lekki", "Euracare Multi-Specialist Hospital", "Mart-Life Medical Centre"],
+    commonNeeds: [
+      { title: "Postnatal care and Omugwo", description: "Trained postnatal support for families without grandparents nearby, day or night." },
+      { title: "Nannies for working parents", description: "Vetted, CPR-trained nannies, live-in or live-out, matched to your family." },
+      { title: "Children's nursing", description: "Nursing at home for sick children and babies home from hospital." },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      {
+        q: "Do you place live-in nannies in Lekki Phase 1?",
+        a: "Yes. Every nanny is police-cleared, reference-checked and CPR certified before placement.",
+      },
+      {
+        q: "Can a postnatal nurse start when we come home from hospital?",
+        a: "Yes. For planned births we can plan support to start the day you come home.",
+      },
+    ],
+    nearby: ["lekki", "victoria-island", "vgc"],
+  },
+  {
+    slug: "vgc",
+    name: "VGC",
+    axis: "Island",
+    intro: "Nurses, caregivers and nannies for families inside Victoria Garden City, along the Lekki-Epe corridor.",
+    landmarks: ["Victoria Garden City estate", "VGC residential avenues", "VGC lakeside homes", "Lekki-Epe Expressway side"],
+    nearbyHospitals: ["Lagoon Hospitals Lekki", "Royal Albert Hospital", "St. Ives Specialist Hospital"],
+    commonNeeds: [
+      { title: "Eldercare for parents who live with you", description: "Companion and personal care for older relatives at home, visiting or live-in." },
+      { title: "Nanny and school-run support", description: "Vetted nannies for school runs, homework and evenings." },
+      { title: "Nursing at home", description: "Medicines, wound care and checks, so you avoid the drive into town." },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      {
+        q: "Can your staff get through the VGC gates?",
+        a: "Yes. We share each professional's details in advance so the household and estate security can clear them.",
+      },
+      { q: "Do you cover the whole of VGC?", a: "Yes, and the wider Ajah and Lekki-Epe corridor." },
+    ],
+    nearby: ["ajah", "lekki"],
+  },
+  {
+    slug: "ikeja-gra",
+    name: "Ikeja GRA",
+    axis: "Mainland",
+    intro:
+      "Home nursing, eldercare and live-in caregivers for families in Ikeja GRA, close to LASUTH and the mainland's specialist hospitals.",
+    landmarks: ["Isaac John Street", "Joel Ogunnaike Street", "Oduduwa Way", "Sobo Arobiodu Street", "Mobolaji Bank Anthony Way side"],
+    nearbyHospitals: [
+      "Lagos State University Teaching Hospital (LASUTH)",
+      "Reddington Hospital Ikeja",
+      "First Consultants Medical Centre",
+      "Eko Hospital Ikeja",
+    ],
+    commonNeeds: [
+      { title: "Eldercare at home", description: "Personal care, mobility support and company for older parents in the family home." },
+      {
+        title: "Recovery after a hospital stay",
+        description: "Nursing for wounds, medicines and daily checks after discharge from LASUTH or a private hospital.",
+      },
+      {
+        title: "Chronic condition support",
+        description: "Regular visits for blood pressure, diabetes and medicines, with readings recorded each time.",
+      },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      { q: "Do you cover all of Ikeja GRA?", a: "Yes, and the rest of Ikeja, including Allen, Opebi and Maryland." },
+      {
+        q: "Can you pick up care after discharge from LASUTH?",
+        a: "Yes. With your consent we collect the discharge notes and medicines list and start the day you come home.",
+      },
+    ],
+    nearby: ["ikeja", "magodo-gra"],
+  },
+  {
+    slug: "magodo-gra",
+    name: "Magodo GRA",
+    axis: "Mainland",
+    intro:
+      "Nurses and caregivers for families across Magodo GRA Phase 1 and Phase 2, for parents, new mothers and recovery at home.",
+    landmarks: ["Magodo GRA Phase 1 (Isheri)", "Magodo GRA Phase 2 (Shangisha)", "CMD Road side", "Ojodu side"],
+    nearbyHospitals: [
+      "Lagos State University Teaching Hospital (LASUTH)",
+      "Reddington Hospital Ikeja",
+      "First Consultants Medical Centre",
+    ],
+    commonNeeds: [
+      { title: "Care for ageing parents", description: "Visiting or live-in caregivers for personal care, mobility and company." },
+      { title: "Postnatal support", description: "Day or overnight care so a new mother can rest and recover." },
+      { title: "Nursing at home", description: "Medicines, injections, wound care and checks without the traffic to the hospital." },
+    ],
+    responseLine: "Most placements are confirmed within 48 hours of the home assessment.",
+    faqs: [
+      { q: "Do you cover both Magodo phases?", a: "Yes. We cover Phase 1 (Isheri) and Phase 2 (Shangisha)." },
+      {
+        q: "Can your staff get through estate security?",
+        a: "Yes. We share each professional's details in advance so the household and estate can clear them.",
+      },
+    ],
+    nearby: ["ikeja-gra", "ikeja"],
   },
 ];
 

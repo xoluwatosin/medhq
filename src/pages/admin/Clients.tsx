@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, Link2, UserRoundPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useListParam, useRestoreListParams } from "@/hooks/useListParam";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,23 +15,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { adminDb } from "@/lib/admin-utils";
 import { CLIENT_GROUPS, createCarePerson, workKindLabel } from "@/lib/care";
-import { careStageLabel, careStageTone } from "@/lib/care-status";
+import { CLIENT_STATUSES, careStageLabel, clientStatusOf } from "@/lib/care-status";
 import {
   RELATIONSHIP_TERMS, STATE_TERMS, ageText, lgaTerms, stateLabel, lgaLabel,
 } from "@/lib/care-vocabularies";
-import { DateField, PhoneField, SearchableSelect, Status } from "@/components/field";
+import { DateField, PhoneField, SearchableSelect, SelectField, Status } from "@/components/field";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { dueText, nextActions, needsAttention, workTone, type NextAction } from "@/lib/care-work";
 import AddressAutocomplete from "@/components/portal/AddressAutocomplete";
 import PromoteEnquiries from "@/components/admin/care/PromoteEnquiries";
 import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
-import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
+import ConsoleFilters from "@/components/admin/console/ConsoleFilters";
 import ConsoleTable, { ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
+import CareRequests from "@/pages/admin/CareRequests";
 
 interface ClientRow {
   id: string;
@@ -57,24 +58,25 @@ interface ServiceRow {
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
+// One Care list. Each client has one of four statuses; "Needs you" is the
+// work waiting on staff for clients still in care. Care requests not yet
+// routed into a client stay reachable as their own view.
 const FILTERS = [
-  { id: "attention", label: "Needs attention" },
-  { id: "awaiting", label: "Awaiting responses" },
-  { id: "returned", label: "Responses returned" },
-  { id: "booked", label: "Assessment booked" },
-  { id: "running", label: "Care running" },
-  { id: "all", label: "All" },
+  { id: "attention", label: "Needs you", urgent: true },
+  { id: "open", label: "All open" },
+  ...CLIENT_STATUSES.map((s) => ({ id: s.id, label: s.label })),
+  { id: "requests", label: "Requests to route" },
   { id: "archived", label: "Archive" },
 ] as const;
 
 type FilterId = (typeof FILTERS)[number]["id"];
 
 const COLUMNS: ConsoleColumn[] = [
-  { key: "client", label: "Client", width: "24%" },
-  { key: "service", label: "Service", width: "18%" },
-  { key: "status", label: "Status", width: "16%" },
-  { key: "next", label: "Next action", width: "27%" },
-  { key: "action", label: "Action", width: "15%" },
+  { key: "client", label: "Client", width: "26%" },
+  { key: "status", label: "Status", width: "17%" },
+  { key: "service", label: "Service", width: "17%" },
+  { key: "next", label: "Next step", width: "30%" },
+  { key: "updated", label: "Added", width: "10%" },
 ];
 
 const elapsedLabel = (iso: string) => {
@@ -86,13 +88,19 @@ const elapsedLabel = (iso: string) => {
 
 const matchesFilter = (client: ClientRow, filter: FilterId) => {
   if (filter === "archived") return Boolean(client.archived_at);
-  if (client.archived_at) return false;
-  if (filter === "all") return true;
-  if (filter === "attention") return needsAttention(client.action);
-  if (filter === "awaiting") return client.stage === "awaiting_pre_assessment";
-  if (filter === "returned") return client.stage === "pre_assessment_received";
-  if (filter === "booked") return client.stage === "assessment_booked";
-  return client.stage === "care_running";
+  if (client.archived_at || filter === "requests") return false;
+  const status = clientStatusOf(client.stage).id;
+  if (filter === "open") return status !== "ended";
+  // A file on hold or ended is not waiting on anyone.
+  if (filter === "attention") return (status === "pending" || status === "active") && needsAttention(client.action);
+  return status === filter;
+};
+
+const matchesSearch = (client: ClientRow, query: string, service: string) => {
+  if (service && client.service !== service) return false;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return [client.full_name, client.preferred_name, placeOf(client)].some((v) => v?.toLowerCase().includes(q));
 };
 
 const placeOf = (client: ClientRow) =>
@@ -105,10 +113,15 @@ const placeOf = (client: ClientRow) =>
 
 const Clients = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState<FilterId>("attention");
+  // The chosen view lives in the address bar and is remembered.
+  useRestoreListParams();
+  const [activeFilter, setActiveFilter] = useListParam<FilterId>("view", "attention");
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [query, setQuery] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
   const [open, setOpen] = useState(false);
   const [sweepOpen, setSweepOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -138,6 +151,7 @@ const Clients = () => {
     ]);
 
     if (clientsRes.error) toast.error("Could not load clients");
+    setLoadFailed(Boolean(clientsRes.error));
 
     const actionByClient = new Map((actionsRes ?? []).map((a) => [a.client_id, a]));
 
@@ -154,13 +168,23 @@ const Clients = () => {
 
   useEffect(() => { void load(); }, []);
 
-  const visibleClients = useMemo(
-    () => clients.filter((client) => matchesFilter(client, activeFilter)),
-    [clients, activeFilter],
+  const searched = useMemo(
+    () => clients.filter((client) => matchesSearch(client, query, serviceFilter)),
+    [clients, query, serviceFilter],
   );
 
-  const tabs = useMemo(
-    () => FILTERS.map((f) => ({ ...f, count: clients.filter((c) => matchesFilter(c, f.id)).length })),
+  const visibleClients = useMemo(
+    () => searched.filter((client) => matchesFilter(client, activeFilter)),
+    [searched, activeFilter],
+  );
+
+  const filters = useMemo(
+    () => FILTERS.map((f) => ({ ...f, count: f.id === "requests" ? undefined : searched.filter((c) => matchesFilter(c, f.id)).length })),
+    [searched],
+  );
+
+  const serviceNames = useMemo(
+    () => [...new Set(clients.map((c) => c.service))].sort(),
     [clients],
   );
 
@@ -255,14 +279,14 @@ const Clients = () => {
     client.action ? (
       <>
         <Status
-          label={`${workKindLabel(client.action.kind)} · ${client.action.rank_reason}`}
+          label={`${workKindLabel(client.action.kind)}: ${client.action.rank_reason}`}
           tone={workTone(client.action)}
         />
         <span className="mt-1 block text-sm font-semibold text-ink">{client.action.title}</span>
         <span className="mt-0.5 block text-xs text-muted-copy">
           {[dueText(client.action.due_at), client.action.team ? `Owner: ${client.action.team}` : null]
             .filter(Boolean)
-            .join(" · ")}
+            .join(", ")}
         </span>
       </>
     ) : (
@@ -273,8 +297,8 @@ const Clients = () => {
     <section className="mx-auto w-full max-w-[1080px]" aria-labelledby="clients-heading">
       <ConsolePageHeader
         id="clients-heading"
-        title="Clients"
-        description="Care clients, enquiries and assessments."
+        title="Care"
+        description="Everyone in care, and the requests still being prepared."
         action={
           <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" className="h-11" onClick={() => setSweepOpen(true)}>
@@ -290,8 +314,8 @@ const Clients = () => {
                 <DialogDescription>{createMode === "link" ? "The person completes their details and continues directly to pre-assessment." : createMode === "manual" ? "Enter the person receiving care and the primary contact." : "Choose how the client record should begin."}</DialogDescription>
               </DialogHeader>
               {createMode === "choose" && <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => setCreateMode("manual")} className="rounded-2xl border border-line-soft bg-card p-5 text-left shadow-soft hover:bg-tint/30"><UserRoundPlus className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Create manually</span><span className="mt-1 block text-sm text-muted-copy">Enter the person and contact details now.</span></button>
-                <button type="button" onClick={() => setCreateMode("link")} className="rounded-2xl border border-line-soft bg-card p-5 text-left shadow-soft hover:bg-tint/30"><Link2 className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Generate link</span><span className="mt-1 block text-sm text-muted-copy">Collect their details, then open pre-assessment.</span></button>
+                <button type="button" onClick={() => setCreateMode("manual")} className="border border-line bg-card p-5 text-left hover:bg-tint/30"><UserRoundPlus className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Create manually</span><span className="mt-1 block text-sm text-muted-copy">Enter the person and contact details now.</span></button>
+                <button type="button" onClick={() => setCreateMode("link")} className="border border-line bg-card p-5 text-left hover:bg-tint/30"><Link2 className="h-6 w-6 text-navy" aria-hidden /><span className="mt-4 block text-[15px] font-bold text-navy">Generate link</span><span className="mt-1 block text-sm text-muted-copy">Collect their details, then open pre-assessment.</span></button>
               </div>}
               {createMode === "manual" && <div className="grid gap-4">
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -354,40 +378,30 @@ const Clients = () => {
                   />
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label>Client group</Label>
-                    <Select value={form.client_group} onValueChange={set("client_group")}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CLIENT_GROUPS.map((g) => (
-                          <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Service</Label>
-                    <Select
-                      value={form.service_id}
-                      onValueChange={(v) => {
-                        const picked = services.find((s) => s.id === v);
-                        setForm((f) => ({
-                          ...f,
-                          service_id: v,
-                          client_group: picked?.client_group ?? picked?.client_groups?.[0] ?? f.client_group,
-                        }));
-                      }}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Choose a service" /></SelectTrigger>
-                      <SelectContent>
-                        {services.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <SelectField
+                    label="Client group"
+                    value={form.client_group}
+                    onChange={(v) => { if (v) set("client_group")(v); }}
+                    options={CLIENT_GROUPS.map((g) => ({ value: g.value, label: g.label }))}
+                  />
+                  <SelectField
+                    label="Service"
+                    value={form.service_id}
+                    placeholder="Choose a service"
+                    onChange={(v) => {
+                      if (!v) return;
+                      const picked = services.find((s) => s.id === v);
+                      setForm((f) => ({
+                        ...f,
+                        service_id: v,
+                        client_group: picked?.client_group ?? picked?.client_groups?.[0] ?? f.client_group,
+                      }));
+                    }}
+                    options={services.map((s) => ({ value: s.id, label: s.name }))}
+                  />
                 </div>
-                <div className="border-t border-line-soft pt-4 grid gap-4">
+                <div className="grid gap-4 border-2 border-navy bg-tint/40 p-3">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Primary contact</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="grid gap-2">
                       <Label htmlFor="contact_first_name">Contact first name</Label>
@@ -400,7 +414,7 @@ const Clients = () => {
                   </div>
                   <div className="grid gap-2">
                     <SearchableSelect
-                      label="Relationship to the client"
+                      label="The contact is the client's"
                       value={form.contact_relationship}
                       onChange={set("contact_relationship")}
                       options={RELATIONSHIP_TERMS.map((t) => ({ value: t.code, label: t.label }))}
@@ -428,7 +442,7 @@ const Clients = () => {
                 </div>
               </div>}
               {createMode === "link" && <div className="grid gap-4">
-                {!onboardingLink ? <div className="rounded-2xl border border-line-soft bg-tint/30 p-5"><p className="text-sm leading-relaxed text-ink">No client or placeholder record is created now. Records are created only after the recipient confirms their details.</p><p className="mt-2 text-sm text-muted-copy">The link expires after 30 days and does not grant family portal access.</p></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
+                {!onboardingLink ? <div className="border-2 border-navy bg-tint/40 p-3"><p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">About this link</p><ul className="mt-2 grid gap-1 text-sm text-ink"><li>No record until they confirm their details</li><li>Expires after 30 days</li><li>No family portal access</li></ul></div> : <div className="grid gap-2"><Label htmlFor="onboarding-link">Secure onboarding link</Label><div className="flex gap-2"><Input id="onboarding-link" readOnly value={onboardingLink} className="min-w-0"/><Button type="button" variant="outline" className="h-11 shrink-0" onClick={() => void copyOnboardingLink()}>{copied ? <Check className="h-4 w-4"/> : <Copy className="h-4 w-4"/>}<span className="sr-only">Copy link</span></Button></div></div>}
               </div>}
               <DialogFooter className="gap-2">
                 {createMode !== "choose" && <Button type="button" variant="outline" className="h-11" onClick={() => setCreateMode("choose")}>Back</Button>}
@@ -449,19 +463,52 @@ const Clients = () => {
       />
 
 
-      <ConsoleTabs
-        tabs={tabs}
+      <ConsoleFilters
+        filters={filters}
         active={activeFilter}
         onChange={(id) => setActiveFilter(id as FilterId)}
         label="Filter clients"
         controls="client-records"
       />
 
+      {activeFilter !== "requests" && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Input
+            type="search"
+            aria-label="Search clients"
+            placeholder="Search by name or area"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-10 min-w-0 flex-[1_1_240px]"
+          />
+          <div className="min-w-0 flex-[0_1_220px]">
+            <SelectField
+              label="Service"
+              hideLabel
+              value={serviceFilter}
+              placeholder="All services"
+              onChange={(v) => setServiceFilter(v ?? "")}
+              options={serviceNames.map((n) => ({ value: n, label: n }))}
+            />
+          </div>
+        </div>
+      )}
+
       <div id="client-records">
-        {loading ? (
+        {activeFilter === "requests" ? (
+          <CareRequests embedded />
+        ) : loading ? (
           <p className="py-10 text-center text-sm text-muted-copy">Loading clients</p>
+        ) : loadFailed ? (
+          <p className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-copy">Clients could not be loaded. Refresh to try again.</p>
         ) : visibleClients.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-copy">No clients</p>
+          <div className="border border-line bg-card">
+            <MuEmpty
+              art={art.objCarePlan}
+              title={activeFilter === "attention" ? "Nothing needs you right now" : "No clients here"}
+              description={query || serviceFilter ? "No client matches the search. Clear it to see everyone." : activeFilter === "open" ? "Add a client or route care requests to start a record." : "Nothing in this view right now. Try another filter."}
+            />
+          </div>
         ) : (
           <>
             <ConsoleTable
@@ -471,22 +518,25 @@ const Clients = () => {
               renderRow={(client) => (
                 <>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">
-                    <strong className="block text-sm font-semibold text-navy">{client.full_name}</strong>
+                    <Link
+                      to={`/admin/clients/${client.id}`}
+                      className="block text-sm font-semibold text-navy underline-offset-2 hover:underline focus-visible:underline"
+                    >
+                      {client.full_name}
+                    </Link>
                     <span className="mt-0.5 block text-xs text-muted-copy">
                       {placeOf(client) || "Details not set"}
                     </span>
                   </td>
-                  <td className="border-r border-line-soft px-3 py-3 align-middle">{client.service}</td>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">
-                    <Status label={careStageLabel(client.stage)} tone={careStageTone(client.stage)} />
-                    <span className="mt-1 block text-xs font-semibold text-muted-copy">{elapsedLabel(client.created_at)}</span>
+                    <Status label={clientStatusOf(client.stage).label} tone={clientStatusOf(client.stage).tone} />
+                    {clientStatusOf(client.stage).id === "pending" && (
+                      <span className="mt-1 block text-xs text-muted-copy">{careStageLabel(client.stage)}</span>
+                    )}
                   </td>
+                  <td className="border-r border-line-soft px-3 py-3 align-middle">{client.service}</td>
                   <td className="border-r border-line-soft px-3 py-3 align-middle">{nextActionCell(client)}</td>
-                  <td className="px-3 py-2 align-middle">
-                    <Button asChild type="button" variant="outline" size="sm" className="h-11 w-full border-line-soft bg-card px-2.5 text-xs text-navy">
-                      <Link to={`/admin/clients/${client.id}`}>Open record</Link>
-                    </Button>
-                  </td>
+                  <td className="px-3 py-3 align-middle text-xs font-semibold tabular-nums text-muted-copy">{elapsedLabel(client.created_at)}</td>
                 </>
               )}
             />
@@ -496,8 +546,8 @@ const Clients = () => {
               rows={visibleClients.map((client) => ({
                 key: client.id,
                 title: client.full_name,
-                state: `${client.service} · ${placeOf(client) || "Details not set"} · ${elapsedLabel(client.created_at)}`,
-                status: <Status label={careStageLabel(client.stage)} tone={careStageTone(client.stage)} />,
+                state: [client.service, placeOf(client) || "Details not set", elapsedLabel(client.created_at)].join(", "),
+                status: <Status label={clientStatusOf(client.stage).label} tone={clientStatusOf(client.stage).tone} />,
                 to: `/admin/clients/${client.id}`,
               }))}
             />

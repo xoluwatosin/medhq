@@ -46,13 +46,13 @@ const ContractPackRail = ({
     return (
       <>
         {/* Phones: a stacked list rather than a squeezed icon strip. */}
-        <div className="flex w-full flex-col gap-2 rounded-2xl border border-border/60 bg-background p-3 sm:hidden">
+        <div className="flex w-full flex-col gap-2 border border-line bg-card p-3 sm:hidden">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">The pack</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">The pack</p>
             <button
               type="button"
               onClick={onToggleCollapsed}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+              className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:bg-muted"
               aria-label="Show the pack"
               title="Show the pack"
             >
@@ -66,9 +66,9 @@ const ContractPackRail = ({
                   type="button"
                   onClick={() => onSelect(entry.key)}
                   className={cn(
-                    "flex min-h-11 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left transition",
+                    "flex min-h-11 w-full items-center gap-2 border px-3 py-2 text-left transition",
                     activeKey === entry.key
-                      ? "border-primary/50 bg-primary/5"
+                      ? "border-navy/40 bg-tint/60"
                       : "border-transparent hover:bg-muted/50",
                     !entry.included && "opacity-50",
                   )}
@@ -79,7 +79,7 @@ const ContractPackRail = ({
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{entry.title}</span>
-                  {entry.done && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-700" />}
+                  {entry.done && <Check className="h-3.5 w-3.5 shrink-0 text-navy" />}
                 </button>
               </li>
             ))}
@@ -87,17 +87,17 @@ const ContractPackRail = ({
         </div>
 
         {/* sm+: the collapsed icon strip. */}
-        <div className="hidden w-10 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border/60 bg-background py-3 sm:flex">
+        <div className="hidden w-10 shrink-0 flex-col items-center gap-2 border border-line bg-card py-3 sm:flex">
           <button
             type="button"
             onClick={onToggleCollapsed}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+            className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:bg-muted"
             aria-label="Show the pack"
             title="Show the pack"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="h-px w-6 bg-border/60" />
+          <div className="h-px w-6 bg-line" />
           {entries.map((entry) => (
             <button
               key={entry.key}
@@ -105,7 +105,7 @@ const ContractPackRail = ({
               onClick={() => onSelect(entry.key)}
               title={entry.title}
               className={cn(
-                "flex min-h-11 min-w-11 items-center justify-center rounded-lg",
+                "flex min-h-11 min-w-11 items-center justify-center",
                 activeKey === entry.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
                 !entry.included && "opacity-40",
               )}
@@ -119,13 +119,13 @@ const ContractPackRail = ({
   }
 
   return (
-    <aside className="w-60 shrink-0 space-y-3 rounded-2xl border border-border/60 bg-background p-3">
+    <aside className="w-60 shrink-0 space-y-3 border border-line bg-card p-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">The pack</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">The pack</p>
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+          className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:bg-muted"
           aria-label="Hide the pack"
           title="Hide the pack"
         >
@@ -140,19 +140,19 @@ const ContractPackRail = ({
               type="button"
               onClick={() => onSelect(entry.key)}
               className={cn(
-                "w-full rounded-xl border px-3 py-2 text-left transition",
+                "w-full border px-3 py-2 text-left transition",
                 activeKey === entry.key
-                  ? "border-primary/50 bg-primary/5"
+                  ? "border-navy/40 bg-tint/60"
                   : "border-transparent hover:bg-muted/50",
                 !entry.included && "opacity-50",
               )}
             >
               <span className="flex items-start justify-between gap-2">
                 <span className="min-w-0 text-sm font-medium leading-snug">
-                  {entry.code ? <span className="text-muted-foreground">{entry.code} · </span> : null}
+                  {entry.code ? <span className="text-muted-foreground">{entry.code}: </span> : null}
                   {entry.title}
                 </span>
-                {entry.done && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-700" />}
+                {entry.done && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy" />}
               </span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 {entry.included ? entry.status : "Left out of this pack"}
@@ -163,7 +163,7 @@ const ContractPackRail = ({
       </ul>
 
       {editable && (
-        <div className="space-y-1.5 border-t border-border/60 pt-2.5">
+        <div className="space-y-1.5 border-t border-line-soft pt-2.5">
           <Button variant="outline" size="sm" className="w-full justify-start" onClick={onAddAnnex}>
             <Plus className="mr-2 h-4 w-4" />Add an annex
           </Button>

@@ -10,6 +10,7 @@
 // a previous visit, we show them back rather than asking again.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,9 @@ import {
 } from "@/components/request/care-kinds";
 import {
   Choice, DialCodeField, FieldLabel, Question, RequestShell, joinPhone,
+  requestPrimary, requestQuiet, requestSecondary,
 } from "@/components/request/RequestShell";
+import { art } from "@/components/mc/art";
 
 export interface CarePrefill {
   name?: string;
@@ -52,9 +55,15 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   /** Answers carried in from another door, such as the welcome pop-up. */
   prefill?: CarePrefill;
+  /** The person has just chosen this service elsewhere, so it is not asked again. */
+  preconfirmed?: boolean;
 }
 
 /** Names are always held as two parts. A stored single name is split once. */
+const ABROAD = "care_from_abroad";
+
+const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
 const splitName = (raw: string): { first: string; last: string } => {
   const parts = (raw || "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { first: "", last: "" };
@@ -65,9 +74,10 @@ type StepKey = "confirm" | "recap" | "name" | "phone" | "email" | "consent" | "f
 
 const CareRequestDialog = ({
   serviceLineKey, trigger, source = "request_care",
-  open: openProp, onOpenChange: onOpenChangeProp, prefill,
+  open: openProp, onOpenChange: onOpenChangeProp, prefill, preconfirmed = false,
 }: Props) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [openState, setOpenState] = useState(false);
   const controlled = openProp !== undefined;
   const open = controlled ? openProp : openState;
@@ -84,6 +94,7 @@ const CareRequestDialog = ({
   const [index, setIndex] = useState(0);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [showSent, setShowSent] = useState(false);
   const [editContact, setEditContact] = useState(false);
 
   const initialName = splitName(prefill?.name ?? visitor.name);
@@ -95,7 +106,7 @@ const CareRequestDialog = ({
   const [email, setEmail] = useState(prefill?.email ?? visitor.email);
   const [consent, setConsent] = useState(prefill?.consent ?? visitor.consent);
 
-  const [confirmed, setConfirmed] = useState<"" | "yes" | "no">("");
+  const [confirmed, setConfirmed] = useState<"" | "yes" | "no">(preconfirmed ? "yes" : "");
   const [forWhom, setForWhom] = useState<"" | "me" | "else">("");
   const [who, setWho] = useState<Who | "">("");
   const [kind, setKind] = useState<CareKind | null>(pageKind);
@@ -106,13 +117,18 @@ const CareRequestDialog = ({
 
   const steps: StepKey[] = useMemo(() => {
     const s: StepKey[] = [];
-    if (pageKind) s.push("confirm");
+    if (pageKind && !preconfirmed) s.push("confirm");
+    const settled = pageKind && (confirmed === "yes" || preconfirmed);
+    // Who it is for comes before contact details, so a carer looking for work
+    // is sent to the right place before typing anything. Care from abroad is
+    // always for someone else.
+    if (!(settled && pageKind.line === ABROAD)) s.push("forWhom");
     if (contactKnown) s.push("recap");
     else s.push("name", "phone", "email", "consent");
-    if (!(pageKind && confirmed === "yes")) s.push("forWhom", "who", "kind");
+    if (!settled) s.push("who", "kind");
     s.push("soon");
     return s;
-  }, [pageKind, contactKnown, confirmed]);
+  }, [pageKind, contactKnown, confirmed, preconfirmed]);
 
   const stepKey = steps[Math.min(index, steps.length - 1)];
   const stepNo = Math.min(index, steps.length - 1);
@@ -129,16 +145,38 @@ const CareRequestDialog = ({
     }
   }, [open, pageKind, source]);
 
+  // A service chosen just before opening (the welcome pop-up) arrives after
+  // this form was mounted, so it is taken up when the form opens.
+  useEffect(() => {
+    if (open && preconfirmed && pageKind) {
+      setKind(pageKind);
+      setConfirmed("yes");
+    }
+  }, [open, preconfirmed, pageKind]);
+
   const fullPhone = joinPhone(dial, phone);
 
+  // Care for family back home is arranged for someone else, never for yourself.
   const kinds = useMemo(
-    () => (who ? CARE_KINDS.filter((k) => k.who.includes(who as Who)) : CARE_KINDS),
-    [who],
+    () => CARE_KINDS
+      .filter((k) => !who || k.who.includes(who as Who))
+      .filter((k) => forWhom !== "me" || k.line !== ABROAD),
+    [who, forWhom],
   );
+
+  /** Who the care is for, as the enquiry desk reads it. */
+  const forWhomAnswer = forWhom === "me"
+    ? "For themselves"
+    : forWhom === "else" || kind?.line === ABROAD
+      ? "For someone else"
+      : "";
+  const whoAnswer = who
+    ? forWhom === "me" ? `Themselves, ${WHO_LABEL[who as Who]}` : capitalise(WHO_LABEL[who as Who])
+    : "";
 
   const reset = () => {
     const v = readVisitor();
-    setIndex(0); setDone(false); setEditContact(false);
+    setIndex(0); setDone(false); setEditContact(false); setShowSent(false);
     const n = splitName(prefill?.name ?? v.name);
     setFirstName(v.firstName || n.first);
     setLastName(v.lastName || n.last);
@@ -146,7 +184,7 @@ const CareRequestDialog = ({
     setPhone(prefill?.phone ?? v.phone);
     setEmail(prefill?.email ?? v.email);
     setConsent(prefill?.consent ?? v.consent);
-    setConfirmed(""); setForWhom(""); setWho("");
+    setConfirmed(preconfirmed ? "yes" : ""); setForWhom(""); setWho("");
     setKind(pageKind);
     setSoon("");
   };
@@ -204,7 +242,7 @@ const CareRequestDialog = ({
     `Name: ${name.trim()}`,
     `WhatsApp: ${fullPhone}`,
     email.trim() ? `Email: ${email.trim()}` : "",
-    `Care for: ${forWhom === "me" ? "myself" : who ? WHO_LABEL[who as Who] : "someone else"}`,
+    forWhom === "me" ? "Care for: myself" : who ? `Care for: ${WHO_LABEL[who as Who]}` : forWhomAnswer ? "Care for: someone else" : "",
     `Kind of care: ${kind?.label ?? ""}`,
     `How soon: ${soon}`,
   ].filter(Boolean).join("\n");
@@ -214,10 +252,10 @@ const CareRequestDialog = ({
     setSending(true);
     try {
       const summary = [
-        `Care for: ${forWhom === "me" ? "themselves" : who ? WHO_LABEL[who as Who] : "someone else"}`,
-        `Kind of care: ${kind.label}`,
-        `How soon: ${soon}`,
-      ].join(". ");
+        forWhomAnswer ? `${forWhomAnswer}${whoAnswer && forWhom !== "me" ? ` (${WHO_LABEL[who as Who]})` : ""}` : "",
+        kind.label,
+        `Needed: ${soon.toLowerCase()}`,
+      ].filter(Boolean).join(". ");
       const earlier = priorInterests(readVisitor(), kind.line);
       const id = await submitCareRequest({
         name,
@@ -230,8 +268,8 @@ const CareRequestDialog = ({
         serviceLineName: kind.label,
         message: summary,
         answers: {
-          for_whom: forWhom === "me" ? "For me" : forWhom === "else" ? "For someone else" : "",
-          who_needs_care: who ? WHO_LABEL[who as Who] : "",
+          for_whom: forWhomAnswer,
+          who_needs_care: whoAnswer,
           kind_of_care: kind.label,
           how_soon: soon,
           confirmed_from_page: pageKind ? `${pageKind.label} (${confirmed === "yes" ? "confirmed" : "changed"})` : "",
@@ -304,53 +342,88 @@ const CareRequestDialog = ({
         total={done ? 0 : steps.length}
         chip={kind?.label ?? null}
         scrollRef={journeyRef}
-        footer={done ? undefined : (
+        art={done ? art.charNurse : art.coordinatorPhone}
+        footer={done || !(stepNo > 0 || showContinue || stepKey === "soon") ? undefined : (
           <>
             {stepNo > 0 ? (
-              <Button variant="ghost" className="rounded-xl text-body" onClick={back}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
+              <button type="button" className={requestQuiet} onClick={back}>
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+              </button>
             ) : <span />}
             {showContinue && (
-              <Button className="min-w-[136px] rounded-xl" onClick={next} disabled={!canContinue}>
-                Continue <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <button type="button" className={`${requestPrimary} min-w-[140px]`} onClick={next} disabled={!canContinue}>
+                Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
             )}
             {stepKey === "soon" && (
-              <Button className="min-w-[150px] rounded-xl" onClick={submit} disabled={!soon || !kind || sending}>
-                {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+              <button type="button" className={`${requestPrimary} min-w-[150px]`} onClick={submit} disabled={!soon || !kind || sending}>
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
                 Send request
-              </Button>
+              </button>
             )}
           </>
         )}
       >
         {done ? (
-          <div className="space-y-4 pb-2">
-            <div className="space-y-3 text-center">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-hairline-warm bg-tint">
-                <CheckCircle2 className="h-6 w-6 text-brand" />
-              </span>
-              <p className="text-[22px] font-bold text-navy">Your request has been received.</p>
-              <p className="mx-auto max-w-[44ch] text-[14px] leading-[1.55] text-body">
-                A care adviser will reach you on WhatsApp at {fullPhone}
+          <div className="space-y-5 pb-1">
+            <div>
+              <h2 className="text-[26px] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">Your request is in.</h2>
+              <p className="mt-2 text-[15px] leading-[1.55] text-body">
+                A care coordinator will message you on WhatsApp at <b className="text-ink">{fullPhone}</b>
                 {email.trim() ? `, and a guide is on its way to ${email.trim()}` : ""}.
-                Everything starts with a care needs assessment, and we will walk you through it.
-              </p>
-              <p className="mx-auto max-w-[44ch] text-[14px] leading-[1.55] text-body">
-                Tap below to open WhatsApp with your answers already written out, so nothing has to be repeated.
               </p>
             </div>
-            <div className="flex gap-3">
+            <div>
+              {/* Where they are: the request, folded to a tick unless tapped,
+                  then the one thing that happens next. */}
+              <div className="flex items-stretch">
+                <button
+                  type="button"
+                  onClick={() => setShowSent((v) => !v)}
+                  aria-expanded={showSent}
+                  aria-label={showSent ? "Request sent" : "Request sent, show"}
+                  className="mc-step-first flex min-h-[52px] shrink-0 items-center gap-2 bg-navy pl-3.5 pr-6 text-[13.5px] font-extrabold text-white"
+                >
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                  {showSent && <span className="whitespace-nowrap">Request sent</span>}
+                </button>
+                <div className="mc-step -ml-1.5 flex min-h-[52px] min-w-0 flex-1 items-center bg-brand py-2 pl-6 pr-6 text-white">
+                  <span className="text-[14.5px] font-extrabold leading-tight">We'll be in touch, usually the same working day</span>
+                </div>
+              </div>
+
+              <p className="label-caps mt-5 text-[11px]">What to expect</p>
+              <ol className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:gap-0">
+                {[
+                  { t: "Care needs", d: "A paid assessment may be required" },
+                  { t: "A match", d: "A carer chosen for the plan and the person" },
+                  { t: "Care begins", d: "On the days you agree" },
+                ].map((step, i) => (
+                  <li
+                    key={step.t}
+                    className={`flex min-h-[56px] flex-col justify-center bg-tint py-2 pr-6 text-navy sm:flex-1 ${
+                      i === 0 ? "mc-step-first pl-4" : "mc-step pl-4 sm:-ml-1.5 sm:pl-6"
+                    }`}
+                  >
+                    <span className="text-[14px] font-extrabold leading-tight">{step.t}</span>
+                    <span className="mt-0.5 text-[12.5px] leading-snug text-body">{step.d}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <p className="text-[15px] leading-[1.55] text-body">
+              Send your answers on WhatsApp now and the coordinator can start straight away, without asking again.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
               <a
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappText())}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-[15px] font-semibold text-primary-foreground"
+                className={`${requestPrimary} flex-1`}
               >
                 Send on WhatsApp
               </a>
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => onOpenChange(false)}>Close</Button>
+              <button type="button" className={`${requestSecondary} flex-1`} onClick={() => onOpenChange(false)}>Close</button>
             </div>
           </div>
         ) : (
@@ -360,12 +433,15 @@ const CareRequestDialog = ({
                 <Choice
                   label={`Yes, ${pageKind?.label.toLowerCase()}`}
                   blurb={pageKind?.blurb}
+                  art={pageKind?.art}
+                  price={pageKind?.price}
                   selected={confirmed === "yes"}
                   onClick={() => pick(() => { setConfirmed("yes"); setKind(pageKind); })}
                 />
                 <Choice
                   label="No, something else"
                   blurb="We will ask a couple of questions instead"
+                  art={art.objPhoneChat}
                   selected={confirmed === "no"}
                   onClick={() => pick(() => { setConfirmed("no"); setKind(null); })}
                 />
@@ -374,18 +450,19 @@ const CareRequestDialog = ({
 
             {stepKey === "recap" && (
               <div className="space-y-3">
-                <div className="space-y-2 rounded-xl border border-hairline-warm bg-tint/40 p-4">
-                  <p className="text-[14px] font-semibold text-ink">{name}</p>
-                  <p className="text-[13px] text-body">{fullPhone}</p>
-                  <p className="text-[13px] text-body">{email}</p>
+                <div className="relative space-y-1 border-2 border-navy bg-tint p-4 pr-24 shadow-offset-sm">
+                  <img src={art.objIdVerification} alt="" className="absolute bottom-2 right-3 h-[64px] object-contain" />
+                  <p className="text-[16px] font-extrabold text-navy">{name}</p>
+                  <p className="text-[14px] text-body">{fullPhone}</p>
+                  <p className="text-[14px] text-body">{email}</p>
                 </div>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-xl border-hairline-warm"
-                  onClick={() => { setEditContact(true); setIndex(pageKind ? 1 : 0); }}
+                <button
+                  type="button"
+                  className={`${requestSecondary} w-full`}
+                  onClick={() => { setEditContact(true); setIndex(steps.indexOf("recap")); }}
                 >
-                  <Pencil className="mr-2 h-4 w-4" /> Change my details
-                </Button>
+                  <Pencil className="h-4 w-4" aria-hidden="true" /> Change my details
+                </button>
               </div>
             )}
 
@@ -394,14 +471,14 @@ const CareRequestDialog = ({
                 <div className="space-y-1.5">
                   <FieldLabel htmlFor="cr-first-name">First name, required</FieldLabel>
                   <Input id="cr-first-name" value={firstName} maxLength={60} autoFocus
-                    className="h-12 rounded-xl border-hairline-warm bg-background px-4 text-[16px]"
+                    className="h-12 rounded-none border-[1.5px] border-navy/40 bg-background px-4 text-[16px] focus-visible:border-brand"
                     placeholder="e.g. Adaeze"
                     onChange={(e) => setFirstName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel htmlFor="cr-last-name">Last name, required</FieldLabel>
                   <Input id="cr-last-name" value={lastName} maxLength={60}
-                    className="h-12 rounded-xl border-hairline-warm bg-background px-4 text-[16px]"
+                    className="h-12 rounded-none border-[1.5px] border-navy/40 bg-background px-4 text-[16px] focus-visible:border-brand"
                     placeholder="e.g. Okonkwo"
                     onChange={(e) => setLastName(e.target.value)} />
                 </div>
@@ -419,7 +496,7 @@ const CareRequestDialog = ({
               <div className="space-y-1.5">
                 <FieldLabel htmlFor="cr-email">Email address, required</FieldLabel>
                 <Input id="cr-email" type="email" value={email} maxLength={255} autoFocus
-                  className="h-12 rounded-xl border-hairline-warm bg-background px-4 text-[16px]"
+                  className="h-12 rounded-none border-[1.5px] border-navy/40 bg-background px-4 text-[16px] focus-visible:border-brand"
                   placeholder="you@example.com"
                   onChange={(e) => setEmail(e.target.value)} />
                 {email.length > 0 && !emailOk(email.trim()) && (
@@ -429,7 +506,7 @@ const CareRequestDialog = ({
             )}
 
             {stepKey === "consent" && (
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline-warm bg-tint/40 p-4 text-[14px] leading-[1.5] text-body">
+              <label className="flex cursor-pointer items-start gap-3 border-2 border-navy bg-tint p-4 text-[15px] leading-[1.5] text-body shadow-offset-sm">
                 <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
                 <span>
                   I agree to be contacted about my request, and to Medic Connect holding these
@@ -440,10 +517,15 @@ const CareRequestDialog = ({
 
             {stepKey === "forWhom" && (
               <div className="grid gap-2">
-                <Choice label="For me" blurb="I am the one who needs care"
-                  selected={forWhom === "me"} onClick={() => pick(() => setForWhom("me"))} />
-                <Choice label="For someone else" blurb="I am arranging care for a loved one"
+                <Choice label="For me" blurb="I am the one who needs care" art={art.objHouseHeart}
+                  selected={forWhom === "me"} onClick={() => pick(() => {
+                    setForWhom("me");
+                    setKind((k) => (k?.line === ABROAD ? null : k));
+                  })} />
+                <Choice label="For someone else" blurb="I am arranging care for a loved one" art={art.familyDoorNurse}
                   selected={forWhom === "else"} onClick={() => pick(() => setForWhom("else"))} />
+                <Choice label="I'm a carer looking for work" blurb="Join our network of nurses and caregivers" art={art.carerManJacket}
+                  selected={false} onClick={() => { onOpenChange(false); navigate("/join"); }} />
               </div>
             )}
 
@@ -451,19 +533,19 @@ const CareRequestDialog = ({
               <div className="grid gap-2">
                 {(forWhom === "me"
                   ? [
-                      { w: "pregnant" as Who, label: "I'm pregnant, or a new mother" },
-                      { w: "adult" as Who, label: "I'm an adult" },
-                      { w: "older" as Who, label: "I'm an older person" },
+                      { w: "pregnant" as Who, label: "I'm pregnant, or a new mother", a: art.midwifePregnantBp },
+                      { w: "adult" as Who, label: "I'm an adult", a: art.carerManJacket },
+                      { w: "older" as Who, label: "I'm an older person", a: art.grandfatherWalkingStick },
                     ]
                   : [
-                      { w: "pregnant" as Who, label: "Someone pregnant, or a new mother" },
-                      { w: "baby" as Who, label: "A baby or newborn" },
-                      { w: "child" as Who, label: "A child" },
-                      { w: "adult" as Who, label: "An adult" },
-                      { w: "older" as Who, label: "An older person" },
+                      { w: "pregnant" as Who, label: "Someone pregnant, or a new mother", a: art.midwifePregnantBp },
+                      { w: "baby" as Who, label: "A baby or newborn", a: art.proPostnatal },
+                      { w: "child" as Who, label: "A child", a: art.charBoy },
+                      { w: "adult" as Who, label: "An adult", a: art.carerManJacket },
+                      { w: "older" as Who, label: "An older person", a: art.charGrandma },
                     ]
-                ).map(({ w, label }) => (
-                  <Choice key={w} label={label} selected={who === w}
+                ).map(({ w, label, a }) => (
+                  <Choice key={w} label={label} art={a} selected={who === w}
                     onClick={() => pick(() => {
                       setWho(w);
                       // The kind list is about to change; drop a kind that no longer fits.
@@ -476,7 +558,7 @@ const CareRequestDialog = ({
             {stepKey === "kind" && (
               <div className="grid gap-2">
                 {kinds.map((k) => (
-                  <Choice key={k.line} label={k.label} blurb={k.blurb}
+                  <Choice key={k.line} label={k.label} blurb={k.blurb} art={k.art} price={k.line === "general" ? undefined : k.price}
                     selected={kind?.line === k.line}
                     onClick={() => pick(() => { setKind(k); rememberInterest(k.line); trackServiceInterest(k.line, source); })} />
                 ))}
@@ -491,10 +573,10 @@ const CareRequestDialog = ({
                   ))}
                 </div>
                 {soon === "Within 48 hours" && (
-                  <div className="flex animate-in gap-3 rounded-xl border border-brand/30 bg-tint p-3.5 fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex animate-in gap-3 border-2 border-navy bg-card p-3.5 shadow-[4px_4px_0_hsl(var(--brand))] fade-in slide-in-from-top-2 duration-300">
                     <Siren className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
                     <div className="space-y-1 text-[13px] leading-[1.45] text-body">
-                      <p className="font-semibold text-ink">We treat this as urgent.</p>
+                      <p className="font-extrabold text-navy">We treat this as urgent.</p>
                       <p>
                         Send your request and a care adviser will come back to you the same working
                         day. For a medical emergency, please call your local emergency services first.

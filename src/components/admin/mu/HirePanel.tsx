@@ -5,7 +5,7 @@
 // the offer they accepted. Nothing is retyped, and the whole history stays on
 // the person rather than in a separate authoring screen.
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Ban, Briefcase, CalendarDays, FileSignature, FileStack, Loader2, MapPin, Plus, RotateCcw, Send,
@@ -34,7 +34,7 @@ import {
   MuEmpty, MuField, MuFieldGrid, MuNote, MuRecord, MuSection, MuStatus, MuTone,
 } from "@/components/admin/mu/MuShell";
 import WorkPanel from "@/components/admin/mu/WorkPanel";
-import { OFFER_STATUS_ADMIN_LABEL, type Offer } from "@/lib/offers";
+import { type Offer } from "@/lib/offers";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -112,10 +112,10 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
     setTemplateDialog(true);
   };
 
-  const runContractAction = async (fn: () => Promise<void>, done: string) => {
+  const runContractAction = async (fn: () => Promise<void | string>, done: string) => {
     try {
-      await fn();
-      toast({ title: done });
+      const said = await fn();
+      toast({ title: typeof said === "string" && said ? said : done });
       load();
       onChanged?.();
     } catch (err: any) {
@@ -134,11 +134,7 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
 
       <MuSection
         title={showBin ? "Contracts in the bin" : "Contracts"}
-        description={
-          showBin
-            ? "Drafts moved out of the way. Nothing here was destroyed, and any of it can be restored."
-            : "Draft it, issue it for signature, then it becomes active. Renewals and amendments stack here rather than replacing the last one."
-        }
+        description={showBin ? "Binned drafts can be restored." : undefined}
         padded={false}
         actions={
           <>
@@ -163,14 +159,7 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
           <MuEmpty
             icon={FileSignature}
             title={showBin ? "The bin is empty" : "No contract on file"}
-            description={
-              showBin
-                ? "Nothing has been binned for this candidate."
-                : acceptedOffers.length > 0
-                ? "They have accepted an offer, so a contract can be built straight from its terms."
-                : "Send an offer first, then build the contract from the terms they accept."
-
-            }
+            description={showBin || acceptedOffers.length > 0 ? undefined : "Send an offer first."}
           />
         ) : (
           <div className="divide-y divide-border/60">
@@ -228,13 +217,15 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
                       <FileSignature className="mr-2 h-4 w-4" />Open the document
                     </Button>
                     {c.status === "draft" && (
-                      <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued for candidate signature")}>
+                      <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued")}>
                         <Send className="mr-2 h-4 w-4" />Issue for signature
                       </Button>
                     )}
                     {c.status === "signed" && (
-                      <Button size="sm" onClick={() => runContractAction(() => setContractStatus(c.id, "active"), "Contract active")}>
-                        <ShieldCheck className="mr-2 h-4 w-4" />Mark active
+                      <Button size="sm" asChild>
+                        <Link to={`/admin/contracts/${c.id}`}>
+                          <ShieldCheck className="mr-2 h-4 w-4" />Countersign
+                        </Link>
                       </Button>
                     )}
                     {["draft", "issued"].includes(c.status) && (
@@ -269,20 +260,12 @@ const HirePanel = ({ personId, person, onChanged }: Props) => {
         )}
       </MuSection>
 
-      {acceptedOffers.length > 0 && (
-        <MuNote title="Offers they have accepted">
-          {acceptedOffers
-            .map((o) => `${o.title || "Untitled offer"} (${OFFER_STATUS_ADMIN_LABEL[o.status] || o.status})`)
-            .join(", ")}
-        </MuNote>
-      )}
-
       <Dialog open={templateDialog} onOpenChange={setTemplateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Start the contract</DialogTitle>
             <DialogDescription>
-              Pick the role template. The candidate and accepted offer details are still carried into the draft.
+              Candidate and offer details carry into the draft.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

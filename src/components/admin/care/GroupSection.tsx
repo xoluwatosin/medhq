@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cxInputClass } from "@/components/candidate/primitives";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
 import { DateField, DateTimeField, SelectField, Status } from "@/components/field";
 import { careErrorMessage } from "@/lib/care-errors";
+import { adminDb } from "@/lib/admin-utils";
+import { roleText } from "@/lib/care-records";
 import { assessorOptions, LOCATION_KINDS, locationLabel, type AssessorOption } from "@/lib/care-assessment";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -20,15 +23,6 @@ import {
   requestCoverage, requestReadiness, saveRequest, saveVisit, selectRequest, sendTopUp,
   serviceOptions, setRelationship, setServiceIntention,
 } from "@/lib/care-group";
-
-const ROLE_LABELS: Record<string, string> = {
-  enquirer: "Enquirer",
-  care_recipient: "Care recipient",
-  payer: "Payer",
-  representative: "Representative",
-  contact: "Contact",
-  other: "Other",
-};
 
 const STATE_LABELS: Record<string, string> = {
   proposed: "Proposed",
@@ -53,8 +47,14 @@ const GroupSection = ({
 
   // Adding a recipient
   const [addingRecipient, setAddingRecipient] = useState(false);
-  const [recipientName, setRecipientName] = useState("");
+  const [recipientFirst, setRecipientFirst] = useState("");
+  const [recipientLast, setRecipientLast] = useState("");
   const [recipientDob, setRecipientDob] = useState("");
+  const [recipientService, setRecipientService] = useState("");
+
+  // Removing a recipient added by mistake
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
+  const [removeReason, setRemoveReason] = useState("");
 
   // Recording a relationship
   const [addingRelationship, setAddingRelationship] = useState(false);
@@ -67,7 +67,7 @@ const GroupSection = ({
   const [editingService, setEditingService] = useState<string | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [serviceId, setServiceId] = useState("");
-  const [serviceState, setServiceState] = useState("proposed");
+  const [serviceState, setServiceState] = useState("confirmed");
   const [serviceRecipients, setServiceRecipients] = useState<string[]>([]);
   const [serviceReason, setServiceReason] = useState("");
 
@@ -99,7 +99,7 @@ const GroupSection = ({
       setReadiness(selected ? await requestReadiness(selected.id) : null);
       setCoverage(selected ? await requestCoverage(selected.id) : null);
     } catch (error) {
-      toast.error(careErrorMessage(error, "Could not load the family and care group"));
+      toast.error(careErrorMessage(error, "Could not load the family"));
     } finally {
       setLoading(false);
     }
@@ -135,14 +135,44 @@ const GroupSection = ({
     if (!request) return;
     setSaving(true);
     try {
-      await addRecipient({ requestId: request.id, fullName: recipientName, dateOfBirth: recipientDob || null });
+      const first = recipientFirst.trim();
+      const last = recipientLast.trim();
+      const created = await addRecipient({
+        requestId: request.id, fullName: [first, last].join(" "), dateOfBirth: recipientDob || null,
+      });
+      // The service goes on the care record; the request picks it up from there.
+      const { error } = await adminDb().from("clients")
+        .update({ first_name: first, last_name: last, service_id: recipientService })
+        .eq("id", created.client_id);
+      if (error) throw error;
       toast.success("Recipient added");
       setAddingRecipient(false);
-      setRecipientName("");
+      setRecipientFirst("");
+      setRecipientLast("");
       setRecipientDob("");
+      setRecipientService("");
       await refresh();
     } catch (error) {
       toast.error(careErrorMessage(error, "Could not add the recipient"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitRemoval = async () => {
+    if (!removing) return;
+    setSaving(true);
+    try {
+      const { error } = await adminDb().rpc("care_request_recipient_remove", {
+        _recipient_id: removing.id, _reason: removeReason.trim(),
+      });
+      if (error) throw error;
+      toast.success(`${removing.name} removed`);
+      setRemoving(null);
+      setRemoveReason("");
+      await refresh();
+    } catch (error) {
+      toast.error(careErrorMessage(error, "Could not remove the recipient"));
     } finally {
       setSaving(false);
     }
@@ -174,7 +204,7 @@ const GroupSection = ({
     const existing = request?.services.find((s) => s.id === id) ?? null;
     setEditingService(id);
     setServiceId(existing?.service_id ?? "");
-    setServiceState(existing?.state ?? "proposed");
+    setServiceState(existing?.state === "declined" ? "declined" : "confirmed");
     setServiceRecipients(existing ? existing.recipients.map((r) => r.request_recipient_id) : []);
     setServiceReason(existing?.reason ?? "");
     setServiceOpen(true);
@@ -263,11 +293,11 @@ const GroupSection = ({
     }
   };
 
-  if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading the family and care group</p>;
+  if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">Loading the family</p>;
   if (!overview) {
     return (
-      <MuSection title="Family and care group">
-        <MuEmpty icon={Users} title="No family and care group" />
+      <MuSection title="Family">
+        <MuEmpty art={art.objHandsHeart} title="No family recorded" description="The family appears here once a care request links people to this client." />
       </MuSection>
     );
   }
@@ -280,7 +310,7 @@ const GroupSection = ({
     <div className="flex flex-col gap-4">
       <MuSection
         title="Request"
-        description="The enquiry this family and care group came from."
+        description="The enquiry this family came from."
         actions={
           canEdit && request?.status === "draft" ? (
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={markOpen}>
@@ -291,16 +321,15 @@ const GroupSection = ({
       >
         <MuTable
           rows={[
-            { label: "Family and care group", value: overview.group.display_name },
+            { label: "Family", value: overview.group.display_name },
             { label: "Status", value: request ? request.status.replace(/_/g, " ") : null },
             { label: "Source", value: request?.source ?? null },
             { label: "Enquirer", value: personName(request?.enquirer_person_id ?? null) },
-            { label: "Address", value: overview.group.address_line },
           ]}
         />
       </MuSection>
 
-      <MuSection title="People" description="Everyone recorded on this family and care group.">
+      <MuSection title="People">
         {overview.members.length === 0 ? (
           <MuEmpty icon={Users} title="No people recorded" />
         ) : (
@@ -309,8 +338,7 @@ const GroupSection = ({
               <MuRow
                 key={m.id}
                 title={m.full_name}
-                state={[m.email, m.phone].filter(Boolean).join(" · ") || undefined}
-                status={<Status label={ROLE_LABELS[m.role] ?? m.role} tone="neutral" />}
+                state={[roleText(m.roles), m.email, m.phone].filter(Boolean).join(", ") || undefined}
               />
             ))}
           </div>
@@ -319,7 +347,7 @@ const GroupSection = ({
 
       <MuSection
         title="Recipients"
-        description="Each recipient keeps their own care record. Clinical information is never shared between them."
+        description="Each keeps their own care record. Clinical information is never shared."
         actions={
           canEdit && request ? (
             <Button type="button" variant="secondary" size="sm" className="h-9" onClick={() => setAddingRecipient(true)}>
@@ -339,8 +367,21 @@ const GroupSection = ({
                 state={r.address_line ?? undefined}
                 status={
                   r.person_id
-                    ? <Status label="Person attached" tone="good" />
+                    ? undefined
                     : <Status label="No person attached" tone="warning" />
+                }
+                action={
+                  canEdit && recipients.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9"
+                      onClick={() => { setRemoveReason(""); setRemoving({ id: r.id, name: r.full_name }); }}
+                    >
+                      Remove
+                    </Button>
+                  ) : undefined
                 }
               />
             ))}
@@ -350,7 +391,6 @@ const GroupSection = ({
 
       <MuSection
         title="Relationships"
-        description="Facts about people. A relationship never grants access to anything."
         actions={
           canEdit ? (
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => setAddingRelationship(true)}>
@@ -366,7 +406,7 @@ const GroupSection = ({
             {overview.relationships.map((rel) => (
               <MuRow
                 key={rel.id}
-                title={`${personName(rel.from_person_id) ?? "Someone"} — ${
+                title={`${personName(rel.from_person_id) ?? "Someone"}: ${
                   terms.find((t) => t.code === rel.relationship_code)?.label ?? rel.relationship_code
                 } ${personName(rel.to_person_id) ?? "someone"}`}
                 state={rel.other_label ?? undefined}
@@ -412,7 +452,7 @@ const GroupSection = ({
           .map((r) => (
             <div
               key={r.request_recipient_id}
-              className="mb-3 flex flex-col gap-3 rounded-2xl border border-tint-border bg-tint/45 p-4 shadow-[var(--shadow-surface)] sm:flex-row sm:items-center sm:justify-between"
+              className="mb-3 flex flex-col gap-3 border border-l-4 border-line border-l-brand bg-tint/45 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="text-sm font-semibold text-ink">
@@ -454,7 +494,7 @@ const GroupSection = ({
                   state={names || undefined}
                   status={
                     <>
-                      <Status label={STATE_LABELS[s.state] ?? s.state} tone={s.state === "confirmed" ? "good" : "neutral"} />
+                      {s.state === "declined" && <Status label={STATE_LABELS.declined} tone="neutral" />}
                       {conflict && <Status label="Clinical decision needed" tone="warning" />}
                     </>
                   }
@@ -492,7 +532,7 @@ const GroupSection = ({
 
       <MuSection
         title="Assessment visit"
-        description="One visit can cover several recipients. Each recipient still keeps their own assessment."
+        description="One visit can cover several recipients."
         actions={
           canEdit ? (
             <Button type="button" variant="secondary" size="sm" className="h-9" onClick={openVisit}>
@@ -523,7 +563,7 @@ const GroupSection = ({
       <MuSection title="Questionnaire" description="What still has to be true before the questions go out.">
         {outstanding.length === 0 ? (
           <p className="px-5 py-4 text-[14.5px] text-muted-foreground">
-            Everything needed is in place. Use the Pre-assessment link tab for this recipient.
+            Everything needed is in place.
           </p>
         ) : (
           <ul className="flex list-disc flex-col gap-1 px-9 py-4 text-[14.5px] text-muted-foreground">
@@ -539,13 +579,40 @@ const GroupSection = ({
         description="A new care record is created for this person."
         onSave={submitRecipient}
         saving={saving}
-        saveDisabled={!recipientName.trim()}
+        saveDisabled={!recipientFirst.trim() || !recipientLast.trim() || !recipientService}
       >
-        <CareFormRow label="Full name">
-          <input className={cxInputClass()} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
+        <CareFormRow label="First name">
+          <input className={cxInputClass()} value={recipientFirst} onChange={(e) => setRecipientFirst(e.target.value)} />
         </CareFormRow>
-        <CareFormRow label="Date of birth">
+        <CareFormRow label="Last name">
+          <input className={cxInputClass()} value={recipientLast} onChange={(e) => setRecipientLast(e.target.value)} />
+        </CareFormRow>
+        <p className="text-[13px] text-muted-foreground">For a baby not yet born, use Baby and the family name.</p>
+        <CareFormRow label="Date of birth, or expected date">
           <DateField value={recipientDob} onChange={setRecipientDob} />
+        </CareFormRow>
+        <CareFormRow label="Service">
+          <SelectField
+            value={recipientService}
+            onChange={setRecipientService}
+            options={services.map((sv) => ({ value: sv.id, label: sv.name }))}
+            placeholder="Choose a service"
+          />
+        </CareFormRow>
+      </CareSheet>
+
+      <CareSheet
+        open={Boolean(removing)}
+        onOpenChange={(next) => { if (!next) setRemoving(null); }}
+        title={removing ? `Remove ${removing.name}` : "Remove recipient"}
+        description="Their care record is removed from this request. A copy is kept, with your name and the reason."
+        onSave={submitRemoval}
+        saveLabel="Remove"
+        saving={saving}
+        saveDisabled={!removeReason.trim()}
+      >
+        <CareFormRow label="Why is this person being removed?">
+          <input className={cxInputClass()} value={removeReason} onChange={(e) => setRemoveReason(e.target.value)} />
         </CareFormRow>
       </CareSheet>
 
@@ -593,17 +660,6 @@ const GroupSection = ({
             onChange={setServiceId}
             options={services.map((s) => ({ value: s.id, label: s.name }))}
             placeholder="Choose a service"
-          />
-        </CareFormRow>
-        <CareFormRow label="State">
-          <SelectField
-            value={serviceState}
-            onChange={setServiceState}
-            options={[
-              { value: "proposed", label: "Proposed" },
-              { value: "confirmed", label: "Confirmed" },
-              { value: "declined", label: "Declined" },
-            ]}
           />
         </CareFormRow>
         <CareFormRow label="Recipients">

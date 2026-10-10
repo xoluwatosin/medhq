@@ -194,6 +194,7 @@ export function ageFromDateOfBirth(
   return { years: Math.max(years, 0), days };
 }
 
+export const BABY_BANDS = ["newborn", "infant", "expected"];
 export const CHILD_ONLY_SERVICES = ["nanny", "additional_needs"];
 export const MATERNAL_SERVICES = ["antenatal", "postnatal"];
 
@@ -205,20 +206,22 @@ export function derivedFacts(
   const self = String(responses.who_for ?? "") === "myself";
   const age = ageFromDateOfBirth(responses.date_of_birth, now);
   const approx = Number(responses.approx_age);
-  const years = age
+  // A baby not born yet is held with the expected date (mirrors care.ts).
+  const expected = String(responses.dob_known ?? "") === "expected" && !age;
+  const years = expected ? null : age
     ? age.years
     : String(responses.dob_known ?? "") === "no" && Number.isFinite(approx) && approx >= 0 && approx <= 120
       ? Math.floor(approx)
       : null;
-  const band = ageBandOf(years, age ? age.days : null);
+  const band = expected ? "expected" : ageBandOf(years, age ? age.days : null);
   const answered =
     String(responses.service_confirmed ?? "") || String(responses.service_requested ?? "");
   const service = answered || String(options.recordedService ?? "") || "";
 
   const group =
-    MATERNAL_SERVICES.includes(service) && band !== "newborn" && band !== "infant"
+    MATERNAL_SERVICES.includes(service) && !BABY_BANDS.includes(band)
       ? "maternal"
-      : band === "newborn" || band === "infant"
+      : BABY_BANDS.includes(band)
         ? "baby"
         : band === "child"
           ? "child"
@@ -232,9 +235,9 @@ export function derivedFacts(
   const settled = !!String(responses.service_confirmed ?? "");
   const conflict =
     (!settled && !!recorded && !!answered && recorded !== answered) ||
-    (self && (band === "newborn" || band === "infant" || band === "child")) ||
+    (self && (BABY_BANDS.includes(band) || band === "child")) ||
     (CHILD_ONLY_SERVICES.includes(service) && years !== null && years >= 18) ||
-    (MATERNAL_SERVICES.includes(service) && (band === "child" || band === "newborn" || band === "infant"));
+    (MATERNAL_SERVICES.includes(service) && (band === "child" || BABY_BANDS.includes(band)));
 
   return {
     derived_is_self: self ? "yes" : "no",
@@ -242,7 +245,7 @@ export function derivedFacts(
     derived_age_band: band,
     derived_recipient_group: group,
     derived_service: service || "unknown",
-    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" ? "yes" : "no",
+    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" || String(responses.intake_filler_parent ?? "") === "yes" ? "yes" : "no",
     derived_service_conflict: conflict ? "yes" : "no",
   };
 }
@@ -874,6 +877,44 @@ export function answersForRecipient(
   return out;
 }
 
+/** The person asking is this recipient's parent or legal guardian. */
+export const PARENT_RELATIONSHIPS = ["Mother", "Father", "Guardian"];
+
+/**
+ * What the intake already settles about one care recipient, in the terms the
+ * questions' conditions read. Mirrors intakeRoutingAnswers in
+ * src/lib/care-intake.ts: the page and the server must route identically, or
+ * the server would prune answers to questions the family was shown.
+ */
+export function intakeRoutingAnswers(
+  recipients: Record<string, unknown>[],
+  r: Record<string, unknown>,
+): Record<string, unknown> {
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const services = (x: Record<string, unknown>) => (Array.isArray(x.services) ? x.services.map(String) : []);
+  const newborn = recipients.find((x) => x.id !== r.id && services(x).includes("newborn") && str(x.dateOfBirth));
+  const relationship = str(r.relationship);
+  const isEnquirer = r.isEnquirer === true;
+  const others = recipients.filter((x) => x.id !== r.id);
+  const babies = others.filter((x) => services(x).includes("newborn")).map((x) => str(x.firstName).trim()).filter(Boolean);
+  const names = babies.length <= 1 ? (babies[0] ?? "") : `${babies.slice(0, -1).join(", ")} and ${babies[babies.length - 1]}`;
+  return {
+    who_for: isEnquirer ? "myself" : "someone_else",
+    recipient_first_name: str(r.firstName),
+    dob_known: r.expectedBirth === true ? "expected" : r.dobKnown ?? null,
+    date_of_birth: r.dateOfBirth ?? null,
+    approx_age: r.approxAge ?? null,
+    intake_relationship: relationship,
+    intake_filler_parent: !isEnquirer && PARENT_RELATIONSHIPS.includes(relationship) ? "yes" : "no",
+    intake_first_recipient: recipients[0]?.id === r.id ? "yes" : "no",
+    intake_sole_self: recipients.length === 1 && isEnquirer ? "yes" : "no",
+    intake_newborn_dob: newborn ? str(newborn.dateOfBirth) : "",
+    intake_newborn_names: names,
+    intake_parent_on_request:
+      services(r).includes("newborn") && others.some((x) => services(x).includes("postnatal_mother")) ? "yes" : "no",
+  };
+}
+
 /** Answers that belong to the request itself, excluding recipient namespaces. */
 export function requestAnswers(responses: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
@@ -943,6 +984,9 @@ export function validateIntake(value: unknown): string | null {
       if (!shortText(r[key])) return "We cannot read the care recipient details";
     }
     if (r.dobKnown !== undefined && r.dobKnown !== null && !["yes", "no"].includes(String(r.dobKnown))) {
+      return "We cannot read the care recipient details";
+    }
+    if (r.expectedBirth !== undefined && r.expectedBirth !== null && typeof r.expectedBirth !== "boolean") {
       return "We cannot read the care recipient details";
     }
     if (r.approxAge !== undefined && r.approxAge !== null) {

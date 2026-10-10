@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import AdminBand from "@/components/admin/mu/AdminBand";
 
 interface ConsolePageHeaderProps {
   title: string;
@@ -8,16 +9,11 @@ interface ConsolePageHeaderProps {
   action?: ReactNode;
 }
 
+/** The console screens open with the same navy band as every admin page. */
 const ConsolePageHeader = ({ title, description, id, action }: ConsolePageHeaderProps) => (
-  <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-    <div className="min-w-0">
-      <h1 id={id} className="text-2xl font-semibold tracking-tight text-navy">
-        {title}
-      </h1>
-      {description && <p className="mt-1 text-xs leading-[1.45] text-muted-copy">{description}</p>}
-    </div>
-    {action && <div className="shrink-0">{action}</div>}
-  </header>
+  <div className="mb-6">
+    <AdminBand id={id} title={title} description={description} actions={action} />
+  </div>
 );
 
 export default ConsolePageHeader;

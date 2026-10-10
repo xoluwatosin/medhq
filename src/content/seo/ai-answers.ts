@@ -62,7 +62,8 @@ export const AI_ANSWERS: AiAnswer[] = [
     fixed price for a defined item of care or a from price where the final figure depends on the detail of
     the arrangement: a basic nursing visit is {{fee:PUB-NURSING-BASIC}}, a skilled nursing visit starts at
     {{fee:PUB-NURSING-SKILLED}}, an 8-hour nursing shift is {{fee:PUB-NURSING-SHIFT-8H}}, and four hours of
-    companion care is {{fee:PUB-COMPANION-4H}}. Ongoing, live-in, overnight and package care is quoted
+    companion care is {{fee:PUB-COMPANION-4H}}. A live-in caregiver starts from {{fee:PUB-LIVE-IN}} a month.
+    Other ongoing, overnight and package care is quoted
     after assessment rather than published as a rate, because the price depends on the professionals
     required, the number of staff, the hours and shift pattern, complexity, location, duration, equipment
     and supplies, transport and any specialist input. Where third-party costs apply, such as pharmacy,

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Plus, Share2, Copy, ExternalLink, Inbox, Files, ArrowLeft, MoreHorizontal, Archive, ArchiveRestore, Trash2, RotateCcw } from "lucide-react";
+import { Loader2, Plus, Share2, Copy, ExternalLink, Inbox, Files, MoreHorizontal, Archive, ArchiveRestore, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
+import { MuEmpty, MuPage, MuPageHeader, MuStatus, type MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -29,11 +30,11 @@ interface Row {
   application_count?: number;
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  draft: "outline",
-  open: "default",
-  closed: "secondary",
-  archived: "destructive",
+const statusTone: Record<string, MuTone> = {
+  draft: "neutral",
+  open: "good",
+  closed: "neutral",
+  archived: "warning",
 };
 
 type View = "active" | "archived" | "bin";
@@ -109,10 +110,15 @@ const MatchUniverseOpportunities = () => {
     toast({ title: "Deleted for good" });
   };
 
+  const emptyTitle: Record<View, string> = {
+    active: "No live opportunities",
+    archived: "Nothing archived",
+    bin: "The bin is empty",
+  };
   const emptyCopy: Record<View, string> = {
-    active: "No live opportunities yet. Create your first to get a shareable link.",
-    archived: "Nothing archived. Archived opportunities keep their applications but drop off the public list.",
-    bin: "The bin is empty. Binned opportunities stay here until you delete them for good.",
+    active: "Create your first to get a shareable link.",
+    archived: "Archived opportunities keep their applications but drop off the public list.",
+    bin: "Binned opportunities stay here until you delete them for good.",
   };
 
   const createNew = async () => {
@@ -161,36 +167,39 @@ const MatchUniverseOpportunities = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
-          <Button variant="ghost" size="sm" asChild className="mb-2 -ml-3">
-            <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Match Universe</Link>
-          </Button>
-          <h1 className="text-2xl font-serif font-bold">Opportunities</h1>
-          <p className="text-sm text-muted-foreground mt-1">Post internal and partner opportunities. Public pages keep the Healthcare Matchmakers Network branding.</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" asChild><Link to="/admin/match-universe/opportunities/templates">Question templates</Link></Button>
-          <Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New opportunity</Button>
-        </div>
-      </div>
+    <MuPage>
+      <MuPageHeader
+        title="Opportunities"
+        description="Public postings and their share links."
+        actions={
+          <>
+            <Button onClick={createNew}><Plus className="mr-2 h-4 w-4" />New opportunity</Button>
+            <Button variant="outline" asChild><Link to="/admin/match-universe/opportunities/templates">Question templates</Link></Button>
+          </>
+        }
+      />
 
-      <Tabs value={view} onValueChange={(v) => setView(v as View)} className="mb-4">
-        <TabsList>
-          <TabsTrigger value="active">Live ({buckets.active.length})</TabsTrigger>
-          <TabsTrigger value="archived">Archive ({buckets.archived.length})</TabsTrigger>
-          <TabsTrigger value="bin">Bin ({buckets.bin.length})</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <ConsoleTabs
+        label="Opportunity view"
+        active={view}
+        onChange={(id) => setView(id as View)}
+        tabs={[
+          { id: "active", label: "Live", count: buckets.active.length },
+          { id: "archived", label: "Archive", count: buckets.archived.length },
+          { id: "bin", label: "Bin", count: buckets.bin.length },
+        ]}
+      />
 
       {visible.length === 0 ? (
-        <div className="border border-dashed border-border rounded-2xl p-12 text-center">
-          <Share2 className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-muted-foreground">{emptyCopy[view]}</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={view === "active" ? art.objClipboard : art.objFolderDocuments}
+            title={emptyTitle[view]}
+            description={emptyCopy[view]}
+          />
         </div>
       ) : (
-        <div className="hidden md:block border border-border rounded-2xl overflow-hidden bg-background">
+        <div className="hidden md:block border border-line overflow-hidden bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -209,11 +218,11 @@ const MatchUniverseOpportunities = () => {
                     <Link to={`/admin/match-universe/opportunities/${r.id}`} className="font-medium hover:underline">{r.title}</Link>
                     <p className="text-xs text-muted-foreground mt-0.5">/hm/{r.slug}</p>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{r.location || "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{r.location || "Not stated"}</TableCell>
                   <TableCell>
                     {r.deleted_at
-                      ? <Badge variant="destructive">In bin</Badge>
-                      : <Badge variant={statusVariant[r.status]}>{STATUS_LABELS[r.status]}</Badge>}
+                      ? <MuStatus tone="warning" label="In bin" />
+                      : <MuStatus tone={statusTone[r.status] ?? "neutral"} label={STATUS_LABELS[r.status] ?? r.status} />}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground capitalize">{r.link_target}</TableCell>
                   <TableCell className="text-center">
@@ -285,10 +294,10 @@ const MatchUniverseOpportunities = () => {
           rows={visible.map((r): ConsoleMobileRow => ({
             key: r.id,
             title: r.title,
-            state: [r.location || "No location", STATUS_LABELS[r.status] ?? r.status].filter(Boolean).join(" · "),
+            state: r.location || "No location",
             status: r.deleted_at
-              ? <Badge variant="destructive">In bin</Badge>
-              : <Badge variant={statusVariant[r.status]}>{STATUS_LABELS[r.status]}</Badge>,
+              ? <MuStatus tone="warning" label="In bin" />
+              : <MuStatus tone={statusTone[r.status] ?? "neutral"} label={STATUS_LABELS[r.status] ?? r.status} />,
             to: `/admin/match-universe/opportunities/${r.id}`,
           }))}
         />
@@ -308,7 +317,7 @@ const MatchUniverseOpportunities = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </MuPage>
   );
 };
 

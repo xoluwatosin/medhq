@@ -9,12 +9,12 @@ import { formatDistanceToNow } from "date-fns";
 import {
   AlertTriangle, Clock, FileText, FileWarning, Inbox, Loader2, RefreshCw, Repeat, ShieldCheck, Users,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
-import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface Health {
   people_total: number;
@@ -101,30 +101,24 @@ const MatchUniverseIntake = () => {
   return (
     <MuPage>
       <MuPageHeader
-        backTo="/admin/match-universe"
-        backLabel="Match Universe"
         title="Intake"
         description="Application sources and any records stalled during intake."
         actions={
-          <>
-            <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe"><Users className="mr-2 h-4 w-4" />Candidates</Link>
-            </Button>
-          </>
+          <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
         }
       />
 
       <MuStats
         columns={4}
         stats={[
-          { label: "People in the candidate pool", value: health?.people_total ?? 0, icon: Users, hint: `${health?.people_week ?? 0} joined this week` },
+          { label: "People in the candidate pool", value: health?.people_total ?? 0, icon: Users, hint: `${health?.people_week ?? 0} joined this week`, to: "/admin/match-universe?view=all" },
           {
             label: "Documents to review",
             value: health?.docs_pending ?? 0,
             icon: Inbox,
             tone: (health?.docs_pending ?? 0) > 0 ? "attention" : "default",
             hint: `${health?.docs_today ?? 0} arrived today`,
+            to: "/admin/match-universe/verification",
           },
           {
             label: "Awaiting candidate response",
@@ -139,36 +133,37 @@ const MatchUniverseIntake = () => {
             icon: AlertTriangle,
             tone: (health?.merges_open ?? 0) > 0 ? "attention" : "default",
             hint: `${health?.conflicts_open ?? 0} field conflicts open`,
+            to: "/admin/match-universe/merges",
           },
         ]}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <MuSection title="Document sources" description="All files on record, grouped by intake source.">
+        <MuSection title="Document sources">
           <ul className="space-y-2">
             {Object.entries(health?.docs_by_source ?? {}).map(([k, v]) => (
               <li key={k} className="flex items-center justify-between text-sm">
                 <span>{SOURCE_LABELS[k] ?? k}</span>
-                <Badge variant="secondary" className="tabular-nums">{v}</Badge>
+                <MuStatus className="tabular-nums" label={v} />
               </li>
             ))}
             {Object.keys(health?.docs_by_source ?? {}).length === 0 && (
-              <p className="text-sm text-muted-foreground">Nothing on file yet.</p>
+              <MuEmpty art={art.objFolderDocuments} title="Nothing on file yet" description="Files appear here as they arrive from each source." />
             )}
           </ul>
         </MuSection>
 
-        <MuSection title="CV processing status" description="Parse state across every profile.">
+        <MuSection title="CV processing status">
           <ul className="space-y-2">
             {Object.entries(health?.parse_status ?? {}).map(([k, v]) => (
               <li key={k} className="flex items-center justify-between text-sm">
                 <span className="capitalize">{k.replace(/_/g, " ")}</span>
-                <Badge variant={k === "failed" ? "destructive" : "secondary"} className="tabular-nums">{v}</Badge>
+                <MuStatus tone={k === "failed" ? "warning" : "neutral"} className="tabular-nums" label={v} />
               </li>
             ))}
-            <li className="flex items-center justify-between border-t border-border/60 pt-2 text-sm">
+            <li className="flex items-center justify-between border-t border-line-soft pt-2 text-sm">
               <span>No CV on file at all</span>
-              <Badge variant="outline" className="tabular-nums">{health?.no_cv ?? 0}</Badge>
+              <MuStatus className="tabular-nums" label={health?.no_cv ?? 0} />
             </li>
           </ul>
         </MuSection>
@@ -176,7 +171,7 @@ const MatchUniverseIntake = () => {
 
       <MuSection
         title="Portal access"
-        description="Candidates who cannot complete their profile until invited to the portal."
+        description="Candidates need an invite to finish their profile."
         actions={
           <>
             <Button size="sm" variant="outline" disabled={busy === "sweep"} onClick={sweep}>
@@ -191,11 +186,11 @@ const MatchUniverseIntake = () => {
         }
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-border/70 p-4">
+          <div className="border border-line p-4">
             <p className="text-2xl font-semibold tabular-nums">{health?.uninvited ?? 0}</p>
             <p className="text-xs text-muted-foreground">have an email but have never been invited</p>
           </div>
-          <div className="rounded-xl border border-border/70 p-4">
+          <div className="border border-line p-4">
             <p className="text-2xl font-semibold tabular-nums">{health?.invited_unclaimed ?? 0}</p>
             <p className="text-xs text-muted-foreground">were invited and have not signed in yet</p>
           </div>
@@ -204,13 +199,12 @@ const MatchUniverseIntake = () => {
 
       <MuSection
         title={`${backlog.length} profile${backlog.length === 1 ? "" : "s"} the parser has not finished with`}
-        description="Failures first. Profiles with no CV need chasing rather than reprocessing."
         padded={false}
       >
         {backlog.length === 0 && (
-          <MuEmpty icon={ShieldCheck} title="All CVs have been processed" />
+          <MuEmpty art={art.objDocumentMagnifier} title="All CVs have been processed" description="Nothing is waiting on the parser." />
         )}
-        <ul className="divide-y divide-border/60">
+        <ul className="divide-y divide-line-soft">
           {backlog.map((r) => (
             <li key={r.person_id} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -218,10 +212,8 @@ const MatchUniverseIntake = () => {
                   <Link to={`/admin/match-universe/${r.person_id}?tab=profile`} className="text-sm font-medium hover:underline underline-offset-4">
                     {r.full_name || "Unnamed person"}
                   </Link>
-                  <Badge variant={r.parse_status === "failed" ? "destructive" : "outline"} className="text-[10px]">
-                    {r.parse_status === "failed" ? "Read failed" : "Never read"}
-                  </Badge>
-                  {!r.has_cv && <Badge variant="secondary" className="text-[10px]">No CV on file</Badge>}
+                  <MuStatus tone={r.parse_status === "failed" ? "warning" : "neutral"} label={r.parse_status === "failed" ? "Read failed" : "Never read"} />
+                  {!r.has_cv && <MuStatus label="No CV on file" />}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">

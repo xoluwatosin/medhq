@@ -12,6 +12,70 @@ Decisions used:
 - **REFRAME** — overlaps an established page. Must be narrowed to a different question, or merged.
 - **HOLD** — no distinct search demand established yet, or the claim base is not settled.
 
+## Approved for indexing (2026-10-04)
+
+Checked against both the established pages and the governed SEO pages. Each answers a
+distinct question with no owner, and is listed in `INDEXABLE_EXPANSION_PATHS`:
+
+/wound-dressing-at-home, /blood-sample-collection-at-home, /iv-therapy-at-home,
+/injection-at-home, /stoma-care-at-home, /peg-feeding-support-at-home,
+/tracheostomy-care-at-home, /ventilator-care-at-home, /medication-administration-at-home,
+/diabetic-foot-care-at-home, /medical-escort-services, /home-care-vs-care-home,
+/nurse-vs-caregiver, /who-do-i-need-after-surgery, /transport-to-medical-appointments,
+/how-to-verify-a-nurse-in-nigeria, /how-to-verify-a-doctor-in-nigeria, /caregiver-cost-in-lagos
+
+## Overlaps with governed pages, not covered by the clusters below
+
+| Route | Competes with | Proposed |
+| --- | --- | --- |
+| /continence-care-at-home | /catheter-care-at-home | REFRAMED to dignity-led personal care, APPROVED |
+| /physiotherapy-after-stroke | /stroke-recovery-at-home, /physiotherapy-at-home | MERGED → /stroke-recovery-at-home |
+| /orthopaedic-recovery-at-home | /post-surgical-care, /physiotherapy-at-home | REFRAMED to hip replacement and fractures, APPROVED |
+| /ngo-health-programme-implementation, /community-health-outreach-services | /ngo-healthcare-staffing | MERGED |
+| /night-nurse-for-newborn | /newborn-care | REFRAMED to overnight only, APPROVED |
+| /live-in-nanny | /professional-nanny | REFRAMED to live-in only, APPROVED |
+| /live-in-caregiver | /caregiver, /24-hour-nursing-care | REFRAMED to live-in only, APPROVED |
+| /managed-postpartum-stay-in-nigeria | /omugwo, /professional-omugwo, /care-from-abroad | MERGED → /professional-omugwo |
+| /diabetes-care-at-home | /chronic-care-at-home | APPROVED, links up to the parent |
+| /cancer-care-at-home | /palliative-care-at-home | APPROVED, treatment-stage support, links to palliative |
+
+Already indexed pairs that compete with each other: /omugwo and /professional-omugwo,
+/nanny-childcare and /professional-nanny, /care-at-home and /caregiver.
+
+## Group four, approved (2026-10-04)
+
+Profession jobs and staffing pages, the maternity and discharge pages, /shadow-teacher,
+/stroke-recovery-at-home and /who-should-i-hire-for-a-newborn are approved; each links up to
+the page owning the wider topic. /medic-connect-talent-pool now redirects to /careers, which
+already owns joining the candidate pool.
+
+## Group three, decided (2026-10-04)
+
+Approved: /autism-support-at-home, /adhd-support-at-home, /speech-therapist-for-children
+(speech therapists confirmed as a service), /what-does-a-shadow-teacher-do,
+/care-after-hospital-discharge, /high-risk-pregnancy-support-at-home,
+/how-medic-connect-home-care-works, /healthcare-facility-management-support (managed
+departments confirmed as a service).
+
+Redirected: /school-companion → /shadow-teacher; /additional-needs-childcare,
+/early-intervention-support, /behaviour-support → /pediatric-care; /hospital-to-home-care →
+/care-after-hospital-discharge; /care-for-elderly-parents → /eldercare;
+/blood-sugar-monitoring-at-home → /diabetes-care-at-home; /blood-pressure-monitoring-at-home →
+/chronic-care-at-home; /speech-delay-support → /speech-therapist-for-children.
+
+Held: /occupational-therapy-for-children, until supplying occupational therapists is confirmed.
+
+## Competing live pages, resolved (2026-10-04)
+
+| Pair | Decision |
+| --- | --- |
+| /omugwo and /professional-omugwo | MERGED → /omugwo, the head term; its "managed and documented" line moved across |
+| /nanny-childcare and /professional-nanny | MERGED → /nanny-childcare, whose title already targets "professional nanny" |
+| /care-at-home and /caregiver | KEPT both: general home care vs hiring a caregiver; /care-at-home now links to /caregiver |
+
+Every merged route is also a permanent (301) redirect in `vercel.json`, so search engines
+transfer the old page's standing without running the app. A test keeps the two lists equal.
+
 ## Merged now
 
 | Route | Owner | Reason |

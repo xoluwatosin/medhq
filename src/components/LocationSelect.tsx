@@ -82,11 +82,15 @@ export const LgaSelect = ({
     [current, list],
   );
 
+  // No state yet: the same control, waiting, with the reason as its
+  // placeholder rather than a sentence dropped into the layout.
   if (!state) {
     return (
-      <p className="rounded-xl border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
-        Choose a state first, then the local government becomes selectable.
-      </p>
+      <Select disabled>
+        <SelectTrigger id={id} className={className} title="Choose a state first">
+          <SelectValue placeholder="Local government (pick a state)" />
+        </SelectTrigger>
+      </Select>
     );
   }
 

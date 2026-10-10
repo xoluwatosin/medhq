@@ -1,12 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
+import { shortBlogUrl } from "@/lib/short-link";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { TEMPLATE_MAP, PolaroidFrame, CleanEditorial } from "@/components/blog-templates";
+import { TEMPLATE_MAP, CleanEditorial } from "@/components/blog-templates";
 import SEO from "@/components/SEO";
+import CareRequestDialog from "@/components/CareRequestDialog";
+import { Chevrons, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
+import { art } from "@/components/mc/art";
+import PostCard, { firstParagraph, postDate, readMinutes, shareDescription } from "@/components/blog/PostCard";
+import { cn } from "@/lib/utils";
 
 interface BlogPostData {
   id: string;
@@ -33,6 +37,7 @@ interface RelatedPost {
   featured_image_url: string | null;
   published_at: string;
   category: string;
+  author: string;
 }
 
 const BlogPost = () => {
@@ -62,7 +67,7 @@ const BlogPost = () => {
           // Fetch related posts
           supabase
             .from("blog_posts")
-            .select("title, slug, featured_image_url, published_at, category")
+            .select("title, slug, featured_image_url, published_at, category, author")
             .eq("status", "published")
             .lte("published_at", new Date().toISOString())
             .eq("category", data.category)
@@ -89,44 +94,65 @@ const BlogPost = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  const shell = (children: React.ReactNode) => (
+    <div className="min-h-dvh bg-background">
+      <MedicHeader />
+      <section className="relative -mt-[80px] overflow-hidden bg-navy pb-16 pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
+        <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px]" />
+        <div className="relative mx-auto max-w-[860px] px-[22px] sm:px-[50px]">{children}</div>
+      </section>
+      <Footer />
+    </div>
+  );
+
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-background">
-        <MedicHeader />
-        <div className="flex justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        <Footer />
-      </div>
+    return shell(
+      <div aria-busy="true" aria-label="Loading the story" className="space-y-4">
+        <div className="h-5 w-28 animate-pulse bg-white/10" />
+        <div className="h-12 w-full animate-pulse bg-white/10" />
+        <div className="h-12 w-2/3 animate-pulse bg-white/10" />
+      </div>,
     );
   }
 
   if (!post) {
-    return (
-      <div className="min-h-dvh bg-background">
-        <MedicHeader />
-        <div className="text-center py-32">
-          <h1 className="text-2xl font-semibold mb-4">Post not found</h1>
-          <Button asChild><Link to="/blog"><ArrowLeft className="mr-2 h-4 w-4" />Back to Blog</Link></Button>
-        </div>
-        <Footer />
-      </div>
+    return shell(
+      <div className="flex flex-col items-start gap-5">
+        <p className="eyebrow !text-brand-soft">The Bridge</p>
+        <h1 className="text-[34px] leading-[1.05] tracking-[-0.05em] !text-white sm:text-[48px]">We could not find that story.</h1>
+        <Link to="/blog" className="inline-flex min-h-[48px] items-center rounded-control bg-white px-6 text-[16px] font-extrabold text-navy shadow-offset-blue">
+          See all stories
+        </Link>
+      </div>,
     );
   }
 
   const BodyTemplate = TEMPLATE_MAP[post.body_template || "clean-editorial"] || CleanEditorial;
+  const lede = firstParagraph(post.excerpt);
+  const date = postDate(post.published_at, "long");
 
   return (
     <div className="min-h-dvh bg-background">
       <SEO
         title={`${post.title} | The Bridge`}
-        description={post.excerpt || `${post.title} — from The Bridge.`}
+        description={lede ? shareDescription(lede) : `${post.title}, from The Bridge.`}
         path={`/blog/${post.slug}`}
         image={post.featured_image_url || undefined}
+        imageAlt={post.featured_image_url ? post.title : undefined}
         type="article"
+        publishedTime={post.published_at}
+        // Search results show this trail under the title; without it Google
+        // falls back to the hyphenated address.
+        breadcrumbs={[
+          { name: "Home", path: "/" },
+          { name: "The Bridge", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ]}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Article",
           "headline": post.title,
-          "description": post.excerpt,
+          "description": lede ? shareDescription(lede) : undefined,
           "image": post.featured_image_url || undefined,
           "author": { "@type": "Person", "name": post.author },
           "datePublished": post.published_at,
@@ -139,122 +165,122 @@ const BlogPost = () => {
           "articleSection": post.category
         }}
       />
-      {/* Reading progress bar */}
-      <div
-        className="fixed top-0 left-0 h-[3px] bg-primary z-50 transition-[width] duration-150"
-        style={{ width: `${scrollProgress}%` }}
-      />
+      {/* Reading progress */}
+      <div className="fixed left-0 top-0 z-50 h-[4px] bg-brand transition-[width] duration-150" style={{ width: `${scrollProgress}%` }} />
 
       <MedicHeader />
 
-      {/* Hero — Substack-style: image on top, title + meta below, generous whitespace */}
-      {post.hero_template === "polaroid" ? (
-        <section className="bg-accent py-10 sm:py-16">
-          <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 text-accent-foreground">
-              <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors mb-4">
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Back to Blog
-              </Link>
-              <span className="block text-xs font-medium uppercase tracking-[0.15em] opacity-70">{post.category}</span>
-              <h1 className="text-[2rem] sm:text-4xl lg:text-5xl font-semibold mt-3 mb-4 leading-[1.15] tracking-tight">{post.title}</h1>
-              <p className="text-base sm:text-lg opacity-80 leading-relaxed">{post.excerpt}</p>
-              <div className="mt-5 flex items-center gap-3">
-                <span className="text-sm font-medium">By {post.author}</span>
-                <span className="text-[11px] uppercase tracking-[0.18em] opacity-60 border-l border-current/30 pl-3">
-                  {new Date(post.published_at).toLocaleDateString("en-GB", { month: "long", day: "numeric", year: "numeric" })}
-                </span>
-              </div>
-            </div>
-            {post.featured_image_url && (
-              <div className="flex-shrink-0 w-64 sm:w-72 md:w-[35%]">
-                <PolaroidFrame
-                  src={post.featured_image_url}
-                  caption={post.polaroid_caption || undefined}
-                  rotation={-3}
-                  variant="tape"
-                  className="w-full"
-                />
-              </div>
+      {/* The headline on navy; the photo hangs from the bottom edge like a pinned print. */}
+      <section className={cn("relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]", post.featured_image_url ? "pb-[150px] sm:pb-[220px]" : "pb-16")}>
+        <Watermark glyph="o" size={620} opacity={0.12} className="-right-[200px] -top-[120px] hidden lg:block" />
+        <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
+        <div className="relative mx-auto max-w-[860px] px-[22px] sm:px-[50px]">
+          <Link to="/blog" className="text-[14px] font-extrabold text-brand-soft hover:text-white">
+            <span aria-hidden="true">←</span> The Bridge
+          </Link>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {post.category && (
+              <TapeLabel tone="blue" tilt={-2} className="uppercase">
+                {post.category}
+              </TapeLabel>
             )}
+            <TapeLabel tone="tint" tilt={2}>
+              {readMinutes(post.content)} MIN READ
+            </TapeLabel>
           </div>
-        </section>
-      ) : (
-        <section className="relative h-[420px] sm:h-[60vh] flex items-end overflow-hidden">
-          {post.featured_image_url && (
-            <img fetchPriority="high" src={post.featured_image_url} alt={post.title} className="absolute inset-0 w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/30 to-transparent" />
-          <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 pb-12 w-full">
-            <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm text-background hover:text-background/80 transition-colors mb-3 bg-primary/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Blog
-            </Link>
-            <span className="block text-sm font-medium uppercase tracking-wider text-background/70">{post.category}</span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-background mt-2 mb-3">{post.title}</h1>
-            <div className="mt-2 flex items-center gap-3 text-background/85">
-              <span className="text-sm font-medium">By {post.author}</span>
-              <span className="text-[11px] uppercase tracking-[0.18em] opacity-80 border-l border-background/40 pl-3">
-                {new Date(post.published_at).toLocaleDateString("en-GB", { month: "long", day: "numeric", year: "numeric" })}
-              </span>
-            </div>
-          </div>
-        </section>
+          <h1 className="mt-4 text-[32px] leading-[1.04] tracking-[-0.05em] !text-white sm:text-[48px] lg:text-[56px]">{post.title}</h1>
+          {lede && <p className="mt-5 line-clamp-4 max-w-[60ch] text-[16px] leading-[1.6] text-body-navy sm:text-[19px]">{lede}</p>}
+          <p className="mt-6 text-[14px] font-bold text-white">
+            By {post.author}
+            <span className="mt-1 block font-semibold text-body-navy sm:ml-3 sm:mt-0 sm:inline">{date}</span>
+          </p>
+        </div>
+      </section>
 
+      {post.featured_image_url && (
+        <div className="relative mx-auto -mt-[120px] max-w-[860px] px-[22px] sm:-mt-[190px] sm:px-[50px]">
+          <figure className={cn("relative border-2 border-navy bg-white p-3 pb-12 shadow-offset sm:p-4 sm:pb-14", post.hero_template === "polaroid" ? "rotate-[-2deg]" : "rotate-[-1deg]")}>
+            <Tape width={130} tilt={-3} className="-top-3 left-1/2 z-10 -ml-[65px]" />
+            <Tape width={70} tilt={40} className="-right-5 top-3 hidden sm:block" />
+            <img fetchPriority="high" src={post.featured_image_url} alt="" className="aspect-[16/9] w-full object-cover" />
+            <figcaption className="absolute bottom-3 left-4 right-4 truncate text-[14px] font-extrabold text-navy sm:bottom-4 sm:left-5 sm:text-[15px]">
+              {post.polaroid_caption || `${post.category || "The Bridge"}, ${date}`}
+            </figcaption>
+          </figure>
+        </div>
       )}
 
-      {/* Body */}
-      <BodyTemplate content={post.content} bodyImages={post.body_images} bodyCaptions={post.body_captions} dropCapEnabled={post.drop_cap_enabled !== false} />
+      <div className="pt-10 sm:pt-14">
+        <BodyTemplate content={post.content} bodyImages={post.body_images} bodyCaptions={post.body_captions} dropCapEnabled={post.drop_cap_enabled !== false} />
+      </div>
 
-      {/* Thanks for reading sign-off */}
-      <section className="border-t border-border/60 py-12 mt-8">
-        <div className="max-w-[680px] mx-auto px-5 sm:px-6 text-center">
-          <p className="text-2xl sm:text-3xl italic text-primary mb-3">Thanks for reading.</p>
-          <p className="text-sm text-muted-foreground">Written by {post.author}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
-            Published {new Date(post.published_at).toLocaleDateString("en-GB", { month: "long", day: "numeric", year: "numeric" })}
-          </p>
-          <div className="mt-6">
-            <Button asChild variant="outline" className="rounded-full">
-              <Link to="/blog"><ArrowLeft className="mr-2 h-4 w-4" />More Articles</Link>
-            </Button>
+      {/* Sign-off: who wrote it, then a way to get help. */}
+      <section className="mx-auto max-w-[680px] px-[22px]">
+        <div className="relative flex flex-wrap items-end justify-between gap-6 border-t-4 border-navy pt-8">
+          <div>
+            <p className="text-[34px] font-extrabold leading-none tracking-[-0.05em] text-navy sm:text-[40px]">Thanks for reading.</p>
+            <p className="mt-4 text-[15px] font-bold text-body">Written by</p>
+            <p className="text-[20px] font-extrabold tracking-[-0.03em] text-navy">{post.author}</p>
+            <p className="mt-1 text-[14px] text-body">Published {date}</p>
+          </div>
+          <Stamp title="THE END" sub="THE BRIDGE" tone="blue" tilt={-8} />
+        </div>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(`${post.title}\n${shortBlogUrl(post.slug)}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 inline-flex min-h-[48px] items-center gap-3 border-2 border-navy bg-white px-5 text-[16px] font-extrabold text-navy shadow-offset-sm hover:bg-tint"
+        >
+          Share on WhatsApp
+          <Chevrons size={13} colors={["hsl(var(--brand))", "hsl(var(--brand))", "hsl(var(--navy))"]} />
+        </a>
+        <div className="relative mt-10 overflow-hidden bg-navy p-6 pr-[120px] shadow-offset-blue sm:p-8 sm:pr-[180px]">
+          <img src={art.charNurse} alt="" className="pointer-events-none absolute -bottom-2 right-2 h-[150px] object-contain sm:right-6 sm:h-[190px]" />
+          <p className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-white sm:text-[28px]">Need care at home?</p>
+          <p className="mt-2 text-[15px] leading-[1.6] text-body-navy">Tell us what is needed and we will arrange the assessment.</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <CareRequestDialog
+              source={`blog:${post.slug}`}
+              trigger={
+                <button className="inline-flex min-h-[48px] items-center justify-center rounded-control bg-white px-6 text-[16px] font-extrabold text-navy">
+                  Request care
+                </button>
+              }
+            />
+            <a
+              href="https://wa.me/2348126988237"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-control border-2 border-white/40 px-6 text-[16px] font-extrabold text-white hover:bg-white/10"
+            >
+              Chat on WhatsApp
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Related Posts */}
       {relatedPosts.length > 0 && (
-        <section className="max-w-[680px] mx-auto px-5 sm:px-6 pt-8 pb-4">
-          <div className="pt-10">
-            <h3 className="text-xl font-semibold mb-6">More from The Bridge</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {relatedPosts.map((rp) => (
-                <Link key={rp.slug} to={`/blog/${rp.slug}`} className="group">
-                  {rp.featured_image_url && (
-                    <img loading="lazy" decoding="async"
-                      src={rp.featured_image_url}
-                      alt={rp.title}
-                      className="w-full h-36 object-cover kit-curve-sm mb-3 group-hover:opacity-90 transition-opacity"
-                    />
-                  )}
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{rp.category}</p>
-                  <h4 className="font-semibold text-sm mt-1 group-hover:text-primary transition-colors leading-snug">
-                    {rp.title}
-                  </h4>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(rp.published_at).toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" })}
-                  </p>
-                </Link>
-              ))}
-            </div>
-            <div className="text-center mt-8">
-              <Button asChild variant="outline" className="rounded-full">
-                <Link to="/blog"><ArrowLeft className="mr-2 h-4 w-4" />All Articles</Link>
-              </Button>
-            </div>
-          </div>
+        <section aria-labelledby="related-heading" className="mx-auto mt-20 max-w-[1440px] px-[22px] sm:px-[50px]">
+          <hr className="mb-6 border-t-4 border-navy" />
+          <p className="eyebrow">Keep reading</p>
+          <h2 id="related-heading" className="mt-3 text-[30px] leading-none tracking-[-0.05em] sm:text-[40px]">
+            More from The Bridge
+          </h2>
+          <ul className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedPosts.map((rp, i) => (
+              <li key={rp.slug}>
+                <PostCard post={rp} index={i} />
+              </li>
+            ))}
+          </ul>
         </section>
       )}
+
+      <div className="mx-auto max-w-[1440px] px-[22px] pb-16 pt-12 sm:px-[50px]">
+        <Link to="/blog" className="text-[16px] font-extrabold text-brand hover:text-navy">
+          <span aria-hidden="true">←</span> All stories
+        </Link>
+      </div>
 
       <Footer />
     </div>

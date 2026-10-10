@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { adminDb } from "@/lib/admin-utils";
 import { CLIENT_GROUPS } from "@/lib/care";
 import { careErrorMessage } from "@/lib/care-errors";
@@ -52,11 +52,14 @@ export const PromoteEnquiries = ({
   onOpenChange,
   services,
   onDone,
+  onlyId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   services: ServiceRow[];
   onDone: () => void;
+  /** Route just this enquiry, opened from the enquiry itself. */
+  onlyId?: string;
 }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,11 +69,13 @@ export const PromoteEnquiries = ({
 
   const read = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await adminDb()
+    let query = adminDb()
       .from("contact_submissions")
       .select("id, name, email, phone, service_line, city, created_at")
       .is("care_client_id", null)
-      .eq("archived", false)
+      .eq("archived", false);
+    if (onlyId) query = query.eq("id", onlyId);
+    const { data, error } = await query
       .order("created_at", { ascending: false })
       .limit(200);
     setLoading(false);
@@ -82,14 +87,20 @@ export const PromoteEnquiries = ({
       Object.fromEntries(rows.map((e) => {
         const match = services.find((s) => s.slug === e.service_line);
         return [e.id, {
-          picked: false,
+          picked: e.id === onlyId,
           serviceId: match?.id ?? "",
           clientGroup: match?.client_group ?? match?.client_groups?.[0] ?? "adult",
           attachTo: "",
         }];
       })),
     );
-  }, [services]);
+    // Opened from one enquiry: it is already chosen, so check its matches now.
+    if (onlyId && rows.some((e) => e.id === onlyId)) {
+      enquiryMatches(onlyId)
+        .then((found) => setMatches((prev) => ({ ...prev, [onlyId]: found })))
+        .catch(() => { /* matches are a signal; routing still works without them */ });
+    }
+  }, [services, onlyId]);
 
   useEffect(() => { if (open) void read(); }, [open, read]);
 
@@ -147,16 +158,18 @@ export const PromoteEnquiries = ({
         <DialogHeader>
           <DialogTitle>Care requests waiting to be routed</DialogTitle>
           <DialogDescription>
-            These care requests have no care record. Nothing is created until you choose them and confirm.
+            Nothing is created until you choose and confirm.
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Loading care requests</p>
         ) : enquiries.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No care requests are waiting for a care record.
-          </p>
+          <MuEmpty
+            art={art.objCarePlan}
+            title="Nothing to route"
+            description="No care requests are waiting for a care record."
+          />
         ) : (
           <ul className="flex flex-col divide-y divide-line-soft">
             {enquiries.map((e) => {
@@ -183,37 +196,41 @@ export const PromoteEnquiries = ({
                     </span>
                   </label>
                   {choice.picked && (
-                    <div className="grid gap-3 pl-7">
+                    <div className="ml-7 grid gap-3 border-2 border-navy bg-tint/40 p-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Route as</p>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <Select value={choice.serviceId} onValueChange={(v) => update(e.id, { serviceId: v })}>
-                          <SelectTrigger className="h-11"><SelectValue placeholder="Choose a service" /></SelectTrigger>
-                          <SelectContent>
-                            {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <Select value={choice.clientGroup} onValueChange={(v) => update(e.id, { clientGroup: v })}>
-                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {CLIENT_GROUPS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <SelectField
+                          label="Service"
+                          hideLabel
+                          value={choice.serviceId}
+                          placeholder="Choose a service"
+                          onChange={(v) => { if (v) update(e.id, { serviceId: v }); }}
+                          options={services.map((s) => ({ value: s.id, label: s.name }))}
+                        />
+                        <SelectField
+                          label="Client group"
+                          hideLabel
+                          value={choice.clientGroup}
+                          onChange={(v) => { if (v) update(e.id, { clientGroup: v }); }}
+                          options={CLIENT_GROUPS.map((g) => ({ value: g.value, label: g.label }))}
+                        />
                       </div>
                       {found.length > 0 && (
                         <div className="grid gap-2">
                           <span className="text-[13px] font-semibold text-foreground">
                             Matching people already on record
                           </span>
-                          <Select value={choice.attachTo || "new"} onValueChange={(v) => update(e.id, { attachTo: v === "new" ? "" : v })}>
-                            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new">Create a new household</SelectItem>
-                              {found.map((m) => (
-                                <SelectItem key={m.person_id} value={m.person_id}>
-                                  {`${m.full_name} · matched on ${m.matched_on === "email" ? "email" : "phone"}${m.group_name ? ` · ${m.group_name}` : ""}`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <SelectField
+                            label="Matching people already on record"
+                            hideLabel
+                            value={choice.attachTo}
+                            placeholder="Create a new household"
+                            onChange={(v) => update(e.id, { attachTo: v })}
+                            options={found.map((m) => ({
+                              value: m.person_id,
+                              label: `${m.full_name}, matched on ${m.matched_on === "email" ? "email" : "phone"}${m.group_name ? `, ${m.group_name}` : ""}`,
+                            }))}
+                          />
                         </div>
                       )}
                     </div>

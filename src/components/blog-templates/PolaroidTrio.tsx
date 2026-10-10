@@ -13,7 +13,7 @@ const PolaroidTrio = ({ content, bodyImages, bodyCaptions = [], dropCapEnabled =
   const activeImages = bodyImages.filter(url => url).slice(0, 3);
 
   return (
-    <article className="max-w-[820px] mx-auto px-4 pt-0 pb-12 text-lg leading-relaxed">
+    <article className="max-w-[820px] mx-auto px-[22px] pt-0 pb-12 text-[17px] leading-[1.75] text-ink sm:text-[18.5px]">
       {sections.slice(0, midpoint).map((s, i) => renderSection(s, i, i === 0, dropCapEnabled))}
       {activeImages.length > 0 && (
         <div className="flex flex-wrap justify-center gap-6 my-10">

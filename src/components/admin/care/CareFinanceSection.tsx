@@ -3,12 +3,13 @@ import { toast } from "sonner";
 import { Plus, Send, Check, ExternalLink, RefreshCw, Ban, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CareField as CareFormRow, CareSheet } from "@/components/admin/care/CareSurface";
-import { MuEmpty, MuRow, MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuRow, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { cxInputClass } from "@/components/candidate/primitives";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
-import { naira } from "@/lib/invoice-totals";
+import { INVOICE_STATUS_LABELS, naira } from "@/lib/invoice-totals";
 import { formatDate } from "@/lib/format";
 
 type Contact = { id: string; full_name: string; email: string | null };
@@ -16,6 +17,11 @@ type Quote = { id: string; quote_number: string; status: string; current_version
 type Version = { id: string; quote_id: string; version: number; total: number; valid_until: string | null };
 type Invoice = { id: string; invoice_number: string; status: string; total: number; hosted_link: string | null; quote_version_id: string | null };
 type Adjustment = { id: string; invoice_id: string; kind: string; reference: string; amount: number; reason: string; status: string; created_at: string };
+
+const sentenceCase = (value: string) => {
+  const text = value.replace(/_/g, " ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 const blankLine = () => ({ description: "", quantity: "1", unit_price: "" });
 
@@ -105,20 +111,20 @@ export default function CareFinanceSection({ clientId, contacts }: { clientId: s
   };
 
   return <div className="flex flex-col gap-4">
-    <MuSection title="Quotes" description="Select the recorded contact responsible for each quote." actions={<Button type="button" variant="outline" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Create quote</Button>} padded={false}>
-      {!quotes.length ? <div className="p-5"><MuEmpty title="No quotes" /></div> : <div className="divide-y divide-line-soft">{quotes.map((quote) => {
+    <MuSection title="Quotes" actions={<Button type="button" variant="outline" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Create quote</Button>} padded={false}>
+      {!quotes.length ? <MuEmpty art={art.objSignedContract} title="No quotes yet" description="Create a quote for a recorded contact with an email address." /> : <div className="divide-y divide-line-soft">{quotes.map((quote) => {
         const version = versionFor(quote); const contact = contacts.find((row) => row.id === quote.recipient_contact_id);
-        return <MuRow key={quote.id} title={`${quote.quote_number} · ${version ? naira(version.total) : ""}`} state={`${contact?.full_name ?? "Contact"}${version?.valid_until ? ` · Valid until ${formatDate(version.valid_until)}` : ""}`} status={<span className="text-xs font-bold uppercase text-muted-foreground">{quote.status}</span>} action={<div className="flex gap-2">{quote.status === "draft" && <Button size="sm" onClick={() => void act(quote, "issue")} disabled={busy}><Send className="mr-1.5 h-4 w-4" />Issue</Button>}{quote.status === "issued" && <Button size="sm" onClick={() => void act(quote, "accept")} disabled={busy}><Check className="mr-1.5 h-4 w-4" />Record acceptance</Button>}</div>} />;
+        return <MuRow key={quote.id} title={version ? `${quote.quote_number}, ${naira(version.total)}` : quote.quote_number} state={`${contact?.full_name ?? "Contact"}${version?.valid_until ? `, valid until ${formatDate(version.valid_until)}` : ""}`} status={<MuStatus label={sentenceCase(quote.status)} />} action={<div className="flex gap-2">{quote.status === "draft" && <Button size="sm" onClick={() => void act(quote, "issue")} disabled={busy}><Send className="mr-1.5 h-4 w-4" />Issue</Button>}{quote.status === "issued" && <Button size="sm" onClick={() => void act(quote, "accept")} disabled={busy}><Check className="mr-1.5 h-4 w-4" />Record acceptance</Button>}</div>} />;
       })}</div>}
     </MuSection>
     <MuSection title="Invoices" padded={false}>
-      {!invoices.length ? <div className="p-5"><MuEmpty title="No invoices" /></div> : <div className="divide-y divide-line-soft">{invoices.map((invoice) => <MuRow key={invoice.id} title={`${invoice.invoice_number} · ${naira(invoice.total)}`} state={invoice.status} action={<div className="flex flex-wrap gap-2">{invoice.status === "draft" && <Button size="sm" onClick={() => void issueInvoice(invoice)} disabled={busy}>Issue invoice</Button>}{invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && <Button size="sm" variant="outline" onClick={() => void invoiceAction(invoice, "verify")} disabled={busy}><RefreshCw className="mr-1.5 h-4 w-4" />Verify</Button>}{invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && <Button size="sm" variant="outline" onClick={() => void invoiceAction(invoice, "archive")} disabled={busy}><Ban className="mr-1.5 h-4 w-4" />Cancel</Button>}{invoice.hosted_link && <Button size="sm" variant="outline" asChild><a href={invoice.hosted_link} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-4 w-4" />Payment page</a></Button>}<Button size="sm" variant="outline" onClick={() => setAdjusting(invoice)}><ReceiptText className="mr-1.5 h-4 w-4" />Adjustment</Button></div>} />)}</div>}
+      {!invoices.length ? <MuEmpty art={art.objPriceTagNaira} title="No invoices yet" description="Invoices raised for this client appear here." /> : <div className="divide-y divide-line-soft">{invoices.map((invoice) => <MuRow key={invoice.id} title={`${invoice.invoice_number}, ${naira(invoice.total)}`} status={<MuStatus label={INVOICE_STATUS_LABELS[invoice.status] ?? sentenceCase(invoice.status)} />} action={<div className="flex flex-wrap gap-2">{invoice.status === "draft" && <Button size="sm" onClick={() => void issueInvoice(invoice)} disabled={busy}>Issue invoice</Button>}{invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && <Button size="sm" variant="outline" onClick={() => void invoiceAction(invoice, "verify")} disabled={busy}><RefreshCw className="mr-1.5 h-4 w-4" />Verify</Button>}{invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && <Button size="sm" variant="outline" onClick={() => void invoiceAction(invoice, "archive")} disabled={busy}><Ban className="mr-1.5 h-4 w-4" />Cancel</Button>}{invoice.hosted_link && <Button size="sm" variant="outline" asChild><a href={invoice.hosted_link} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-4 w-4" />Payment page</a></Button>}<Button size="sm" variant="outline" onClick={() => setAdjusting(invoice)}><ReceiptText className="mr-1.5 h-4 w-4" />Adjustment</Button></div>} />)}</div>}
     </MuSection>
     <MuSection title="Adjustments" padded={false}>
-      {!adjustments.length ? <div className="p-5"><MuEmpty title="No adjustments" /></div> : <div className="divide-y divide-line-soft">{adjustments.map((adjustment) => <MuRow key={adjustment.id} title={`${adjustment.reference} · ${naira(adjustment.amount)}`} state={`${adjustment.kind.replace(/_/g, " ")} · ${adjustment.reason}`} status={<span className="text-xs font-bold uppercase text-muted-foreground">{adjustment.status}</span>} />)}</div>}
+      {!adjustments.length ? <MuEmpty title="No adjustments" description="Credit notes, refunds and payment adjustments appear here." /> : <div className="divide-y divide-line-soft">{adjustments.map((adjustment) => <MuRow key={adjustment.id} title={`${adjustment.reference}, ${naira(adjustment.amount)}`} state={`${sentenceCase(adjustment.kind)}: ${adjustment.reason}`} status={<MuStatus label={sentenceCase(adjustment.status)} />} />)}</div>}
     </MuSection>
     <CareSheet open={open} onOpenChange={setOpen} title="Create quote" onSave={save} saving={busy} saveDisabled={!contactId || !lines.some((line) => line.description.trim())}>
-      <CareFormRow label="Billing contact"><select className={cxInputClass()} value={contactId} onChange={(event) => setContactId(event.target.value)}><option value="">Select contact</option>{contacts.filter((contact) => contact.email).map((contact) => <option key={contact.id} value={contact.id}>{contact.full_name} · {contact.email}</option>)}</select></CareFormRow>
+      <CareFormRow label="Billing contact"><select className={cxInputClass()} value={contactId} onChange={(event) => setContactId(event.target.value)}><option value="">Select contact</option>{contacts.filter((contact) => contact.email).map((contact) => <option key={contact.id} value={contact.id}>{`${contact.full_name}, ${contact.email}`}</option>)}</select></CareFormRow>
       {lines.map((line, index) => <div key={index} className="grid gap-3 border-b border-line-soft pb-4 sm:grid-cols-[1fr_6rem_9rem]"><CareFormRow label="Description"><input className={cxInputClass()} value={line.description} onChange={(event) => setLines((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} /></CareFormRow><CareFormRow label="Quantity"><input type="number" min="0.01" step="0.01" className={cxInputClass()} value={line.quantity} onChange={(event) => setLines((current) => current.map((row, i) => i === index ? { ...row, quantity: event.target.value } : row))} /></CareFormRow><CareFormRow label="Unit price"><input type="number" min="0" step="0.01" className={cxInputClass()} value={line.unit_price} onChange={(event) => setLines((current) => current.map((row, i) => i === index ? { ...row, unit_price: event.target.value } : row))} /></CareFormRow></div>)}
       <Button type="button" variant="outline" onClick={() => setLines((current) => [...current, blankLine()])}>Add line</Button>
       <CareFormRow label="Valid until"><input type="date" className={cxInputClass()} value={validUntil} onChange={(event) => setValidUntil(event.target.value)} /></CareFormRow>

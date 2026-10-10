@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   ArrowDown, ArrowUp, Ban, CheckCircle2, Copy, Download, Eye, FileSignature, FileStack, Loader2, Mail,
-  Plus, Save, Send, Sparkles, Trash2,
+  MoreHorizontal, Plus, Save, Send, Sparkles, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,15 +21,18 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { SelectField } from "@/components/field";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus, MuTone,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ContractDocument from "@/components/contracts/ContractDocument";
 import ContractRichTextEditor, { ContractRichTextEditorRef } from "@/components/contracts/ContractRichTextEditor";
 import ContractPackRail, { PackRailEntry } from "@/components/admin/contracts/ContractPackRail";
@@ -38,10 +41,11 @@ import JSZip from "jszip";
 import { blobToBase64, downloadBlob } from "@/lib/contract-pdf";
 import { buildContractPack } from "@/lib/contract-pack-pdf";
 import { hasBlockingChecks, runContractChecks } from "@/lib/contract-checks";
+import { issueAndSendContract } from "@/lib/contract-issue";
 
 import {
   ContractAnnex, ContractClause, ContractEvent, ContractRecord, DEFAULT_ANNEXES,
-  countersignContract, effectiveClauses, effectiveFields, issueContractDocument,
+  countersignContract, effectiveClauses, effectiveFields,
   loadContract, loadContractEvents, personHomeAddress, saveContractDraft, signingLink, uploadAnnexFile, voidContract,
 } from "@/lib/contracts";
 import { AnnexLibraryItem, ContractTemplate, annexFromLibrary, loadAnnexLibrary, loadTemplates } from "@/lib/contract-templates";
@@ -86,6 +90,7 @@ const ContractEditor = () => {
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [countersigning, setCountersigning] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [countersignName, setCountersignName] = useState("");
   const [templateDialog, setTemplateDialog] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -247,19 +252,17 @@ const ContractEditor = () => {
     setBusy(true);
     try {
       await saveContractDraft(contract.id, { fields, clauses, annexes, is_clinical: isClinical, actor_name: adminDisplayName });
-      const token = await issueContractDocument(contract.id, adminDisplayName);
-      await supabase.functions.invoke("send-contract-email", {
-        body: { contract_id: contract.id, kind: "issue" },
-      });
+      const result = await issueAndSendContract(contract.id, adminDisplayName);
       try {
-        await navigator.clipboard?.writeText(signingLink(token));
+        await navigator.clipboard?.writeText(signingLink(result.token));
       } catch {
         /* a blocked clipboard must never look like a failed issue */
       }
-      toast({
-        title: "Issued",
-        description: "The wording is frozen, the signing link has been emailed and copied to your clipboard.",
-      });
+      toast(
+        result.emailed
+          ? { title: "Issued", description: "The wording is frozen, the signing link has been emailed and copied to your clipboard." }
+          : { title: "Issued, but the email did not send", description: `${result.emailError ?? "Unknown error"}. The link is on your clipboard; use Chase to resend.`, variant: "destructive" },
+      );
       load();
     } catch (err: any) {
       toast({ title: "Could not issue", description: err.message, variant: "destructive" });
@@ -546,8 +549,10 @@ const ContractEditor = () => {
   if (!contract) {
     return (
       <MuPage>
-        <MuPageHeader title="Contract" />
-        <MuSection><MuEmpty title="This contract could not be found" /></MuSection>
+        <MuPageHeader title="Contract" backTo="/admin/workforce" backLabel="Workforce" />
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="This contract could not be found" description="It may have been withdrawn, or the link is wrong." />
+        </MuSection>
       </MuPage>
     );
   }
@@ -556,40 +561,71 @@ const ContractEditor = () => {
     <MuPage>
       <MuPageHeader
         title={fields.employee_name ? `Contract, ${fields.employee_name}` : "Contract"}
-        description="Pick a document on the left, write in the middle, mind the checks on the right."
+        description="The offer letter and its annex pack."
         backTo={`/admin/workforce/${contract.person_id}`}
         backLabel="Back to the staff record"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <>
             <MuStatus label={STATUS_LABELS[contract.status] || contract.status} tone={statusTone(contract.status)} />
-            <Button variant="outline" size="sm" onClick={() => setPreviewDoc("letter")}>
-              <Eye className="mr-2 h-4 w-4" />Preview
-            </Button>
-            <Button variant="outline" size="sm" onClick={download}>
-              <Download className="mr-2 h-4 w-4" />PDF
-            </Button>
-            {contract.sign_token && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard?.writeText(signingLink(contract.sign_token!));
-                  toast({ title: "Signing link copied" });
-                }}
-              >
-                <Copy className="mr-2 h-4 w-4" />Signing link
-              </Button>
-            )}
-            {editable && (
-              <Button variant="outline" size="sm" onClick={runReview} disabled={reviewLoading}>
-                {reviewLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                AI review
-              </Button>
-            )}
-            {editable && (
-              <Button size="sm" onClick={save} disabled={saving}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm"><MoreHorizontal className="mr-2 h-4 w-4" />More</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(editable || contract.status === "issued") && (
+                  <DropdownMenuItem onSelect={() => setPreviewDoc("letter")}>
+                    <Eye className="mr-2 h-4 w-4" />Preview
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={() => download()}>
+                  <Download className="mr-2 h-4 w-4" />Download PDF
+                </DropdownMenuItem>
+                {contract.sign_token && (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      navigator.clipboard?.writeText(signingLink(contract.sign_token!));
+                      toast({ title: "Signing link copied" });
+                    }}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />Copy signing link
+                  </DropdownMenuItem>
+                )}
+                {editable && (
+                  <DropdownMenuItem onSelect={() => runReview()} disabled={reviewLoading}>
+                    {reviewLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    AI review
+                  </DropdownMenuItem>
+                )}
+                {["draft", "issued"].includes(contract.status) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      disabled={busy}
+                      onSelect={() => setWithdrawOpen(true)}
+                    >
+                      <Ban className="mr-2 h-4 w-4" />Withdraw
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {editable ? (
+              <Button variant="outline" size="sm" onClick={save} disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save draft
+              </Button>
+            ) : contract.status === "issued" ? (
+              <Button variant="outline" size="sm" onClick={() =>
+                supabase.functions
+                  .invoke("send-contract-email", { body: { contract_id: contract.id, kind: "issue" } })
+                  .then(() => toast({ title: "Reminder sent" }))
+              }>
+                <Mail className="mr-2 h-4 w-4" />Chase
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setPreviewDoc("letter")}>
+                <Eye className="mr-2 h-4 w-4" />Preview
               </Button>
             )}
             {editable && (
@@ -602,27 +638,23 @@ const ContractEditor = () => {
                 <Send className="mr-2 h-4 w-4" />Issue for signature
               </Button>
             )}
-            {contract.status === "issued" && (
-              <Button variant="outline" size="sm" onClick={() =>
-                supabase.functions
-                  .invoke("send-contract-email", { body: { contract_id: contract.id, kind: "issue" } })
-                  .then(() => toast({ title: "Reminder sent" }))
-              }>
-                <Mail className="mr-2 h-4 w-4" />Chase
-              </Button>
-            )}
             {contract.status === "signed" && (
               <Button size="sm" onClick={() => setCountersigning(true)}>
                 <FileSignature className="mr-2 h-4 w-4" />Countersign
               </Button>
             )}
-            {["draft", "issued"].includes(contract.status) && (
-              <Button variant="outline" size="sm" onClick={withdraw} disabled={busy}>
-                <Ban className="mr-2 h-4 w-4" />Withdraw
-              </Button>
-            )}
-          </div>
+          </>
         }
+      />
+
+      <ConfirmAction
+        open={withdrawOpen}
+        onOpenChange={setWithdrawOpen}
+        title="Withdraw this contract?"
+        description={<p>The contract is voided and can no longer be signed. To offer terms again, draft a new one.</p>}
+        confirmLabel="Withdraw contract"
+        destructive
+        onConfirm={withdraw}
       />
 
       <div className="flex items-start gap-4">
@@ -642,7 +674,7 @@ const ContractEditor = () => {
         <main className="min-w-0 flex-1">
           {!editable ? (
             // Frozen wording: the record of exactly what was signed.
-            <div className="overflow-x-auto rounded-3xl bg-muted p-4">
+            <div className="overflow-x-auto border border-line-soft bg-muted p-4">
               <ContractDocument
                 fields={fields}
                 clauses={clauses}
@@ -663,12 +695,7 @@ const ContractEditor = () => {
           ) : activeDoc === "letter" ? (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-base font-semibold">Offer letter</h2>
-                  <p className="text-xs text-muted-foreground">
-                    The main clauses. Variables in double braces are filled from the details on the right.
-                  </p>
-                </div>
+                <h2 className="text-base font-semibold">Offer letter</h2>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
@@ -701,7 +728,7 @@ const ContractEditor = () => {
                 <section
                   key={c.key}
                   id={`clause-${c.key}`}
-                  className="scroll-mt-24 rounded-2xl border border-border/60 bg-background p-4"
+                  className="scroll-mt-24 border border-line bg-card p-4"
                   onFocusCapture={() => { lastEditorKey.current = `clause-${c.key}`; }}
                 >
                   <div className="flex items-center gap-2">
@@ -742,14 +769,9 @@ const ContractEditor = () => {
             </div>
           ) : activeAnnex && activeAnnexIndex != null ? (
             <div className="space-y-4">
-              <div>
-                <h2 className="text-base font-semibold">{activeAnnex.code}: {activeAnnex.title}</h2>
-                <p className="text-xs text-muted-foreground">
-                  One annex on the stand at a time. Settings above, wording below.
-                </p>
-              </div>
+              <h2 className="text-base font-semibold">{activeAnnex.code}: {activeAnnex.title}</h2>
 
-              <section className="space-y-3 rounded-2xl border border-border/60 bg-background p-4">
+              <section className="space-y-3 border border-line bg-card p-4">
                 <div className="flex items-center gap-2">
                   <Input
                     className="h-8 w-28 text-sm font-medium"
@@ -781,6 +803,8 @@ const ContractEditor = () => {
                   onChange={(e) => patchAnnex(activeAnnexIndex, { note: e.target.value })}
                 />
 
+                <div className="border-2 border-navy bg-tint/40 p-3">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center gap-2 text-xs">
                     <Switch
@@ -804,6 +828,7 @@ const ContractEditor = () => {
                     Clinical roles only
                   </label>
                 </div>
+                </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {activeAnnex.attachment_path ? (
@@ -823,7 +848,7 @@ const ContractEditor = () => {
                       </Button>
                     </>
                   ) : (
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                    <label className="inline-flex cursor-pointer items-center gap-2 border border-dashed border-line px-3 py-2 text-xs text-muted-foreground">
                       {uploadingAnnex === activeAnnex.code ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -854,7 +879,7 @@ const ContractEditor = () => {
               </section>
 
               <section
-                className="rounded-2xl border border-border/60 bg-background p-4"
+                className="border border-line bg-card p-4"
                 onFocusCapture={() => { lastEditorKey.current = `annex-${activeAnnexIndex}`; }}
               >
                 <Label className="text-xs">Wording printed inside the contract pack</Label>
@@ -875,7 +900,7 @@ const ContractEditor = () => {
 
           {/* Clinical scope lives on the letter, so the toggle lives with it. */}
           {editable && activeDoc === "letter" && (
-            <div className="mt-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background p-4">
+            <div className="mt-4 flex items-center justify-between border border-line bg-card p-4">
               <div>
                 <p className="text-sm font-medium">Clinical role</p>
                 <p className="text-xs text-muted-foreground">Adds Annex F, scope of practice.</p>
@@ -912,20 +937,18 @@ const ContractEditor = () => {
               Exactly as the person will read it. Unfilled variables are highlighted.
             </DialogDescription>
           </DialogHeader>
-          <Select value={previewDoc ?? "letter"} onValueChange={setPreviewDoc}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pick a document" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="letter">Offer letter</SelectItem>
-              {annexes.filter((a) => a.include).map((a) => (
-                <SelectItem key={a.code} value={a.code}>
-                  {a.code}: {a.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-muted/30 p-3 sm:p-6">
+          <SelectField
+            label="Document"
+            hideLabel
+            value={previewDoc ?? "letter"}
+            onChange={(v) => setPreviewDoc(v || "letter")}
+            placeholder="Pick a document"
+            options={[
+              { value: "letter", label: "Offer letter" },
+              ...annexes.filter((a) => a.include).map((a) => ({ value: a.code, label: `${a.code}: ${a.title}` })),
+            ]}
+          />
+          <div className="min-h-0 flex-1 overflow-y-auto border border-line-soft bg-muted/30 p-3 sm:p-6">
             {previewDoc && contract && (
               <ContractDocument
                 fields={fields as any}
@@ -955,10 +978,10 @@ const ContractEditor = () => {
           <DialogHeader>
             <DialogTitle>A second read of the wording</DialogTitle>
             <DialogDescription>
-              Comments on the draft as saved: gaps, wording that reads oddly, and terms worth a second look. It advises; you decide.
+              Comments on the saved draft. It advises; you decide.
             </DialogDescription>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-muted/30 p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto border border-line-soft bg-muted/30 p-4">
             {reviewLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />Reading the draft…
@@ -980,7 +1003,7 @@ const ContractEditor = () => {
           </DialogHeader>
           {annexLibrary.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              The annex library is empty, so there is nothing to pick from yet. Start a blank annex instead.
+              The annex library is empty.
             </p>
           ) : (
             <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
@@ -990,13 +1013,13 @@ const ContractEditor = () => {
                   <button
                     key={item.id}
                     type="button"
-                    className={`w-full rounded-xl border p-3 text-left transition ${picked ? "border-primary bg-primary/5" : "border-border/60 hover:bg-muted/40"}`}
+                    className={`w-full border p-3 text-left transition ${picked ? "border-navy/40 bg-tint/60" : "border-line hover:bg-muted/40"}`}
                     onClick={() =>
                       setPickedAnnexIds((p) => (picked ? p.filter((x) => x !== item.id) : [...p, item.id]))
                     }
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium">{item.code} · {item.title}</span>
+                      <span className="text-sm font-medium">{item.code}: {item.title}</span>
                       {picked && <CheckCircle2 className="h-4 w-4 text-primary" />}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -1004,7 +1027,7 @@ const ContractEditor = () => {
                         item.kind === "file" ? "Attached file" : "Written document",
                         item.requires_signature ? "Signed by the person" : "Read only",
                         item.clinical_only ? "Clinical roles only" : null,
-                      ].filter(Boolean).join(" · ")}
+                      ].filter(Boolean).join(", ")}
                     </p>
                   </button>
                 );
@@ -1032,19 +1055,13 @@ const ContractEditor = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>Template</Label>
-            <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a template" />
-              </SelectTrigger>
-              <SelectContent>
-                {templates.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectField
+              label="Template"
+              value={selectedTemplateId}
+              onChange={setSelectedTemplateId}
+              placeholder="Choose a template"
+              options={templates.map((template) => ({ value: template.id, label: template.name }))}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTemplateDialog(false)}>Cancel</Button>

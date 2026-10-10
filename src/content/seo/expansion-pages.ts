@@ -4,7 +4,7 @@
  */
 import clinicalHero from "@/assets/hero/clinical-hero.jpg";
 import eldercareHero from "@/assets/hero/eldercare-hero.jpg";
-import hospitalStaffingHero from "@/assets/hero/hospital-staffing-hero.jpg";
+import hospitalStaffingHero from "@/assets/hero/hospital-staffing-hero.webp";
 import nannyHero from "@/assets/hero/nanny-hero.jpg";
 import pediatricHero from "@/assets/hero/pediatric-hero.jpg";
 import postnatalHero from "@/assets/hero/postnatal-hero.jpg";
@@ -46,7 +46,7 @@ const PAGE_SEEDS: PageSeed[] = [
   seed("wound-dressing-at-home", "Wound dressing at home", "care", "nurse-led wound dressing and review at home", "People recovering from surgery|People with pressure or diabetic wounds|People discharged with a dressing regime|Families arranging regular dressing changes", "MOD-02,MOD-03,MOD-04,MOD-05", "PUB-ASSESSMENT,PUB-WOUND-SIMPLE,PUB-WOUND-COMPLEX"),
   seed("community-health-outreach-services", "Community health outreach services", "staffing", "staffed community screening, education and outreach programmes", "NGOs and foundations|Public health programmes|Community organisations|Employers commissioning outreach", "MOD-16,MOD-12,MOD-01,MOD-06", ""),
   seed("hospital-to-home-care", "Hospital-to-home care", "care", "a planned transition from hospital into care at home", "People preparing for discharge|People recovering after admission|Families coordinating follow-up care|People needing equipment or skilled support", "MOD-02,MOD-03,MOD-04,MOD-07", "PUB-ASSESSMENT,PUB-DISCHARGE-TRANSITION"),
-  seed("live-in-caregiver", "Live-in caregiver", "care", "daily-living support provided through a managed live-in arrangement", "Older people living at home|Adults needing daily-living support|Families arranging continuous presence|People needing companionship and routine", "MOD-02,MOD-05,MOD-07,MOD-09", "PUB-ASSESSMENT"),
+  seed("live-in-caregiver", "Live-in caregiver", "care", "one trusted caregiver living in the home, for daily living, company and routine", "Older people living at home|Adults needing daily-living support|Families arranging continuous presence|People needing companionship and routine", "MOD-02,MOD-05,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-LIVE-IN"),
   seed("managed-postpartum-stay-in-nigeria", "Managed postpartum stay in Nigeria", "care", "a coordinated return-to-Nigeria and postpartum support arrangement", "Mothers returning to Nigeria after birth|Families arranging mother-and-baby support|Parents needing night support|Families coordinating appointments and logistics", "MOD-10,MOD-14,MOD-02,MOD-05", "PUB-ASSESSMENT,PUB-POSTNATAL-VISIT,PUB-BREASTFEEDING"),
   seed("stroke-recovery-at-home", "Stroke recovery at home", "care", "nursing, rehabilitation and daily-living support after stroke", "People returning home after stroke|People needing neuro-rehabilitation|Families arranging mobility support|People needing nursing observations", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-NURSING-SKILLED,PUB-NEURO-REHAB"),
   seed("clinical-research-staffing", "Clinical research staffing", "staffing", "operational research staff for site, home and community delivery", "Research sponsors and delivery partners|Clinical research sites|Community research programmes|Organisations needing field teams", "MOD-16,MOD-12,MOD-01,MOD-06", ""),
@@ -66,8 +66,8 @@ const PAGE_SEEDS: PageSeed[] = [
   seed("healthcare-facility-management-support", "Healthcare facility management support", "staffing", "managed workforce and operational support for healthcare facilities", "Hospitals and clinics|Diagnostic centres|Facilities needing managed departments|Organisations commissioning operational support", "MOD-12,MOD-01,MOD-06", ""),
   seed("hospital-support-services", "Hospital support services", "staffing", "clinical, administrative and facilities support for hospitals", "Hospitals|Clinics and day-case centres|Diagnostic centres|Healthcare organisations building support teams", "MOD-12,MOD-01,MOD-06", ""),
   seed("coming-to-nigeria-after-giving-birth", "Coming to Nigeria after giving birth", "guide", "how to plan postpartum care, travel, accommodation and local support", "", "MOD-10,MOD-14,MOD-02,MOD-05", "PUB-ASSESSMENT,PUB-POSTNATAL-VISIT"),
-  seed("night-nurse-for-newborn", "Night nurse for newborn", "care", "overnight newborn and maternal support within an assessed care arrangement", "New parents needing overnight support|Mothers recovering after birth|Families establishing feeding routines|Newborns needing professional observation", "MOD-10,MOD-02,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-POSTNATAL-VISIT"),
-  seed("live-in-nanny", "Live-in nanny", "childcare", "childcare delivered through an agreed live-in arrangement", "Families needing daily childcare|Parents needing consistent routines|Families with infants or young children|Families requiring agreed household support", "MOD-02,MOD-11,MOD-05,MOD-07", "PUB-ASSESSMENT"),
+  seed("night-nurse-for-newborn", "Night nurse for a newborn", "care", "overnight newborn support, so parents can rest while a professional watches, feeds and settles the baby", "New parents needing overnight support|Mothers recovering after birth|Families establishing feeding routines|Newborns needing professional observation", "MOD-10,MOD-02,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-POSTNATAL-VISIT"),
+  seed("live-in-nanny", "Live-in nanny", "childcare", "a nanny who lives in your home, with hours, rest days and duties agreed in writing before they start", "Families needing daily childcare|Parents needing consistent routines|Families with infants or young children|Families requiring agreed household support", "MOD-02,MOD-11,MOD-05,MOD-07", "PUB-ASSESSMENT"),
   seed("c-section-recovery-at-home", "C-section recovery at home", "care", "postnatal nursing and practical support after a Caesarean birth", "Mothers recovering from a Caesarean birth|Families needing wound checks|Parents arranging feeding support|Families needing practical newborn support", "MOD-10,MOD-02,MOD-03,MOD-04", "PUB-ASSESSMENT,PUB-CSECTION-WOUND,PUB-POSTNATAL-VISIT"),
   seed("care-after-hospital-discharge", "Care after hospital discharge", "care", "assessment-led care for a safe return home after hospital treatment", "People preparing to leave hospital|People needing wound or medicine support|Families arranging equipment and routines|People needing rehabilitation at home", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-DISCHARGE-TRANSITION"),
   seed("equipment-needed-after-hospital-discharge", "Equipment needed after hospital discharge", "guide", "an assessment-led checklist for equipment and supplies at home", "", "MOD-02,MOD-03,MOD-05,MOD-07", "PUB-ASSESSMENT"),
@@ -87,11 +87,11 @@ const PAGE_SEEDS: PageSeed[] = [
   seed("medication-administration-at-home", "Medication administration at home", "care", "prescribed medicines administered at home within nursing scope", "People with prescribed medicines|People needing a nursing visit|Families coordinating medicine routines|People needing a documented medication record", "MOD-02,MOD-03,MOD-04,MOD-08", "PUB-ASSESSMENT,PUB-NURSING-BASIC"),
   seed("blood-pressure-monitoring-at-home", "Blood pressure monitoring at home", "care", "home observations recorded against an agreed care plan", "People monitoring hypertension|People recovering after illness|Older people needing regular checks|Families coordinating ongoing observations", "MOD-02,MOD-03,MOD-04,MOD-07", "PUB-ASSESSMENT,PUB-WELLNESS-CHECK"),
   seed("blood-sugar-monitoring-at-home", "Blood sugar monitoring at home", "care", "home blood glucose observations recorded against the care plan", "People living with diabetes|People needing regular observations|Older people needing monitoring|Families coordinating ongoing care", "MOD-02,MOD-03,MOD-04,MOD-07", "PUB-ASSESSMENT,PUB-WELLNESS-CHECK"),
-  seed("continence-care-at-home", "Continence care at home", "care", "dignified continence and catheter support within an assessed care plan", "Older people living at home|People with mobility limitations|People needing catheter support|Families arranging personal care", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-CATHETER"),
+  seed("continence-care-at-home", "Continence care at home", "care", "private, dignified help with continence for a parent or relative at home", "Older people living at home|People with mobility limitations|People needing catheter support|Families arranging personal care", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-CATHETER"),
   seed("diabetes-care-at-home", "Diabetes care at home", "care", "nursing observations, medicine support and daily routines for diabetes", "People living with diabetes|People needing medicine support|People needing foot or wound review|Families coordinating chronic care", "MOD-02,MOD-03,MOD-07,MOD-08", "PUB-ASSESSMENT,PUB-CHRONIC-MONTHLY"),
   seed("cancer-care-at-home", "Cancer care at home", "care", "supportive nursing and daily-living care at home alongside hospital treatment", "People receiving cancer treatment|People needing symptom support|Families arranging daily-living care|People transitioning between hospital and home", "MOD-02,MOD-03,MOD-04,MOD-07", "PUB-ASSESSMENT,PUB-NURSING-SKILLED"),
   seed("diabetic-foot-care-at-home", "Diabetic foot care at home", "care", "nurse-led wound care for diabetic foot problems where home treatment is suitable", "People living with diabetic foot wounds|People needing regular dressing changes|Families arranging nursing visits|People needing escalation when a wound changes", "MOD-02,MOD-03,MOD-04,MOD-07", "PUB-ASSESSMENT,PUB-WOUND-COMPLEX"),
-  seed("orthopaedic-recovery-at-home", "Orthopaedic recovery at home", "care", "nursing, mobility and rehabilitation support after orthopaedic treatment", "People recovering after orthopaedic surgery|People rebuilding mobility|Families arranging home support|People needing wound or medicine care", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-DISCHARGE-TRANSITION,PUB-PHYSIO"),
+  seed("orthopaedic-recovery-at-home", "Recovery at home after a hip replacement or fracture", "care", "nursing, physiotherapy and mobility help after a hip or knee replacement or a broken bone", "People recovering after orthopaedic surgery|People rebuilding mobility|Families arranging home support|People needing wound or medicine care", "MOD-02,MOD-03,MOD-07,MOD-09", "PUB-ASSESSMENT,PUB-DISCHARGE-TRANSITION,PUB-PHYSIO"),
   seed("antenatal-care-at-home", "Antenatal care at home", "care", "supplementary antenatal observations, education and preparation at home", "Pregnant women needing routine support|Families preparing for birth|Women needing prescribed medicine support|People coordinating home and hospital maternity care", "MOD-10,MOD-02,MOD-03,MOD-04", "PUB-ASSESSMENT,PUB-ANTENATAL-VISIT,PUB-ANTENATAL-TRIMESTER"),
   seed("high-risk-pregnancy-support-at-home", "High-risk pregnancy support at home", "care", "supplementary home support alongside hospital-led high-risk maternity care", "Women under high-risk maternity care|Families coordinating hospital appointments|Women needing prescribed observations|Families preparing support at home", "MOD-10,MOD-02,MOD-03,MOD-04", "PUB-ASSESSMENT,PUB-HIGH-RISK-ANTENATAL"),
   seed("breastfeeding-support-at-home", "Breastfeeding support at home", "care", "professional feeding support for mother and baby at home", "Mothers establishing breastfeeding|Families needing feeding guidance|Mothers recovering after birth|Parents coordinating newborn support", "MOD-10,MOD-02,MOD-07", "PUB-ASSESSMENT,PUB-BREASTFEEDING"),
@@ -112,7 +112,7 @@ const PAGE_SEEDS: PageSeed[] = [
   seed("physiotherapist-jobs-and-opportunities", "Physiotherapist jobs and opportunities", "jobs", "physiotherapy assignments, contracts, employment and permanent placements", "Registered physiotherapists|Neuro-rehabilitation therapists|Home care physiotherapists|Therapists seeking permanent placement", "MOD-13,MOD-01,MOD-06", ""),
   seed("how-to-verify-a-nurse-in-nigeria", "How to verify a nurse in Nigeria", "guide", "what to check when reviewing a nurse’s identity, registration and suitability", "", "MOD-01,MOD-13", ""),
   seed("how-to-verify-a-doctor-in-nigeria", "How to verify a doctor in Nigeria", "guide", "what to check when reviewing a doctor’s identity, registration and suitability", "", "MOD-01,MOD-13", ""),
-  seed("caregiver-cost-in-lagos", "Caregiver cost in Lagos", "guide", "how assessed needs, hours, shift pattern and service arrangement affect caregiver cost", "", "MOD-02,MOD-05,MOD-06,MOD-09", "PUB-ASSESSMENT,PUB-COMPANION-4H"),
+  seed("caregiver-cost-in-lagos", "Caregiver cost in Lagos", "guide", "how assessed needs, hours, shift pattern and service arrangement affect caregiver cost", "", "MOD-02,MOD-05,MOD-06,MOD-09", "PUB-ASSESSMENT,PUB-COMPANION-4H,PUB-LIVE-IN"),
 ];
 
 const visualSet = (page: PageSeed) => {
@@ -149,6 +149,35 @@ const guideChecklist = (page: PageSeed) => {
   return { heading: page.h1.endsWith("?") ? "How to decide" : "What to check", items: record.points };
 };
 
+/** Narrow pages link to the governed page that owns the wider topic. */
+const RELATED_OVERRIDES: Record<string, ExpansionPage["related"]> = {
+  "diabetes-care-at-home": [{ label: "Chronic condition care at home", path: "/chronic-care-at-home" }, { label: "Diabetic foot care at home", path: "/diabetic-foot-care-at-home" }],
+  "night-nurse-for-newborn": [{ label: "Newborn care at home", path: "/newborn-care" }, { label: "Postnatal care at home", path: "/postnatal-care" }],
+  "live-in-nanny": [{ label: "Nanny and childcare services", path: "/nanny-childcare" }, { label: "Night nurse for a newborn", path: "/night-nurse-for-newborn" }],
+  "live-in-caregiver": [{ label: "24-hour nursing care", path: "/24-hour-nursing-care" }, { label: "Caregiver services", path: "/caregiver" }],
+  "continence-care-at-home": [{ label: "Catheter care at home", path: "/catheter-care-at-home" }, { label: "Eldercare at home", path: "/eldercare" }],
+  "orthopaedic-recovery-at-home": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Physiotherapy at home", path: "/physiotherapy-at-home" }],
+  "midwife-jobs-and-opportunities": [{ label: "Nursing careers", path: "/careers/nursing" }, { label: "Careers", path: "/careers" }],
+  "c-section-recovery-at-home": [{ label: "Postnatal care at home", path: "/postnatal-care" }, { label: "Night nurse for a newborn", path: "/night-nurse-for-newborn" }],
+  "breastfeeding-support-at-home": [{ label: "Postnatal care at home", path: "/postnatal-care" }, { label: "Newborn care at home", path: "/newborn-care" }],
+  "nicu-to-home-support": [{ label: "Newborn care at home", path: "/newborn-care" }, { label: "Postnatal care at home", path: "/postnatal-care" }],
+  "coming-to-nigeria-after-giving-birth": [{ label: "Omugwo", path: "/omugwo" }, { label: "Care from abroad", path: "/care-from-abroad" }],
+  "who-should-i-hire-for-a-newborn": [{ label: "Newborn care at home", path: "/newborn-care" }, { label: "Omugwo", path: "/omugwo" }],
+  "equipment-needed-after-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "How to prepare the home before discharge", path: "/how-to-prepare-the-home-before-hospital-discharge" }],
+  "how-to-prepare-the-home-before-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Equipment needed after discharge", path: "/equipment-needed-after-hospital-discharge" }],
+  "shadow-teacher": [{ label: "Nanny and childcare", path: "/nanny-childcare" }, { label: "Pediatric care", path: "/pediatric-care" }],
+  "stroke-recovery-at-home": [{ label: "Physiotherapy at home", path: "/physiotherapy-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
+  "autism-support-at-home": [{ label: "Paediatric and additional needs care", path: "/pediatric-care" }, { label: "Shadow teacher", path: "/shadow-teacher" }],
+  "adhd-support-at-home": [{ label: "Paediatric and additional needs care", path: "/pediatric-care" }, { label: "Shadow teacher", path: "/shadow-teacher" }],
+  "speech-therapist-for-children": [{ label: "Paediatric and additional needs care", path: "/pediatric-care" }, { label: "Autism support at home", path: "/autism-support-at-home" }],
+  "what-does-a-shadow-teacher-do": [{ label: "Shadow teacher", path: "/shadow-teacher" }, { label: "Paediatric and additional needs care", path: "/pediatric-care" }],
+  "care-after-hospital-discharge": [{ label: "Post-surgical care at home", path: "/post-surgical-care" }, { label: "Equipment needed after discharge", path: "/equipment-needed-after-hospital-discharge" }],
+  "high-risk-pregnancy-support-at-home": [{ label: "Antenatal care at home", path: "/antenatal-care" }, { label: "Postnatal care at home", path: "/postnatal-care" }],
+  "how-medic-connect-home-care-works": [{ label: "Care at home", path: "/care-at-home" }, { label: "Caregiver cost in Lagos", path: "/caregiver-cost-in-lagos" }],
+  "healthcare-facility-management-support": [{ label: "Hospital support", path: "/hospital-support" }, { label: "For facilities", path: "/for-facilities" }],
+  "cancer-care-at-home": [{ label: "Palliative care at home", path: "/palliative-care-at-home" }, { label: "Clinical home care", path: "/clinical-home-care" }],
+};
+
 const toPage = (page: PageSeed): ExpansionPage => {
   const visuals = visualSet(page);
   const marketText = page.slug === "caregiver-cost-in-lagos" ? "in Lagos" : "in Lagos, Abuja/FCT, Ogun and Ibadan/Oyo";
@@ -171,7 +200,7 @@ const toPage = (page: PageSeed): ExpansionPage => {
     moduleCodes: page.modules,
     feeSkus: page.fees,
     checklist: page.template === "guide" ? guideChecklist(page) : undefined,
-    related: page.template === "jobs" ? [{ label: "Careers", path: "/careers" }, { label: "Candidate applications", path: "/join" }] : page.template === "staffing" ? [{ label: "Hospital staffing", path: "/hospital-staffing" }, { label: "For facilities", path: "/for-facilities" }] : [{ label: "Clinical home care", path: "/clinical-home-care" }, { label: "Care at home", path: "/care-at-home" }],
+    related: RELATED_OVERRIDES[page.slug] ?? (page.template === "jobs" ? [{ label: "Careers", path: "/careers" }, { label: "Candidate applications", path: "/join" }] : page.template === "staffing" ? [{ label: "Hospital staffing", path: "/hospital-staffing" }, { label: "For facilities", path: "/for-facilities" }] : [{ label: "Clinical home care", path: "/clinical-home-care" }, { label: "Care at home", path: "/care-at-home" }]),
   };
 };
 

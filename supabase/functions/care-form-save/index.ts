@@ -6,7 +6,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   answersForRecipient, applicableSections, buildContext, cleanResponses, hashToken, LINK_SEGMENT,
-  fieldVisible, missingConsent, outstandingRequired, raisedFlags, recipientIdsOf, requestAnswers,
+  fieldVisible, intakeRoutingAnswers, missingConsent, withDerived, outstandingRequired, raisedFlags, recipientIdsOf, requestAnswers,
   SERVICE_KEY_BY_SECTION, validateResponses,
   withoutDerived,
   type ControlledRefs, type FormDefinition, type FormSection,
@@ -101,7 +101,12 @@ const evaluationGroups = (
   for (const recipient of recipients) {
     const id = typeof recipient.id === "string" ? recipient.id : "";
     if (!/^r\d+$/.test(id)) continue;
-    const local = answersForRecipient(responses, id);
+    // The intake's facts and the derived ones (age, group, service), so a
+    // question's own condition reads them exactly as the page does.
+    const local = withDerived(
+      { ...answersForRecipient(responses, id), ...intakeRoutingAnswers(recipients, recipient), service_requested: (Array.isArray(recipient.services) ? recipient.services.map(String).map((v) => SERVICE_SECTION[v]).find(Boolean) : null) ?? null },
+      { recordedService },
+    );
     const services = Array.isArray(recipient.services)
       ? recipient.services.map(String).map((s) => SERVICE_SECTION[s]).filter((s): s is string => !!s)
       : [];
@@ -151,6 +156,57 @@ const evaluationGroups = (
       ];
 };
 
+type NamedContact = { firstName?: string; lastName?: string; phone?: string; email?: string; relationship?: string; relationshipOther?: string };
+
+async function addNamedContacts(
+  db: ReturnType<typeof createClient>,
+  clientId: string,
+  groups: { sections: { fields?: { id: string; type: string }[] }[]; responses: Record<string, unknown> }[],
+) {
+  const named: NamedContact[] = [];
+  for (const group of groups) {
+    for (const section of group.sections) {
+      for (const field of section.fields ?? []) {
+        if (field.type !== "contact_block") continue;
+        const value = group.responses[field.id];
+        if (value && typeof value === "object" && !Array.isArray(value)) named.push(value as NamedContact);
+      }
+    }
+  }
+  if (named.length === 0) return;
+
+  const { data: existing } = await db.from("client_contacts").select("full_name, phone").eq("client_id", clientId);
+  const digits = (v?: string | null) => String(v ?? "").replace(/\D/g, "").slice(-10);
+  const known = (existing ?? []) as { full_name: string | null; phone: string | null }[];
+
+  for (const c of named) {
+    const first = String(c.firstName ?? "").trim();
+    const last = String(c.lastName ?? "").trim();
+    const phone = String(c.phone ?? "").trim();
+    const fullName = [first, last].join(" ");
+    if (!first || !last || !phone) continue;
+    const already = known.some((k) =>
+      (phone && digits(k.phone) && digits(k.phone) === digits(phone)) ||
+      String(k.full_name ?? "").trim().toLowerCase() === fullName.toLowerCase());
+    if (already) continue;
+
+    const relationship = c.relationship === "Other" ? String(c.relationshipOther ?? "").trim() || null : c.relationship || null;
+    const email = String(c.email ?? "").trim().toLowerCase() || null;
+    const { data: person, error: personError } = await db.from("care_people").insert({
+      full_name: fullName, first_name: first || null, last_name: last || null,
+      phone: phone || null, whatsapp: phone || null, email, source: "pre_assessment",
+    }).select("id").single();
+    if (personError) throw personError;
+    const { error: contactError } = await db.from("client_contacts").insert({
+      client_id: clientId, person_id: (person as { id: string }).id, full_name: fullName,
+      first_name: first || null, last_name: last || null, relationship,
+      phone: phone || null, whatsapp: phone || null, email, is_primary: false, is_enquirer: false,
+    });
+    if (contactError) throw contactError;
+    known.push({ full_name: fullName, phone });
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -183,7 +239,7 @@ Deno.serve(async (req) => {
 
     const { data: token } = await db
       .from("care_access_tokens")
-      .select("id, client_id, filler_type, person_id, suppress_auto_grant, expires_at, revoked_at, frozen_at, document_id, scope, covers_recipient_key, covers_services")
+      .select("id, client_id, filler_type, person_id, suppress_auto_grant, expires_at, revoked_at, frozen_at, document_id, scope, covers_recipient_key, covers_services, filled_by_staff")
       .eq("token_hash", token_hash)
       .maybeSingle();
     if (!token) return json({ error: "This link is not valid" }, 404);
@@ -261,6 +317,20 @@ Deno.serve(async (req) => {
     const { data: existing } = token.document_id
       ? await existingQuery.eq("id", token.document_id).maybeSingle()
       : await existingQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
+
+    // A form already sent back, perhaps by staff filling it in with the
+    // family, is not started again from another link.
+    if (!existing && !token.document_id && token.scope !== "top_up") {
+      const { data: sent } = await db
+        .from("care_documents")
+        .select("id")
+        .eq("client_id", client.id)
+        .eq("kind", "pre_assessment")
+        .eq("status", "submitted")
+        .limit(1)
+        .maybeSingle();
+      if (sent) return json({ error: "This form has already been sent back to us" }, 409);
+    }
 
     // A form that has been started stays on the questions it was started on.
     // Only a new draft picks up the current published version.
@@ -480,6 +550,26 @@ Deno.serve(async (req) => {
     // Nothing is reported as sent back unless it truly is. A failure here
     // leaves the form open, so the family can press Send again.
     if (finaliseError) throw finaliseError;
+
+    // Anyone else the family named to reach (the alternative contact, or the
+    // local contact for a family abroad) joins the client's contacts, so staff
+    // find them on the record and not only inside the answers. A first name,
+    // a last name and a phone number are enough; the relationship and email
+    // are added when given. This never stops a form being received.
+    try {
+      await addNamedContacts(db, token.client_id, groups);
+    } catch (err) {
+      console.error("care-form-save named contacts", err instanceof Error ? err.message : err);
+    }
+
+    if (token.filled_by_staff) {
+      await db.from("care_activity").insert({
+        client_id: token.client_id,
+        action: "pre_assessment_filled_by_staff",
+        detail: { document_id: documentId },
+        actor_id: token.filled_by_staff,
+      });
+    }
 
     // A top-up closes the gap it was sent for.
     const { error: coverageError } = await db

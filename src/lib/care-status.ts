@@ -38,3 +38,24 @@ export const careFlagTone = (severity: string): StatusTone =>
 /** The state of a pre-assessment document. */
 export const careDocumentTone = (status: string | null | undefined): StatusTone =>
   status === "submitted" ? "good" : status ? "progress" : "neutral";
+
+/**
+ * A client's status: one of four, never set by hand. It follows the stage the
+ * database derives: care running is Active, a paused file is On hold, a closed
+ * file is Ended, and everything before care starts is Pending. The stage stays
+ * readable underneath as where a Pending client has got to.
+ */
+export const CLIENT_STATUSES = [
+  { id: "pending", label: "Pending", tone: "info" },
+  { id: "active", label: "Active", tone: "good" },
+  { id: "on_hold", label: "On hold", tone: "warning" },
+  { id: "ended", label: "Ended", tone: "neutral" },
+] as const satisfies readonly { id: string; label: string; tone: StatusTone }[];
+
+export type ClientStatusId = (typeof CLIENT_STATUSES)[number]["id"];
+
+export const clientStatusOf = (stage: string) => {
+  const id: ClientStatusId =
+    stage === "care_running" ? "active" : stage === "paused" ? "on_hold" : stage === "closed" ? "ended" : "pending";
+  return CLIENT_STATUSES.find((s) => s.id === id)!;
+};

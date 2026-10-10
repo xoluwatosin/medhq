@@ -9,6 +9,7 @@ import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { DateTimeField, SearchableSelect, SelectField, Status } from "@/components/field";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { formatDateTime } from "@/lib/format";
 import {
   assessmentStatusLabel, assessmentStatusTone, assessorOptions, clientAssessments,
@@ -51,6 +52,7 @@ const AssessmentSection = ({
   const [assessorId, setAssessorId] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [fees, setFees] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -144,6 +146,19 @@ const AssessmentSection = ({
     void after("Visit cancelled");
   };
 
+  // Assessors are paid per assessment, once the clinical review accepts it.
+  const savePay = async (row: AssessmentWork, paid: boolean) => {
+    const typed = fees[row.id];
+    const amount = typed === undefined || typed.trim() === "" ? null : Number(typed.replace(/[^0-9]/g, ""));
+    const { error } = await adminDb().rpc("care_assessment_assessor_pay", {
+      _id: row.id, _fee_naira: amount, _paid: paid,
+    });
+    if (error) { toast.error(careErrorMessage(error, "Could not save the assessor's pay")); return; }
+    void after(paid ? "Marked as paid" : "Saved");
+  };
+
+  const payable = rows.filter((r) => r.status === "submitted" && r.assessor_person_id);
+
   if (loading) return <p className="py-8 text-center text-sm text-muted-foreground">Loading the assessment</p>;
 
   return (
@@ -182,10 +197,11 @@ const AssessmentSection = ({
       >
         {!live ? (
           <MuEmpty
+            art={art.objCalendar}
             title="No assessment arranged"
             description={preAssessmentReturned
               ? "Arrange the visit and assign an assessor."
-              : "The pre-assessment has to come back before a visit can be arranged."}
+              : "The visit can be arranged once the pre-assessment comes back, or once you record on the Overview that an assessment is needed."}
           />
         ) : (
           <MuTable
@@ -200,6 +216,62 @@ const AssessmentSection = ({
           />
         )}
       </MuSection>
+
+      {canArrange && payable.length > 0 && (
+        <MuSection
+          title="Assessor pay"
+          description="Pay is set per assessment. It can be marked paid once the clinical review accepts the assessment."
+          padded={false}
+        >
+          <div className="divide-y divide-line-soft">
+            {payable.map((row) => (
+              <div key={row.id} className="flex flex-wrap items-end gap-3 px-5 py-4">
+                <div className="min-w-0 flex-[1_1_200px]">
+                  <p className="text-sm font-semibold text-navy">{assessorName(row.assessor_person_id)}</p>
+                  <p className="text-xs text-muted-copy">
+                    {row.review_decision === "accepted"
+                      ? "Accepted by clinical review"
+                      : row.review_decision === "returned" ? "Sent back for more detail" : "Waiting for clinical review"}
+                  </p>
+                </div>
+                {row.assessor_paid_at ? (
+                  <>
+                    <Status
+                      label={`Paid ₦${(row.assessor_fee_naira ?? 0).toLocaleString("en-NG")} on ${formatDateTime(row.assessor_paid_at)}`}
+                      tone="good"
+                    />
+                    <Button type="button" variant="outline" className="h-10" onClick={() => void savePay(row, false)}>
+                      Undo
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <CareFormRow label="Amount (₦)">
+                      <input
+                        className={cxInputClass()}
+                        inputMode="numeric"
+                        value={fees[row.id] ?? (row.assessor_fee_naira?.toString() ?? "")}
+                        onChange={(e) => setFees((f) => ({ ...f, [row.id]: e.target.value }))}
+                      />
+                    </CareFormRow>
+                    <Button type="button" variant="outline" className="h-10" onClick={() => void savePay(row, false)}>
+                      Save amount
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-10"
+                      disabled={row.review_decision !== "accepted"}
+                      onClick={() => void savePay(row, true)}
+                    >
+                      Mark paid
+                    </Button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </MuSection>
+      )}
 
       {history.length > 0 && (
         <MuSection title="Assessment history" padded={false}>
@@ -271,7 +343,7 @@ const AssessmentSection = ({
       >
         {assessors.length === 0 ? (
           <p className="text-[14.5px] text-body">
-            No approved assessors. Approve a professional as an assessor first.
+            No approved assessors yet.
           </p>
         ) : (
           <SearchableSelect

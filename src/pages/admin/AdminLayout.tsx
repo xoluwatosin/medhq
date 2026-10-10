@@ -1,6 +1,7 @@
 import { Outlet, Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBell } from "@/components/admin/notifications/NotificationBell";
 import { LogOut, ArrowLeft, Menu, Search, UserCog, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,40 +14,65 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logoWhite from "@/assets/brand/medicconnect-logo-white.svg";
 import logoMark from "@/assets/brand/m-full-soft.svg";
+import logoNavy from "@/assets/brand/medicconnect-logo.svg";
+import { NotchTag, Watermark } from "@/components/mc/brand";
+import { BandSlotContext } from "@/components/admin/mu/AdminBand";
 import {
-  SidebarProvider, Sidebar, SidebarContent, SidebarGroup,
+  SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
   visibleDomains, myProfileDomain, domainLanding, domainDestinations, locateRoute,
-  isNavItemActive, type AdminDomain,
-} from "@/lib/admin-nav";
+  isNavItemActive, type AdminDomain, canOpenRoute } from "@/lib/admin-nav";
 
 /** The rail head: full lockup when open, the mark alone when retracted. */
+/** The rail in four short groups, so nine areas read as four decisions. */
+const RAIL_GROUPS: { label: string; keys: string[] }[] = [
+  { label: "Today", keys: ["overview", "me"] },
+  { label: "People", keys: ["care", "talent", "workforce", "programmes"] },
+  { label: "Reach", keys: ["inbox", "communications", "content"] },
+  { label: "Running the business", keys: ["finance", "insights", "administration"] },
+];
+
 const RailHead = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   return (
-    <div className={`flex shrink-0 items-center ${collapsed ? "justify-center px-0 pb-3 pt-4" : "px-4 pb-4 pt-5"}`}>
+    <div className={`flex shrink-0 items-center ${collapsed ? "justify-center px-0 pb-3 pt-4" : "px-3 pb-4 pt-4"}`}>
       {collapsed ? (
-        <img src={logoMark} alt="Medic Connect" className="h-7 w-7" />
+        <span className="flex h-10 w-10 items-center justify-center bg-white">
+          <img src={logoMark} alt="Medic Connect" className="h-6 w-6" />
+        </span>
       ) : (
-        <div>
-          <img src={logoWhite} alt="Medic Connect" className="h-6 w-auto" />
-          <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">Admin Centre</p>
-        </div>
+        <Link to="/admin" className="block w-full">
+          {/* The site header's white plate, so admin opens on the same mark. */}
+          <span className="flex items-center bg-white px-3.5 py-3 shadow-[4px_4px_0_hsl(var(--brand))]">
+            <img src={logoNavy} alt="Medic Connect" className="h-7 w-auto" />
+          </span>
+          <span className="mt-3 inline-flex"><NotchTag tone="blue" size="sm">Admin centre</NotchTag></span>
+        </Link>
       )}
     </div>
   );
 };
 
 /** Retract control, pinned to the foot of the rail. */
-const RailFoot = () => {
+const RailFoot = ({ name, email }: { name: string; email: string }) => {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "A";
   return (
-    <div className="shrink-0 p-2">
+    <div className="shrink-0 space-y-1 p-2">
+      {!collapsed && (
+        <Link to="/admin/me" className="flex items-center gap-2.5 px-2 py-2 hover:bg-white/10">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white text-[12px] font-extrabold text-navy">{initials}</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13.5px] font-bold text-white">{name}</span>
+            <span className="block truncate text-[11.5px] text-white/55">{email}</span>
+          </span>
+        </Link>
+      )}
       <button
         onClick={toggleSidebar}
         aria-label={collapsed ? "Widen the menu" : "Narrow the menu"}
@@ -82,6 +108,15 @@ const AdminLayout = () => {
   // The domain's own navigation. It only earns a row when the domain holds more
   // than one destination; specialist pages stay out of it.
   const localNav = here.domain && here.domain.items.length > 1 ? here.domain.items : [];
+
+  const [bandSlot, setBandSlot] = useState<HTMLElement | null>(null);
+
+  // Dialogs, sheets and menus render outside this layout, at the end of the
+  // page. Marking the page root lets the admin look reach them too.
+  useEffect(() => {
+    document.documentElement.classList.add("admin-kit-root");
+    return () => document.documentElement.classList.remove("admin-kit-root");
+  }, []);
 
   // Command palette: the fastest route between thirty-odd pages.
   useEffect(() => {
@@ -227,42 +262,53 @@ const AdminLayout = () => {
   }
 
   return (
+    <BandSlotContext.Provider value={bandSlot}>
     <SidebarProvider style={{ "--sidebar-width": "15rem", "--sidebar-width-icon": "4rem" } as React.CSSProperties}>
-      <div className="admin-kit flex min-h-dvh w-full bg-muted">
+      <div className="admin-kit flex min-h-dvh w-full bg-background">
         {/* Desktop command rail: the business domains, nothing else. */}
         <Sidebar collapsible="icon" className="hidden border-r border-navy/20 md:flex">
-          <SidebarContent className="flex flex-col gap-0">
+          <SidebarContent className="relative flex flex-col gap-0 overflow-hidden">
+            <Watermark glyph="o" size={260} opacity={0.08} className="-bottom-[90px] -left-[90px] top-auto" />
             <RailHead />
 
             <div className="mx-3 h-px shrink-0 bg-white/15" />
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
-              <SidebarGroup className="px-2 py-1">
-                <SidebarGroupContent>
-                  <SidebarMenu className="gap-1">
-                    {domains.map((domain) => (
-                      <SidebarMenuItem key={domain.key}>
-                        <SidebarMenuButton asChild isActive={here.domain?.key === domain.key} tooltip={domain.label}>
-                          <Link to={domainLanding(domain)}>
-                            <domain.icon className="h-[18px] w-[18px] shrink-0" />
-                            <span className="truncate">{domain.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+              {RAIL_GROUPS.map((group) => {
+                const inGroup = domains.filter((d) => group.keys.includes(d.key));
+                if (inGroup.length === 0) return null;
+                return (
+                  <SidebarGroup key={group.label} className="px-2 py-1.5">
+                    <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu className="gap-1">
+                        {inGroup.map((domain) => (
+                          <SidebarMenuItem key={domain.key}>
+                            <SidebarMenuButton asChild isActive={here.domain?.key === domain.key} tooltip={domain.label}>
+                              <Link to={domainLanding(domain)}>
+                                <span className="rail-tile flex h-7 w-7 shrink-0 items-center justify-center">
+                                  <domain.icon className="h-[16px] w-[16px]" />
+                                </span>
+                                <span className="truncate">{domain.label}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                );
+              })}
             </div>
 
             <div className="mx-3 h-px shrink-0 bg-white/15" />
 
-            <RailFoot />
+            <RailFoot name={adminDisplayName || "Admin"} email={user?.email ?? ""} />
           </SidebarContent>
         </Sidebar>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-hairline bg-background/95 px-3 backdrop-blur sm:px-6">
+          <header className="admin-top sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-white/10 bg-navy px-3 text-white sm:px-6">
             <div className="hidden md:block"><SidebarTrigger /></div>
 
             {/* Phone: contextual back to the parent page when on a detail route,
@@ -279,13 +325,13 @@ const AdminLayout = () => {
 
             {/* Where you are: domain, then destination, then a leaf for details. */}
             <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
-              <span className="hidden text-muted-foreground sm:inline">{here.domain?.label ?? "Admin"}</span>
-              <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground/60 sm:inline" />
-              <span className="truncate font-semibold text-navy">{here.item?.title ?? here.domain?.label ?? "Admin Centre"}</span>
+              <span className="hidden text-white/60 sm:inline">{here.domain?.label ?? "Admin"}</span>
+              <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 text-white/40 sm:inline" />
+              <span className="truncate font-bold text-white">{here.item?.title ?? here.domain?.label ?? "Admin Centre"}</span>
               {here.deeper && (
                 <>
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                  <span className="truncate text-muted-foreground">Details</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/40" />
+                  <span className="truncate text-white/60">Details</span>
                 </>
               )}
             </nav>
@@ -295,19 +341,21 @@ const AdminLayout = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setSearchOpen(true)}
-                className="hidden h-9 gap-2 border-hairline pl-2.5 pr-2 text-muted-foreground sm:flex"
+                className="hidden h-9 gap-2 border-white/30 bg-transparent pl-2.5 pr-2 text-white/80 hover:bg-white/10 hover:text-white sm:flex"
               >
                 <Search className="h-4 w-4" />
                 <span className="text-sm">Jump to…</span>
-                <kbd className="ml-4 rounded bg-muted px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground">⌘K</kbd>
+                <kbd className="ml-4 bg-white/15 px-1.5 py-0.5 font-sans text-[10px] font-medium text-white/80">⌘K</kbd>
               </Button>
               <Button variant="ghost" size="icon" className="sm:hidden" aria-label="Search admin" onClick={() => setSearchOpen(true)}>
                 <Search className="h-5 w-5" />
               </Button>
 
+              <NotificationBell />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-navy text-[12px] font-semibold text-white hover:bg-navy/90 hover:text-white" aria-label="Account menu">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 bg-white text-[12px] font-extrabold text-navy hover:bg-tint hover:text-navy" aria-label="Account menu">
                     {initials || "A"}
                   </Button>
                 </DropdownMenuTrigger>
@@ -338,7 +386,7 @@ const AdminLayout = () => {
 
           {/* The domain's own navigation, directly above its workspace. */}
           {localNav.length > 0 && (
-            <div className="sticky top-14 z-10 border-b border-hairline bg-background/95 backdrop-blur">
+            <div className="sticky top-14 z-10 bg-navy">
               <nav
                 aria-label={`${here.domain?.label} sections`}
                 className="mx-auto flex w-full max-w-[1400px] gap-1 overflow-x-auto px-3 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden"
@@ -350,10 +398,10 @@ const AdminLayout = () => {
                       key={item.url}
                       to={item.url}
                       aria-current={active ? "page" : undefined}
-                      className={`flex min-h-9 shrink-0 items-center gap-1.5 px-3 text-[13.5px] font-medium transition-colors ${
+                      className={`flex min-h-10 shrink-0 items-center gap-1.5 px-3.5 text-[13.5px] font-bold transition-colors ${
                         active
-                          ? "border-b-2 border-navy text-navy"
-                          : "border-b-2 border-transparent text-muted-foreground hover:text-navy"
+                          ? "bg-white text-navy"
+                          : "text-white/75 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
@@ -366,8 +414,21 @@ const AdminLayout = () => {
           )}
 
           <main className="flex-1">
-            <div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:px-8 lg:py-7">
-              <Outlet />
+            {/* Each page's navy band lands here, full width, under the tab rail. */}
+            <div ref={setBandSlot} />
+            <div className="mx-auto w-full max-w-[1400px] p-4 pt-8 sm:p-6 sm:pt-10 lg:px-8 lg:pb-10 lg:pt-10">
+              {canOpenRoute(location.pathname, { isSuperAdmin, permissions }) ? (
+                <Outlet />
+              ) : (
+                <div className="mx-auto max-w-[520px] py-16 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">No access</p>
+                  <h1 className="mt-2 text-2xl font-bold tracking-tight">This area is not part of your access.</h1>
+                  <p className="mt-3 text-sm text-muted-foreground">Ask the super admin if you need it.</p>
+                  <Button asChild className="mt-6">
+                    <Link to="/admin">Back to the overview</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </main>
         </div>
@@ -394,6 +455,7 @@ const AdminLayout = () => {
         </CommandList>
       </CommandDialog>
     </SidebarProvider>
+    </BandSlotContext.Provider>
   );
 };
 

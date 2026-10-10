@@ -303,7 +303,7 @@ const CONTACT_PARTS = [
   { key: "firstName", label: "First name" },
   { key: "lastName", label: "Last name" },
   { key: "phone", label: "Phone number" },
-  { key: "email", label: "Email address" },
+  { key: "email", label: "Email address (if they have one)" },
 ] as const;
 
 const sameName = (a: string, b: string) =>
@@ -362,7 +362,7 @@ export const ContactBlockAnswer = ({
         </p>
       )}
       <div className="flex min-w-0 flex-col gap-2">
-        <p className="text-[13px] font-bold text-ink2">Relationship to the person receiving care</p>
+        <p className="text-[13px] font-bold text-ink2">Relationship to the person receiving care{requiredParts.includes("relationship") ? "" : " (optional)"}</p>
         <div className="flex flex-wrap gap-2">
           {[...RELATIONSHIPS, RELATIONSHIP_OTHER].slice(0, 200).map((option) => {
             const selected = relationship === option;

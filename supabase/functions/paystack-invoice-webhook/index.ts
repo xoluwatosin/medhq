@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createHmac } from "node:crypto";
 import { mapStatus } from "../_shared/paystack-invoice.ts";
+import { confirmCarePayment, thankForCarePayment } from "../_shared/care-payment.ts";
 
 serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
@@ -24,9 +25,17 @@ serve(async (req) => {
   }
 
   const name = String(event?.event || "");
+  const data = event.data ?? {};
+
+  // A care payment made through checkout: confirmed with Paystack, recorded,
+  // and the family thanked.
+  if (name === "charge.success" && typeof data?.metadata?.invoice_id === "string") {
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await confirmCarePayment(admin as never, data.metadata.invoice_id, String(data.reference ?? "") || null);
+    return new Response("ok", { status: 200 });
+  }
   if (!name.startsWith("paymentrequest.")) return new Response("ok", { status: 200 });
 
-  const data = event.data ?? {};
   const requestCode = data.request_code ?? data.offline_reference;
   if (!requestCode) return new Response("ok", { status: 200 });
 
@@ -47,6 +56,12 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     })
     .eq("request_code", data.request_code ?? requestCode);
+
+  // A care payment made as a payment request is thanked for too.
+  if (status === "paid") {
+    const { data: inv } = await admin.from("paystack_invoices").select("id").eq("request_code", data.request_code ?? requestCode).maybeSingle();
+    if (inv) await thankForCarePayment(admin as never, inv.id);
+  }
 
   return new Response("ok", { status: 200 });
 });

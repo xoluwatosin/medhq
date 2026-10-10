@@ -2,38 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Medic Connect Typography Pack — Figtree variable font, self-hosted. */
+/* Figtree, self-hosted in the six files the design system ships. */
 @font-face {
   font-family: 'Figtree';
-  font-style: italic;
-  font-weight: 300 900;
+  font-style: normal;
+  font-weight: 400;
   font-display: swap;
-  src: url("/fonts/figtree-italic-latin-ext.woff2") format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url("/fonts/Figtree-Regular.ttf") format('truetype');
 }
 @font-face {
   font-family: 'Figtree';
   font-style: italic;
-  font-weight: 300 900;
+  font-weight: 400;
   font-display: swap;
-  src: url("/fonts/figtree-italic-latin.woff2") format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url("/fonts/Figtree-Italic.ttf") format('truetype');
 }
 @font-face {
   font-family: 'Figtree';
   font-style: normal;
-  font-weight: 300 900;
+  font-weight: 500;
   font-display: swap;
-  src: url("/fonts/figtree-normal-latin-ext.woff2") format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url("/fonts/Figtree-Medium.ttf") format('truetype');
 }
 @font-face {
   font-family: 'Figtree';
   font-style: normal;
-  font-weight: 300 900;
+  font-weight: 600;
   font-display: swap;
-  src: url("/fonts/figtree-normal-latin.woff2") format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url("/fonts/Figtree-SemiBold.ttf") format('truetype');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Figtree-Bold.ttf") format('truetype');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 800 900;
+  font-display: swap;
+  src: url("/fonts/Figtree-ExtraBold.ttf") format('truetype');
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -42,29 +52,32 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --browser-chrome: #FAF8F4;
+    --browser-chrome: #FFFFFF;
     --iphone-edge-top: hsl(var(--warm-white));
     --iphone-edge-bottom: hsl(var(--warm-white));
-    --active-edge-theme: #FAF8F4;
-    /* Medic Connect design guide palette. Warm white page, navy and brand blue. */
+    --active-edge-theme: #FFFFFF;
+    /* Medic Connect design system palette. The page is pure white; cream is retired. */
     --navy: 231 48% 28%;              /* #26306B */
     --brand: 232 54% 50%;             /* #3B4DC4 */
     --brand-soft: 233 73% 63%;        /* #5B6BE5 */
     --tint: 229 100% 97%;             /* #EEF1FF */
-    --warm-white: 40 38% 97%;         /* #FAF8F4 */
+    --warm-white: 0 0% 100%;          /* #FFFFFF, cream retired */
+    --navy-mid: 232 51% 41%;          /* #33409C bar charts, steps, middle tier */
+    --canvas: 230 100% 98%;           /* #F4F6FF app background */
+    --tint-deep: 231 62% 90%;         /* #D5DAF5 tape, hairlines on tint */
     --ink: 225 28% 14%;               /* #1A1F2E */
-    --body: 223 17% 27%;              /* #3A4152 */
-    --muted-copy: 224 11% 47%;        /* #6B7285 */
-    --label: 225 11% 59%;             /* #8A90A2 */
-    --hairline: 42 16% 87%;           /* #E4E1DA */
-    --hairline-warm: 40 15% 84%;      /* #DDD9D1 */
+    --body: 224 13% 33%;              /* #4A5060 */
+    --muted-copy: 229 10% 43%;        /* #63687A */
+    --label: 229 10% 43%;             /* #63687A, labels pass 4.5:1 */
+    --hairline: 41 17% 83%;           /* #DCD7CC */
+    --hairline-warm: 41 17% 83%;      /* #DCD7CC */
     --field-border: 42 11% 76%;       /* #C9C5BC */
     --hairline-tint: 231 62% 90%;     /* #D5DAF5 */
     --hairline-navy: 234 42% 46%;     /* #454FA8 */
     --outline-navy: 233 55% 66%;      /* #7A85D8 */
     --body-navy: 233 58% 86%;         /* #C6CBF0 */
     --muted-navy: 233 58% 78%;        /* #A8B0E8 */
-    --price: 0 100% 59%;              /* #FF2E2E, prices only */
+    --price: 0 72% 44%;               /* #C21F1F, price type only, never on navy */
 
     /* Candidate experience tokens. See docs/candidate-experience/design-guide.md */
     --desk: 42 22% 91%;               /* #EDEAE3 canvas behind cards */
@@ -111,7 +124,7 @@ All colors MUST be HSL.
     --accent: var(--tint);
     --accent-foreground: var(--navy);
 
-    --destructive: 0 72% 50%;
+    --destructive: var(--navy);       /* errors are navy and bold, never red */
     --destructive-foreground: 0 0% 100%;
 
     --border: var(--hairline);
@@ -119,7 +132,8 @@ All colors MUST be HSL.
     --ring: var(--brand);
 
     /* Soft surface scale from the uploaded Request care reference. */
-    --radius: 0.875rem;
+    --radius: 0px;                    /* square everywhere */
+    --radius-control: 10px;           /* buttons and fields only */
 
 
     /* Custom design tokens */
@@ -138,8 +152,9 @@ All colors MUST be HSL.
     --surface-emphasis: var(--navy);
     --surface-overlay: 231 48% 12%;
     --shadow-soft: 225 28% 14%;
-    --shadow-surface: 0 12px 28px -18px hsl(var(--navy) / 0.24), 0 2px 5px hsl(var(--navy) / 0.06);
-    --shadow-dialog: 0 24px 60px -22px hsl(var(--navy) / 0.34), 0 2px 5px hsl(var(--navy) / 0.07);
+    --shadow-surface: 6px 6px 0 hsl(var(--navy));
+    /* Pop-ups and sheets: the site's hard offset, in brand blue. */
+    --shadow-dialog: 8px 8px 0 hsl(var(--brand));
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --chart-1: 217 10% 64%;
@@ -203,7 +218,7 @@ All colors MUST be HSL.
     overflow-x: clip;
   }
 
-  html[data-edge-top="page"] { --iphone-edge-top: hsl(var(--warm-white)); --active-edge-theme: #FAF8F4; }
+  html[data-edge-top="page"] { --iphone-edge-top: hsl(var(--warm-white)); --active-edge-theme: #FFFFFF; }
   html[data-edge-top="card"] { --iphone-edge-top: hsl(var(--card)); --active-edge-theme: #FFFFFF; }
   html[data-edge-top="navy"] { --iphone-edge-top: hsl(var(--navy)); --active-edge-theme: #26306B; }
   html[data-edge-top="desk"] { --iphone-edge-top: hsl(var(--desk)); --active-edge-theme: #EDEAE3; }
@@ -264,15 +279,26 @@ All colors MUST be HSL.
   }
 
 
+  /* Headlines are always 800 with tight negative tracking and balanced wraps. */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans text-[hsl(var(--ink))];
-    font-weight: 500;
-    letter-spacing: -0.025em;
+    @apply font-sans text-[hsl(var(--navy))];
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
   }
 
-  h3, h4, h5, h6 {
-    font-weight: 600;
-    letter-spacing: -0.015em;
+  h4, h5, h6 {
+    letter-spacing: -0.03em;
+  }
+
+  /* Hard offset shadows, flat colour fields and solid lines only. */
+  :focus-visible {
+    outline-color: hsl(var(--brand));
+  }
+
+  ::selection {
+    background: hsl(var(--brand));
+    color: #fff;
   }
 }
 
@@ -286,24 +312,61 @@ All colors MUST be HSL.
     box-shadow: 0 20px 40px -10px hsl(var(--shadow-soft) / 0.15);
   }
 
-  /* The nav pill is one of only two rounded shapes in the system. */
+  /* The nav bar is square with a hard navy offset, like every card. */
   .pill-nav {
-    @apply rounded-full bg-white border border-border/60;
-    box-shadow: 0 8px 26px rgba(26, 31, 46, 0.07);
+    @apply bg-white;
+    border: 2px solid hsl(var(--navy));
+    box-shadow: 4px 4px 0 hsl(var(--navy));
   }
 
-  /* Legacy class names retained for route compatibility. Their visual
-     treatment now follows the shared soft, symmetric surface system. */
+  /* Legacy class names retained for route compatibility. Surfaces are square;
+     kit-curve-sm sits on buttons and fields, so it takes the 10px control radius. */
   .kit-curve {
-    border-radius: 16px;
+    border-radius: 0;
   }
 
   .kit-curve-sm {
-    border-radius: 12px;
+    border-radius: var(--radius-control);
   }
 
   .kit-curve-lg {
-    border-radius: 24px;
+    border-radius: 0;
+  }
+
+  /* Medic Connect brand shapes, from the design system's shape tokens. */
+  .mc-notch { clip-path: polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%); }
+  .mc-notch-sm { clip-path: polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%); }
+  .mc-chevron { clip-path: polygon(0 0,45% 0,100% 50%,45% 100%,0 100%,55% 50%); }
+  .mc-step-first { clip-path: polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%); }
+  .mc-step { clip-path: polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%,12px 50%); }
+  .mc-tag-left { clip-path: polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%); }
+  .mc-fold { clip-path: polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%); }
+  .mc-file { clip-path: polygon(0 0,70% 0,100% 25%,100% 100%,0 100%); }
+  .mc-ticket { clip-path: polygon(0 0,100% 0,100% calc(50% - 10px),calc(100% - 10px) 50%,100% calc(50% + 10px),100% 100%,0 100%,0 calc(50% + 10px),10px 50%,0 calc(50% - 10px)); }
+  .mc-bubble-left { clip-path: polygon(0 0,100% 0,100% calc(100% - 12px),40px calc(100% - 12px),22px 100%,24px calc(100% - 12px),0 calc(100% - 12px)); }
+  .mc-bubble-right { clip-path: polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 24px) calc(100% - 12px),calc(100% - 22px) 100%,calc(100% - 40px) calc(100% - 12px),0 calc(100% - 12px)); }
+
+  /* Ticker band: one linear loop, no easing, still for reduced motion. */
+  @keyframes mc-ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .mc-ticker-track { animation: mc-ticker 38s linear infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-ticker-track { animation: none; }
+  }
+
+  /* A card that settles straight when you reach for it. Colour and transform
+     over 220ms, nothing bounces. */
+  .mc-tilt {
+    transform: rotate(var(--mc-tilt, 0deg));
+    transition: transform 220ms cubic-bezier(0.2,0.7,0.2,1), box-shadow 220ms cubic-bezier(0.2,0.7,0.2,1);
+  }
+  @media (hover: hover) {
+    .mc-tilt:hover { transform: rotate(0deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-tilt { transition: none; }
   }
 
   /* Candidate experience shapes. The public site is square cornered, the
@@ -325,6 +388,127 @@ All colors MUST be HSL.
   .cx p, .cx-prose { text-wrap: pretty; }
   .cx-measure { max-width: 58ch; }
 
+  /* Sign-up follows the public site: square paper with a hard navy offset,
+     heavier headings and firmer fields. Scoped to the join shell only. */
+  .cx-join .cx-card,
+  .cx-join .cx-card-emph { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  .cx-join .cx-heading { font-weight: 800; letter-spacing: -0.04em; }
+  /* A card that is open paper on phones, with no frame. */
+  @media (max-width: 767px) {
+    .cx-join .cx-card.cx-flat-sm { border: 0; box-shadow: none; }
+  }
+  .cx-join input.cx-chip,
+  .cx-join select.cx-chip,
+  .cx-join textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 52px; font-size: 16px; background-color: #fff; }
+  .cx-join label { font-size: 14.5px; font-weight: 800; color: hsl(var(--navy)); }
+  .cx-join button.cx-control[type="submit"] { min-height: 54px; font-size: 16.5px; font-weight: 800; box-shadow: 4px 4px 0 hsl(var(--brand)); }
+  .cx-join button.cx-control[type="submit"]:disabled { box-shadow: none; }
+  .cx-join input.cx-chip:focus,
+  .cx-join select.cx-chip:focus,
+  .cx-join textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
+
+  /* The signed-in candidate portal in the house style: square paper, quiet
+     hairlines on everyday cards, a hard offset only where the next action is,
+     bold navy headings, firm fields and controls. Scoped to .cx-portal so the
+     admin screens that share these primitives are untouched. */
+  .cx-portal .cx-card { border-radius: 0; border: 2px solid hsl(var(--navy) / 0.12); }
+  .cx-portal .cx-card-emph { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  .cx-portal .cx-card-emph.bg-navy { border: 0; box-shadow: 6px 6px 0 hsl(var(--brand)); }
+  .cx-portal .cx-card.cx-card-warn { border-radius: 0; border: 2px solid hsl(var(--navy)); box-shadow: 6px 6px 0 hsl(var(--navy)); }
+  /* No amber on candidate pages: anything that needs the candidate uses the
+     brand palette. Notes sit on tint, and the "needs you" pill is price red. */
+  .cx-portal .bg-warn-bg, .cx-portal .bg-warn-wash,
+  .cx-join .bg-warn-bg, .cx-join .bg-warn-wash { background-color: hsl(var(--tint)); }
+  .cx-portal .border-warn-line, .cx-join .border-warn-line { border-color: hsl(var(--brand) / 0.35); }
+  .cx-portal .text-warn-ink, .cx-join .text-warn-ink { color: hsl(var(--navy)); }
+  .cx-portal .cx-pill.bg-warn-bg, .cx-join .cx-pill.bg-warn-bg { background-color: hsl(var(--price)); color: #fff; }
+  .cx-portal .cx-heading { font-weight: 800; letter-spacing: -0.04em; }
+  .cx-portal .cx-chip { border-radius: 0; }
+  .cx-portal input.cx-chip,
+  .cx-portal select.cx-chip,
+  .cx-portal textarea.cx-chip { border-radius: 10px; border-width: 2px; border-color: hsl(var(--navy) / 0.2); min-height: 48px; font-size: 15.5px; background-color: #fff; }
+  .cx-portal input.cx-chip:focus,
+  .cx-portal select.cx-chip:focus,
+  .cx-portal textarea.cx-chip:focus { border-color: hsl(var(--brand)); }
+  .cx-portal .cx-control.bg-navy { box-shadow: 4px 4px 0 hsl(var(--brand)); font-weight: 800; }
+  .cx-portal .cx-control.bg-navy:disabled { box-shadow: none; }
+
+  /* One field look on candidate pages: every text box, phone dropdown and
+     site dropdown is 48px, 2px navy-tint border, 10px corners, a navy arrow. */
+  .cx-portal :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-join :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-portal button[role="combobox"], .cx-join button[role="combobox"] {
+    border-radius: 10px; border: 2px solid hsl(var(--navy) / 0.2); background-color: #fff; font-size: 15.5px; color: hsl(var(--ink));
+  }
+  .cx-portal :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select), .cx-join :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select),
+  .cx-portal button[role="combobox"], .cx-join button[role="combobox"] { min-height: 48px; }
+  .cx-portal :is(input, textarea, select):focus, .cx-join :is(input, textarea, select):focus,
+  .cx-portal button[role="combobox"]:focus, .cx-join button[role="combobox"]:focus { border-color: hsl(var(--brand)); outline: none; box-shadow: none; }
+  .cx-portal button[role="combobox"] > svg, .cx-join button[role="combobox"] > svg { color: hsl(var(--navy)); opacity: 1; }
+  .cx-portal select, .cx-join select {
+    appearance: none; padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2326306B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .cx-portal label, .cx-portal .cx-label { color: hsl(var(--navy)); }
+  .cx-portal .cx-section-head h2.cx-heading { font-size: 24px; line-height: 1.1; color: hsl(var(--navy)); }
+  .cx-portal .cx-section-head { border-top: 4px solid hsl(var(--navy)); padding-top: 18px; margin-top: 10px; }
+  @media (min-width: 768px) { .cx-portal .cx-section-head h2.cx-heading { font-size: 28px; } }
+
+  /* The family question pages (pre-assessment, its intake, care details) in
+     the house style: square choices with a hard navy offset that turn tint
+     with a blue offset when picked, firm 2px fields at 16px so phones never
+     zoom, and generous touch targets. Scoped to .cx-family, so the admin and
+     assessor screens that share these controls are untouched. */
+  .cx-family .cx-control, .cx-family .cx-chip { border-radius: 0; }
+  .cx-family button.cx-control[aria-pressed],
+  .cx-family button.cx-control[role="checkbox"] {
+    min-height: 54px; padding: 13px 16px; font-size: 16px; font-weight: 700; line-height: 1.35;
+    border: 2px solid hsl(var(--navy)); background-color: #fff; color: hsl(var(--ink));
+    box-shadow: 3px 3px 0 hsl(var(--navy));
+    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+  }
+  .cx-family button.cx-control[aria-pressed]:hover,
+  .cx-family button.cx-control[role="checkbox"]:hover { background-color: hsl(var(--tint) / 0.6); }
+  .cx-family button.cx-control[aria-pressed]:active,
+  .cx-family button.cx-control[role="checkbox"]:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 hsl(var(--navy)); }
+  .cx-family button.cx-control[aria-pressed="true"],
+  .cx-family button.cx-control[role="checkbox"][aria-checked="true"] {
+    background-color: hsl(var(--tint)); color: hsl(var(--navy)); font-weight: 800;
+    box-shadow: 3px 3px 0 hsl(var(--brand));
+  }
+  .cx-family button.cx-control[aria-pressed] .cx-chip,
+  .cx-family button.cx-control[role="checkbox"] .cx-chip { height: 22px; width: 22px; border-width: 2px; border-color: hsl(var(--navy)); }
+  .cx-family :is(input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="search"], input:not([type]), textarea, select),
+  .cx-family button[role="combobox"] {
+    border-radius: 0; border: 2px solid hsl(var(--navy)); background-color: #fff; font-size: 16px; color: hsl(var(--ink));
+  }
+  .cx-family :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select),
+  .cx-family button[role="combobox"] { min-height: 52px; }
+  .cx-family textarea { padding: 12px 14px; line-height: 1.55; }
+  .cx-family :is(input, textarea, select):focus,
+  .cx-family button[role="combobox"]:focus { border-color: hsl(var(--brand)); outline: none; box-shadow: 0 0 0 3px hsl(var(--brand) / 0.22); }
+  .cx-family select {
+    appearance: none; padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2326306B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .cx-family ::placeholder { color: hsl(var(--label)); }
+
+  /* Long text on the public site (privacy, terms): the kit's reading measure,
+     body grey at 16 to 17px, navy headings opened by a hairline. */
+  .kit-prose { max-width: 760px; color: hsl(var(--body)); font-size: 16px; line-height: 1.7; }
+  @media (min-width: 640px) { .kit-prose { font-size: 17px; } }
+  .kit-prose section + section { margin-top: 48px; padding-top: 28px; border-top: 4px solid hsl(var(--navy)); }
+  .kit-prose h2 { color: hsl(var(--navy)); font-size: 26px; line-height: 1.2; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 14px; }
+  .kit-prose h3 { color: hsl(var(--ink)); font-size: 19px; line-height: 1.4; font-weight: 700; margin: 26px 0 10px; }
+  .kit-prose p + p { margin-top: 14px; }
+  .kit-prose ul { list-style: disc; padding-left: 22px; margin: 10px 0; }
+  .kit-prose li + li { margin-top: 8px; }
+  .kit-prose li::marker { color: hsl(var(--brand)); }
+  .kit-prose strong { color: hsl(var(--ink)); font-weight: 700; }
+  .kit-prose a { color: hsl(var(--brand)); text-decoration: underline; text-underline-offset: 3px; }
+
   .surface-quiet {
     border: 1px solid hsl(var(--line));
     border-radius: 16px;
@@ -345,9 +529,10 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-surface);
   }
 
+  /* Pop-ups are drawn like the site's cards: square, a navy rule, a hard offset. */
   .surface-dialog {
-    border: 1px solid hsl(var(--line));
-    border-radius: 24px;
+    border: 2px solid hsl(var(--navy));
+    border-radius: 0;
     background: hsl(var(--card));
     box-shadow: var(--shadow-dialog);
   }
@@ -396,21 +581,25 @@ All colors MUST be HSL.
   }
 
   /* Eyebrow and label, the only uppercase type in the system. */
+  /* Their default colours have no specificity, so a colour set on the element
+     (pale blue on navy, for example) always wins. */
   .eyebrow {
-    @apply uppercase font-bold text-[12px] text-[hsl(var(--brand))];
+    @apply uppercase font-extrabold text-[13px];
     letter-spacing: 0.2em;
   }
+  :where(.eyebrow) { color: hsl(var(--brand)); }
 
   .label-caps {
-    @apply uppercase font-bold text-[11px] text-[hsl(var(--label))];
+    @apply uppercase font-extrabold text-[11px];
     letter-spacing: 0.16em;
   }
+  :where(.label-caps) { color: hsl(var(--label)); }
 
-  /* Prices are the only place hot red appears. */
+  /* Price type only, never on navy. */
   .price {
-    @apply text-[hsl(var(--price))] font-bold;
+    @apply text-[hsl(var(--price))] font-extrabold;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
   }
 
 
@@ -705,24 +894,25 @@ All colors MUST be HSL.
 
   /* Substack-style drop cap — explicit span (not ::first-letter) for reliability */
   .drop-cap-letter {
-    @apply font-serif font-bold float-left mr-2;
-    font-size: 3.5rem;
-    line-height: 0.9;
+    @apply float-left mr-3 bg-brand px-3 font-black text-white;
+    font-size: 3.2rem;
+    line-height: 1.15;
     margin-top: 6px;
-    color: hsl(var(--primary));
+    transform: rotate(-3deg);
+    box-shadow: 4px 4px 0 hsl(var(--navy));
     shape-outside: margin-box;
   }
 
   /* Edit/preview typography parity — editor matches renderSection() output */
   .rich-text-editor .ProseMirror {
-    @apply font-serif text-[1.0625rem] sm:text-[1.125rem] leading-[1.75] text-foreground/90;
+    @apply text-[17px] sm:text-[18.5px] leading-[1.75] text-ink;
     outline: none;
   }
   .rich-text-editor .ProseMirror h2 {
-    @apply text-[1.75rem] sm:text-3xl font-bold font-serif mt-12 mb-4 leading-tight tracking-tight;
+    @apply text-[26px] sm:text-[32px] font-extrabold text-navy mt-14 mb-4 leading-[1.1] tracking-[-0.04em];
   }
   .rich-text-editor .ProseMirror h3 {
-    @apply text-xl sm:text-2xl font-semibold font-serif mt-8 mb-3 leading-snug;
+    @apply text-[20px] sm:text-[22px] font-extrabold text-navy mt-10 mb-3 leading-snug tracking-[-0.03em];
   }
   .rich-text-editor .ProseMirror h4 {
     @apply text-lg font-semibold mt-6 mb-2;
@@ -731,7 +921,7 @@ All colors MUST be HSL.
     @apply my-5;
   }
   .rich-text-editor .ProseMirror blockquote {
-    @apply border-l-[3px] border-primary pl-5 sm:pl-6 py-2 my-8 text-lg sm:text-xl italic text-muted-foreground font-serif leading-relaxed;
+    @apply my-10 bg-tint px-6 py-6 text-[20px] font-extrabold leading-[1.4] tracking-[-0.02em] text-navy sm:px-8 sm:text-[22px];
   }
   .rich-text-editor .ProseMirror ul {
     @apply list-disc pl-6 space-y-2 my-5;
@@ -784,32 +974,155 @@ All colors MUST be HSL.
     display: none;
   }
 
-
 }
 
   
 
 
 /* ---------------------------------------------------------------------------
-   Admin centre: retain its density while sharing the soft surface language.
+   Admin centre: the site's square, navy register, plainer. No tilt, no
+   offset shadows, no tape; clip art only in empty states. Surfaces are
+   square with a 1px line; headings are heavy navy Figtree, never serif.
 --------------------------------------------------------------------------- */
 @layer components {
-  .admin-kit :is(.rounded-lg, .rounded-xl, .rounded-2xl) {
-    border-radius: 16px;
+  .admin-kit :is(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+    border-radius: 0;
   }
 
-  .admin-kit :is(button, [role="tab"], input, select, textarea).rounded-md,
-  .admin-kit :is(button, [role="tab"]) {
-    border-radius: 10px;
+  .admin-kit :is(button, [role="tab"], input, select, textarea) {
+    border-radius: 0;
   }
 
-  .admin-kit :is(.rounded-full, [role="progressbar"], [role="progressbar"] > *) {
+  /* Round only where round means something: avatars, switches, radios, progress. */
+  .admin-kit :is([role="switch"], [role="switch"] > span, [role="radio"], [role="progressbar"], [role="progressbar"] > *, .admin-round) {
     border-radius: 9999px;
   }
 
-  .admin-kit [data-sidebar="menu-button"] {
-    border-radius: 12px;
+  /* Cards are flat panels on a line, not floating tiles. */
+  .admin-kit :is(.shadow, .shadow-sm, .shadow-md) {
+    box-shadow: none;
   }
+
+  /* The serif alias was never a serif; headings are heavy navy sans. */
+  .admin-kit .font-serif {
+    font-family: inherit;
+  }
+  .admin-kit main h1 {
+    color: hsl(var(--navy));
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-size: 26px;
+  }
+  @media (min-width: 640px) {
+    .admin-kit main h1 { font-size: 30px; }
+  }
+  .admin-kit main h2 { color: hsl(var(--navy)); }
+
+  /* shadcn tabs read as the hairline rail: an underline, not a grey pill box. */
+  .admin-kit div[role="tablist"][data-orientation] {
+    background: transparent;
+    height: auto;
+    padding: 0;
+    gap: 0.25rem;
+    border-bottom: 2px solid hsl(var(--navy));
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"] {
+    min-height: 44px;
+    padding: 0 0.875rem;
+    background: transparent;
+    box-shadow: none;
+    font-weight: 700;
+    color: hsl(var(--navy) / 0.7);
+  }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"]:hover { background: hsl(var(--tint)); color: hsl(var(--navy)); }
+  .admin-kit div[role="tablist"][data-orientation] > [role="tab"][data-state="active"] {
+    background: hsl(var(--navy));
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .admin-kit [data-sidebar="menu-button"] {
+    border-radius: 0;
+  }
+
+  /* Pop-ups render outside the layout; the root carries the same look. */
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper] > *) {
+    border-radius: 0;
+  }
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"]) :is(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, button, input, select, textarea) {
+    border-radius: 0;
+  }
+  .admin-kit-root :is([role="dialog"], [role="alertdialog"]) :is(h2, [id$="-title"]) {
+    color: hsl(var(--navy));
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Badges and the shared controls are square in admin. */
+  .admin-kit :is(.cx-control, .rounded-full.border.text-xs.font-semibold) {
+    border-radius: 0;
+  }
+
+  /* Table heads: a navy bar with small white caps, the same on every list. */
+  .admin-kit thead {
+    background: hsl(var(--navy));
+  }
+  .admin-kit thead th {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+    /* The page-wide anywhere rule split headings mid-word ("LOCATIO N").
+       Headings wrap only between words. */
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+  }
+  .admin-kit thead tr { border-bottom: 0; }
+  .admin-kit thead tr:hover { background: transparent; }
+
+  /* Tables sit on a card with the site's navy edge and hard offset. */
+  /* Only a list table standing on its own; a table inside a card is the card's. */
+  .admin-kit main div:has(> table > thead):not(:has(> table thead.bg-navy)):not(section > div):not(section div div) {
+    border: 2px solid hsl(var(--navy));
+    box-shadow: 6px 6px 0 hsl(var(--navy));
+    background: hsl(var(--card));
+  }
+
+  /* Buttons are the site's: square, heavy, a navy edge and a hard offset. */
+  .admin-kit main :is(button, a).bg-primary {
+    border: 2px solid hsl(var(--navy));
+    box-shadow: 3px 3px 0 hsl(var(--navy));
+    font-weight: 800;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+  }
+  .admin-kit main :is(button, a).bg-primary:active { transform: translate(2px, 2px); box-shadow: none; }
+  .admin-kit main :is(button, a).border-input {
+    border: 2px solid hsl(var(--navy));
+    color: hsl(var(--navy));
+    font-weight: 700;
+  }
+
+  /* On the navy band: blue buttons with a white offset, outlines in white. */
+  .admin-kit .admin-band :is(button, a).bg-primary {
+    border-color: #fff;
+    box-shadow: 4px 4px 0 #fff;
+  }
+  .admin-kit .admin-band :is(button, a).border-input {
+    background: transparent;
+    border-color: hsl(0 0% 100% / 0.7);
+    color: #fff;
+  }
+  .admin-kit .admin-band :is(button, a).border-input:hover { background: hsl(0 0% 100% / 0.12); color: #fff; }
+  .admin-kit .admin-band :is(button, a):is(.hover\:bg-accent, [class*="variant-ghost"]):not(.bg-primary):not(.border-input) { color: #fff; }
+
+  /* The navy top bar. */
+  .admin-kit .admin-top [data-sidebar="trigger"] { color: #fff; }
+  .admin-kit .admin-top [data-sidebar="trigger"]:hover { background: hsl(0 0% 100% / 0.12); }
 
   /* Navy command rail: the admin sidebar is a navy surface, not a grey card. */
   .admin-kit {
@@ -828,8 +1141,8 @@ All colors MUST be HSL.
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    font-weight: 600;
-    color: hsl(0 0% 100% / 0.45);
+    font-weight: 800;
+    color: hsl(var(--brand-soft));
     padding-left: 0.75rem;
     margin-bottom: 0.25rem;
   }
@@ -838,7 +1151,7 @@ All colors MUST be HSL.
   .admin-kit [data-sidebar="menu-button"] {
     color: hsl(0 0% 100% / 0.78);
     font-size: 14.5px;
-    min-height: 2.75rem;
+    min-height: 2.5rem;
     gap: 0.7rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
@@ -854,11 +1167,26 @@ All colors MUST be HSL.
     transform: translateY(1px);
   }
 
+  /* Each area's icon sits on its own small tile. */
+  .admin-kit [data-sidebar="menu-button"] .rail-tile {
+    background: hsl(0 0% 100% / 0.08);
+    color: hsl(0 0% 100% / 0.85);
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+  .admin-kit [data-sidebar="menu-button"]:hover .rail-tile { background: hsl(0 0% 100% / 0.16); color: #fff; }
+
+  /* Where you are: a white block, navy words, the tile in brand blue, a hard offset. */
   .admin-kit [data-sidebar="menu-button"][data-active="true"] {
+    background: #fff;
+    color: hsl(var(--navy));
+    font-weight: 800;
+    box-shadow: 4px 4px 0 hsl(var(--brand));
+  }
+  .admin-kit [data-sidebar="menu-button"][data-active="true"] .rail-tile {
     background: hsl(var(--brand));
     color: #fff;
-    font-weight: 600;
   }
+  .admin-kit [data-sidebar="menu-button"][data-active="true"]:hover { background: #fff; color: hsl(var(--navy)); }
 
   /* Retracted: square icon plates, centred, still comfortably tappable. */
   .admin-kit [data-collapsible="icon"] [data-sidebar="menu-button"] {
@@ -893,8 +1221,8 @@ html.a11y-text-2 { --a11y-text-size: 20px; --a11y-heading-size: 25px; --a11y-sma
 html.a11y-text-3 { --a11y-text-size: 24px; --a11y-heading-size: 30px; --a11y-small-size: 18px; --a11y-public-text-size: 21px; }
 
 /* Public Medic Connect pages share the reflowing text-size preference without
-   scaling the viewport. Route handling removes these classes from Admin,
-   Candidate Portal and Heard, while the more tightly controlled form rules
+   scaling the viewport. Route handling removes these classes from Admin
+   and the Candidate Portal, while the more tightly controlled form rules
    below retain their dedicated type scale. */
 html[class*="a11y-text-"] .mc-a11y-public :where(
   p, a, button, label, input, textarea, select, dt, dd, li

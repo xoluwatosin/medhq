@@ -7,6 +7,8 @@ import {
 import { useCatalogue } from "@/hooks/useCatalogue";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
+import { MuEmpty } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 
 interface Props {
   open: boolean;
@@ -26,14 +28,14 @@ export function ServicePickerModal({ open, onClose, onSelect }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Pick from Catalogue</DialogTitle>
+          <DialogTitle>Pick from the catalogue</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
           {categories.map((cat) => {
             const catServices = services.filter((s) => s.category_id === cat.id);
             return (
               <div key={cat.id} className="mb-6">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                <h4 className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                   {cat.name}
                 </h4>
                 <div className="space-y-1">
@@ -41,7 +43,7 @@ export function ServicePickerModal({ open, onClose, onSelect }: Props) {
                     <button
                       key={svc.id}
                       onClick={() => handleSelect(svc.name, svc.price)}
-                      className="w-full flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent transition-colors"
                     >
                       <span>{svc.name}</span>
                       <div className="flex items-center gap-2">
@@ -53,16 +55,18 @@ export function ServicePickerModal({ open, onClose, onSelect }: Props) {
                     </button>
                   ))}
                   {catServices.length === 0 && (
-                    <p className="text-xs text-muted-foreground px-3 py-2">No services yet</p>
+                    <p className="text-xs text-muted-foreground px-3 py-2">No services in this category yet.</p>
                   )}
                 </div>
               </div>
             );
           })}
           {categories.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No catalogue items. Go to the Catalogue tab to add services.
-            </p>
+            <MuEmpty
+              art={art.objPriceTagNaira}
+              title="No catalogue items"
+              description="Add services on the Catalogue tab, then pick them here."
+            />
           )}
         </ScrollArea>
       </DialogContent>

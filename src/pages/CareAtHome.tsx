@@ -2,96 +2,37 @@ import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { medicalBusinessSchema } from "@/lib/medical-schema";
-import AudienceHero from "@/components/home/AudienceHero";
-import KitFlipCard, { KitService } from "@/components/home/KitFlipCard";
+import ServiceCards, { type ServiceCard } from "@/components/mc/ServiceCards";
+import { art } from "@/components/mc/art";
 import CTASection from "@/components/CTASection";
-import { KitMain, KitSection } from "@/components/kit/KitLayout";
-import { MessageCircle } from "lucide-react";
+import { KitMain } from "@/components/kit/KitLayout";
+import { Watermark } from "@/components/mc/brand";
 
-import clinicalImg from "@/assets/services/clinical-home-care.jpg";
-import postOpImg from "@/assets/services/post-operative.jpg";
-import abroadImg from "@/assets/hero/clinical-hero.jpg";
-import antenatalImg from "@/assets/services/antenatal-care.jpg";
-import postnatalImg from "@/assets/services/postnatal-care.jpg";
-import nannyImg from "@/assets/services/nanny-childcare.jpg";
-import eldercareImg from "@/assets/services/eldercare.jpg";
-import pediatricImg from "@/assets/services/pediatric-care.jpg";
 import KitPillHeading from "@/components/kit/KitPillHeading";
+import ServiceDirectory from "@/components/mc/ServiceDirectory";
+import { directoryGroups } from "@/content/seo/site-directory";
 
-const homeServices: KitService[] = [
-  {
-    eyebrow: "Clinical",
-    title: "Clinical home care",
-    description:
-      "Skilled nursing, chronic illness management and medical support, delivered at home by qualified healthcare professionals.",
-    href: "/clinical-home-care",
-    image: clinicalImg,
-    back: "navy",
-  },
-  {
-    eyebrow: "Recovery",
-    title: "Post-surgical care at home",
-    description:
-      "Recover at home with skilled nurses managing wounds, drains, medication and mobility. Daily reports keep your surgeon and family in the loop.",
-    href: "/post-surgical-care",
-    image: postOpImg,
-    back: "brand",
-  },
-  {
-    eyebrow: "Diaspora",
-    title: "Care from abroad",
-    description:
-      "Coordinating care for a loved one in Nigeria from overseas. Verified visits, photo documented reports and a single point of contact across time zones.",
-    href: "/care-from-abroad",
-    image: abroadImg,
-    back: "tint",
-  },
-  {
-    eyebrow: "Maternity",
-    title: "Antenatal care at home",
-    description:
-      "Pregnancy monitoring at home: vitals checks, self testing support, telehealth appointments and education on nutrition, rest and warning signs.",
-    href: "/antenatal-care",
-    image: antenatalImg,
-    back: "outline",
-  },
-  {
-    eyebrow: "Maternity",
-    title: "Postnatal care and Omugwo",
-    description:
-      "Rest, recover and bond with your baby. Professional postnatal support for new mothers and families, honouring traditional Nigerian care practices.",
-    href: "/postnatal-care",
-    image: postnatalImg,
-    back: "brand",
-  },
-  {
-    eyebrow: "Family",
-    title: "Nanny and childcare",
-    description:
-      "Safe, reliable and personalised care for your children. Trusted nannies matched to your family's needs and values.",
-    href: "/nanny-childcare",
-    image: nannyImg,
-    back: "navy",
-  },
-  {
-    eyebrow: "Eldercare",
-    title: "Eldercare and companion care",
-    description:
-      "Dignified care that helps seniors maintain independence and quality of life. Compassionate companions who treat your loved ones like family.",
-    href: "/eldercare",
-    image: eldercareImg,
-    back: "outline",
-  },
-  {
-    eyebrow: "Specialist",
-    title: "Pediatric and special needs",
-    description:
-      "Specialised support for children with medical conditions and developmental needs. Trained caregivers who understand the challenges families face.",
-    href: "/pediatric-care",
-    image: pediatricImg,
-    back: "tint",
-  },
+/**
+ * The care at home service lines with starting prices from the published price
+ * list (src/content/seo/governed-modules.ts). An empty price means none is
+ * published; the card says it is quoted after assessment.
+ */
+const homeServices: ServiceCard[] = [
+  { title: "Clinical home care", line: "Skilled nursing and medical support at home.", href: "/clinical-home-care", price: "₦18,000", art: art.proNurseKit },
+  { title: "Post-surgical care", line: "Wounds, drains, medication and mobility after surgery.", href: "/post-surgical-care", price: "₦20,000", art: art.objWalkingFrame },
+  { title: "Antenatal care", line: "Pregnancy checks and support at home.", href: "/antenatal-care", price: "₦30,000", art: art.midwifePregnantBp },
+  { title: "Postnatal care and Omugwo", line: "Rest, recover and bond with your baby.", href: "/postnatal-care", price: "₦20,000", art: art.proPostnatal },
+  { title: "Nanny and childcare", line: "Trusted nannies matched to your family.", href: "/nanny-childcare", price: "", art: art.nannyReading },
+  { title: "Paediatric and additional needs", line: "Support for children with medical or developmental needs.", href: "/pediatric-care", price: "", art: art.charBoy },
+  { title: "Eldercare", line: "Dignified care that keeps older relatives independent.", href: "/eldercare", price: "₦18,000", art: art.charGrandma },
+  // /caregiver owns the "hire a caregiver" search; this page owns home care in
+  // general, so it links down rather than competing for the same query.
+  { title: "Caregivers", line: "Personal care, company and appointment escort.", href: "/caregiver", price: "₦18,000", art: art.charCaregiver },
+  { title: "Care from abroad", line: "One contact in Nigeria for families overseas.", href: "/care-from-abroad", price: "", art: art.diasporaSon },
 ];
+
+const lead =
+  "Vetted nurses, nannies and carers placed in your home, usually within 48 hours. Services may begin with a ₦35,000 care needs assessment.";
 
 const CareAtHome = () => (
   <div className="min-h-dvh bg-background animate-fade-in">
@@ -103,41 +44,55 @@ const CareAtHome = () => (
     />
     <MedicHeader />
 
-    <AudienceHero variant="centred">
-      <div className="mx-auto max-w-[820px] text-center">
-        <p className="eyebrow text-muted-navy">Care at home</p>
-        <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" className="mt-5" />
-        <p className="mx-auto mt-6 max-w-[54ch] text-[18px] leading-[1.6] text-body-navy sm:text-[21px]">
-          Vetted nurses, nannies and carers placed in your home, usually within 48 hours. So you can stop carrying it all on your own.
-        </p>
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="https://wa.me/2348126988237"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="kit-curve-sm inline-flex items-center gap-2 bg-white px-7 py-3.5 text-[16px] font-semibold text-navy transition-opacity duration-200 hover:opacity-90"
-          >
-            <MessageCircle className="h-5 w-5" aria-hidden="true" />
-            Chat on WhatsApp
-          </a>
-          <a
-            href="tel:+2348126988237"
-            className="kit-curve-sm inline-flex items-center gap-2 border-[1.5px] border-outline-navy px-7 py-3.5 text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-hairline-navy"
-          >
-            Call +234 812 698 8237
-          </a>
+    {/* Shorter navy hero; on desktop the first row of service cards hangs across
+        its bottom edge, the way the home page doors do. */}
+    {/* Phones and tablets (design 1): the boxed headline aligned left, the
+        paragraph beside the family at the door, and the first row of tiles
+        rising over the band's bottom edge. */}
+    <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px] lg:hidden">
+      <Watermark glyph="o" size={360} opacity={0.12} className="-right-[150px] -top-[90px]" />
+      <div className="relative mx-auto max-w-[720px] px-[22px] pb-[86px] sm:px-[50px]">
+        {/* On tablets the illustration is taller, so the headline keeps to its left. */}
+        <div className="sm:max-w-[60%]">
+          <KitPillHeading text="Care that comes to your door" accent={[0]} align="left" />
         </div>
+        <p className="mt-5 max-w-[54%] text-[15px] leading-[1.55] text-body-navy sm:max-w-[48%] sm:text-[18px]">{lead}</p>
+        <img
+          src={art.familyDoorNurse}
+          alt=""
+          className="pointer-events-none absolute bottom-[70px] right-2 h-[170px] max-w-[44%] object-contain object-right-bottom sm:right-[50px] sm:h-[230px]"
+        />
       </div>
-    </AudienceHero>
+    </section>
 
-    <KitMain>
-      <KitSection eyebrow="Services" title="Care at home services" intro="Every plan begins with a home care needs assessment, then we match a vetted professional to the household.">
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
-          {homeServices.map((service) => (
-            <KitFlipCard key={service.href} {...service} />
-          ))}
-        </div>
-      </KitSection>
+    {/* Desktop: shorter navy hero; the first row of service cards hangs across
+        its bottom edge, the way the home page doors do. */}
+    <section className="relative -mt-[114px] hidden overflow-hidden bg-navy pt-[150px] lg:block">
+      <Watermark glyph="o" size={620} opacity={0.12} className="-right-[220px] -top-[160px]" />
+      <div className="relative mx-auto max-w-[920px] px-[50px] pb-[200px] text-center">
+        {/* Only one hero shows at a time; the hidden one is display:none, so the page has one visible h1. */}
+        <KitPillHeading text="Care that comes to your door" accent={[0]} align="centre" />
+        <p className="mx-auto mt-6 max-w-[58ch] text-[20px] leading-[1.6] text-body-navy">{lead}</p>
+      </div>
+    </section>
+
+    <KitMain className="relative -mt-[64px] pt-0 lg:-mt-[160px]">
+      <section aria-labelledby="services-heading" className="relative">
+        {/* The line the first row of cards hangs from. */}
+        <div aria-hidden="true" className="absolute inset-x-0 top-[2px] hidden h-[3px] bg-brand-soft lg:block" />
+        {/* The hero carries the page heading; this one is for screen readers and the outline. */}
+        <h2 id="services-heading" className="sr-only">
+          Care at home services
+        </h2>
+        <ServiceCards services={homeServices} />
+      </section>
+
+      <ServiceDirectory
+        id="all-care-heading"
+        eyebrow="Everything we arrange at home"
+        title="Find the care you need"
+        groups={directoryGroups("clinical", "maternity", "children", "older", "guides")}
+      />
 
       <CTASection
         headline="Ready to arrange care at home?"

@@ -6,7 +6,7 @@
 // it. Editing an annex here changes what future contracts carry. It never
 // touches a contract already issued: that pack is frozen at issue.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FileText, Loader2, Paperclip, Plus, Save, Trash2, Upload } from "lucide-react";
+import { BookOpen, Loader2, Paperclip, Plus, Save, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,10 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { useToast } from "@/hooks/use-toast";
 import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ContractRichTextEditor from "@/components/contracts/ContractRichTextEditor";
 import {
   AnnexLibraryItem, createAnnexItem, deleteAnnexItem, installAnnexPack, loadAnnexLibrary, saveAnnexItem,
@@ -73,6 +75,21 @@ const AnnexLibrary = () => {
   useEffect(() => { setDraft(selected ? { ...selected } : null); setPreview(false); }, [selected]);
 
   const set = (patch: Partial<AnnexLibraryItem>) => setDraft((d) => (d ? { ...d, ...patch } : d));
+
+  // Unsaved edits are never thrown away silently.
+  const dirty = !!draft && !!selected && JSON.stringify(draft) !== JSON.stringify(selected);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const choose = (next: string) => {
+    if (next === selectedId) return;
+    if (dirty) setPendingId(next);
+    else setSelectedId(next);
+  };
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const save = async () => {
     if (!draft) return;
@@ -150,19 +167,28 @@ const AnnexLibrary = () => {
 
   return (
     <MuPage>
+      <ConfirmAction
+        open={pendingId !== null}
+        onOpenChange={(o) => !o && setPendingId(null)}
+        title="Leave this annex without saving?"
+        description={<p>Your changes to {draft?.code || "this annex"} have not been saved. Leaving now discards them.</p>}
+        confirmLabel="Discard changes"
+        destructive
+        onConfirm={() => { if (pendingId) setSelectedId(pendingId); setPendingId(null); }}
+      />
       <MuPageHeader
         title="Annex library"
-        description="The documents a contract refers to. Written once here, carried by every contract that includes them."
+        description="The documents a contract refers to, written once."
         backTo="/admin/workforce"
         backLabel="Back to workforce"
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button variant="outline" onClick={installPack} disabled={installing}>
               {installing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpen className="mr-2 h-4 w-4" />}
               Load the employee pack
             </Button>
             <Button onClick={() => setAdding(true)}><Plus className="mr-2 h-4 w-4" />New annex</Button>
-          </div>
+          </>
         }
       />
 
@@ -171,7 +197,14 @@ const AnnexLibrary = () => {
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <MuSection><MuEmpty icon={FileText} title="The library is empty" description="Add the first annex to begin." /></MuSection>
+        <MuSection padded={false}>
+          <MuEmpty
+            art={art.objFolderDocuments}
+            title="The library is empty"
+            description="Add the first annex to begin."
+            action={<Button onClick={() => setAdding(true)}><Plus className="mr-2 h-4 w-4" />New annex</Button>}
+          />
+        </MuSection>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
           <MuSection title="Annexes" padded={false}>
@@ -180,7 +213,7 @@ const AnnexLibrary = () => {
                 <li key={i.id}>
                   <button
                     type="button"
-                    onClick={() => setSelectedId(i.id)}
+                    onClick={() => choose(i.id)}
                     className={`w-full px-4 py-3 text-left transition-colors ${
                       i.id === selectedId ? "bg-muted" : "hover:bg-muted/50"
                     }`}
@@ -231,29 +264,29 @@ const AnnexLibrary = () => {
                   <Input value={draft.note || ""} onChange={(e) => set({ note: e.target.value })} />
                 </div>
 
+                <div className="border-2 border-navy bg-tint/40 p-3">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
                     { label: "Asked to sign it", hint: "The person signs this annex alongside the letter.", key: "requires_signature" as const },
                     { label: "Clinical roles only", hint: "Left off contracts that are not clinical.", key: "clinical_only" as const },
                     { label: "In use", hint: "Turn off to retire it without deleting it.", key: "active" as const },
                   ].map((t) => (
-                    <div key={t.key} className="flex items-start justify-between gap-3 border border-line p-3">
-                      <div>
-                        <p className="text-[13px] font-medium">{t.label}</p>
-                        <p className="text-xs text-muted-foreground">{t.hint}</p>
-                      </div>
+                    <label key={t.key} title={t.hint} className="flex items-center justify-between gap-3">
+                      <span className="text-[13px] font-medium">{t.label}</span>
                       <Switch
                         checked={!!draft[t.key]}
                         onCheckedChange={(v) => set({ [t.key]: v } as Partial<AnnexLibraryItem>)}
                       />
-                    </div>
+                    </label>
                   ))}
+                </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 border border-line p-3">
                   <Paperclip className="h-4 w-4 text-muted-foreground" />
                   <p className="text-[13px]">
-                    {draft.file_name ? `Attached: ${draft.file_name}` : "No file attached. A document written below prints with the contract."}
+                    {draft.file_name ? `Attached: ${draft.file_name}` : "No file attached"}
                   </p>
                   <div className="ml-auto flex gap-2">
                     {draft.file_path && (
@@ -274,9 +307,6 @@ const AnnexLibrary = () => {
 
                 <div className="space-y-1.5">
                   <Label>The wording</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Fields written as tokens, for example {"{{employee_name}}"}, fill in from the contract.
-                  </p>
                   {preview ? (
                     <div
                       className="prose prose-sm max-w-none border border-line p-4"
@@ -286,7 +316,7 @@ const AnnexLibrary = () => {
                     <ContractRichTextEditor
                       value={draft.body}
                       minHeight="360px"
-                      placeholder="Write the annex document here."
+                      placeholder="Write the annex here. Tokens like {{employee_name}} fill in from the contract."
                       onChange={(html) => set({ body: html })}
                     />
                   )}

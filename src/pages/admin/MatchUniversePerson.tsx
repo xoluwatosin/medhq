@@ -2,12 +2,12 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { humaniseTerm } from "@/lib/readable";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Loader2, ArrowLeft, Mail, Phone, MapPin, Briefcase, FileText, ExternalLink, CalendarDays,
-  Compass, ShieldCheck, ShieldAlert, Check, X, MessageCircle, Save, Send, MoreHorizontal, RefreshCw,
+  Compass, ShieldCheck, ShieldAlert, Check, X, MessageCircle, Save, Send, MoreHorizontal, RefreshCw, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import { Textarea } from "@/components/ui/textarea";
@@ -38,20 +38,24 @@ import ReadinessPanel, { useReadiness } from "@/components/admin/mu/ReadinessPan
 import { openDocumentTab, loadRequirements, type DocumentRequirement } from "@/lib/documents";
 import VerifiedBadge, { nyscOutstanding } from "@/components/VerifiedBadge";
 import { becomeWorkforce, returnToTalent } from "@/lib/lifecycle";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { IdCard } from "lucide-react";
 import {
   Person, PersonDocument, VERIFICATION_LABELS,
   initialsOf, logActivity, sourceOf,
 } from "@/lib/match-universe";
 import {
-  MuEmpty, MuField, MuFieldGrid, MuHero, MuHeroStrip, MuPage, MuRow, MuSection,
+  MuEmpty, MuField, MuFieldGrid, MuHero, MuPage, MuRow, MuSection, MuSectionOpener,
   MuStatus, MuTable, MuTabRail,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import MuHeroWatermark from "@/components/admin/mu/heroWatermark";
 
 import { trackLabel } from "@/lib/join-tracks";
 import { SEX_OPTIONS } from "@/lib/work-preferences";
 import { emailHistoryFor, type EmailEvent } from "@/lib/email-analytics";
+import AvailabilityDetail from "@/components/admin/mu/AvailabilityDetail";
+import ClinicalAssessorPanel from "@/components/admin/mu/ClinicalAssessorPanel";
 
 
 
@@ -153,6 +157,7 @@ const MatchUniversePerson = () => {
   const [parsing, setParsing] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [confirmMove, setConfirmMove] = useState<"staff" | "talent" | null>(null);
   const navigate = useNavigate();
 
   // Move a hired candidate into the staff register. One person record, one
@@ -328,8 +333,8 @@ const MatchUniversePerson = () => {
     });
   }, [id]);
 
-  // Live sync. Anything the candidate changes in their portal — profile fields,
-  // uploads, answers to questions, references, preferences, availability —
+  // Live sync. Anything the candidate changes in their portal (profile fields,
+  // uploads, answers to questions, references, preferences, availability)
   // lands on this page within a second, without a refresh.
   useEffect(() => {
     if (!id) return;
@@ -453,15 +458,17 @@ const MatchUniversePerson = () => {
 
   if (!person)
     return (
-      <div className="text-center py-16 space-y-3">
-        <p className="text-muted-foreground">This profile no longer exists.</p>
-        <Button variant="outline" asChild><Link to="/admin/match-universe">Back to Match Universe</Link></Button>
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Profile not found"
+          description="This profile no longer exists. It may have been merged into another."
+          action={<Button variant="outline" asChild><Link to="/admin/match-universe">Back to talent pool</Link></Button>}
+        />
       </div>
     );
 
   const whatsapp = person.phone ? `https://wa.me/${person.phone.replace(/[^0-9]/g, "")}` : null;
-  const verifiedDocs = docs.filter((d) => d.verified).length;
-  const awaitingDocs = docs.filter((d) => !d.verified).length;
   const profession = person.current_position?.trim() || ownRoleFallback;
   const isStaff = !!(person as any).is_staff;
   // Home address is three separate lines on the record; read as one sentence.
@@ -480,9 +487,6 @@ const MatchUniversePerson = () => {
 
   return (
     <MuPage className="max-w-6xl">
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link to="/admin/match-universe"><ArrowLeft className="mr-2 h-4 w-4" />Match Universe</Link>
-      </Button>
 
       {/* One navy surface. The name is the identity, the facts we hold sit
           under it as a labelled grid, and a single action moves the record on.
@@ -531,7 +535,7 @@ const MatchUniversePerson = () => {
         }
         primary={
           isStaff ? (
-            <Button size="sm" asChild className="rounded-none bg-white font-semibold text-navy hover:bg-white/90">
+            <Button size="sm" asChild className="bg-white font-semibold text-navy hover:bg-white/90">
               <Link to={`/admin/workforce/${person.id}`}>
                 <IdCard className="mr-2 h-4 w-4" />Open staff record
               </Link>
@@ -541,7 +545,7 @@ const MatchUniversePerson = () => {
               size="sm"
               onClick={invitePortal}
               disabled={inviting}
-              className="rounded-none bg-white font-semibold text-navy hover:bg-white/90"
+              className="bg-white font-semibold text-navy hover:bg-white/90"
             >
               {inviting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {person.invited_at ? "Send the invite again" : "Invite to their profile"}
@@ -556,7 +560,7 @@ const MatchUniversePerson = () => {
                 size="icon"
                 asChild
                 aria-label="Message on WhatsApp"
-                className="rounded-none border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <a href={whatsapp} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" /></a>
               </Button>
@@ -567,7 +571,7 @@ const MatchUniversePerson = () => {
                   variant="outline"
                   size="icon"
                   aria-label="More actions"
-                  className="rounded-none border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -595,41 +599,39 @@ const MatchUniversePerson = () => {
                     opens the contract. The invitation to sign in stays locked
                     inside the staff record until that contract is signed. */}
                 {!isStaff ? (
-                  <DropdownMenuItem onClick={moveToStaff} disabled={converting}>
+                  <DropdownMenuItem onSelect={() => setConfirmMove("staff")} disabled={converting}>
                     <IdCard className="mr-2 h-4 w-4" />Move to staff register
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onClick={moveToTalent} disabled={converting}>
+                  <DropdownMenuItem onSelect={() => setConfirmMove("talent")} disabled={converting}>
                     <IdCard className="mr-2 h-4 w-4" />Return to Talent
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <ConfirmAction
+              open={confirmMove === "staff"}
+              onOpenChange={(o) => !o && setConfirmMove(null)}
+              title={`Move ${person.full_name} to the staff register?`}
+              description={
+                <>
+                  <p>They leave the Talent Pool and gain an employment record. Their sign-in, documents and history stay as they are.</p>
+                  <p>A signed contract must already be on file.</p>
+                </>
+              }
+              confirmLabel="Move to staff register"
+              onConfirm={moveToStaff}
+            />
+            <ConfirmAction
+              open={confirmMove === "talent"}
+              onOpenChange={(o) => !o && setConfirmMove(null)}
+              title={`Return ${person.full_name} to Talent?`}
+              description={<p>Their employment closes. Live assignments or contracts block this until they are resolved. History is kept.</p>}
+              confirmLabel="Return to Talent"
+              destructive
+              onConfirm={moveToTalent}
+            />
           </>
-        }
-        strip={
-          <MuHeroStrip
-            items={[
-              {
-                label: "Verification",
-                sentence:
-                  person.verification_state === "verified" && nyscOutstanding(docReqs)
-                    ? "Verified, NYSC certificate outstanding"
-                    : VERIFICATION_LABELS[person.verification_state] ?? person.verification_state,
-              },
-              {
-                label: "Documents",
-                sentence: docs.length === 0
-                  ? "Nothing on file yet"
-                  : verifiedDocs === docs.length
-                    ? `All ${docs.length} accepted`
-                    : verifiedDocs === 0
-                      ? `${docs.length} on file, none accepted yet`
-                      : `${verifiedDocs} accepted of ${docs.length} on file`,
-              },
-              { label: "Readiness", sentence: readiness.sentence },
-            ]}
-          />
         }
       />
 
@@ -638,7 +640,7 @@ const MatchUniversePerson = () => {
           value={tab}
           onChange={setTab}
           tabs={[
-            { value: "verification", label: "Verification", count: readiness.office.length },
+            { value: "verification", label: "Checks", count: readiness.office.length },
             { value: "profile", label: "Profile" },
             { value: "matching", label: "Matching" },
             { value: "hiring", label: "Offers and contracts" },
@@ -655,40 +657,48 @@ const MatchUniversePerson = () => {
             One tab, because a credential is only ever as good as the document
             behind it. Nothing here is a manual switch. */}
         <TabsContent value="verification" className="space-y-6 mt-4">
+          {/* Every required document is in and some wait on us: a nudge to
+              review them, shown only until the decisions are made. */}
+          {!readiness.loading &&
+            readiness.items.some((i) => i.code.startsWith("document_pending:")) &&
+            !readiness.items.some((i) => i.code.startsWith("document_missing:") || i.code.startsWith("document_rejected:")) && (
+              <div className="flex flex-col gap-3 border-2 border-navy bg-brand p-4 text-white shadow-offset sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[15px] font-extrabold">Every required document is in</p>
+                  <p className="mt-1 text-[13.5px] text-white/85">
+                    {readiness.office.length === 1 ? "One waits" : `${readiness.office.length} wait`} for a decision. Accepting them verifies {person.full_name?.split(" ")[0] || "this person"}.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 border-white bg-white text-navy hover:bg-tint"
+                  onClick={() => document.getElementById("person-documents")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  Review them
+                </Button>
+              </div>
+            )}
           <ReadinessPanel
             items={readiness.items}
             loading={readiness.loading}
             sentence={readiness.sentence}
           />
-          {/* The document ledger and the credential worklist carry their own
-              headings, so they stand as sections rather than sitting inside a
-              second frame. */}
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-[16px] font-bold tracking-[-0.02em]">Documents</h2>
-              <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-                Required documents for this profession, what is on file, and the state of each. Every decision is
-                logged and sent to the candidate.
-              </p>
-            </div>
-            <DocumentsPanel personId={person.id} personName={person.full_name} onChanged={load} />
-          </section>
+          {/* One place to decide: the documents. Accepting one settles the
+              credential it proves, so the proofs below are read only. */}
+          {/* The documents carry their own ledgers, so they open with the site's
+              section rule rather than a second box around boxes. */}
+          <div id="person-documents" className="scroll-mt-24">
+            <MuSectionOpener label="Documents" title="What is on file, and a decision on each" />
+          </div>
+          <DocumentsPanel personId={person.id} personName={person.full_name} onChanged={load} />
 
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-[16px] font-bold tracking-[-0.02em]">Credentials</h2>
-              <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-                What each document proves. Passing an attached document is the only way a credential becomes verified.
-              </p>
-            </div>
+          <MuSection title="What their documents prove" padded={false}>
             <CredentialsPanel personId={person.id} documents={docs} actor={actor} onChanged={load} />
-          </section>
+          </MuSection>
 
 
-          <MuSection
-            title="References"
-            description="Referees provided by the candidate. Contact details only, taken up at shortlist stage."
-          >
+          <MuSection title="References" description="Taken up at shortlist stage.">
             <ReferencesTable personId={person.id} />
           </MuSection>
 
@@ -706,55 +716,39 @@ const MatchUniversePerson = () => {
             hasAccount={!!person.auth_user_id}
             onChanged={load}
           />
-          {/* Two columns on a desk: the record we hold on the left, the CV read
-              beside it, so the comparison is a glance and not a scroll. */}
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-
-          <MuSection
-
-            title="Profile details"
-            description="Profession is what this person does, taken from their CV or what they told us, never the role they applied to. Licence and right to work sit under Verification with the tier that earned them, because a tick on a form is a claim and not a credential."
-          >
-            {/* One record, read as a table. Claims carry a quiet provenance
-                line rather than a badge, because the value is the point. */}
+          {/* One record, said once. Contact details live in the band above;
+              the licence has its own place; what the CV says is folded away
+              for the moments it is needed. */}
+          <MuSection title="About them" padded={false}>
             <MuTable
+              className="border-0"
               rows={[
-                { label: "Full name", value: person.full_name },
-                { label: "Email", value: person.email },
-                { label: "Phone", value: person.phone },
-                {
-                  label: "Joined as",
-                  value: (person as any).track ? trackLabel((person as any).track) : null,
-                  note: (person as any).track_source === "candidate_confirmed"
-                    ? "Confirmed by the candidate"
-                    : (person as any).track_source === "inferred"
-                      ? "Worked out from their job title. The candidate confirms it at next sign-in."
-                      : undefined,
-                },
-                { label: "Institution", value: (person as any).institution ?? null },
-                { label: "Course", value: (person as any).course_of_study ?? null },
-                { label: "Level of study", value: (person as any).study_level ?? null },
-                { label: "Year of study", value: (person as any).year_of_study ?? null },
-                { label: "Expected graduation", value: (person as any).expected_graduation ?? null },
-                {
-                  label: "Why they are joining us",
-                  value: (person as any).joining_statement ?? null,
-                  note: "Written by the student in place of a second referee",
-                },
-                { label: "State", value: person.state },
-                { label: "LGA", value: person.lga },
                 { label: "Home address", value: addressLine },
                 {
                   label: "Sex",
                   value: SEX_OPTIONS.find((o) => o.code === String((person as any).sex ?? "").toLowerCase())?.label ?? null,
                   note: CLAIM_NOTE,
                 },
-
                 {
                   label: "Languages",
-                  value: Array.isArray(person.languages)
-                    ? person.languages.join(", ")
-                    : (person.languages as any) ?? null,
+                  value: Array.isArray(person.languages) ? person.languages.join(", ") : (person.languages as any) ?? null,
+                },
+              ]}
+            />
+          </MuSection>
+
+          <MuSection title="Work" padded={false}>
+            <MuTable
+              className="border-0"
+              rows={[
+                {
+                  label: "Joined as",
+                  value: (person as any).track ? trackLabel((person as any).track) : null,
+                  note: (person as any).track_source === "candidate_confirmed"
+                    ? "Confirmed by the candidate"
+                    : (person as any).track_source === "inferred"
+                      ? "Worked out from their job title; they confirm it at next sign-in"
+                      : undefined,
                 },
                 { label: "Profession", value: profession, note: CLAIM_NOTE },
                 {
@@ -762,43 +756,65 @@ const MatchUniversePerson = () => {
                   value: person.years_experience != null ? String(person.years_experience) : null,
                   note: experienceNote,
                 },
-                { label: "Licensing body", value: person.licensing_body, note: CLAIM_NOTE },
-                { label: "Licence number", value: person.license_number, note: CLAIM_NOTE },
-                {
-                  label: "Licence expiry",
-                  value: person.license_expiry ? String(person.license_expiry) : null,
-                  note: CLAIM_NOTE,
-                },
-                {
-                  label: "NYSC",
-                  value: (person as any).nysc_status ? humaniseTerm(String((person as any).nysc_status)) : null,
-                  note: CLAIM_NOTE,
-                },
-                {
-                  label: "Right to work",
-                  value:
-                    (person as any).right_to_work === true ? "Yes, they hold the right to work"
-                    : (person as any).right_to_work === false ? "No, they do not hold the right to work"
-                    : null,
-                  note: CLAIM_NOTE,
-                },
-
+                // Students only: shown when there is something to show.
+                ...[
+                  { label: "Institution", value: (person as any).institution ?? null },
+                  { label: "Course", value: (person as any).course_of_study ?? null },
+                  { label: "Level of study", value: (person as any).study_level ?? null },
+                  { label: "Year of study", value: (person as any).year_of_study ?? null },
+                  { label: "Expected graduation", value: (person as any).expected_graduation ?? null },
+                  { label: "Why they are joining us", value: (person as any).joining_statement ?? null, note: "In place of a second referee" },
+                ].filter((row) => row.value),
               ]}
             />
           </MuSection>
-          <MuSection
-            title="CV summary"
-            description="Data extracted from the CV. Missing or conflicting fields are raised with the candidate in their portal."
-          >
-            <CvDataTab
-              personId={person.id}
-              parseStatus={(person as any).parse_status ?? "not_parsed"}
-              gaps={Array.isArray((person as any).candidate_gaps) ? (person as any).candidate_gaps : []}
-              actor={actor}
-              onProfileChanged={load}
+
+          <MuSection title="Licence" padded={false}>
+            <MuTable
+              className="border-0"
+              rows={[
+                { label: "Licensing body", value: person.licensing_body, note: CLAIM_NOTE },
+                { label: "Licence number", value: person.license_number, note: CLAIM_NOTE },
+                {
+                  label: "Expiry",
+                  value: person.license_expiry ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      {format(new Date(String(person.license_expiry)), "d MMM yyyy")}
+                      {(() => {
+                        const days = Math.ceil((new Date(String(person.license_expiry)).getTime() - Date.now()) / 86400000);
+                        return days < 0
+                          ? <MuStatus tone="bad" label="Expired" />
+                          : days <= 60
+                            ? <MuStatus tone="warning" label={`Expires in ${days} days`} />
+                            : <MuStatus tone="good" label="In date" />;
+                      })()}
+                    </span>
+                  ) : null,
+                  note: CLAIM_NOTE,
+                },
+              ]}
             />
           </MuSection>
-          </div>
+
+          {id && <ClinicalAssessorPanel personId={id} />}
+
+          <Collapsible>
+            <MuSection padded={false}>
+              <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-tint/40">
+                <span className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">What their CV says</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-navy" aria-hidden="true" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="border-t-2 border-navy p-5">
+                <CvDataTab
+                  personId={person.id}
+                  parseStatus={(person as any).parse_status ?? "not_parsed"}
+                  gaps={Array.isArray((person as any).candidate_gaps) ? (person as any).candidate_gaps : []}
+                  actor={actor}
+                  onProfileChanged={load}
+                />
+              </CollapsibleContent>
+            </MuSection>
+          </Collapsible>
         </TabsContent>
 
 
@@ -822,6 +838,10 @@ const MatchUniversePerson = () => {
             description="Set by the candidate in their portal. Unfilled days count as unconfirmed, not unavailable, and outdated availability is discounted when matching."
           >
             <AvailabilityCalendar personId={person.id} lastUpdate={(person as any).last_availability_update} readOnly />
+            <div className="mt-6 border-t border-line pt-5">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-label">Day by day, with the hours they named</p>
+              <AvailabilityDetail personId={person.id} />
+            </div>
           </MuSection>
         </TabsContent>
 
@@ -848,7 +868,7 @@ const MatchUniversePerson = () => {
             padded={false}
           >
             {subs.length === 0 && (
-              <MuEmpty title="No applications recorded" description="This profile was created through another route." />
+              <MuEmpty art={art.objClipboard} title="No applications recorded" description="This profile was created through another route." />
             )}
             {/* One line per application, everything else folded away. The
                 header carries what you scan for; the detail is there when you
@@ -896,7 +916,7 @@ const MatchUniversePerson = () => {
                           the stage list above; this section is the paperwork. */}
 
                       {hasDetail && (
-                        <AccordionTrigger className="h-8 shrink-0 rounded-none px-2 py-0 text-[13px] font-semibold hover:no-underline">
+                        <AccordionTrigger className="h-8 shrink-0 px-2 py-0 text-[13px] font-semibold hover:no-underline">
                           Detail
                         </AccordionTrigger>
                       )}
@@ -904,11 +924,11 @@ const MatchUniversePerson = () => {
                     </div>
                     <AccordionContent className="space-y-4 px-5 pb-4">
                       {s.cover_note && (
-                        <p className="whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm">{s.cover_note}</p>
+                        <p className="whitespace-pre-wrap bg-muted/40 p-3 text-sm">{s.cover_note}</p>
                       )}
                       {answers.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                             Application answers
                           </p>
                           <MuTable rows={answers} />
@@ -916,7 +936,7 @@ const MatchUniversePerson = () => {
                       )}
                       {attribution.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                             How they found us
                           </p>
                           <MuTable rows={attribution.map(([label, value]) => ({ label, value }))} />
@@ -951,7 +971,7 @@ const MatchUniversePerson = () => {
             description="Every email sent and every change made, in order."
             padded={false}
           >
-            {timeline.length === 0 && <MuEmpty title="Nothing recorded yet" />}
+            {timeline.length === 0 && <MuEmpty art={art.objEnvelope} title="Nothing recorded yet" description="Emails sent and changes made to this profile appear here." />}
             <div className="divide-y divide-line-soft">
             {timeline.map((t) => (
               <MuRow

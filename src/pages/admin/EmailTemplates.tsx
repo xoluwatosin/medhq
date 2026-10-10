@@ -4,22 +4,17 @@
 // copy for whatever block you have selected. Nobody writes HTML here, and the
 // house rules are checked before a design can be saved.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Mail, Plus, Save, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Save, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { adminDb } from "@/lib/admin-utils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuLoadError, MuPageHeader, MuSection, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +33,6 @@ import {
   type EmailKind,
   type EmailTemplateDoc,
 } from "@/lib/email-kit";
-import { CATALOGUE } from "@/lib/email-kit/catalogue.generated";
 import {
   addBlockTo,
   BlockCanvas,
@@ -69,13 +63,17 @@ const EmailTemplates = () => {
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [startOpen, setStartOpen] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data } = await adminDb()
+    const { data, error } = await adminDb()
       .from("email_kit_templates")
       .select("id, name, kind, purpose, updated_at")
       .order("updated_at", { ascending: false });
+    if (error) toast({ title: "Could not load the email library", description: error.message, variant: "destructive" });
+    setLoadError(error ? error.message : null);
     setList((data as TemplateRow[]) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -209,40 +207,42 @@ const EmailTemplates = () => {
 
   if (!doc) {
     return (
-      <div>
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Email library</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every email we send is assembled from the Medic Connect kit, so the brand stays put
-              and nobody has to write HTML.
-            </p>
-          </div>
-          <Button onClick={() => setStartOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />New email
-          </Button>
-        </header>
+      <div className="space-y-6">
+        <MuPageHeader
+          title="Email library"
+          description="Every email we send, built from the Medic Connect kit."
+          actions={
+            <Button onClick={() => setStartOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />New email
+            </Button>
+          }
+        />
 
-        {list.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-10 text-center">
-            <Mail className="mx-auto h-6 w-6 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              No emails yet. Start from a recipe and the structure is already correct.
-            </p>
-          </div>
+        {loadError ? (
+          <MuLoadError what="the email library" onRetry={() => load()} />
+        ) : list.length === 0 ? (
+          <MuSection padded={false}>
+            <MuEmpty
+              art={art.objEnvelope}
+              title="No emails yet"
+              description="Start from a recipe and the structure is already correct."
+              action={<Button onClick={() => setStartOpen(true)}><Plus className="mr-2 h-4 w-4" />New email</Button>}
+            />
+          </MuSection>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {list.map((row) => (
               <button
                 key={row.id}
                 onClick={() => openTemplate(row.id)}
-                className="rounded-2xl border bg-card p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+                className="border border-line bg-card p-4 text-left transition-colors hover:border-navy/40 hover:bg-tint/40"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{row.name}</span>
-                  <Badge variant={row.kind === "marketing" ? "default" : "secondary"}>
-                    {row.kind === "marketing" ? "Marketing" : "Transactional"}
-                  </Badge>
+                  <span className="font-semibold text-navy">{row.name}</span>
+                  <MuStatus
+                    label={row.kind === "marketing" ? "Marketing" : "Transactional"}
+                    tone={row.kind === "marketing" ? "info" : "neutral"}
+                  />
                 </div>
                 {row.purpose && (
                   <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{row.purpose}</p>
@@ -262,26 +262,32 @@ const EmailTemplates = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <MuToolbar>
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => { setDoc(null); setOpenId(null); load(); }}>
-            All emails
+            <ArrowLeft className="mr-2 h-4 w-4" />All emails
           </Button>
           <Input
+            aria-label="Email name"
             value={doc.name}
             onChange={(e) => patchDoc({ name: e.target.value })}
             className="h-9 w-56 font-medium"
           />
-          <Select value={doc.kind} onValueChange={(v) => patchDoc({ kind: v as EmailKind })}>
-            <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="transactional">Transactional</SelectItem>
-              <SelectItem value="marketing">Marketing</SelectItem>
-            </SelectContent>
-          </Select>
+          <SelectField
+            label="Kind"
+            hideLabel
+            value={doc.kind}
+            onChange={(v) => { if (v) patchDoc({ kind: v as EmailKind }); }}
+            options={[
+              { value: "transactional", label: "Transactional" },
+              { value: "marketing", label: "Marketing" },
+            ]}
+            className="w-44"
+          />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
           <Input
+            aria-label="Send a test to"
             value={testEmail}
             onChange={(e) => setTestEmail(e.target.value)}
             placeholder="you@medicconnect.co"
@@ -296,14 +302,14 @@ const EmailTemplates = () => {
             Save
           </Button>
         </div>
-      </header>
+      </MuToolbar>
 
       <div className="grid gap-4 xl:grid-cols-[240px_1fr_340px]">
         <BlockPalette onAdd={addBlock} />
 
         {/* Canvas */}
         <section className="space-y-4">
-          <div className="rounded-lg border bg-card p-4">
+          <div className="border border-line bg-card p-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Subject line</Label>
@@ -339,8 +345,8 @@ const EmailTemplates = () => {
             onRemove={removeBlock}
           />
 
-          <div className="rounded-lg border bg-card">
-            <p className="border-b px-4 py-3 text-sm font-medium">Preview</p>
+          <div className="border border-line bg-card">
+            <p className="border-b border-line-soft px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Preview</p>
             <iframe title="Email preview" srcDoc={html} className="h-[80vh] w-full bg-white" />
           </div>
         </section>
@@ -368,23 +374,21 @@ const StartDialog = ({
     <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Start a new email</DialogTitle>
-        <DialogDescription>
-          A recipe gives you the right blocks in the right order for that job. You can still change
-          anything afterwards.
-        </DialogDescription>
+        <DialogDescription>A recipe sets the blocks in order. You can change anything after.</DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
         {RECIPES.map((r) => (
           <button
             key={r.id}
             onClick={() => onStart(r.id, r.kind as EmailKind)}
-            className="w-full rounded-xl border p-3 text-left transition hover:border-primary/40"
+            className="w-full border border-line p-3 text-left transition-colors hover:border-navy/40 hover:bg-tint/40"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{r.name}</span>
-              <Badge variant={r.kind === "marketing" ? "default" : "secondary"}>
-                {r.kind === "marketing" ? "Marketing" : "Transactional"}
-              </Badge>
+              <MuStatus
+                label={r.kind === "marketing" ? "Marketing" : "Transactional"}
+                tone={r.kind === "marketing" ? "info" : "neutral"}
+              />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{r.blocks.length} blocks</p>
           </button>
@@ -399,9 +403,6 @@ const StartDialog = ({
           Blank marketing
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Contact details in footers come from the kit: {CATALOGUE.meta.contact.email}, {CATALOGUE.meta.contact.whatsapp}.
-      </p>
     </DialogContent>
   </Dialog>
 );

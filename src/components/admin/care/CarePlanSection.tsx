@@ -14,6 +14,7 @@ import { cxInputClass } from "@/components/candidate/primitives";
 import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { MuEmpty, MuRow, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { SaveState, Status, type SaveStatus } from "@/components/field";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -178,12 +179,13 @@ const CarePlanSection = ({
     await load();
   };
 
-  if (loading) return <MuSection title="Care plan"><p className="text-sm text-body">Loading.</p></MuSection>;
+  if (loading) return <MuSection title="Care plan"><p className="text-sm text-body">Loading the care plan.</p></MuSection>;
 
   if (!plan) {
     return (
       <MuSection title="Care plan">
         <MuEmpty
+          art={art.objCarePlan}
           title="No care plan yet"
           description="The plan opens once a clinician accepts the assessment."
         />
@@ -196,7 +198,7 @@ const CarePlanSection = ({
       <MuSection
         title="Working plan"
         description={isDraft
-          ? "A draft is written section by section. It is issued later, once the package is agreed and staffing is arranged."
+          ? "Written section by section. Issued once the package and staffing are agreed."
           : "This version has been issued. A change starts a new version."}
         actions={<div className="flex flex-wrap items-center gap-2">
           <Status label={approved ? "Approved" : planStatusLabel(plan.status)} tone={approved || plan.status === "submitted" ? "good" : "progress"} />
@@ -248,9 +250,7 @@ const CarePlanSection = ({
               : undefined}
           >
             {rows.length === 0 ? (
-              <div className="px-5 py-5">
-                <MuEmpty title={`No ${kind}s recorded`} />
-              </div>
+              <MuEmpty title={`No ${ITEM_LABELS[kind].toLowerCase()}s recorded`} />
             ) : (
               <div className="divide-y divide-line-soft">
                 {rows.map((row) => (
@@ -279,7 +279,7 @@ const CarePlanSection = ({
       })}
 
       {plans.length > 1 && (
-        <MuSection title="Earlier versions" description="Every issued version stays on the record.">
+        <MuSection title="Earlier versions">
           <MuTable
             rows={plans.filter((p) => p.id !== plan.id).map((p) => ({
               label: planVersionLabel(p),

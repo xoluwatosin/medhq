@@ -1,5 +1,8 @@
 // The one list of care kinds, shared by every door into the enquiry desk:
 // the Request care journey, the welcome pop-up and the WhatsApp widget.
+// Each carries the same illustration and starting price as its card on
+// Care at home, so the pop-up and the site show one set of services.
+import { art } from "@/components/mc/art";
 
 export type Who = "pregnant" | "baby" | "child" | "adult" | "older";
 
@@ -16,18 +19,22 @@ export interface CareKind {
   label: string;
   blurb: string;
   who: Who[];
+  /** The service card illustration. */
+  art: string;
+  /** Starting price, "₦18,000", or "" when quoted after the assessment. */
+  price: string;
 }
 
 export const CARE_KINDS: CareKind[] = [
-  { line: "antenatal", label: "Antenatal care at home", blurb: "Support through pregnancy", who: ["pregnant"] },
-  { line: "postnatal", label: "Postnatal care and Omugwo", blurb: "Mother and baby, after birth", who: ["pregnant", "baby"] },
-  { line: "post_surgical", label: "Post-surgical care at home", blurb: "Recovery after an operation", who: ["child", "adult", "older"] },
-  { line: "eldercare", label: "Eldercare and companion care", blurb: "Day-to-day help and company", who: ["older"] },
-  { line: "clinical_home_care", label: "Clinical home care", blurb: "Nursing and clinical procedures", who: ["pregnant", "baby", "child", "adult", "older"] },
-  { line: "nanny_childcare", label: "Nanny and childcare", blurb: "Trusted care for little ones", who: ["baby", "child"] },
-  { line: "paediatric", label: "Children with additional needs", blurb: "Specialist support for children", who: ["child"] },
-  { line: "care_from_abroad", label: "Care for family back home", blurb: "Arranging care from abroad", who: ["adult", "older", "pregnant", "baby", "child"] },
-  { line: "general", label: "Something else / I'm not sure", blurb: "We will help you work it out", who: ["pregnant", "baby", "child", "adult", "older"] },
+  { line: "antenatal", label: "Antenatal care at home", blurb: "Support through pregnancy", who: ["pregnant"], art: art.midwifePregnantBp, price: "₦30,000" },
+  { line: "postnatal", label: "Postnatal care and Omugwo", blurb: "Mother and baby, after birth", who: ["pregnant", "baby"], art: art.proPostnatal, price: "₦20,000" },
+  { line: "post_surgical", label: "Post-surgical care at home", blurb: "Recovery after an operation", who: ["child", "adult", "older"], art: art.objWalkingFrame, price: "₦20,000" },
+  { line: "eldercare", label: "Eldercare and companion care", blurb: "Day-to-day help and company", who: ["older"], art: art.charGrandma, price: "₦18,000" },
+  { line: "clinical_home_care", label: "Clinical home care", blurb: "Nursing and clinical procedures", who: ["pregnant", "baby", "child", "adult", "older"], art: art.proNurseKit, price: "₦18,000" },
+  { line: "nanny_childcare", label: "Nanny and childcare", blurb: "Trusted care for little ones", who: ["baby", "child"], art: art.nannyReading, price: "" },
+  { line: "paediatric", label: "Children with additional needs", blurb: "Specialist support for children", who: ["child"], art: art.charBoy, price: "" },
+  { line: "care_from_abroad", label: "Care for family back home", blurb: "Arranging care from abroad", who: ["adult", "older", "pregnant", "baby", "child"], art: art.diasporaSon, price: "" },
+  { line: "general", label: "Something else / I'm not sure", blurb: "We will help you work it out", who: ["pregnant", "baby", "child", "adult", "older"], art: art.objPhoneChat, price: "" },
 ];
 
 export const kindByLine = (line?: string | null) =>

@@ -1,3 +1,4 @@
+import { attributionColumns } from "@/lib/utm";
 // The enquiry desk, in one place.
 //
 // A person asking about care answers a short set of questions: the ones every
@@ -60,7 +61,25 @@ export interface Enquiry {
   replied_at: string | null;
   archived: boolean;
   created_at: string;
+  /** Set once the enquiry has been routed into Care. */
+  care_client_id?: string | null;
+  /** Where the visit came from (ad, post, search, shared link). */
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  referrer?: string | null;
+  landing_path?: string | null;
 }
+
+/** "instagram, social, october launch" / "google.com" / "Not recorded", in plain words. */
+export const enquiryOrigin = (e: Pick<Enquiry, "utm_source" | "utm_medium" | "utm_campaign" | "referrer">) => {
+  const parts = [e.utm_source, e.utm_medium, e.utm_campaign].filter(Boolean).map((p) => String(p).replace(/_/g, " "));
+  if (parts.length) return parts.join(", ");
+  if (e.referrer) {
+    try { return new URL(e.referrer).hostname.replace(/^www\./, ""); } catch { /* fall through */ }
+  }
+  return "Not recorded";
+};
 
 export interface EnquirySend {
   id: string;
@@ -182,6 +201,8 @@ export async function submitCareRequest(p: CareRequestPayload): Promise<string> 
       answers: p.answers,
       consent_email: p.consentEmail,
       source: p.source,
+      // Which ad, post, search or shared link brought them here.
+      ...attributionColumns(),
     });
   if (error) throw error;
   return id;

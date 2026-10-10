@@ -7,9 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -22,6 +20,13 @@ import { format } from "date-fns";
 import { adminDb, SUPER_ADMIN_ID } from "@/lib/admin-utils";
 import AccessAreas from "@/components/admin/AccessAreas";
 import { ACCESS_DELEGATE_PERMISSION, namedAreas } from "@/lib/admin-access";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus, MuTone } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+import { cn } from "@/lib/utils";
+
+const CAPS = "text-[11px] font-bold uppercase tracking-[0.14em] text-label";
+
+const STATE_TONE: Record<string, MuTone> = { Active: "good", Invited: "info", Withdrawn: "bad" };
 
 interface AdminUser {
   id: string;
@@ -249,15 +254,11 @@ const ControlCentre = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-serif font-bold">Admin access</h1>
-          <p className="text-sm text-muted-foreground">
-            Who can reach the Admin Centre, and which areas each person holds.
-          </p>
-        </div>
-        {canManage && (
+    <MuPage>
+      <MuPageHeader
+        title="People and access"
+        description="Who can reach the Admin Centre, and which areas each person holds."
+        actions={canManage ? (
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" />Add admin</Button>
@@ -275,9 +276,6 @@ const ControlCentre = () => {
                     placeholder="name@medicconnect.co"
                     type="email"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    If this person already signs in, that same account gains admin areas.
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Full name</Label>
@@ -304,10 +302,15 @@ const ControlCentre = () => {
               </div>
             </DialogContent>
           </Dialog>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       <div className="space-y-4">
+        {admins.length === 0 && (
+          <MuSection padded={false}>
+            <MuEmpty art={art.objPadlock} title="No admins yet" description="People you add here can sign in to the Admin Centre." />
+          </MuSection>
+        )}
         {admins.map((admin) => {
           const isSuper = admin.user_id === SUPER_ADMIN_ID;
           const isSelf = admin.user_id === user?.id;
@@ -315,19 +318,17 @@ const ControlCentre = () => {
           const isExpanded = expandedAdmin === admin.id;
           const areas = namedAreas(admin.permissions);
           return (
-            <Card key={admin.id} className={!admin.is_active ? "opacity-60" : ""}>
-              <CardHeader className="pb-3">
+            <section key={admin.id} className={cn("border border-line bg-card", !admin.is_active && "opacity-60")}>
+              <div className="border-b border-line-soft px-5 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <CardTitle className="text-base">{admin.display_name || admin.email}</CardTitle>
+                    <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-navy">{admin.display_name || admin.email}</h2>
                     <p className="truncate text-sm text-muted-foreground">{admin.email}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {isSuper && <Badge className="text-xs">Super admin</Badge>}
-                      <Badge variant={admin.is_active ? "outline" : "destructive"} className="text-xs">
-                        {accountState(admin)}
-                      </Badge>
+                      {isSuper && <MuStatus label="Super admin" tone="info" />}
+                      <MuStatus label={accountState(admin)} tone={STATE_TONE[accountState(admin)]} />
                       {admin.permissions?.includes(ACCESS_DELEGATE_PERMISSION) && (
-                        <Badge variant="secondary" className="text-xs">Manages access</Badge>
+                        <MuStatus label="Manages access" tone="neutral" />
                       )}
                     </div>
                   </div>
@@ -412,24 +413,26 @@ const ControlCentre = () => {
                     </div>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              <div className="space-y-4 p-5">
                 <div>
-                  <Label className="mb-2 block text-xs uppercase tracking-wider text-muted-foreground">Areas</Label>
+                  <p className={`mb-2 ${CAPS}`}>Areas</p>
                   {isSuper ? (
-                    <p className="text-sm text-muted-foreground">Every area.</p>
+                    <p className="text-sm text-muted-foreground">Every area</p>
                   ) : areas.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No areas yet.</p>
+                    <p className="text-sm text-muted-foreground">No areas yet</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {areas.map((label) => (
-                        <Badge key={label} variant="secondary" className="text-xs font-normal">{label}</Badge>
+                        <MuStatus key={label} label={label} tone="neutral" />
                       ))}
                     </div>
                   )}
                 </div>
 
                 {!isSuper && (
+                  <div className="border-2 border-navy bg-tint/40 p-3">
+                  <p className={`mb-2 ${CAPS}`}>Approvals</p>
                   <div className="flex flex-wrap gap-6">
                     <div className="flex items-center gap-2">
                       <Switch
@@ -447,6 +450,7 @@ const ControlCentre = () => {
                       />
                       <span className="text-sm">Campaigns need approval</span>
                     </div>
+                  </div>
                   </div>
                 )}
 
@@ -466,16 +470,16 @@ const ControlCentre = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Access changes</p>
+                      <p className={`mb-1 ${CAPS}`}>Access changes</p>
                       {(accessLogs[admin.user_id] || []).length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No recorded changes.</p>
+                        <p className="text-sm text-muted-foreground">No recorded changes</p>
                       ) : (
                         <div className="max-h-48 space-y-1 overflow-y-auto">
                           {(accessLogs[admin.user_id] || []).map((log) => (
                             <div key={log.id} className="text-sm text-muted-foreground">
                               {ACTION_LABELS[log.action] || log.action}
                               {log.actor_email ? ` by ${log.actor_email}` : ""}
-                              {" · "}
+                              {", "}
                               {format(new Date(log.created_at), "dd MMM yyyy, HH:mm")}
                             </div>
                           ))}
@@ -483,9 +487,9 @@ const ControlCentre = () => {
                       )}
                     </div>
                     <div>
-                      <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Sign-ins</p>
+                      <p className={`mb-1 ${CAPS}`}>Sign-ins</p>
                       {(loginLogs[admin.user_id] || []).length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No sign-ins recorded.</p>
+                        <p className="text-sm text-muted-foreground">No sign-ins recorded</p>
                       ) : (
                         <div className="max-h-48 space-y-1 overflow-y-auto">
                           {(loginLogs[admin.user_id] || []).map((log) => (
@@ -499,8 +503,8 @@ const ControlCentre = () => {
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           );
         })}
       </div>
@@ -532,7 +536,7 @@ const ControlCentre = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </MuPage>
   );
 };
 

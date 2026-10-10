@@ -6,12 +6,14 @@ import { CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SEO from "@/components/SEO";
 import { CxJoinShell, CxJoinAside } from "@/components/candidate/CxJoinShell";
+import { TRACK_ART } from "@/components/candidate/track-art";
 import { CxCard, CxButton, CxField, cxInputClass } from "@/components/candidate/primitives";
 import { CxAuthPassword } from "@/components/candidate/CxAuthShell";
 import { PasswordRequirements } from "@/components/candidate/PasswordRequirements";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { attributionColumns } from "@/lib/utm";
 import { trackJoinApplication } from "@/lib/measurement";
 import { trackBySlug, YEAR_OF_STUDY, JOIN_PENDING_KEY } from "@/lib/join-tracks";
 
@@ -143,7 +145,9 @@ const JoinAccount = () => {
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/portal`,
-        data: { display_name: fullName },
+        // The visit's source rides on the account, so we can tell which
+        // channels bring candidates.
+        data: { display_name: fullName, acquisition: attributionColumns() },
       },
     });
 
@@ -237,6 +241,7 @@ const JoinAccount = () => {
       heading={invited ? "You are on our list. Make it a profile." : "One profile, and the work comes to you."}
       lede={`Typical for ${track.examples.toLowerCase()}. About ${track.minutes} minutes.`}
       items={track.steps.map((s) => ({ title: s }))}
+      art={TRACK_ART[track.slug]}
     />
   );
 
@@ -249,7 +254,7 @@ const JoinAccount = () => {
           Start with your details. You can add documents and work preferences after you sign in.
         </p>
         <div className="mt-5 flex items-center gap-3 border-t border-hairline-navy pt-4">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-extrabold text-navy">1</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-white text-[13px] font-extrabold text-navy shadow-[3px_3px_0_hsl(var(--brand))]">1</span>
           <div>
             <p className="text-[14.5px] font-bold text-white">Account details</p>
             <p className="text-[13px] text-muted-navy">Documents and availability come next.</p>
@@ -266,9 +271,21 @@ const JoinAccount = () => {
         title="Create your account"
         eyebrow={track.label}
         back="/join"
+        step={0}
         aside={aside}
         mobileLead={mobileLead}
-        className="pb-28 pt-6 md:pb-[34px] md:pt-[34px]"
+        className="pb-32 md:pb-16"
+        heroExtra={
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="cx-pill bg-white/10 px-3 py-1.5 text-[13px] font-extrabold text-white">{track.label}</span>
+            <Link
+              to={claimToken ? `/claim?t=${encodeURIComponent(claimToken)}` : "/join"}
+              className="text-[14px] font-bold text-brand-soft underline-offset-4 hover:text-white hover:underline"
+            >
+              Change route
+            </Link>
+          </div>
+        }
         headerAction={
           <Link
             to="/portal/login"
@@ -278,20 +295,8 @@ const JoinAccount = () => {
           </Link>
         }
       >
-        <div className="flex items-center justify-between gap-3 border-b border-line pb-4 md:flex-wrap md:justify-start md:border-0 md:pb-0">
-          <span className="cx-pill bg-tint px-3 py-1.5 text-[12.5px] font-extrabold text-navy">
-            {track.label}
-          </span>
-          <Link
-            to={claimToken ? `/claim?t=${encodeURIComponent(claimToken)}` : "/join"}
-            className="text-[14px] font-bold text-brand underline-offset-4 hover:underline"
-          >
-            Change route
-          </Link>
-        </div>
-
         <div className="grid gap-6">
-          <CxCard kind="quiet" className="border-0 bg-transparent p-0 md:border md:bg-white md:p-8">
+          <CxCard kind="quiet" className="cx-flat-sm border-0 bg-transparent p-0 md:border md:bg-white md:p-8">
 
             {onFile ? (
               <div className="space-y-4">

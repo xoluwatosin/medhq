@@ -6,11 +6,8 @@
 // basis, never from a relationship label.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { cxInputClass } from "@/components/candidate/primitives";
@@ -20,7 +17,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { MuEmpty, MuRow, MuSection } from "@/components/admin/mu/MuShell";
-import { Status, StatusTone } from "@/components/field";
+import { art } from "@/components/mc/art";
+import { SelectField, Status, StatusTone } from "@/components/field";
 import { formatDate } from "@/lib/format";
 
 /** The seven recorded reasons somebody may see a care record. */
@@ -248,16 +246,7 @@ export const AccessSection = ({
     );
   };
 
-  const setPayer = async (person: AccessPerson) => {
-    setBusy(true);
-    const { error } = await supabase.rpc("care_payer_set", {
-      _client_id: clientId, _person_id: person.person_id,
-    });
-    setBusy(false);
-    if (error) { fail(error, "Could not set the payer"); return; }
-    await after("Payer set");
-  };
-
+  // Payers, and their shares, are set on the Commercial tab.
   const sendInvitation = async (person: AccessPerson, retry = false) => {
     if (!person.grant_id) return;
     setBusy(true);
@@ -300,12 +289,12 @@ export const AccessSection = ({
     <div className="space-y-4">
       <MuSection
         title="Access"
-        description="Who may see this record, and the recorded reason each of them may see it."
+        description="Who may see this record, and why."
         padded={false}
       >
         {people.length === 0 ? (
           <MuEmpty
-            icon={ShieldCheck}
+            art={art.objShieldCheck}
             title="No people on this record"
             description="Add a contact first. Access is given to a person, for one client at a time."
           />
@@ -363,11 +352,6 @@ export const AccessSection = ({
                               Revoke
                             </Button>
                           )}
-                          {!person.is_payer && (
-                            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void setPayer(person)}>
-                              Set as payer
-                            </Button>
-                          )}
                         </div>
                       ) : null
                     }
@@ -375,7 +359,8 @@ export const AccessSection = ({
 
                   {/* Recorded reasons for access. */}
                   {live.length > 0 && (
-                    <div className="space-y-1 px-5 pb-2">
+                    <div className="mx-5 mb-2 space-y-1 border border-line bg-tint/40 p-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Reasons for access</p>
                       {live.map((b) => (
                         <div key={b.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
                           <Status label={BASIS_LABEL[b.basis_kind] ?? b.basis_kind} tone="info" />
@@ -397,7 +382,8 @@ export const AccessSection = ({
 
                   {/* Portal invitation and how delivery went. */}
                   {person.grant_state === "active" && (
-                    <div className="flex flex-wrap items-center gap-3 px-5 pb-3 text-[13px] text-muted-foreground">
+                    <div className="mx-5 mb-3 flex flex-wrap items-center gap-3 border border-line bg-tint/40 p-3 text-[13px] text-muted-foreground">
+                      <p className="w-full text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Portal invitation</p>
                       {delivery ? <Status label={delivery.label} tone={delivery.tone} /> : null}
                       <span>
                         {inviteState === "accepted"
@@ -442,12 +428,15 @@ export const AccessSection = ({
         saving={busy}
       >
         <CareFormRow label="Reason">
-          <Select value={basisDraft.kind} onValueChange={(v) => setBasisDraft((d) => ({ ...d, kind: v }))}>
-            <SelectTrigger id="basis-kind" className="h-11"><SelectValue placeholder="Choose a reason" /></SelectTrigger>
-            <SelectContent>
-              {BASIS_KINDS.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SelectField
+            label="Reason"
+            hideLabel
+            name="basis-kind"
+            value={basisDraft.kind}
+            placeholder="Choose a reason"
+            onChange={(v) => setBasisDraft((d) => ({ ...d, kind: v }))}
+            options={BASIS_KINDS.map((b) => ({ value: b.value, label: b.label }))}
+          />
         </CareFormRow>
         <CareFormRow label="Evidence">
           <input id="basis-note" className={cxInputClass()} value={basisDraft.note}
@@ -484,32 +473,30 @@ export const AccessSection = ({
           label="Care plan"
           help={clinicalOptions.length === 0 ? "Record a reason for access first." : undefined}
         >
-          <Select value={grantDraft.clinicalBasis}
-            onValueChange={(v) => setGrantDraft((d) => ({ ...d, clinicalBasis: v }))}>
-            <SelectTrigger id="clinical-basis" className="h-11"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No care plan access</SelectItem>
-              {clinicalOptions.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{BASIS_LABEL[b.basis_kind] ?? b.basis_kind}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectField
+            label="Care plan"
+            hideLabel
+            name="clinical-basis"
+            value={grantDraft.clinicalBasis === "none" ? "" : grantDraft.clinicalBasis}
+            placeholder="No care plan access"
+            onChange={(v) => setGrantDraft((d) => ({ ...d, clinicalBasis: v || "none" }))}
+            options={clinicalOptions.map((b) => ({ value: b.id, label: BASIS_LABEL[b.basis_kind] ?? b.basis_kind }))}
+          />
         </CareFormRow>
 
         <CareFormRow
           label="Invoices and payments"
           help={financeOptions.length === 0 ? "Record a finance participant reason first." : undefined}
         >
-          <Select value={grantDraft.financeBasis}
-            onValueChange={(v) => setGrantDraft((d) => ({ ...d, financeBasis: v }))}>
-            <SelectTrigger id="finance-basis" className="h-11"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No finance access</SelectItem>
-              {financeOptions.map((b) => (
-                <SelectItem key={b.id} value={b.id}>Finance participant</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectField
+            label="Invoices and payments"
+            hideLabel
+            name="finance-basis"
+            value={grantDraft.financeBasis === "none" ? "" : grantDraft.financeBasis}
+            placeholder="No finance access"
+            onChange={(v) => setGrantDraft((d) => ({ ...d, financeBasis: v || "none" }))}
+            options={financeOptions.map((b) => ({ value: b.id, label: "Finance participant" }))}
+          />
         </CareFormRow>
 
         <CareFormRow label="Reason for this decision">

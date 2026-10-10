@@ -43,6 +43,14 @@ const staticEntries: SitemapEntry[] = [
   { path: "/home-care-ajah", changefreq: "monthly", priority: "0.9" },
   { path: "/home-care-surulere", changefreq: "monthly", priority: "0.9" },
   { path: "/home-care-yaba", changefreq: "monthly", priority: "0.9" },
+  { path: "/home-care-banana-island", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-parkview", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-osborne-foreshore", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-eko-atlantic", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-lekki-phase-1", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-vgc", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-ikeja-gra", changefreq: "monthly", priority: "0.8" },
+  { path: "/home-care-magodo-gra", changefreq: "monthly", priority: "0.8" },
   { path: "/creator", changefreq: "monthly", priority: "0.7" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
@@ -64,8 +72,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/omugwo", changefreq: "monthly", priority: "0.9" },
   { path: "/palliative-care-at-home", changefreq: "monthly", priority: "0.9" },
   { path: "/physiotherapy-at-home", changefreq: "monthly", priority: "0.9" },
-  { path: "/professional-nanny", changefreq: "monthly", priority: "0.9" },
-  { path: "/professional-omugwo", changefreq: "monthly", priority: "0.9" },
   ...expansionPaths.map((path) => ({ path, changefreq: "monthly" as const, priority: "0.8" })),
 ];
 

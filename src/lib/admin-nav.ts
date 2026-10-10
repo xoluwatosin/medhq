@@ -1,8 +1,9 @@
 import {
-  FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, Archive, MailOpen,
-  Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Heart, Orbit, HeartPulse,
+  FileText, Users, Megaphone, LayoutDashboard, Mail, UserPlus, MailOpen,
+  Palette, Settings, Shield, HelpCircle, CheckCircle, Receipt, Orbit, HeartPulse,
   Briefcase, ShieldCheck, Inbox, CalendarDays, Copy, ClipboardList, UserCog, IdCard,
   BarChart3, KeyRound, FileSignature, Library, Layers, Search,
+  UserX,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -62,10 +63,10 @@ export const adminDomains: AdminDomain[] = [
     key: "care",
     label: "Care",
     icon: HeartPulse,
-    url: "/admin/care/requests",
+    url: "/admin/clients",
     items: [
-      { title: "Requests", url: "/admin/care/requests", icon: ClipboardList, perm: "dashboard", exact: true, keywords: "care requests families groups recipients enquirer preparation" },
-      { title: "Clients", url: "/admin/clients", icon: HeartPulse, perm: "dashboard", keywords: "care clients recipients assessments" },
+      { title: "Care list", url: "/admin/clients", icon: HeartPulse, perm: "dashboard", keywords: "care clients recipients assessments requests families groups enquirer preparation paused closed" },
+      { title: "Duplicates", url: "/admin/care/duplicates", icon: Copy, perm: "dashboard", keywords: "care duplicates same person merge entered twice families" },
     ],
   },
   {
@@ -74,7 +75,8 @@ export const adminDomains: AdminDomain[] = [
     icon: Orbit,
     url: "/admin/match-universe",
     items: [
-      { title: "Talent Pool", url: "/admin/match-universe", icon: Orbit, perm: "match_universe", exact: true, keywords: "Candidates candidate pool Match Universe register nurses talent" },
+      { title: "Talent pool", url: "/admin/match-universe", icon: Orbit, perm: "match_universe", exact: true, keywords: "Candidates candidate pool Match Universe register nurses talent" },
+      { title: "Not signed in", url: "/admin/match-universe/not-signed-in", icon: UserX, perm: "match_universe", keywords: "unclaimed accounts invite never signed in claim records" },
       { title: "Intake", url: "/admin/match-universe/intake", icon: Inbox, perm: "match_universe", keywords: "Candidate intake front of funnel parsing new arrivals applications" },
       { title: "Opportunities", url: "/admin/match-universe/opportunities", icon: Briefcase, perm: "match_universe", keywords: "Match Universe jobs roles vacancies recruitment" },
       { title: "Staffing requests", url: "/admin/match-universe/requests", icon: ClipboardList, perm: "match_universe", keywords: "Client requests staffing brief client need matching" },
@@ -92,7 +94,8 @@ export const adminDomains: AdminDomain[] = [
     icon: IdCard,
     url: "/admin/workforce",
     items: [
-      { title: "Workforce", url: "/admin/workforce", icon: IdCard, perm: "workforce", keywords: "staff register contracts compliance employees" },
+      { title: "Workforce", url: "/admin/workforce", icon: IdCard, perm: "workforce", keywords: "staff register compliance employees" },
+      { title: "Contracts", url: "/admin/contracts", icon: FileSignature, perm: "workforce", exact: true, keywords: "contracts awaiting signature countersign issued drafts register" },
     ],
     aside: [
       { title: "Contract templates", url: "/admin/contracts/templates", icon: FileSignature, perm: "workforce", keywords: "contract template employment letter" },
@@ -103,11 +106,11 @@ export const adminDomains: AdminDomain[] = [
     key: "programmes",
     label: "Programmes",
     icon: Layers,
-    url: "/admin/programmes",
+    // Creator is the one programme today, so it is the Programmes page. When a
+    // second programme arrives, it becomes a second tab here.
+    url: "/admin/creator-applications",
     items: [
-      { title: "All programmes", url: "/admin/programmes", icon: Layers, exact: true, keywords: "programmes register Creator" },
-
-      { title: "Creator", url: "/admin/creator-applications", icon: Palette, perm: "creator_applications", keywords: "Creator applications content partners" },
+      { title: "Creator", url: "/admin/creator-applications", icon: Palette, perm: "creator_applications", keywords: "Creator applications content partners programmes register" },
     ],
   },
   {
@@ -116,7 +119,7 @@ export const adminDomains: AdminDomain[] = [
     icon: Mail,
     url: "/admin/enquiries",
     items: [
-      { title: "Enquiries", url: "/admin/enquiries", icon: Mail, perm: "enquiries", exact: true, keywords: "messages contact form leads" },
+      { title: "Enquiries", url: "/admin/enquiries", icon: Mail, perm: "enquiries", exact: true, keywords: "messages contact form leads archived archive restore" },
     ],
     aside: [
       { title: "Enquiry setup", url: "/admin/enquiries/setup", icon: HelpCircle, perm: "enquiries", keywords: "service lines brochures reply questions" },
@@ -130,7 +133,7 @@ export const adminDomains: AdminDomain[] = [
     items: [
       { title: "Campaigns", url: "/admin/campaigns", icon: Megaphone, perm: "campaigns", keywords: "email send broadcast" },
       { title: "Audience", url: "/admin/audience", icon: Users, perm: "audience", keywords: "subscribers groups lists" },
-      { title: "Email Library", url: "/admin/email-templates", icon: MailOpen, perm: "email_templates", keywords: "email templates kit recipes transactional" },
+      { title: "Email library", url: "/admin/email-templates", icon: MailOpen, perm: "email_templates", keywords: "email templates kit recipes transactional" },
     ],
   },
   {
@@ -165,14 +168,14 @@ export const adminDomains: AdminDomain[] = [
     key: "administration",
     label: "Administration",
     icon: Shield,
-    url: "/admin/settings",
+    url: "/admin/control-centre",
+    // One Administration page: its three parts are tabs on the domain rail.
     items: [
-      { title: "Settings", url: "/admin/settings", icon: Settings, perm: "settings", keywords: "configuration notifications" },
-      { title: "Admin access", url: "/admin/control-centre", icon: Shield, perm: "admin_access", keywords: "Access control admins permissions Control Centre" },
+      { title: "People and access", url: "/admin/control-centre", icon: Shield, perm: "admin_access", keywords: "Admin access Access control admins permissions Control Centre" },
+      { title: "Notifications", url: "/admin/settings", icon: Settings, perm: "settings", keywords: "settings configuration notifications emails" },
+      { title: "Alert keys", url: "/admin/alert-keys", icon: KeyRound, perm: "settings", keywords: "secrets run key rotate admin alert test audit job keys" },
     ],
     aside: [
-      { title: "Alert keys", url: "/admin/alert-keys", icon: KeyRound, perm: "settings", keywords: "secrets run key rotate admin alert test audit" },
-      { title: "Archive", url: "/admin/archives", icon: Archive, perm: "archives", keywords: "archives archived deleted" },
       { title: "Approvals", url: "/admin/approvals", icon: CheckCircle, superAdmin: true, keywords: "pending review publish" },
     ],
   },
@@ -263,4 +266,29 @@ export const locateRoute = (domains: AdminDomain[], pathname: string): AdminLoca
     deeper: pathname !== best.item.url,
     backUrl: best.item.url,
   };
+};
+
+/** Detail routes that live outside any listed destination but belong to one. */
+const ROUTE_PERMISSION_EXTRAS: { url: string; perm?: string; superAdmin?: boolean }[] = [
+  { url: "/admin/contracts", perm: "workforce" },
+];
+
+/**
+ * Whether the signed-in admin may open this route at all. The rail hides what
+ * they cannot reach; this stops a typed or bookmarked address from opening it
+ * anyway. Routes nobody has mapped stay open, the same as before, and the
+ * database policies still decide what data comes back.
+ */
+export const canOpenRoute = (pathname: string, access: AdminAccess): boolean => {
+  if (access.isSuperAdmin) return true;
+  const candidates = [
+    ...adminDomains.flatMap((d) => domainDestinations(d)),
+    ...ROUTE_PERMISSION_EXTRAS,
+  ].filter((item) => item.url !== "/admin" && (pathname === item.url || pathname.startsWith(`${item.url}/`)));
+  // Every destination that covers this path must allow it; the most specific
+  // one decides when they disagree.
+  const best = candidates.sort((a, b) => b.url.length - a.url.length)[0];
+  if (!best) return true;
+  if (best.superAdmin) return false;
+  return !best.perm || access.permissions.includes(best.perm);
 };

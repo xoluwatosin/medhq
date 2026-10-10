@@ -45,7 +45,7 @@ export const Status = ({ label, tone = "neutral", icon, srLabel, className }: St
   return (
     <span
       className={cn(
-        "inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium [.admin-kit_&]:rounded-none [.admin-kit_&]:px-2 [.admin-kit_&]:py-0.5 [.admin-kit_&]:font-bold",
         TONE_CLASS[tone],
         className,
       )}

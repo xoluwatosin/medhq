@@ -16,7 +16,7 @@ interface ConsoleTabsProps {
 
 const ConsoleTabs = ({ tabs, active, onChange, label, controls }: ConsoleTabsProps) => (
   <div
-    className="mb-1.5 flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    className="mb-5 flex gap-1 overflow-x-auto border-b-2 border-navy [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     role="tablist"
     aria-label={label}
   >
@@ -31,12 +31,12 @@ const ConsoleTabs = ({ tabs, active, onChange, label, controls }: ConsoleTabsPro
           aria-controls={controls}
           onClick={() => onChange(tab.id)}
           className={cn(
-            "min-h-11 shrink-0 border-b-2 border-transparent bg-transparent px-0 pb-2 pt-1 text-sm font-medium text-muted-copy transition-colors hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            isActive && "border-navy font-semibold text-ink",
+            "min-h-11 shrink-0 bg-transparent px-3.5 text-sm font-bold text-navy/70 transition-colors hover:bg-tint hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            isActive && "bg-navy text-white hover:bg-navy hover:text-white",
           )}
         >
           {tab.label}
-          {!!tab.count && <span className="ml-2 text-xs text-muted-copy">{tab.count}</span>}
+          {!!tab.count && <span className={cn("ml-2 px-1.5 py-0.5 text-[11px] font-extrabold tabular-nums", isActive ? "bg-white text-navy" : "bg-tint text-navy")}>{tab.count}</span>}
         </button>
       );
     })}

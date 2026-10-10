@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/useListParam";
+import { FilterChips, type ActiveFilter } from "@/components/admin/FilterChips";
+import { humaniseTerm } from "@/lib/readable";
 
-import { Loader2, Search, Users, GitMerge, ShieldCheck, FileText, Briefcase, BriefcaseBusiness, CalendarCheck, Inbox, Activity, Send, Sparkles, UserRound, ClipboardList, Moon, UserX, Mailbox } from "lucide-react";
+import { Loader2, Search, Users, GitMerge, MoreHorizontal, ShieldCheck, FileText, BriefcaseBusiness, Inbox, Send, Sparkles, UserRound, ClipboardList, Moon, UserX } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ExportDropdown from "@/components/admin/ExportDropdown";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import {
@@ -28,17 +32,18 @@ import { resolveProfession, PROFESSIONS } from "@/lib/professions";
 import { TRACK_TAGS, trackRules, trackKnown } from "@/lib/tracks";
 import { facetLabel } from "@/lib/match-taxonomy";
 import { CARE_TYPES, CARE_TYPE_LABEL, LOOKING_OPTIONS } from "@/lib/work-preferences";
-import { MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
 import ConsoleMobileList, { ConsoleMobileRow } from "@/components/admin/console/ConsoleMobileList";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import { LgaSelect } from "@/components/LocationSelect";
 import { NIGERIA_STATES } from "@/lib/nigeria-locations";
 import { freshnessLabel, isFresh as isAvailabilityFresh } from "@/lib/availability";
+import { selectAll } from "@/lib/select-all";
 
 // Governed rule: a record with no meaningful activity in this many days is
 // dormant. Falls back to when the record was created if it has never had any
 // activity recorded at all. This threshold is the single source of truth for
-// "dormant" anywhere on this page — do not invent a separate engagement score.
+// "dormant" anywhere on this page. Do not invent a separate engagement score.
 const DORMANT_DAYS = 90;
 
 // looking_status only ever holds one of these four codes (see
@@ -77,8 +82,18 @@ interface Row {
   latestAt: string;
 }
 
-const MatchUniverse = () => {
+/**
+ * The Talent pool holds the people who have claimed their account. Records
+ * whose owner has not signed in yet live on their own page ("unclaimed"),
+ * where the job is to invite them in.
+ */
+const MatchUniverse = ({ scope = "claimed" }: { scope?: "claimed" | "unclaimed" }) => {
   const { toast } = useToast();
+  // Filters live in the address bar and the list remembers the last set used.
+  useRestoreListParams();
+  const clearParams = useClearListParams();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const { search: filterSearch } = useLocation();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -87,26 +102,25 @@ const MatchUniverse = () => {
   const [pendingReviews, setPendingReviews] = useState(0);
 
 
-  const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("all");
-  const [docFilter, setDocFilter] = useState("all");
-  const [verifyFilter, setVerifyFilter] = useState("all");
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
-  const [careFilter, setCareFilter] = useState("all");
-  const [trackFilter, setTrackFilter] = useState("all");
-  const [liveInFilter, setLiveInFilter] = useState("all");
+  const [search, setSearch] = useListParam<string>("q", "");
+  const [sourceFilter, setSourceFilter] = useListParam<string>("channel", "all");
+  const [docFilter, setDocFilter] = useListParam<string>("docs", "all");
+  const [verifyFilter, setVerifyFilter] = useListParam<string>("verified", "all");
+  const [specialtyFilter, setSpecialtyFilter] = useListParam<string>("specialty", "all");
+  const [careFilter, setCareFilter] = useListParam<string>("care", "all");
+  const [trackFilter, setTrackFilter] = useListParam<string>("route", "all");
+  const [liveInFilter, setLiveInFilter] = useListParam<string>("livein", "all");
   // Referees the candidate has given us. A separate question from whether we
   // hold a written reference letter, so it gets its own filter.
-  const [refFilter, setRefFilter] = useState("all");
+  const [refFilter, setRefFilter] = useListParam<string>("referees", "all");
   const [tidying, setTidying] = useState(false);
-  const [sortBy, setSortBy] = useState<"recent" | "docs_desc" | "name_asc" | "exp_desc">("recent");
+  const [sortBy, setSortBy] = useListParam<"recent" | "docs_desc" | "name_asc" | "exp_desc">("sort", "recent");
   const [checked, setChecked] = useState<Set<string>>(new Set());
   // Account state: who can actually sign in, and who we have asked but not heard from.
-  const [accountFilter, setAccountFilter] = useState("all");
   // Talent is a lifecycle state, not a UI convenience. People currently on the
   // Workforce belong in Workforce, so the default pool leaves them out. Their
   // record and history are untouched and still reachable here under "Everyone".
-  const [lifecycleFilter, setLifecycleFilter] = useState<"talent" | "workforce" | "all">("talent");
+  const [lifecycleFilter, setLifecycleFilter] = useListParam<"talent" | "workforce" | "all">("lifecycle", "talent");
   // Optional role to invite against, so the email leads with the job.
   const [blastOpp, setBlastOpp] = useState("none");
   const [openRoles, setOpenRoles] = useState<{ id: string; title: string }[]>([]);
@@ -114,47 +128,60 @@ const MatchUniverse = () => {
   // The primary register view. Active talent is the working default; the rest
   // surface a specific operational job (chase readiness, re-engage, invite,
   // stand down).
-  const [view, setView] = useState<
-    "active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "all"
-  >("active");
-  // Placement readiness, read from mu_readiness_summary — never recomputed here.
-  const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number }>>(new Map());
-  const [readinessFilter, setReadinessFilter] = useState<"all" | "ready" | "office" | "candidate" | "any">("all");
-  const [professionFilter, setProfessionFilter] = useState("all");
-  const [stateFilter, setStateFilter] = useState("all");
-  const [lgaFilter, setLgaFilter] = useState("");
-  const [minExpFilter, setMinExpFilter] = useState("");
-  const [engagementFilter, setEngagementFilter] = useState<"all" | "recent" | "dormant">("all");
-  const [freshnessFilter, setFreshnessFilter] = useState<"all" | "current" | "stale" | "never">("all");
-  const [lookingFilter, setLookingFilter] = useState("all");
+  type ViewId = "active" | "needs_completion" | "dormant" | "unclaimed" | "unavailable" | "never_invited" | "invited" | "documents_in" | "all";
+  const [rawView, setView] = useListParam<ViewId>("view", scope === "claimed" ? "active" : "never_invited");
+  const SCOPE_VIEWS: ViewId[] = scope === "claimed"
+    ? ["active", "documents_in", "needs_completion", "unavailable", "all"]
+    : ["never_invited", "invited", "all"];
+  const view: ViewId = rawView === "dormant" ? "all" : SCOPE_VIEWS.includes(rawView) ? rawView : SCOPE_VIEWS[0];
+  // Placement readiness, read from mu_readiness_summary, never recomputed here.
+  const [readiness, setReadiness] = useState<Map<string, { candidate: number; office: number; docsMissing: number | null }>>(new Map());
+  const [readinessFilter, setReadinessFilter] = useListParam<"all" | "ready" | "office" | "candidate" | "any">("readiness", "all");
+  const [professionFilter, setProfessionFilter] = useListParam<string>("profession", "all");
+  const [stateFilter, setStateFilter] = useListParam<string>("state", "all");
+  const [lgaFilter, setLgaFilter] = useListParam<string>("lga", "");
+  const [minExpFilter, setMinExpFilter] = useListParam<string>("minyears", "");
+  const [engagementFilter, setEngagementFilter] = useListParam<"all" | "recent" | "dormant">("engagement", "all");
+  const [freshnessFilter, setFreshnessFilter] = useListParam<"all" | "current" | "stale" | "never">("availability", "all");
+  const [lookingFilter, setLookingFilter] = useListParam<string>("looking", "all");
 
   const load = async () => {
+    // Each list is read whole, a page at a time: a plain select stops at
+    // 1,000 rows, and documents alone are close to that.
+    const all = (q: () => any, key = "id") =>
+      selectAll<any>((a, z) => q().order(key).range(a, z)).then((data) => ({ data }));
     const [{ data: people }, { data: mm }, { data: jn }, { data: docs }, { count: merges }, { count: claims }, { data: facetRows }, { data: prefRows }, { data: refRows }, { data: readinessRows }] = await Promise.all([
-      adminDb().from("mu_people").select("*").order("last_activity_at", { ascending: false }),
-      adminDb()
+      all(() => adminDb().from("mu_people").select("*").order("last_activity_at", { ascending: false })),
+      all(() => adminDb()
         .from("matchmaker_applications")
         .select("id, person_id, created_at, current_position, utm_source, referrer")
-        .order("created_at", { ascending: false }),
-      adminDb()
+        .order("created_at", { ascending: false })),
+      all(() => adminDb()
         .from("join_applications")
         .select("id, person_id, created_at, role, role_other, qualification, utm_source, referrer")
-        .order("created_at", { ascending: false }),
-      adminDb().from("mu_documents").select("person_id, label, url, verified"),
+        .order("created_at", { ascending: false })),
+      all(() => adminDb().from("mu_documents").select("id, person_id, label, url, verified")),
       adminDb().from("mu_merge_candidates").select("id", { count: "exact", head: true }).eq("status", "pending"),
       adminDb().from("mu_parsed_fields").select("id", { count: "exact", head: true }).eq("status", "pending"),
       // What each person is actually good at, and what work they will take on.
       // Both are filters the office asks for by name, so they load with the roster.
-      adminDb().from("mu_profile_facets").select("person_id, facet_type, code").eq("facet_type", "specialty"),
-      adminDb().from("mu_work_preferences").select("person_id, care_types, live_in"),
-      adminDb().from("mu_references").select("person_id"),
-      // Placement readiness is decided entirely by the database rule set — this
+      all(() => adminDb().from("mu_profile_facets").select("id, person_id, facet_type, code").eq("facet_type", "specialty")),
+      all(() => adminDb().from("mu_work_preferences").select("person_id, care_types, live_in"), "person_id"),
+      all(() => adminDb().from("mu_references").select("id, person_id")),
+      // Placement readiness is decided entirely by the database rule set: this
       // page only reads the totals and never re-implements the logic.
       (adminDb() as any).rpc("mu_readiness_summary"),
     ]);
 
-    const readinessMap = new Map<string, { candidate: number; office: number }>();
+    const readinessMap = new Map<string, { candidate: number; office: number; docsMissing: number | null }>();
     ((readinessRows || []) as any[]).forEach((r) => {
-      readinessMap.set(r.person_id, { candidate: r.candidate_items ?? 0, office: r.office_items ?? 0 });
+      // documents_missing arrives with the 20261005230000 migration; before
+      // that it is absent and nobody is nudged.
+      readinessMap.set(r.person_id, {
+        candidate: r.candidate_items ?? 0,
+        office: r.office_items ?? 0,
+        docsMissing: typeof r.documents_missing === "number" ? r.documents_missing : null,
+      });
     });
     setReadiness(readinessMap);
 
@@ -286,15 +313,23 @@ const MatchUniverse = () => {
 
   const isDormant = (r: Row) => daysSince(r.person.last_activity_at || r.person.created_at) >= DORMANT_DAYS;
   const isNotLooking = (r: Row) => NOT_LOOKING_CODES.includes((r.person as any).looking_status);
-  const readinessOf = (r: Row) => readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
+  const readinessOf = (r: Row) => readiness.get(r.person.id) ?? { candidate: 0, office: 0, docsMissing: null };
   const needsCompletion = (r: Row) => {
     const it = readinessOf(r);
     return it.candidate > 0 || it.office > 0;
   };
   const isExited = (r: Row) => (r.person as any).staff_status === "exited";
-  const isUnclaimed = (r: Row) => !r.person.invited_at || (Boolean(r.person.invited_at) && !r.person.claimed_at);
+  // Claimed: the person has signed in to their account at least once.
+  const isClaimed = (r: Row) => Boolean(r.person.claimed_at) || Boolean((r.person as any).auth_user_id);
+  const isUnclaimed = (r: Row) => !isClaimed(r);
+  // Every required document is in and at least one waits on us: a nudge to
+  // review them, not a status of its own.
+  const documentsIn = (r: Row) => {
+    const it = readiness.get(r.person.id);
+    return Boolean(it && it.docsMissing === 0 && it.office > 0);
+  };
 
-  const matchesView = (r: Row, v: typeof view) => {
+  const matchesView = (r: Row, v: typeof rawView) => {
     const p = r.person;
     switch (v) {
       case "active":
@@ -310,6 +345,12 @@ const MatchUniverse = () => {
         return isDormant(r);
       case "unclaimed":
         return isUnclaimed(r);
+      case "never_invited":
+        return !p.invited_at;
+      case "invited":
+        return Boolean(p.invited_at);
+      case "documents_in":
+        return documentsIn(r);
       case "unavailable":
         return isNotLooking(r);
       case "all":
@@ -321,8 +362,10 @@ const MatchUniverse = () => {
   // Counts respect the lifecycle filter (Talent / Workforce / Everyone), same
   // as the "All" view does, so the tab row and the table never disagree.
   const afterLifecycle = useMemo(
-    () => rows.filter((r) => lifecycleFilter === "all" || ((r.person as any).lifecycle_state ?? "talent") === lifecycleFilter),
-    [rows, lifecycleFilter],
+    () => rows.filter((r) =>
+      (scope === "claimed" ? isClaimed(r) : isUnclaimed(r)) &&
+      (lifecycleFilter === "all" || ((r.person as any).lifecycle_state ?? "talent") === lifecycleFilter)),
+    [rows, lifecycleFilter, scope],
   );
 
   const viewCounts = useMemo(
@@ -331,6 +374,9 @@ const MatchUniverse = () => {
       needs_completion: afterLifecycle.filter((r) => matchesView(r, "needs_completion")).length,
       dormant: afterLifecycle.filter((r) => matchesView(r, "dormant")).length,
       unclaimed: afterLifecycle.filter((r) => matchesView(r, "unclaimed")).length,
+      never_invited: afterLifecycle.filter((r) => matchesView(r, "never_invited")).length,
+      invited: afterLifecycle.filter((r) => matchesView(r, "invited")).length,
+      documents_in: afterLifecycle.filter((r) => matchesView(r, "documents_in")).length,
       unavailable: afterLifecycle.filter((r) => matchesView(r, "unavailable")).length,
       all: afterLifecycle.length,
     }),
@@ -349,13 +395,6 @@ const MatchUniverse = () => {
       }
       if (sourceFilter !== "all" && !r.sources.includes(sourceFilter)) return false;
       if (verifyFilter !== "all" && p.verification_state !== verifyFilter) return false;
-      if (accountFilter !== "all") {
-        const claimed = Boolean(p.claimed_at);
-        const invited = Boolean(p.invited_at);
-        if (accountFilter === "claimed" && !claimed) return false;
-        if (accountFilter === "invited" && (claimed || !invited)) return false;
-        if (accountFilter === "never" && (claimed || invited)) return false;
-      }
       if (specialtyFilter !== "all" && !r.specialties.includes(specialtyFilter)) return false;
       if (trackFilter !== "all") {
         const t = (p as any).track ?? "";
@@ -402,7 +441,7 @@ const MatchUniverse = () => {
     });
     return out;
   }, [
-    afterLifecycle, search, sourceFilter, docFilter, verifyFilter, sortBy, accountFilter,
+    afterLifecycle, search, sourceFilter, docFilter, verifyFilter, sortBy,
     specialtyFilter, careFilter, liveInFilter, trackFilter, refFilter, view, readiness,
     professionFilter, stateFilter, lgaFilter, minExpFilter, engagementFilter, freshnessFilter,
     lookingFilter, readinessFilter,
@@ -518,6 +557,38 @@ const MatchUniverse = () => {
     "Last activity": r.latestAt,
   }));
 
+  // Rows hidden by a filter must never stay selected and get acted on.
+  useEffect(() => { setChecked(new Set()); }, [filterSearch]);
+
+  // One chip per filter that is narrowing the list.
+  const activeFilters: ActiveFilter[] = [
+    { key: "q", on: search !== "", label: `Search: ${search}`, clear: () => setSearch("") },
+    { key: "lifecycle", on: lifecycleFilter !== "talent", label: lifecycleFilter === "all" ? "Everyone, including Workforce" : "On the Workforce", clear: () => setLifecycleFilter("talent") },
+    { key: "profession", on: professionFilter !== "all", label: professionFilter, clear: () => setProfessionFilter("all") },
+    { key: "specialty", on: specialtyFilter !== "all", label: `Specialty: ${specialtyFilter}`, clear: () => setSpecialtyFilter("all") },
+    { key: "route", on: trackFilter !== "all", label: `Route: ${TRACK_TAGS.find((t) => t.id === trackFilter)?.label ?? humaniseTerm(trackFilter)}`, clear: () => setTrackFilter("all") },
+    { key: "care", on: careFilter !== "all", label: `Care: ${CARE_TYPE_LABEL[careFilter as keyof typeof CARE_TYPE_LABEL] ?? humaniseTerm(careFilter)}`, clear: () => setCareFilter("all") },
+    { key: "livein", on: liveInFilter !== "all", label: `Live-in: ${humaniseTerm(liveInFilter)}`, clear: () => setLiveInFilter("all") },
+    { key: "state", on: stateFilter !== "all", label: stateFilter, clear: () => { setStateFilter("all"); setLgaFilter(""); } },
+    { key: "lga", on: lgaFilter !== "", label: lgaFilter, clear: () => setLgaFilter("") },
+    { key: "minyears", on: minExpFilter !== "", label: `${minExpFilter}+ years`, clear: () => setMinExpFilter("") },
+    { key: "engagement", on: engagementFilter !== "all", label: engagementFilter === "recent" ? "Active in the last 90 days" : "Quiet for 90 days", clear: () => setEngagementFilter("all") },
+    { key: "availability", on: freshnessFilter !== "all", label: `Availability: ${humaniseTerm(freshnessFilter)}`, clear: () => setFreshnessFilter("all") },
+    { key: "looking", on: lookingFilter !== "all", label: LOOKING_OPTIONS.find((o) => o.code === lookingFilter)?.label ?? humaniseTerm(lookingFilter), clear: () => setLookingFilter("all") },
+    { key: "readiness", on: readinessFilter !== "all", label: `Outstanding: ${({ ready: "nothing", office: "with the office", candidate: "with the candidate", any: "anything" } as Record<string, string>)[readinessFilter] ?? readinessFilter}`, clear: () => setReadinessFilter("all") },
+    { key: "docs", on: docFilter !== "all", label: `Documents: ${humaniseTerm(docFilter)}`, clear: () => setDocFilter("all") },
+    { key: "referees", on: refFilter !== "all", label: `Referees: ${humaniseTerm(refFilter)}`, clear: () => setRefFilter("all") },
+    { key: "verified", on: verifyFilter !== "all", label: humaniseTerm(verifyFilter), clear: () => setVerifyFilter("all") },
+    { key: "channel", on: sourceFilter !== "all", label: `Channel: ${humaniseTerm(sourceFilter)}`, clear: () => setSourceFilter("all") },
+  ]
+    .filter((f) => f.on)
+    .map(({ key, label, clear }) => ({ key, label, onRemove: clear }));
+  // Filters folded under More filters; the summary says how many are set.
+  const MORE_KEYS = ["specialty", "care", "livein", "minyears", "looking", "readiness", "engagement", "availability", "docs", "referees", "verified", "account", "lifecycle", "channel"];
+  const moreSet = activeFilters.filter((f) => MORE_KEYS.includes(f.key)).length;
+  const clearAllFilters = () =>
+    clearParams(["q", "lifecycle", "profession", "specialty", "route", "care", "livein", "state", "lga", "minyears", "engagement", "availability", "looking", "readiness", "docs", "referees", "verified", "channel", "account"]);
+
   if (loading)
     return (
       <div className="flex justify-center py-12">
@@ -526,66 +597,60 @@ const MatchUniverse = () => {
     );
 
   const totals = {
-    people: rows.length,
-    withDocs: rows.filter((r) => r.docs > 0).length,
-    verified: rows.filter((r) => r.person.verification_state === "verified").length,
+    people: afterLifecycle.length,
+    withDocs: afterLifecycle.filter((r) => r.docs > 0).length,
+    verified: afterLifecycle.filter((r) => r.person.verification_state === "verified").length,
   };
 
   return (
     <MuPage>
       <MuPageHeader
-        title="Talent Pool"
-        description="The talent register. One profile per person."
+        title={scope === "claimed" ? "Talent pool" : "Not signed in"}
+        description={scope === "claimed"
+          ? "Everyone who has claimed their account. One profile per person."
+          : "Records whose owner has not claimed their account yet. Invite them in."}
         actions={
           <>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/intake">
-                <Activity className="mr-2 h-4 w-4" />Intake
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/availability">
-                <CalendarCheck className="mr-2 h-4 w-4" />Availability
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/opportunities">
-                <Briefcase className="mr-2 h-4 w-4" />Opportunities
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/requests">
-                <Mailbox className="mr-2 h-4 w-4" />Staffing requests
-              </Link>
-            </Button>
             <Button variant={pendingReviews > 0 ? "default" : "outline"} size="sm" asChild>
               <Link to="/admin/match-universe/verification">
                 <ShieldCheck className="mr-2 h-4 w-4" />Document review
                 {pendingReviews > 0 && (
-                  <Badge variant="secondary" className="ml-2">{pendingReviews}</Badge>
+                  <span className="ml-2 bg-white/20 px-1.5 text-[12px] font-bold tabular-nums">{pendingReviews}</span>
                 )}
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/merges">
-                <GitMerge className="mr-2 h-4 w-4" />Duplicates
-                {pendingMerges > 0 && <Badge variant="secondary" className="ml-2">{pendingMerges}</Badge>}
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/match-universe/workforce">
-                <BriefcaseBusiness className="mr-2 h-4 w-4" />Workforce
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={tidyDocuments} disabled={tidying}>
-              {tidying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              Tidy documents
-            </Button>
             <ExportDropdown data={exportRows} filename="talent-pool" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="More actions">
+                  <MoreHorizontal className="mr-2 h-4 w-4" />More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/match-universe/merges">
+                    <GitMerge className="mr-2 h-4 w-4" />Duplicates
+                    {pendingMerges > 0 && (
+                      <span className="ml-auto pl-3 text-[12px] font-bold tabular-nums text-muted-foreground">{pendingMerges}</span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/match-universe/workforce">
+                    <BriefcaseBusiness className="mr-2 h-4 w-4" />Workforce
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { void tidyDocuments(); }} disabled={tidying}>
+                  {tidying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  Tidy documents
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
 
+      {scope === "claimed" ? (
       <MuStats
         columns={4}
         stats={[
@@ -601,392 +666,227 @@ const MatchUniverse = () => {
           },
         ]}
       />
+      ) : (
+      <MuStats
+        columns={3}
+        stats={[
+          { label: "Not signed in", value: afterLifecycle.length, icon: UserX },
+          { label: "Never invited", value: viewCounts.never_invited, icon: Send, tone: viewCounts.never_invited > 0 ? "attention" : "default" },
+          { label: "Invited, waiting", value: viewCounts.invited, icon: Inbox },
+        ]}
+      />
+      )}
 
       <ConsoleTabs
-        label="Talent Pool view"
+        label="Talent pool view"
         active={view}
         onChange={(id) => setView(id as typeof view)}
-        tabs={[
+        tabs={scope === "claimed" ? [
           { id: "active", label: "Active talent", count: viewCounts.active },
+          { id: "documents_in", label: "Documents in, to review", count: viewCounts.documents_in },
           { id: "needs_completion", label: "Needs completion", count: viewCounts.needs_completion },
-          { id: "dormant", label: "Dormant", count: viewCounts.dormant },
-          { id: "unclaimed", label: "Unclaimed", count: viewCounts.unclaimed },
-          { id: "unavailable", label: "Unavailable / paused", count: viewCounts.unavailable },
+          { id: "unavailable", label: "Not looking", count: viewCounts.unavailable },
+          { id: "all", label: "All", count: viewCounts.all },
+        ] : [
+          { id: "never_invited", label: "Never invited", count: viewCounts.never_invited },
+          { id: "invited", label: "Invited, waiting", count: viewCounts.invited },
           { id: "all", label: "All", count: viewCounts.all },
         ]}
       />
 
-      <div className="hidden md:block">
-        <MuToolbar>
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, email, phone or profession"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-none bg-background"
-          />
+      {/* One filter area for every screen size: the everyday filters in a row,
+          everything else folded under More filters. */}
+      {/* Finding people: one panel, so the controls read as one group. */}
+      <div className="flex flex-col gap-3 border-2 border-navy bg-tint/40 p-3 sm:p-4">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-navy">Find people</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name, email, phone or profession"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 bg-background"
+            />
+          </div>
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            <Select value={professionFilter} onValueChange={setProfessionFilter}>
+              <SelectTrigger className="w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any profession</SelectItem>
+                {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
+              <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any state</SelectItem>
+                {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <LgaSelect
+              state={stateFilter === "all" ? "" : stateFilter}
+              value={lgaFilter}
+              onChange={setLgaFilter}
+              allowClear
+              className="w-full sm:w-[170px]"
+            />
+            <Select value={trackFilter} onValueChange={setTrackFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any route</SelectItem>
+                {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                <SelectItem value="unknown">Route not confirmed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+              <SelectTrigger className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent activity</SelectItem>
+                <SelectItem value="docs_desc">Most documents</SelectItem>
+                <SelectItem value="name_asc">Name A to Z</SelectItem>
+                <SelectItem value="exp_desc">Most experience</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any specialty</SelectItem>
-              {allSpecialties.map((c) => (
-                <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={trackFilter} onValueChange={setTrackFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any route</SelectItem>
-              {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
-              <SelectItem value="unknown">Route not confirmed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={careFilter} onValueChange={setCareFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any type of care</SelectItem>
-              {CARE_TYPES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={liveInFilter} onValueChange={setLiveInFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Live-in or live-out</SelectItem>
-              <SelectItem value="live_in">Will live in</SelectItem>
-              <SelectItem value="live_out">Will live out</SelectItem>
-              <SelectItem value="unknown">Has not said</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={professionFilter} onValueChange={setProfessionFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any profession</SelectItem>
-              {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any state</SelectItem>
-              {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <LgaSelect
-            state={stateFilter === "all" ? "" : stateFilter}
-            value={lgaFilter}
-            onChange={setLgaFilter}
-            allowClear
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Input
-            type="number"
-            min={0}
-            placeholder="Min. years experience"
-            value={minExpFilter}
-            onChange={(e) => setMinExpFilter(e.target.value)}
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any engagement</SelectItem>
-              <SelectItem value="recent">Recently active</SelectItem>
-              <SelectItem value="dormant">Inactive 90+ days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any availability freshness</SelectItem>
-              <SelectItem value="current">Availability current</SelectItem>
-              <SelectItem value="stale">Availability stale</SelectItem>
-              <SelectItem value="never">Never provided</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={lookingFilter} onValueChange={setLookingFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any looking status</SelectItem>
-              {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any placement readiness</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="office">Office action required</SelectItem>
-              <SelectItem value="candidate">Candidate action required</SelectItem>
-              <SelectItem value="any">Any blocker</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={docFilter} onValueChange={setDocFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any documents</SelectItem>
-              <SelectItem value="any">Has documents</SelectItem>
-              <SelectItem value="none">No documents</SelectItem>
-              {DOC_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {`${DOC_TYPE_LABELS[t]} on file`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={refFilter} onValueChange={setRefFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any referees</SelectItem>
-              <SelectItem value="any">Referees given</SelectItem>
-              <SelectItem value="two">Two or more referees</SelectItem>
-              <SelectItem value="none">No referees yet</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={verifyFilter} onValueChange={setVerifyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any verification</SelectItem>
-              {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All channels</SelectItem>
-              {allSources.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="talent">Talent</SelectItem>
-              <SelectItem value="workforce">On the Workforce</SelectItem>
-              <SelectItem value="all">Everyone</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={accountFilter} onValueChange={setAccountFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any account state</SelectItem>
-              <SelectItem value="claimed">Has signed in</SelectItem>
-              <SelectItem value="invited">Invited, not claimed</SelectItem>
-              <SelectItem value="never">Never invited</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most recent activity</SelectItem>
-              <SelectItem value="docs_desc">Most documents</SelectItem>
-              <SelectItem value="name_asc">Name A to Z</SelectItem>
-              <SelectItem value="exp_desc">Most experience</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-</MuToolbar>
+        <details
+          className="border-t border-navy/20 pt-1"
+          open={moreOpen}
+          onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 py-2 text-[13.5px] font-extrabold text-navy">
+            More filters
+            {moreSet > 0 && <span className="bg-navy px-2 py-0.5 text-[12px] font-bold text-white">{moreSet} set</span>}
+          </summary>
+          <div className="grid grid-cols-1 gap-2 pb-1 sm:grid-cols-2 lg:grid-cols-4">
+            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any specialty</SelectItem>
+                {allSpecialties.map((c) => (
+                  <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={careFilter} onValueChange={setCareFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">Any type of care</SelectItem>
+                {CARE_TYPES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={liveInFilter} onValueChange={setLiveInFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Live-in or live-out</SelectItem>
+                <SelectItem value="live_in">Will live in</SelectItem>
+                <SelectItem value="live_out">Will live out</SelectItem>
+                <SelectItem value="unknown">Has not said</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              min={0}
+              placeholder="Min. years experience"
+              value={minExpFilter}
+              onChange={(e) => setMinExpFilter(e.target.value)}
+              className="w-full"
+            />
+            <Select value={lookingFilter} onValueChange={setLookingFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any looking status</SelectItem>
+                {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any outstanding work</SelectItem>
+                <SelectItem value="ready">Nothing outstanding</SelectItem>
+                <SelectItem value="office">With the office</SelectItem>
+                <SelectItem value="candidate">With the candidate</SelectItem>
+                <SelectItem value="any">Anything outstanding</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any engagement</SelectItem>
+                <SelectItem value="recent">Active in the last 90 days</SelectItem>
+                <SelectItem value="dormant">Quiet for 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any availability freshness</SelectItem>
+                <SelectItem value="current">Availability current</SelectItem>
+                <SelectItem value="stale">Availability stale</SelectItem>
+                <SelectItem value="never">Never provided</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={docFilter} onValueChange={setDocFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any documents</SelectItem>
+                <SelectItem value="any">Has documents</SelectItem>
+                <SelectItem value="none">No documents</SelectItem>
+                {DOC_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {`${DOC_TYPE_LABELS[t]} on file`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={refFilter} onValueChange={setRefFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any referees</SelectItem>
+                <SelectItem value="any">Referees given</SelectItem>
+                <SelectItem value="two">Two or more referees</SelectItem>
+                <SelectItem value="none">No referees yet</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={verifyFilter} onValueChange={setVerifyFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any verification</SelectItem>
+                {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="talent">Talent</SelectItem>
+                <SelectItem value="workforce">On the Workforce</SelectItem>
+                <SelectItem value="all">Everyone</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All channels</SelectItem>
+                {allSources.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </details>
       </div>
 
-      <details className="border border-line-soft bg-card md:hidden">
-        <summary className="flex min-h-11 cursor-pointer items-center justify-between px-4 py-3 text-[13.5px] font-semibold text-navy">
-          Filter and search
-        </summary>
-        <div className="flex flex-col gap-2 border-t border-line-soft p-3">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, email, phone or profession"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-none bg-background"
-          />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any specialty</SelectItem>
-              {allSpecialties.map((c) => (
-                <SelectItem key={c} value={c}>{facetLabel(c)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={trackFilter} onValueChange={setTrackFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any route</SelectItem>
-              {TRACK_TAGS.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
-              <SelectItem value="unknown">Route not confirmed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={careFilter} onValueChange={setCareFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any type of care</SelectItem>
-              {CARE_TYPES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={liveInFilter} onValueChange={setLiveInFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Live-in or live-out</SelectItem>
-              <SelectItem value="live_in">Will live in</SelectItem>
-              <SelectItem value="live_out">Will live out</SelectItem>
-              <SelectItem value="unknown">Has not said</SelectItem>
-            </SelectContent>
-          </Select>
 
-          <Select value={professionFilter} onValueChange={setProfessionFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any profession</SelectItem>
-              {PROFESSIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setLgaFilter(""); }}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="max-h-72">
-              <SelectItem value="all">Any state</SelectItem>
-              {NIGERIA_STATES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <LgaSelect
-            state={stateFilter === "all" ? "" : stateFilter}
-            value={lgaFilter}
-            onChange={setLgaFilter}
-            allowClear
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Input
-            type="number"
-            min={0}
-            placeholder="Min. years experience"
-            value={minExpFilter}
-            onChange={(e) => setMinExpFilter(e.target.value)}
-            className="rounded-none w-full sm:w-[170px]"
-          />
-          <Select value={engagementFilter} onValueChange={(v) => setEngagementFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any engagement</SelectItem>
-              <SelectItem value="recent">Recently active</SelectItem>
-              <SelectItem value="dormant">Inactive 90+ days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={freshnessFilter} onValueChange={(v) => setFreshnessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any availability freshness</SelectItem>
-              <SelectItem value="current">Availability current</SelectItem>
-              <SelectItem value="stale">Availability stale</SelectItem>
-              <SelectItem value="never">Never provided</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={lookingFilter} onValueChange={setLookingFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any looking status</SelectItem>
-              {LOOKING_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={readinessFilter} onValueChange={(v) => setReadinessFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[190px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any placement readiness</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="office">Office action required</SelectItem>
-              <SelectItem value="candidate">Candidate action required</SelectItem>
-              <SelectItem value="any">Any blocker</SelectItem>
-            </SelectContent>
-          </Select>
 
-          <Select value={docFilter} onValueChange={setDocFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any documents</SelectItem>
-              <SelectItem value="any">Has documents</SelectItem>
-              <SelectItem value="none">No documents</SelectItem>
-              {DOC_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {`${DOC_TYPE_LABELS[t]} on file`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={refFilter} onValueChange={setRefFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any referees</SelectItem>
-              <SelectItem value="any">Referees given</SelectItem>
-              <SelectItem value="two">Two or more referees</SelectItem>
-              <SelectItem value="none">No referees yet</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={verifyFilter} onValueChange={setVerifyFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any verification</SelectItem>
-              {Object.entries(VERIFICATION_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All channels</SelectItem>
-              {allSources.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="talent">Talent</SelectItem>
-              <SelectItem value="workforce">On the Workforce</SelectItem>
-              <SelectItem value="all">Everyone</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={accountFilter} onValueChange={setAccountFilter}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any account state</SelectItem>
-              <SelectItem value="claimed">Has signed in</SelectItem>
-              <SelectItem value="invited">Invited, not claimed</SelectItem>
-              <SelectItem value="never">Never invited</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="rounded-none w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Most recent activity</SelectItem>
-              <SelectItem value="docs_desc">Most documents</SelectItem>
-              <SelectItem value="name_asc">Name A to Z</SelectItem>
-              <SelectItem value="exp_desc">Most experience</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-</div>
-      </details>
-
+      <FilterChips filters={activeFilters} onClearAll={clearAllFilters} />
 
       <MuSection
-        title={`Showing ${filtered.length} of ${rows.length} people`}
-        description="Select a person to view their profile, documents and match history."
+        title={`Showing ${filtered.length} of ${afterLifecycle.length} people`}
         padded={false}
         actions={
           checked.size > 0 ? (
@@ -1024,7 +924,7 @@ const MatchUniverse = () => {
               <TableHead>Location</TableHead>
               <TableHead>Documents</TableHead>
               <TableHead className="hidden lg:table-cell">Verification</TableHead>
-              <TableHead className="hidden lg:table-cell">Readiness</TableHead>
+              <TableHead className="hidden lg:table-cell">Outstanding</TableHead>
               <TableHead className="hidden xl:table-cell">Looking status</TableHead>
               <TableHead className="hidden xl:table-cell">Last activity</TableHead>
 
@@ -1095,9 +995,16 @@ const MatchUniverse = () => {
                 <TableCell className="hidden lg:table-cell text-sm">
                   {(() => {
                     const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
-                    if (it.candidate === 0 && it.office === 0) return <MuStatus tone="good" label="Ready" />;
-                    if (it.office > 0) return <MuStatus tone="warning" label="Office action required" />;
-                    return <MuStatus tone="warning" label="Candidate action required" />;
+                    if (documentsIn(r)) {
+                      return (
+                        <Link to={`/admin/match-universe/${r.person.id}?tab=verification`} className="hover:underline">
+                          <MuStatus tone="warning" label="Documents in, review them" />
+                        </Link>
+                      );
+                    }
+                    if (it.candidate === 0 && it.office === 0) return <MuStatus tone="good" label="Nothing" />;
+                    if (it.office > 0) return <MuStatus tone="warning" label="With the office" />;
+                    return <MuStatus tone="neutral" label="With the candidate" />;
                   })()}
                 </TableCell>
                 <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
@@ -1112,8 +1019,12 @@ const MatchUniverse = () => {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
-                  No people match these filters.
+                <TableCell colSpan={9} className="p-0">
+                  <MuEmpty
+                    art={art.objMagnifier}
+                    title="No people match"
+                    description="Try fewer filters or a different search."
+                  />
                 </TableCell>
               </TableRow>
             )}
@@ -1126,23 +1037,28 @@ const MatchUniverse = () => {
         emptyIcon={Users}
         rows={filtered.map((r): ConsoleMobileRow => {
           const it = readiness.get(r.person.id) ?? { candidate: 0, office: 0 };
-          const readinessLabel =
-            it.candidate === 0 && it.office === 0
-              ? "Ready"
+          const readinessLabel = documentsIn(r)
+            ? "Documents in, review them"
+            : it.candidate === 0 && it.office === 0
+              ? "Nothing outstanding"
               : it.office > 0
-                ? "Office action required"
-                : "Candidate action required";
+                ? "With the office"
+                : "With the candidate";
           return {
             key: r.person.id,
             title: r.person.full_name || "Unnamed",
-            state: [
-              r.profession,
-              [r.person.lga, r.person.state].filter(Boolean).join(", ") || "Not stated",
-              LOOKING_OPTIONS.find((o) => o.code === (r.person as any).looking_status)?.label ?? "Not said",
-              readinessLabel,
-            ]
-              .filter(Boolean)
-              .join(" · "),
+            state: (
+              <span className="flex flex-wrap gap-x-3">
+                {[
+                  r.profession,
+                  [r.person.lga, r.person.state].filter(Boolean).join(", ") || "Not stated",
+                  LOOKING_OPTIONS.find((o) => o.code === (r.person as any).looking_status)?.label ?? "Not said",
+                  readinessLabel,
+                ]
+                  .filter(Boolean)
+                  .map((part, i) => <span key={i}>{part}</span>)}
+              </span>
+            ),
             status: (
               <MuStatus
                 tone={r.person.verification_state === "verified" ? "good" : "neutral"}

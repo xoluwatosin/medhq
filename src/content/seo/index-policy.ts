@@ -10,20 +10,97 @@
  */
 
 /**
- * Expansion routes that duplicate an established page. The established URL
- * owns the topic; the duplicate redirects to it and never renders content.
+ * Routes that duplicate an established page. The established URL owns the
+ * topic; the duplicate redirects to it and never renders content. vercel.json
+ * serves the same list as permanent (301) redirects, checked by a test.
  */
 export const EXPANSION_REDIRECTS: Record<string, string> = {
   "/antenatal-care-at-home": "/antenatal-care",
   "/clinical-research-staffing": "/clinical-research",
   "/hospital-support-services": "/hospital-support",
+  "/ngo-health-programme-implementation": "/ngo-healthcare-staffing",
+  "/community-health-outreach-services": "/ngo-healthcare-staffing",
+  "/physiotherapy-after-stroke": "/stroke-recovery-at-home",
+  "/managed-postpartum-stay-in-nigeria": "/omugwo",
+  "/professional-omugwo": "/omugwo",
+  "/professional-nanny": "/nanny-childcare",
+  "/medic-connect-talent-pool": "/careers",
+  "/school-companion": "/shadow-teacher",
+  "/additional-needs-childcare": "/pediatric-care",
+  "/early-intervention-support": "/pediatric-care",
+  "/behaviour-support": "/pediatric-care",
+  "/hospital-to-home-care": "/care-after-hospital-discharge",
+  "/care-for-elderly-parents": "/eldercare",
+  "/blood-sugar-monitoring-at-home": "/diabetes-care-at-home",
+  "/blood-pressure-monitoring-at-home": "/chronic-care-at-home",
+  "/speech-delay-support": "/speech-therapist-for-children",
 };
 
 /**
- * Expansion routes approved for indexing. Empty until the ownership review
- * decides which routes have a distinct purpose against the established pages.
+ * Expansion routes approved for indexing after the ownership review: each
+ * answers a distinct question with no established or governed page owning it.
+ * Overlapping routes stay unindexed until their cluster is resolved; see
+ * ownership-table.md.
  */
-export const INDEXABLE_EXPANSION_PATHS: string[] = [];
+export const INDEXABLE_EXPANSION_PATHS: string[] = [
+  "/wound-dressing-at-home",
+  "/blood-sample-collection-at-home",
+  "/iv-therapy-at-home",
+  "/injection-at-home",
+  "/stoma-care-at-home",
+  "/peg-feeding-support-at-home",
+  "/tracheostomy-care-at-home",
+  "/ventilator-care-at-home",
+  "/medication-administration-at-home",
+  "/diabetic-foot-care-at-home",
+  "/medical-escort-services",
+  "/home-care-vs-care-home",
+  "/nurse-vs-caregiver",
+  "/who-do-i-need-after-surgery",
+  "/transport-to-medical-appointments",
+  "/how-to-verify-a-nurse-in-nigeria",
+  "/how-to-verify-a-doctor-in-nigeria",
+  "/caregiver-cost-in-lagos",
+  "/diabetes-care-at-home",
+  "/cancer-care-at-home",
+  "/night-nurse-for-newborn",
+  "/live-in-nanny",
+  "/live-in-caregiver",
+  "/continence-care-at-home",
+  "/orthopaedic-recovery-at-home",
+  "/caregiver-jobs-and-opportunities",
+  "/nanny-jobs-and-opportunities",
+  "/doctor-jobs-and-opportunities",
+  "/midwife-jobs-and-opportunities",
+  "/pharmacist-jobs-and-opportunities",
+  "/laboratory-scientist-jobs-and-opportunities",
+  "/physiotherapist-jobs-and-opportunities",
+  "/doctor-staffing",
+  "/pharmacist-staffing",
+  "/laboratory-scientist-staffing",
+  "/physiotherapist-staffing",
+  "/school-healthcare-staffing",
+  "/corporate-healthcare-staffing",
+  "/correctional-healthcare-support",
+  "/c-section-recovery-at-home",
+  "/breastfeeding-support-at-home",
+  "/nicu-to-home-support",
+  "/coming-to-nigeria-after-giving-birth",
+  "/who-should-i-hire-for-a-newborn",
+  "/equipment-needed-after-hospital-discharge",
+  "/how-to-prepare-the-home-before-hospital-discharge",
+  "/shadow-teacher",
+  "/stroke-recovery-at-home",
+  "/autism-support-at-home",
+  "/adhd-support-at-home",
+  "/what-does-a-shadow-teacher-do",
+  "/care-after-hospital-discharge",
+  "/high-risk-pregnancy-support-at-home",
+  "/how-medic-connect-home-care-works",
+  "/speech-therapist-for-children",
+  "/occupational-therapy-for-children",
+  "/healthcare-facility-management-support",
+];
 
 const indexableExpansion = new Set(INDEXABLE_EXPANSION_PATHS);
 

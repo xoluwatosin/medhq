@@ -1,3 +1,4 @@
+import { lazyPage } from "@/lib/lazy-page";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,53 +7,46 @@ import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-import Home from "./pages/Home";
-import ForFacilities from "./pages/ForFacilities";
-import CareAtHome from "./pages/CareAtHome";
-import ClinicalHomeCare from "./pages/ClinicalHomeCare";
-import PostSurgicalCare from "./pages/PostSurgicalCare";
-import CareFromAbroad from "./pages/CareFromAbroad";
-import AgencyVsPrivateNurse from "./pages/AgencyVsPrivateNurse";
-import GovernedSeoPage from "./pages/GovernedSeoPage";
+const Home = lazyPage(() => import("./pages/Home"));
+const ForFacilities = lazyPage(() => import("./pages/ForFacilities"));
+const CareAtHome = lazyPage(() => import("./pages/CareAtHome"));
+const ClinicalHomeCare = lazyPage(() => import("./pages/ClinicalHomeCare"));
+const PostSurgicalCare = lazyPage(() => import("./pages/PostSurgicalCare"));
+const CareFromAbroad = lazyPage(() => import("./pages/CareFromAbroad"));
+const AgencyVsPrivateNurse = lazyPage(() => import("./pages/AgencyVsPrivateNurse"));
+const GovernedSeoPage = lazyPage(() => import("./pages/GovernedSeoPage"));
 import { GENERATED_PAGE_PATHS } from "./content/seo/governed-pages";
-import ExpansionSeoPage from "./pages/ExpansionSeoPage";
+const ExpansionSeoPage = lazyPage(() => import("./pages/ExpansionSeoPage"));
 import { EXPANSION_PAGE_PATHS } from "./content/seo/expansion-pages";
 import { EXPANSION_REDIRECTS } from "./content/seo/index-policy";
-import NeighbourhoodCare from "./pages/NeighbourhoodCare";
+const NeighbourhoodCare = lazyPage(() => import("./pages/NeighbourhoodCare"));
 
-import AntenatalCare from "./pages/AntenatalCare";
-import PostnatalCare from "./pages/PostnatalCare";
-import NannyChildcare from "./pages/NannyChildcare";
-import Eldercare from "./pages/Eldercare";
-import PediatricCare from "./pages/PediatricCare";
-import HospitalStaffing from "./pages/HospitalStaffing";
-import HospitalSupport from "./pages/HospitalSupport";
-import ClinicalResearch from "./pages/ClinicalResearch";
-import MedicAbout from "./pages/MedicAbout";
-import MedicContact from "./pages/MedicContact";
-import JoinRoutePicker from "./pages/portal/JoinRoutePicker";
-import JoinAccount from "./pages/portal/JoinAccount";
-import ClaimStart from "./pages/portal/ClaimStart";
-import CampaignDownload from "./pages/CampaignDownload";
+const AntenatalCare = lazyPage(() => import("./pages/AntenatalCare"));
+const PostnatalCare = lazyPage(() => import("./pages/PostnatalCare"));
+const NannyChildcare = lazyPage(() => import("./pages/NannyChildcare"));
+const Eldercare = lazyPage(() => import("./pages/Eldercare"));
+const PediatricCare = lazyPage(() => import("./pages/PediatricCare"));
+const HospitalStaffing = lazyPage(() => import("./pages/HospitalStaffing"));
+const HospitalSupport = lazyPage(() => import("./pages/HospitalSupport"));
+const ClinicalResearch = lazyPage(() => import("./pages/ClinicalResearch"));
+const MedicAbout = lazyPage(() => import("./pages/MedicAbout"));
+const MedicContact = lazyPage(() => import("./pages/MedicContact"));
+const JoinRoutePicker = lazyPage(() => import("./pages/portal/JoinRoutePicker"));
+const JoinAccount = lazyPage(() => import("./pages/portal/JoinAccount"));
+const ClaimStart = lazyPage(() => import("./pages/portal/ClaimStart"));
+const CampaignDownload = lazyPage(() => import("./pages/CampaignDownload"));
 
-import PortalVerify from "./pages/portal/PortalVerify";
-import PortalStart from "./pages/portal/PortalStart";
+const PortalVerify = lazyPage(() => import("./pages/portal/PortalVerify"));
+const PortalStart = lazyPage(() => import("./pages/portal/PortalStart"));
 
-import Auth from "./pages/Auth";
-import Creator from "./pages/Creator";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import Matchmakers from "./pages/Matchmakers";
+const Auth = lazyPage(() => import("./pages/Auth"));
+const Creator = lazyPage(() => import("./pages/Creator"));
+const Blog = lazyPage(() => import("./pages/Blog"));
+const BlogPost = lazyPage(() => import("./pages/BlogPost"));
+const BlogShortLink = lazyPage(() => import("./pages/BlogShortLink"));
+const Matchmakers = lazyPage(() => import("./pages/Matchmakers"));
 
-/** Heard moved to its own site; old links on this domain go there. */
-const HEARD_URL = "https://heard.medicconnect.co";
-const HeardRedirect = () => {
-  const { pathname } = useLocation();
-  const rest = pathname.replace(/^\/(heard-preview|heard)/, "");
-  window.location.replace(HEARD_URL + (rest === "/thanks" ? "/thanks" : rest || "/"));
-  return null;
-};
-
+/** The accessibility panel and live chat shown on every Medic Connect page. */
 const MedicConnectWidgets = () => {
   return (
     <>
@@ -61,88 +55,90 @@ const MedicConnectWidgets = () => {
     </>
   );
 };
-import MatchmakerOpportunity from "./pages/MatchmakerOpportunity";
-import MatchmakerApply from "./pages/MatchmakerApply";
-import MatchmakerTemplates from "./pages/admin/MatchmakerTemplates";
-import Workforce from "./pages/admin/Workforce";
-import WorkforceStaff from "./pages/admin/WorkforceStaff";
-import MyProfile from "./pages/admin/MyProfile";
-import MatchUniverse from "./pages/admin/MatchUniverse";
-import MatchUniverseOpportunities from "./pages/admin/MatchUniverseOpportunities";
-import MatchUniverseOpportunity from "./pages/admin/MatchUniverseOpportunity";
-import MatchUniversePerson from "./pages/admin/MatchUniversePerson";
-import MatchUniverseMerges from "./pages/admin/MatchUniverseMerges";
-import MatchUniverseVerification from "./pages/admin/MatchUniverseVerification";
-import MatchUniverseIntake from "./pages/admin/MatchUniverseIntake";
-import MatchUniverseAvailability from "./pages/admin/MatchUniverseAvailability";
-import MatchUniverseRequests from "./pages/admin/MatchUniverseRequests";
-import MatchUniverseRequest from "./pages/admin/MatchUniverseRequest";
+const MatchmakerOpportunity = lazyPage(() => import("./pages/MatchmakerOpportunity"));
+const MatchmakerApply = lazyPage(() => import("./pages/MatchmakerApply"));
+const MatchmakerTemplates = lazyPage(() => import("./pages/admin/MatchmakerTemplates"));
+const Workforce = lazyPage(() => import("./pages/admin/Workforce"));
+const WorkforceStaff = lazyPage(() => import("./pages/admin/WorkforceStaff"));
+const MyProfile = lazyPage(() => import("./pages/admin/MyProfile"));
+const MatchUniverse = lazyPage(() => import("./pages/admin/MatchUniverse"));
+const MatchUniverseOpportunities = lazyPage(() => import("./pages/admin/MatchUniverseOpportunities"));
+const MatchUniverseOpportunity = lazyPage(() => import("./pages/admin/MatchUniverseOpportunity"));
+const MatchUniversePerson = lazyPage(() => import("./pages/admin/MatchUniversePerson"));
+const MatchUniverseMerges = lazyPage(() => import("./pages/admin/MatchUniverseMerges"));
+const MatchUniverseVerification = lazyPage(() => import("./pages/admin/MatchUniverseVerification"));
+const MatchUniverseIntake = lazyPage(() => import("./pages/admin/MatchUniverseIntake"));
+const MatchUniverseAvailability = lazyPage(() => import("./pages/admin/MatchUniverseAvailability"));
+const MatchUniverseRequests = lazyPage(() => import("./pages/admin/MatchUniverseRequests"));
+const MatchUniverseRequest = lazyPage(() => import("./pages/admin/MatchUniverseRequest"));
 
 
 
-import AdminLayout from "./pages/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import Intelligence from "./pages/admin/Intelligence";
-import AlertKeys from "./pages/admin/AlertKeys";
-import PostsList from "./pages/admin/PostsList";
-import Seo from "./pages/admin/Seo";
-import SeoPageRecord from "./pages/admin/SeoPageRecord";
-import PostEditor from "./pages/admin/PostEditor";
-import Campaigns from "./pages/admin/Campaigns";
-import CampaignEditor from "./pages/admin/CampaignEditor";
-import Audience from "./pages/admin/Audience";
-import Enquiries from "./pages/admin/Enquiries";
-import EnquirySetup from "./pages/admin/EnquirySetup";
-import Applications from "./pages/admin/Applications";
-import Archives from "./pages/admin/Archives";
-import EmailTemplates from "./pages/admin/EmailTemplates";
-import CreatorApplications from "./pages/admin/CreatorApplications";
-import AdminSettings from "./pages/admin/Settings";
-import ControlCentre from "./pages/admin/ControlCentre";
-import Approvals from "./pages/admin/Approvals";
-import Invoices from "./pages/admin/Invoices";
-import SetPassword from "./pages/SetPassword";
-import ContractSign from "./pages/ContractSign";
-import ContractEditor from "./pages/admin/ContractEditor";
-import ContractTemplates from "./pages/admin/ContractTemplates";
-import ContractTemplateEditor from "./pages/admin/ContractTemplateEditor";
-import AnnexLibrary from "./pages/admin/AnnexLibrary";
-import Clients from "./pages/admin/Clients";
-import ClientRecord from "./pages/admin/ClientRecord";
-import CareRequests from "./pages/admin/CareRequests";
-import Programmes from "./pages/admin/Programmes";
+const AdminLayout = lazyPage(() => import("./pages/admin/AdminLayout"));
+const Dashboard = lazyPage(() => import("./pages/admin/Dashboard"));
+const Intelligence = lazyPage(() => import("./pages/admin/Intelligence"));
+const AlertKeys = lazyPage(() => import("./pages/admin/AlertKeys"));
+const PostsList = lazyPage(() => import("./pages/admin/PostsList"));
+const Seo = lazyPage(() => import("./pages/admin/Seo"));
+const SeoPageRecord = lazyPage(() => import("./pages/admin/SeoPageRecord"));
+const PostEditor = lazyPage(() => import("./pages/admin/PostEditor"));
+const Campaigns = lazyPage(() => import("./pages/admin/Campaigns"));
+const CampaignEditor = lazyPage(() => import("./pages/admin/CampaignEditor"));
+const Audience = lazyPage(() => import("./pages/admin/Audience"));
+const Enquiries = lazyPage(() => import("./pages/admin/Enquiries"));
+const EnquirySetup = lazyPage(() => import("./pages/admin/EnquirySetup"));
+const Applications = lazyPage(() => import("./pages/admin/Applications"));
+const EmailTemplates = lazyPage(() => import("./pages/admin/EmailTemplates"));
+const CreatorApplications = lazyPage(() => import("./pages/admin/CreatorApplications"));
+const AdminSettings = lazyPage(() => import("./pages/admin/Settings"));
+const ControlCentre = lazyPage(() => import("./pages/admin/ControlCentre"));
+const Approvals = lazyPage(() => import("./pages/admin/Approvals"));
+const Invoices = lazyPage(() => import("./pages/admin/Invoices"));
+const SetPassword = lazyPage(() => import("./pages/SetPassword"));
+const ContractSign = lazyPage(() => import("./pages/ContractSign"));
+const ContractEditor = lazyPage(() => import("./pages/admin/ContractEditor"));
+const ContractsRegister = lazyPage(() => import("./pages/admin/ContractsRegister"));
+const ContractTemplates = lazyPage(() => import("./pages/admin/ContractTemplates"));
+const ContractTemplateEditor = lazyPage(() => import("./pages/admin/ContractTemplateEditor"));
+const AnnexLibrary = lazyPage(() => import("./pages/admin/AnnexLibrary"));
+const Clients = lazyPage(() => import("./pages/admin/Clients"));
+const ClientRecord = lazyPage(() => import("./pages/admin/ClientRecord"));
+const CareDuplicates = lazyPage(() => import("./pages/admin/CareDuplicates"));
 
-import PortalLogin from "./pages/portal/PortalLogin";
-import PortalSetPassword from "./pages/portal/PortalSetPassword";
-import PortalAccount from "./pages/portal/PortalAccount";
-import WorkforceMode from "./pages/portal/WorkforceMode";
-import PortalDocuments from "./pages/portal/PortalDocuments";
-import PortalAvailability from "./pages/portal/PortalAvailability";
-import PortalPreferences from "./pages/portal/PortalPreferences";
-import PortalOffers from "./pages/portal/PortalOffers";
-import AssessorHome from "./pages/assessor/AssessorHome";
+const PortalLogin = lazyPage(() => import("./pages/portal/PortalLogin"));
+const PortalSetPassword = lazyPage(() => import("./pages/portal/PortalSetPassword"));
+const PortalAccount = lazyPage(() => import("./pages/portal/PortalAccount"));
+const WorkforceMode = lazyPage(() => import("./pages/portal/WorkforceMode"));
+const PortalDocuments = lazyPage(() => import("./pages/portal/PortalDocuments"));
+const PortalAvailability = lazyPage(() => import("./pages/portal/PortalAvailability"));
+const PortalPreferences = lazyPage(() => import("./pages/portal/PortalPreferences"));
+const PortalOffers = lazyPage(() => import("./pages/portal/PortalOffers"));
+const AssessorHome = lazyPage(() => import("./pages/assessor/AssessorHome"));
 import AssessorRoute from "./components/assessor/AssessorRoute";
-import AssessmentWorkspace from "./pages/assessor/AssessmentWorkspace";
-import PortalContract from "./pages/portal/PortalContract";
-import PortalContractDoc from "./pages/portal/PortalContractDoc";
+const AssessmentWorkspace = lazyPage(() => import("./pages/assessor/AssessmentWorkspace"));
+const PortalContract = lazyPage(() => import("./pages/portal/PortalContract"));
+const PortalContractDoc = lazyPage(() => import("./pages/portal/PortalContractDoc"));
 
-import PortalApplications from "./pages/portal/PortalApplications";
-import PortalDetails from "./pages/portal/PortalDetails";
+const PortalApplications = lazyPage(() => import("./pages/portal/PortalApplications"));
+const PortalDetails = lazyPage(() => import("./pages/portal/PortalDetails"));
 
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import PreAssessment from "./pages/PreAssessment";
-import CareOnboarding from "./pages/CareOnboarding";
-import CareProposalView from "./pages/care/CareProposalView";
-import CareInvitation from "./pages/care/CareInvitation";
-import CareHome from "./pages/care/CareHome";
+const Privacy = lazyPage(() => import("./pages/Privacy"));
+const Terms = lazyPage(() => import("./pages/Terms"));
+const PreAssessment = lazyPage(() => import("./pages/PreAssessment"));
+const CareOnboarding = lazyPage(() => import("./pages/CareOnboarding"));
+const CareProposalView = lazyPage(() => import("./pages/care/CareProposalView"));
+const CareOffer = lazyPage(() => import("./pages/care/CareOffer"));
+const CareInvitation = lazyPage(() => import("./pages/care/CareInvitation"));
+const CareHome = lazyPage(() => import("./pages/care/CareHome"));
 
-import Unsubscribe from "./pages/Unsubscribe";
-import NotFound from "./pages/NotFound";
+const Unsubscribe = lazyPage(() => import("./pages/Unsubscribe"));
+const NotFound = lazyPage(() => import("./pages/NotFound"));
+const AdminNotFound = lazyPage(() => import("./pages/admin/AdminNotFound"));
 import LiveChatButton from "./components/LiveChatButton";
 import AccessibilityPanel from "./components/care/AccessibilityPanel";
 import { Analytics } from "./components/Analytics";
 import IPhoneScreenEdges from "./components/IPhoneScreenEdges";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -165,7 +161,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true }}>
+        <ScrollToTop />
         <IPhoneScreenEdges />
         <Analytics />
         <AuthProvider>
@@ -199,6 +196,14 @@ const App = () => (
             <Route path="/home-care-ajah" element={<NeighbourhoodCare slug="ajah" />} />
             <Route path="/home-care-surulere" element={<NeighbourhoodCare slug="surulere" />} />
             <Route path="/home-care-yaba" element={<NeighbourhoodCare slug="yaba" />} />
+            <Route path="/home-care-banana-island" element={<NeighbourhoodCare slug="banana-island" />} />
+            <Route path="/home-care-parkview" element={<NeighbourhoodCare slug="parkview" />} />
+            <Route path="/home-care-osborne-foreshore" element={<NeighbourhoodCare slug="osborne-foreshore" />} />
+            <Route path="/home-care-eko-atlantic" element={<NeighbourhoodCare slug="eko-atlantic" />} />
+            <Route path="/home-care-lekki-phase-1" element={<NeighbourhoodCare slug="lekki-phase-1" />} />
+            <Route path="/home-care-vgc" element={<NeighbourhoodCare slug="vgc" />} />
+            <Route path="/home-care-ikeja-gra" element={<NeighbourhoodCare slug="ikeja-gra" />} />
+            <Route path="/home-care-magodo-gra" element={<NeighbourhoodCare slug="magodo-gra" />} />
             <Route path="/antenatal-care" element={<AntenatalCare />} />
             <Route path="/postnatal-care" element={<PostnatalCare />} />
             <Route path="/nanny-childcare" element={<NannyChildcare />} />
@@ -245,22 +250,23 @@ const App = () => (
 
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/b/:code" element={<BlogShortLink />} />
             <Route path="/hm" element={<Matchmakers />} />
             <Route path="/hm/:slug" element={<MatchmakerOpportunity />} />
             <Route path="/hm/:slug/apply" element={<MatchmakerApply />} />
-            <Route path="/heard/*" element={<HeardRedirect />} />
-            <Route path="/heard" element={<HeardRedirect />} />
-            <Route path="/heard-preview/*" element={<HeardRedirect />} />
             <Route path="/care/start/:token" element={<CareOnboarding />} />
             <Route path="/pre-assessment/:token" element={<PreAssessment />} />
             <Route path="/care/proposal" element={<CareProposalView />} />
+            <Route path="/care/offer/:token" element={<CareOffer />} />
+            <Route path="/o/:token" element={<CareOffer />} />
             <Route path="/care/invitation/:token" element={<CareInvitation />} />
             <Route path="/care" element={<CareHome />} />
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="care/requests" element={<CareRequests />} />
+              <Route path="care/requests" element={<Navigate to="/admin/clients?view=requests" replace />} />
+              <Route path="care/duplicates" element={<CareDuplicates />} />
               <Route path="clients" element={<Clients />} />
               <Route path="clients/:id" element={<ClientRecord />} />
               <Route path="intelligence" element={<Intelligence />} />
@@ -277,7 +283,8 @@ const App = () => (
               <Route path="enquiries" element={<Enquiries />} />
               <Route path="enquiries/setup" element={<EnquirySetup />} />
               <Route path="applications" element={<Applications />} />
-              <Route path="archives" element={<Archives />} />
+              {/* Each list has its own Archived view now. */}
+              <Route path="archives" element={<Navigate to="/admin/enquiries?view=archived" replace />} />
               <Route path="email-templates" element={<EmailTemplates />} />
               <Route path="creator-applications" element={<CreatorApplications />} />
               <Route path="settings" element={<AdminSettings />} />
@@ -285,6 +292,7 @@ const App = () => (
               <Route path="approvals" element={<Approvals />} />
               {/* Match Universe — unified admin workspace for talent pool and opportunities */}
               <Route path="match-universe" element={<MatchUniverse />} />
+              <Route path="match-universe/not-signed-in" element={<MatchUniverse scope="unclaimed" />} />
               <Route path="match-universe/opportunities" element={<MatchUniverseOpportunities />} />
               <Route path="match-universe/opportunities/templates" element={<MatchmakerTemplates />} />
               <Route path="match-universe/opportunities/:id/*" element={<MatchUniverseOpportunity />} />
@@ -298,6 +306,7 @@ const App = () => (
               <Route path="me" element={<MyProfile />} />
               <Route path="workforce" element={<Workforce />} />
               <Route path="workforce/:id" element={<WorkforceStaff />} />
+              <Route path="contracts" element={<ContractsRegister />} />
               <Route path="contracts/templates" element={<ContractTemplates />} />
               <Route path="contracts/templates/:id" element={<ContractTemplateEditor />} />
               <Route path="contracts/annexes" element={<AnnexLibrary />} />
@@ -312,15 +321,14 @@ const App = () => (
               <Route path="matchmakers/templates" element={<Navigate to="/admin/match-universe/opportunities/templates" replace />} />
               <Route path="matchmakers/:id/*" element={<MatchmakerRedirect />} />
 
-
               {/* Domain landings. Every historic URL above still resolves; these
                   only give each business domain a front door of its own. */}
-              <Route path="programmes" element={<Programmes />} />
-              <Route path="care" element={<Navigate to="/admin/care/requests" replace />} />
+              <Route path="programmes" element={<Navigate to="/admin/creator-applications" replace />} />
+              <Route path="care" element={<Navigate to="/admin/clients" replace />} />
               <Route path="talent" element={<Navigate to="/admin/match-universe" replace />} />
               <Route path="communications" element={<Navigate to="/admin/campaigns" replace />} />
               <Route path="finance" element={<Navigate to="/admin/invoices" replace />} />
-
+              <Route path="*" element={<AdminNotFound />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

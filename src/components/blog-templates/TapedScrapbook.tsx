@@ -11,7 +11,7 @@ const TapedScrapbook = ({ content, bodyImages, bodyCaptions = [], dropCapEnabled
   const sections = splitContentAtH2(content);
 
   return (
-    <article className="max-w-[820px] mx-auto px-4 pt-0 pb-12 text-lg leading-relaxed">
+    <article className="max-w-[820px] mx-auto px-[22px] pt-0 pb-12 text-[17px] leading-[1.75] text-ink sm:text-[18.5px]">
       {sections.map((s, i) => (
         <div key={i}>
           {renderSection(s, i, i === 0, dropCapEnabled)}

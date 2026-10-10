@@ -74,7 +74,27 @@ const PortalPreferences = () => {
       )}
 
       <CxSection
-        title="About you"
+        eyebrow="Part 1 of 2"
+        title="Needed to put you forward"
+        intro={rules.needsFunctionAreas
+          ? "The areas you work in, the organisations you would join, and the shape of the contract you want."
+          : rules.needsPlacement
+            ? "What you are hoping to get from us while you study, and what should follow when you finish."
+            : "Who you are happy to care for, whether you want live-in or live-out work, and the shifts that suit you."}
+      >
+        <CxCard className="p-5 sm:p-[22px]">
+          <WorkPreferencesPanel
+            personId={p.person.id}
+            actorName={p.person.full_name}
+            track={p.person.track}
+            onSaved={p.reload}
+          />
+        </CxCard>
+      </CxSection>
+
+      <CxSection
+        eyebrow="Part 2 of 2"
+        title="Helps us match you"
         intro={rules.needsCarePreferences
           ? "Two facts that shape which households we suggest. You control both."
           : "Two facts we hold on your record. You control both."}
@@ -111,24 +131,6 @@ const PortalPreferences = () => {
               </Select>
             </CxField>
           </div>
-        </CxCard>
-      </CxSection>
-
-      <CxSection
-        title="The work you want"
-        intro={rules.needsFunctionAreas
-          ? "The areas you work in, the organisations you would join, and the shape of the contract you want."
-          : rules.needsPlacement
-            ? "What you are hoping to get from us while you study, and what should follow when you finish."
-            : "Who you are happy to care for, whether you want live-in or live-out work, and the shifts that suit you."}
-      >
-        <CxCard className="p-5 sm:p-[22px]">
-          <WorkPreferencesPanel
-            personId={p.person.id}
-            actorName={p.person.full_name}
-            track={p.person.track}
-            onSaved={p.reload}
-          />
         </CxCard>
       </CxSection>
 

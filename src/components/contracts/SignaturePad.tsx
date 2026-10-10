@@ -77,10 +77,16 @@ const SignaturePad = ({ onChange, height = 160 }: Props) => {
 
   return (
     <div className="space-y-2">
-      <div className="rounded-xl border border-dashed border-primary/40 bg-muted/30">
+      {/* A sheet of paper with a signing line. */}
+      <div className="relative border-2 border-navy bg-white shadow-[5px_5px_0_hsl(var(--navy))]">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-6 bottom-9 border-b-2 border-navy/25" />
+        <span aria-hidden="true" className="pointer-events-none absolute bottom-3 left-6 text-[11px] font-extrabold uppercase tracking-[0.14em] text-navy/50">
+          Sign here
+        </span>
+        <span aria-hidden="true" className="pointer-events-none absolute bottom-[38px] left-2 text-[18px] font-black text-navy/30">×</span>
         <canvas
           ref={canvasRef}
-          className="touch-none rounded-xl"
+          className="relative touch-none"
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={end}
@@ -88,7 +94,7 @@ const SignaturePad = ({ onChange, height = 160 }: Props) => {
         />
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13.5px] text-body">
           {empty ? "Sign inside the box using your finger or mouse." : "Happy with it? Continue below."}
         </p>
         <Button type="button" variant="ghost" size="sm" onClick={clear} disabled={empty}>

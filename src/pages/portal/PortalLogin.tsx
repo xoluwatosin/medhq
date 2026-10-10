@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { CxAuthShell, CxAuthAside, CxAuthField, CxAuthOr, CxAuthPassword } from "@/components/candidate/CxAuthShell";
 import { CxButton, cxInputClass } from "@/components/candidate/primitives";
+import { art } from "@/components/mc/art";
 
 /** Sign in for candidates. Admins use /auth. */
 const PortalLogin = () => {
@@ -69,6 +70,7 @@ const PortalLogin = () => {
       <CxAuthShell
         aside={
           <CxAuthAside
+            art={art.charNurse}
             eyebrow="Candidate portal"
             heading="One profile, every role you apply for."
             lede="Your profile stays with you. Update it once and every application we put you forward for uses the same record."

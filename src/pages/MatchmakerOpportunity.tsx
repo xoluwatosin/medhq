@@ -62,7 +62,7 @@ const MatchmakerOpportunity = () => {
   if (!opp) {
     return (
       <div className="min-h-dvh bg-background flex flex-col">
-        <SEO title="Opportunity not found — Medic Connect" description="This Matchmakers opportunity could not be found." path={`/hm/${slug || ""}`} noindex breadcrumbs={[]} />
+        <SEO title="Opportunity not found | Medic Connect" description="This Matchmakers opportunity could not be found." path={`/hm/${slug || ""}`} noindex breadcrumbs={[]} />
         <MedicHeader />
         <main className="flex-1 pt-24 pb-16">
           <div className="max-w-2xl mx-auto px-4 text-center">
@@ -83,7 +83,7 @@ const MatchmakerOpportunity = () => {
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       <SEO
-        title={`${opp.title} — Healthcare Matchmakers Network`}
+        title={`${opp.title} | Healthcare Matchmakers Network`}
         description={opp.summary || "Healthcare opportunity placed by Medic Connect."}
         path={`/hm/${opp.slug}`}
         noindex
@@ -101,7 +101,7 @@ const MatchmakerOpportunity = () => {
           {(isDraft || isPreview) && (
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1.5 text-sm text-amber-900">
               <Eye className="h-4 w-4" />
-              Preview mode — status: {opp.status}
+              Preview mode, status: {opp.status}
             </div>
           )}
 
@@ -130,7 +130,7 @@ const MatchmakerOpportunity = () => {
             <div className="kit-curve-sm border border-border bg-muted/40 p-5">
               <p className="font-medium text-lg">This opportunity has closed.</p>
               <p className="text-base text-muted-foreground mt-1">
-                Thanks for the interest — this role is no longer accepting applications.{" "}
+                Thank you for your interest. This role is no longer accepting applications.{" "}
                 <Link to="/hm" className="underline">See other open opportunities</Link>.
               </p>
             </div>

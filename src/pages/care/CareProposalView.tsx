@@ -6,9 +6,14 @@
 // or agree a price, and a new version carries no agreement forward.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import MedicHeader from "@/components/MedicHeader";
-import Footer from "@/components/Footer";
-import { cxInputClass } from "@/components/candidate/primitives";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Check, MessageSquareText, PhoneCall, Send } from "lucide-react";
+import {
+  FamilyCard, FamilyHeading, FamilyLoading, FamilyNote, FamilySection, FamilyShell, FamilyText,
+  familyInput, familyOnNavy, familyPrimary, familySecondary,
+} from "@/components/care/FamilyShell";
+import { art } from "@/components/mc/art";
+import { ClipArt, NotchTag } from "@/components/mc/brand";
 import { supabase } from "@/integrations/supabase/client";
 import { careErrorMessage } from "@/lib/care-errors";
 import { formatDateTime } from "@/lib/format";
@@ -24,12 +29,39 @@ interface MyClient {
   display_name: string;
 }
 
-const primary =
-  "cx-control min-h-11 bg-navy px-4 text-[14px] font-bold text-white hover:bg-navy/90 disabled:opacity-50";
-const ghost =
-  "cx-control min-h-11 border border-line bg-white px-4 text-[14px] font-bold text-ink hover:bg-desk/60 disabled:opacity-50";
+// The care plan's section titles, so each part of the proposal is headed the
+// way the care team wrote it. Families cannot read form definitions.
+const SECTION_TITLES: Record<string, string> = {
+  front_sheet: "About this plan",
+  goals: "What we are trying to achieve",
+  the_day: "The day",
+  the_week: "The week",
+  personal_care: "Personal care",
+  moving_about: "Moving about",
+  skin_food_continence: "Skin, food and continence",
+  medicines: "Medicines",
+  how_to_be: "How to be with this person",
+  risks: "Risks and what we do about them",
+  boundaries: "Boundaries",
+  who_is_coming: "Who is coming",
+  review: "Review",
+  agreement: "Agreement",
+};
+
+const sectionTitle = (key: string) =>
+  SECTION_TITLES[key] ?? (key.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+
+const inputClass = `${familyInput} py-3`;
+
+const CHOICE_ICONS: Record<ProposalResponseKind, typeof Check> = {
+  agreed: Check,
+  changes_requested: MessageSquareText,
+  call_requested: PhoneCall,
+};
 
 const CareProposalView = () => {
+  const [params] = useSearchParams();
+  const wanted = params.get("client");
   const [clients, setClients] = useState<MyClient[]>([]);
   const [clientId, setClientId] = useState<string>("");
   const [rows, setRows] = useState<ProposalStatusRow[]>([]);
@@ -69,14 +101,15 @@ const CareProposalView = () => {
       const { data } = await supabase.rpc("care_my_clients");
       const mine = (data ?? []) as unknown as MyClient[];
       setClients(mine);
-      if (mine[0]) {
-        setClientId(mine[0].client_id);
-        await load(mine[0].client_id);
+      const first = mine.find((c) => c.client_id === wanted) ?? mine[0];
+      if (first) {
+        setClientId(first.client_id);
+        await load(first.client_id);
       } else {
         setLoading(false);
       }
     })();
-  }, [load]);
+  }, [load, wanted]);
 
   const respond = async () => {
     if (!current || !choice) return;
@@ -94,145 +127,187 @@ const CareProposalView = () => {
 
   const needsComment = choice === "changes_requested" && comment.trim() === "";
 
+  const person = clients.find((c) => c.client_id === clientId);
+  const earlier = rows.filter((r) => r.proposal_id !== current?.proposal_id);
+  const parts = content
+    ? Object.entries(content)
+        .map(([key, value]) => ({
+          key,
+          note: typeof value === "object" && value !== null
+            ? String((value as Record<string, unknown>).note ?? "")
+            : String(value ?? ""),
+        }))
+        .filter((part) => part.note.trim() !== "")
+    : [];
+
+  const aside = loading ? undefined : (
+    <>
+      {current && content !== null && (
+        <FamilyNote title="About cost" art={art.objPriceTagNaira}>
+          The cost is set out separately in your quotation.
+        </FamilyNote>
+      )}
+      {earlier.length > 0 && (
+        <FamilySection label="Earlier versions">
+          <ul className="flex flex-col gap-2">
+            {earlier.map((row) => (
+              <li key={row.proposal_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-2 border-tint-deep bg-card px-4 py-3">
+                <b className="text-[14.5px] font-extrabold text-navy">Version {row.version}</b>
+                <span className="text-[14.5px] text-body">
+                  {proposalStatusLabel[row.status] ?? row.status}
+                  {row.responded_at ? `, you replied on ${formatDateTime(row.responded_at)}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </FamilySection>
+      )}
+      <FamilyNote title="Questions about the plan?" art={art.coordinatorPhone}>
+        Choose Need a call and your coordinator will ring you to talk it through.
+      </FamilyNote>
+    </>
+  );
+
   return (
-    <div className="min-h-dvh bg-desk">
-      <MedicHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">Proposed care and support</h1>
-        <p className="mt-2 text-[15px] text-body">
-          This is what we propose. It is not the final care plan, and nothing starts until we have spoken.
-        </p>
+    <FamilyShell
+      eyebrow="Care plan"
+      title={person ? `Proposed care plan for ${person.display_name}` : "Proposed care plan"}
+      accent={[2]}
+      art={art.charDoctor}
+      lead="The care plan we propose after the assessment. Nothing starts until you have read it and we have spoken with you."
+      path="/care/proposal"
+      aside={aside}
+      action={<Link to="/care" className={familyOnNavy}><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Your care</Link>}
+    >
+      {clients.length > 1 && (
+        <FamilyCard>
+          <label className="label-caps block text-[12px] text-label" htmlFor="proposal-person">Who this is about</label>
+          <select
+            id="proposal-person"
+            className={`${inputClass} mt-2 min-h-12`}
+            value={clientId}
+            onChange={(e) => { setClientId(e.target.value); void load(e.target.value); }}
+          >
+            {clients.map((c) => (
+              <option key={c.client_id} value={c.client_id}>{c.display_name}</option>
+            ))}
+          </select>
+        </FamilyCard>
+      )}
 
-        {clients.length > 1 && (
-          <label className="mt-5 block text-[14px] font-bold text-ink">
-            Who this is about
-            <select
-              className={cn(cxInputClass(), "mt-1")}
-              value={clientId}
-              onChange={(e) => { setClientId(e.target.value); void load(e.target.value); }}
-            >
-              {clients.map((c) => (
-                <option key={c.client_id} value={c.client_id}>{c.display_name}</option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {loading && <p className="mt-8 text-[15px] text-body">Loading.</p>}
-
-        {!loading && rows.length === 0 && (
-          <p className="mt-8 text-[15px] text-body">There is no care proposal to read yet.</p>
-        )}
-
-        {!loading && rows.length > 0 && (
-          <section className="mt-8 border border-line bg-white p-5">
-            <h2 className="text-[18px] font-bold text-ink">
-              {current ? `Version ${current.version}` : "No current version"}
-            </h2>
-            <p className="mt-1 text-[13.5px] text-body">
-              {current
-                ? `${proposalStatusLabel.sent}${current.sent_at ? ` on ${formatDateTime(current.sent_at)}` : ""}`
-                : "The version you were sent has been replaced or withdrawn."}
-            </p>
-
-            {current && content === null && (
-              <p className="mt-4 text-[15px] text-body">
-                You can see that a proposal was sent, but not what it says. Ask the care team for access.
-              </p>
-            )}
-
-            {current && content && (
-              <div className="mt-4 flex flex-col gap-4">
-                {Object.entries(content).map(([key, value]) => {
-                  const note = typeof value === "object" && value !== null
-                    ? String((value as Record<string, unknown>).note ?? "")
-                    : String(value ?? "");
-                  if (!note.trim()) return null;
-                  return (
-                    <div key={key}>
-                      <p className="whitespace-pre-wrap text-[15px] text-ink">{note}</p>
-                    </div>
-                  );
-                })}
-                <p className="text-[13.5px] text-body">
-                  Costs are set out separately in your quotation.
-                </p>
-              </div>
-            )}
-
-            {current && content && (
-              <div className="mt-6 border-t border-line-soft pt-5">
-                <p className="text-[15px] font-bold text-ink">What would you like to do?</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {RESPONSE_CHOICES.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={choice === option.value}
-                      onClick={() => setChoice(option.value)}
-                      className={cn(
-                        "cx-control min-h-11 px-4 text-[14.5px] font-bold transition-colors",
-                        choice === option.value
-                          ? "border-[1.5px] border-navy bg-tint text-navy"
-                          : "border border-line bg-white text-ink hover:bg-desk/60",
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                {choice && (
-                  <textarea
-                    className={cn(cxInputClass(), "mt-3 min-h-24")}
-                    aria-label={choice === "changes_requested" ? "What should change" : "Anything you want to add"}
-                    placeholder={choice === "changes_requested"
-                      ? "Tell us what should change"
-                      : "Anything you want to add, if you like"}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                  />
-                )}
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button" className={primary}
-                    disabled={busy || !choice || needsComment}
-                    onClick={() => void respond()}
+      {loading ? (
+        <FamilyCard><FamilyLoading label="Loading the care proposal" /></FamilyCard>
+      ) : rows.length === 0 ? (
+        <FamilyCard>
+          <div className="flex items-center gap-5">
+            <div className="min-w-0 flex-1">
+              <FamilyHeading>No proposal yet</FamilyHeading>
+              <FamilyText className="mt-2">
+                We write the proposal after the care needs assessment. We will tell you when it is ready to read.
+              </FamilyText>
+            </div>
+            <ClipArt src={art.objCarePlan} size={104} className="hidden sm:block" />
+          </div>
+        </FamilyCard>
+      ) : !current ? (
+        <FamilyCard>
+          <FamilyHeading>This version has been replaced</FamilyHeading>
+          <FamilyText className="mt-2">The proposal you were sent has been replaced or withdrawn. The care team will send the new one.</FamilyText>
+        </FamilyCard>
+      ) : content === null ? (
+        <FamilyCard>
+          <FamilyHeading>Version {current.version}</FamilyHeading>
+          <FamilyText className="mt-2">
+            A proposal was sent{current.sent_at ? ` on ${formatDateTime(current.sent_at)}` : ""}, but it is not shared
+            with you. Ask the care team if you should be able to read it.
+          </FamilyText>
+        </FamilyCard>
+      ) : (
+        <>
+          <FamilyCard>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="inline-flex"><NotchTag tone="navy" size="sm">Version {current.version}</NotchTag></span>
+              {current.sent_at && <span className="text-[13.5px] text-body">Sent {formatDateTime(current.sent_at)}</span>}
+            </div>
+            <ol className="mt-5 flex flex-col">
+              {parts.map((part, i) => (
+                <li key={part.key} className="flex gap-4 border-t-2 border-tint py-5 first:border-t-0 first:pt-1 last:pb-0">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center bg-navy text-[13px] font-extrabold tabular-nums text-white"
                   >
-                    Send
-                  </button>
-                  {choice && (
-                    <button type="button" className={ghost} onClick={() => { setChoice(""); setComment(""); }}>
-                      Cancel
-                    </button>
-                  )}
-                </div>
-                {needsComment && (
-                  <p className="mt-2 text-[13.5px] text-warn-ink">Tell us what should change.</p>
-                )}
-                <p className="mt-3 text-[13.5px] text-body">
-                  Agreeing applies to this version only. It does not start care or agree a price.
-                </p>
-              </div>
-            )}
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-[18px] font-extrabold leading-tight tracking-[-0.02em] text-navy">{sectionTitle(part.key)}</h2>
+                    <p className="mt-2 whitespace-pre-wrap text-[15.5px] leading-[1.65] text-body">{part.note}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </FamilyCard>
 
-            {rows.length > 1 && (
-              <div className="mt-6 border-t border-line-soft pt-4">
-                <p className="text-[14px] font-bold text-ink">Earlier versions</p>
-                {rows.filter((r) => r.proposal_id !== current?.proposal_id).map((row) => (
-                  <p key={row.proposal_id} className="mt-1 text-[13.5px] text-body">
-                    Version {row.version} · {proposalStatusLabel[row.status] ?? row.status}
-                    {row.responded_at ? ` · you replied on ${formatDateTime(row.responded_at)}` : ""}
-                  </p>
-                ))}
-              </div>
+          <FamilyCard className="shadow-offset-blue">
+            <FamilyHeading>What would you like to do?</FamilyHeading>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3" role="group" aria-label="Your reply">
+              {RESPONSE_CHOICES.map((option) => {
+                const Icon = CHOICE_ICONS[option.value];
+                const on = choice === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setChoice(option.value)}
+                    className={cn(
+                      "flex min-h-14 items-center gap-3 border-2 border-navy px-4 text-left text-[15px] font-extrabold transition-all duration-150",
+                      on
+                        ? "translate-x-[2px] translate-y-[2px] bg-brand text-white"
+                        : "bg-card text-navy shadow-offset-sm hover:bg-tint",
+                    )}
+                  >
+                    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center", on ? "bg-white text-brand" : "bg-tint text-navy")}>
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {choice && (
+              <label className="mt-5 block">
+                <span className="label-caps block text-[12px] text-label">
+                  {choice === "changes_requested" ? "What should change?" : "Anything you want to add (optional)"}
+                </span>
+                <textarea
+                  className={`${inputClass} mt-2 min-h-28`}
+                  placeholder={choice === "changes_requested" ? "Tell us what should change" : "If you like"}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </label>
             )}
-          </section>
-        )}
-      </main>
-      <Footer />
-    </div>
+            {needsComment && <p className="mt-2 text-[14px] text-warn-ink">Tell us what should change before you send.</p>}
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button type="button" className={familyPrimary} disabled={busy || !choice || needsComment} onClick={() => void respond()}>
+                <Send className="h-4 w-4" aria-hidden="true" /> Send my reply
+              </button>
+              {choice && (
+                <button type="button" className={familySecondary} onClick={() => { setChoice(""); setComment(""); }}>
+                  Cancel
+                </button>
+              )}
+            </div>
+            <FamilyText className="mt-4 text-[14px]">
+              Agreeing applies to this version only. It does not start care or agree a price.
+            </FamilyText>
+          </FamilyCard>
+        </>
+      )}
+
+    </FamilyShell>
   );
 };
 

@@ -48,7 +48,7 @@ Safeguarding concerns and serious incidents follow the same documented route and
     block("MOD-05", "How pricing works", `
 Two things determine what a service costs: what the care requires, and how it is delivered.
 
-The formal assessment is a fixed fee, paid before the assessment. Published service prices are either a fixed price for a defined item of care, or a from price where the final figure depends on the detail of the arrangement. Ongoing, live-in, overnight and package care is quoted after assessment rather than published as a rate, because the price depends on the professionals required, the number of staff, the hours and shift pattern, complexity, location, duration, equipment and supplies, transport and any specialist input.
+The formal assessment is a fixed fee, paid before the assessment. Published service prices are either a fixed price for a defined item of care, or a from price where the final figure depends on the detail of the arrangement. A live-in caregiver has a from price, set in full after the assessment. Other ongoing, overnight and package care is quoted after assessment rather than published as a rate, because the price depends on the professionals required, the number of staff, the hours and shift pattern, complexity, location, duration, equipment and supplies, transport and any specialist input.
 
 Where third-party costs apply, such as pharmacy, laboratory, equipment or transport, they are set out for the customer before they are incurred.`),
 
@@ -135,6 +135,7 @@ export const GOVERNED_FEES: Record<string, GovernedFee> = Object.fromEntries(
     fee("PUB-ASSESSMENT", "Formal care assessment", 35000, "fixed", "per assessment"),
     fee("PUB-NURSING-BASIC", "Basic nursing visit", 20000, "fixed", "per visit"),
     fee("PUB-NURSING-SKILLED", "Skilled nursing visit", 25000, "from", "per visit"),
+    fee("PUB-LIVE-IN", "Monthly live-in caregiver", 300000, "from", "per month"),
     fee("PUB-NURSING-SHIFT-8H", "8-hour nursing shift", 60000, "fixed", "per shift"),
     fee("PUB-COMPANION-4H", "Companion care, 4 hours", 18000, "fixed", "per 4 hours"),
     fee("PUB-ESCORT", "Hospital appointment escort", 24000, "fixed", "per visit"),

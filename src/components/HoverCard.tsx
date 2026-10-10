@@ -1,9 +1,10 @@
-import { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 interface HoverCardProps {
   title: string;
   description: string;
-  icon: LucideIcon;
+  /** A Lucide icon, or any component taking a className (e.g. NairaIcon). */
+  icon: ComponentType<{ className?: string }>;
   index?: number;
 }
 

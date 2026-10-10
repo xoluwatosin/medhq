@@ -4,18 +4,19 @@
 // first so it is never lost if the chat is never sent.
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, ArrowRight, Loader2, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import {
   Choice, DialCodeField, FieldLabel, Question, RequestShell, joinPhone,
+  requestPrimary, requestQuiet,
 } from "@/components/request/RequestShell";
+import { art } from "@/components/mc/art";
 import { CARE_KINDS, CareKind, WHATSAPP_NUMBER } from "@/components/request/care-kinds";
 import { submitCareRequest } from "@/lib/enquiries";
 import { rememberInterest, readVisitor, writeVisitor } from "@/lib/visitor";
-import { trackCareRequest, trackServiceInterest } from "@/lib/measurement";
+import { trackWhatsAppChat, trackServiceInterest } from "@/lib/measurement";
 
 interface Props {
   open: boolean;
@@ -70,7 +71,7 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
         consentEmail: false,
         source: "whatsapp_widget",
       });
-      trackCareRequest(kind.line);
+      trackWhatsAppChat(kind.line);
       trackServiceInterest(kind.line, "whatsapp_widget");
       rememberInterest(kind.line);
       writeVisitor({ name: name.trim(), dial, phone: phone.trim() });
@@ -91,6 +92,7 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
       open={open}
       onOpenChange={close}
       eyebrow="Chat on WhatsApp"
+      art={art.coordinatorPhone}
       title="Start a WhatsApp chat"
       step={step}
       total={3}
@@ -98,19 +100,19 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
       footer={
         <>
           {step > 0 ? (
-            <Button variant="ghost" className="rounded-xl text-body" onClick={() => setStep((s) => s - 1)}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
+            <button type="button" className={requestQuiet} onClick={() => setStep((s) => s - 1)}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+            </button>
           ) : <span />}
           {step < 2 ? (
-            <Button className="min-w-[136px] rounded-xl" disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <button type="button" className={`${requestPrimary} min-w-[140px]`} disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>
+              Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </button>
           ) : (
-            <Button className="min-w-[150px] rounded-xl" disabled={!canContinue || sending} onClick={send}>
-              {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageCircle className="mr-2 h-4 w-4" />}
+            <button type="button" className={`${requestPrimary} min-w-[150px]`} disabled={!canContinue || sending} onClick={send}>
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <MessageCircle className="h-4 w-4" aria-hidden="true" />}
               Open WhatsApp
-            </Button>
+            </button>
           )}
         </>
       }
@@ -120,7 +122,7 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
           <div className="space-y-1.5">
             <FieldLabel htmlFor="wa-name">Your name, required</FieldLabel>
             <Input id="wa-name" value={name} maxLength={100} autoFocus
-              className="h-12 rounded-xl border-hairline-warm bg-background px-4 text-[16px]"
+              className="h-12 rounded-none border-[1.5px] border-navy/40 bg-background px-4 text-[16px] focus-visible:border-brand"
               placeholder="e.g. Adaeze Okonkwo"
               onChange={(e) => setName(e.target.value)} />
           </div>
@@ -140,7 +142,7 @@ const WhatsAppQuestionnaire = ({ open, onOpenChange }: Props) => {
         <Question heading="What kind of care?" help="Choose the closest one. We can sort out the detail in the chat." stepKey="kind">
           <div className="grid gap-2">
             {CARE_KINDS.map((k) => (
-              <Choice key={k.line} label={k.label} selected={kind?.line === k.line} onClick={() => setKind(k)} />
+              <Choice key={k.line} label={k.label} art={k.art} selected={kind?.line === k.line} onClick={() => setKind(k)} />
             ))}
           </div>
         </Question>

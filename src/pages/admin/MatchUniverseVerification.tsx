@@ -5,9 +5,12 @@
 // credential. A document that nobody can see is a document nobody reviews.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useClearListParams, useListParam, useRestoreListParams } from "@/hooks/useListParam";
+import { FilterChips } from "@/components/admin/FilterChips";
+
 import { formatDistanceToNow } from "date-fns";
 import {
-  AlertTriangle, CalendarDays, Check, Clock, ExternalLink, FileText, Flame, Inbox, Loader2,
+  AlertTriangle, CalendarDays, Check, Clock, ExternalLink, FileText, Flame, Loader2,
   Mail, ScanLine, Search, ShieldCheck, StickyNote, Tag, X,
 } from "lucide-react";
 
@@ -30,6 +33,8 @@ import {
   MuEmpty, MuField, MuFieldGrid, MuNote, MuPage, MuPageHeader, MuRecord, MuSection, MuStats,
   MuStatus, MuToolbar,
 } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
+import { AcceptForNowDialog, ReturnDocumentDialog, decideDocument } from "@/components/admin/mu/DocumentDecision";
 
 interface QueueRow {
   document_id: string;
@@ -65,34 +70,6 @@ const sourceLabel = (r: QueueRow) => {
 
 
 
-// The reasons we send something back, in the words the candidate reads.
-const REJECT_REASONS = [
-  "We cannot read this copy clearly enough to accept it.",
-  "This is not the document we asked for.",
-  "This document has already expired.",
-  "The name on this document does not match the name on your profile.",
-  "Part of the document is missing or cut off.",
-];
-
-// Why we would accept an out of date copy for the time being.
-const CONDITIONAL_REASONS = [
-  "The copy we hold has expired, so we are accepting it while you send a current one.",
-  "Renewal is already under way with the licensing body.",
-  "Accepted for this placement only, pending an in date copy.",
-];
-
-const toISO = (d: Date) => d.toISOString().slice(0, 10);
-/** A sensible chase date: about three months out. */
-const defaultReviewDate = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 90);
-  return toISO(d);
-};
-const tomorrow = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return toISO(d);
-};
 
 
 const MatchUniverseVerification = () => {
@@ -102,21 +79,28 @@ const MatchUniverseVerification = () => {
   const [backlog, setBacklog] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const [q, setQ] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  // Filters live in the address bar and the queue remembers the last set used.
+  useRestoreListParams();
+  const clearParams = useClearListParams();
+  const [q, setQ] = useListParam<string>("q", "");
+  const [typeFilter, setTypeFilter] = useListParam<string>("type", "all");
   const [busy, setBusy] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
 
   const [reject, setReject] = useState<QueueRow | null>(null);
-  const [reason, setReason] = useState("");
-  const [notify, setNotify] = useState(true);
 
   // Conditional acceptance: the copy we hold is out of date, but it is good
   // enough to work with while the candidate fetches a current one.
   const [cond, setCond] = useState<QueueRow | null>(null);
-  const [condUntil, setCondUntil] = useState("");
-  const [condWhy, setCondWhy] = useState("");
-  const [condNotify, setCondNotify] = useState(true);
+
+  // What each kind of document proves, so a pending file says what
+  // accepting it will settle.
+  const [proves, setProves] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    void (adminDb() as any).from("mu_document_types").select("code, evidences").then(({ data }: any) => {
+      setProves(Object.fromEntries((data ?? []).map((t: any) => [t.code, t.evidences ?? []])));
+    });
+  }, []);
 
   const load = useCallback(async () => {
     const [{ data, error }, { data: total }] = await Promise.all([
@@ -182,40 +166,31 @@ const MatchUniverseVerification = () => {
     conditionalUntil: string | null = null,
   ) => {
     setBusy(row.document_id);
-    const { error } = await (adminDb() as any).rpc("mu_review_document", {
-      _document_id: row.document_id,
-      _outcome: outcome,
-      _reason: why || null,
-      _expires_at: row.expires_at || null,
-      _conditional_until: conditionalUntil,
+    const result = await decideDocument({
+      documentId: row.document_id,
+      outcome,
+      reason: why,
+      until: conditionalUntil,
+      expiresAt: row.expires_at,
+      notify: tellThem,
+      canEmail: !!row.person_email,
     });
-    if (error) {
+    if (result.error) {
       setBusy(null);
-      toast({ title: "Could not record the review", description: error.message, variant: "destructive" });
+      toast({ title: "Could not record the review", description: result.error, variant: "destructive" });
       return;
     }
-    // We write to a candidate only when something is needed of them. An
-    // acceptance asks nothing, so it sends no email. A conditional acceptance
-    // does ask for an in date copy, so it can.
-    const emailed = outcome !== "accepted" && tellThem && !!row.person_email;
-    if (emailed) {
-      const { error: mailErr } = await supabase.functions.invoke("notify-candidate-document", {
-        body: { document_id: row.document_id },
-      });
-      if (mailErr) toast({ title: "Reviewed, but the email did not send", description: mailErr.message, variant: "destructive" });
-    }
+    if (result.mailError) toast({ title: "Reviewed, but the email did not send", description: result.mailError, variant: "destructive" });
+    const emailed = result.emailed;
     setBusy(null);
     setReject(null);
-    setReason("");
     setCond(null);
-    setCondUntil("");
-    setCondWhy("");
     toast({
       title: outcome === "accepted"
         ? "Document accepted"
         : outcome === "conditional"
           ? "Document accepted for now"
-          : "Document not accepted",
+          : "Document returned",
       description: emailed ? `${row.full_name} has been emailed.` : "No email sent.",
     });
 
@@ -230,20 +205,27 @@ const MatchUniverseVerification = () => {
     const chosen = filtered.filter((r) => picked.includes(r.document_id));
     if (!chosen.length) return;
     setBusy("bulk");
+    const done: string[] = [];
+    const failed: string[] = [];
     for (const row of chosen) {
-      await (adminDb() as any).rpc("mu_review_document", {
+      const { error } = await (adminDb() as any).rpc("mu_review_document", {
         _document_id: row.document_id,
         _outcome: "accepted",
         _reason: null,
         _expires_at: row.expires_at || null,
       });
       // An acceptance asks nothing of the candidate, so no email is sent.
-
+      (error ? failed : done).push(row.document_id);
     }
     setBusy(null);
-    toast({ title: `${chosen.length} document${chosen.length === 1 ? "" : "s"} accepted` });
-    setRows((prev) => prev.filter((r) => !picked.includes(r.document_id)));
-    setBacklog((n) => Math.max(0, n - chosen.length));
+    toast(
+      failed.length
+        ? { title: `${done.length} accepted, ${failed.length} could not be`, description: "Those are still in the queue and still ticked. Try them one at a time.", variant: "destructive" }
+        : { title: `${done.length} document${done.length === 1 ? "" : "s"} accepted` },
+    );
+    setRows((prev) => prev.filter((r) => !done.includes(r.document_id)));
+    setPicked(failed);
+    setBacklog((n) => Math.max(0, n - done.length));
     setPicked([]);
 
   };
@@ -259,20 +241,14 @@ const MatchUniverseVerification = () => {
     <MuPage>
       <MuPageHeader
         backTo="/admin/match-universe"
-        backLabel="Match Universe"
+        backLabel="Talent pool"
         title="Document review"
-        description="Documents awaiting a decision, most urgent first. Uploads from the portal, applications and admin all arrive here."
-        actions={
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/match-universe/intake"><ShieldCheck className="mr-2 h-4 w-4" />Intake</Link>
-          </Button>
-        }
+        description="Documents awaiting a decision, most urgent first."
       />
 
       <MuStats
-        columns={3}
+        columns={2}
         stats={[
-          { label: "Waiting on review", value: rows.length, icon: Inbox, tone: rows.length ? "attention" : "default" },
           { label: "Arrived today", value: arrivedToday, icon: Clock },
           { label: "On a live shortlist", value: pressured, icon: Flame, hint: "Review these first." },
         ]}
@@ -302,6 +278,13 @@ const MatchUniverseVerification = () => {
           Settle what we can
         </Button>
       </MuToolbar>
+      <FilterChips
+        filters={[
+          ...(q ? [{ key: "q", label: `Search: ${q}`, onRemove: () => setQ("") }] : []),
+          ...(typeFilter !== "all" ? [{ key: "type", label: typeFilter, onRemove: () => setTypeFilter("all") }] : []),
+        ]}
+        onClearAll={() => clearParams(["q", "type"])}
+      />
 
       <MuSection
         title={
@@ -309,11 +292,7 @@ const MatchUniverseVerification = () => {
             ? `${backlog} document${backlog === 1 ? "" : "s"} to review`
             : `${filtered.length} of ${backlog} document${backlog === 1 ? "" : "s"} to review`
         }
-        description={
-          rows.length < backlog
-            ? `Open the file, then accept it or return it with a reason. Showing the first ${rows.length}, most urgent first.`
-            : "Open the file, then accept it or return it with a reason. Accepting verifies the linked credential."
-        }
+        description={rows.length < backlog ? `Showing the first ${rows.length}.` : undefined}
 
         padded={false}
         actions={
@@ -345,14 +324,14 @@ const MatchUniverseVerification = () => {
 
         {!loading && filtered.length === 0 && (
           <MuEmpty
-            icon={Inbox}
+            art={art.objDocumentMagnifier}
             title="Nothing to review"
-            description="All documents have been accepted or returned. New uploads appear here immediately."
+            description="New uploads appear here as they arrive."
           />
         )}
 
         {!loading && filtered.length > 0 && (
-          <ul className="divide-y divide-border/60">
+          <ul className="divide-y divide-line-soft">
             {filtered.map((r) => (
               <li key={r.document_id}>
                 <MuRecord
@@ -364,7 +343,7 @@ const MatchUniverseVerification = () => {
                         onCheckedChange={() => toggle(r.document_id)}
                         aria-label={`Select ${r.label}`}
                       />
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-tint text-sm font-bold text-navy">
                         {initialsOf(r.full_name)}
                       </span>
                     </div>
@@ -417,8 +396,9 @@ const MatchUniverseVerification = () => {
                         label="Proves"
                         icon={ShieldCheck}
                         value={
-                          r.credential_type
-                            ? CREDENTIAL_LABELS[r.credential_type as CredentialType] ?? r.credential_type
+                          (r.credential_type ? [r.credential_type] : proves[r.doc_type ?? ""] ?? []).length
+                            ? (r.credential_type ? [r.credential_type] : proves[r.doc_type ?? ""])
+                                .map((t) => CREDENTIAL_LABELS[t as CredentialType] ?? t).join(", ")
                             : "Nothing on its own"
                         }
                       />
@@ -462,7 +442,7 @@ const MatchUniverseVerification = () => {
                           size="sm"
                           variant="outline"
                           disabled={busy === r.document_id}
-                          onClick={() => { setReject(r); setReason(""); setNotify(true); }}
+                          onClick={() => setReject(r)}
                         >
                           <X className="mr-1.5 h-4 w-4" />Return with a reason
                         </Button>
@@ -470,16 +450,7 @@ const MatchUniverseVerification = () => {
                           size="sm"
                           variant="outline"
                           disabled={busy === r.document_id}
-                          onClick={() => {
-                            setCond(r);
-                            setCondWhy(
-                              r.expires_at && new Date(r.expires_at) < new Date()
-                                ? "The copy we hold has expired, so we are accepting it while you send a current one."
-                                : "",
-                            );
-                            setCondUntil(defaultReviewDate());
-                            setCondNotify(true);
-                          }}
+                          onClick={() => setCond(r)}
                         >
                           <CalendarDays className="mr-1.5 h-4 w-4" />Accept for now
                         </Button>
@@ -507,116 +478,22 @@ const MatchUniverseVerification = () => {
 
 
 
-      <Dialog open={!!cond} onOpenChange={(o) => !o && setCond(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Accept for now</DialogTitle>
-            <DialogDescription>
-              The document counts as in place until the review date. After that it comes back to this
-              queue as expired, and {cond?.full_name || "the candidate"} is asked for a current copy.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {CONDITIONAL_REASONS.map((preset) => (
-                <Button
-                  key={preset}
-                  type="button"
-                  size="sm"
-                  variant={condWhy === preset ? "default" : "outline"}
-                  className="h-auto whitespace-normal py-1.5 text-left text-xs"
-                  onClick={() => setCondWhy(preset)}
-                >
-                  {preset.replace(/\.$/, "")}
-                </Button>
-              ))}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cond-until">Review date</Label>
-              <Input
-                id="cond-until"
-                type="date"
-                min={tomorrow()}
-                value={condUntil}
-                onChange={(e) => setCondUntil(e.target.value)}
-              />
-            </div>
-            <Label htmlFor="cond-why">Why we are accepting it for now</Label>
-            <Textarea
-              id="cond-why"
-              rows={3}
-              value={condWhy}
-              onChange={(e) => setCondWhy(e.target.value)}
-              placeholder="Renewal is under way, so we will work with this copy until the new one arrives."
-            />
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={condNotify} onCheckedChange={(v) => setCondNotify(!!v)} />
-              Email them what is still needed
-            </label>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCond(null)}>Cancel</Button>
-            <Button
-              disabled={!condWhy.trim() || !condUntil || busy === cond?.document_id}
-              onClick={() => cond && review(cond, "conditional", condWhy.trim(), condNotify, condUntil)}
-            >
-              {busy === cond?.document_id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Accept until this date
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AcceptForNowDialog
+        open={!!cond}
+        name={cond?.full_name || "the candidate"}
+        expired={!!cond?.expires_at && new Date(cond.expires_at) < new Date()}
+        busy={busy === cond?.document_id}
+        onCancel={() => setCond(null)}
+        onConfirm={(why, until, tell) => cond && review(cond, "conditional", why, tell, until)}
+      />
 
-      <Dialog open={!!reject} onOpenChange={(o) => !o && setReject(null)}>
-
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Return document</DialogTitle>
-            <DialogDescription>
-              {reject?.full_name} will see this reason on their account, so write it as you would say it to them.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {REJECT_REASONS.map((preset) => (
-                <Button
-                  key={preset}
-                  type="button"
-                  size="sm"
-                  variant={reason === preset ? "default" : "outline"}
-                  className="h-auto whitespace-normal py-1.5 text-left text-xs"
-                  onClick={() => setReason(preset)}
-                >
-                  {preset.replace(/\.$/, "")}
-                </Button>
-              ))}
-            </div>
-            <Label htmlFor="reason">Reason for return</Label>
-            <Textarea
-              id="reason"
-              rows={3}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="The copy is cut off at the bottom, so the expiry date is not readable."
-            />
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={notify} onCheckedChange={(v) => setNotify(!!v)} />
-              Email them the reason
-            </label>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReject(null)}>Cancel</Button>
-            <Button
-              variant="destructive"
-              disabled={!reason.trim() || busy === reject?.document_id}
-              onClick={() => reject && review(reject, "rejected", reason.trim(), notify)}
-            >
-              {busy === reject?.document_id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send back
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ReturnDocumentDialog
+        open={!!reject}
+        name={reject?.full_name || "The candidate"}
+        busy={busy === reject?.document_id}
+        onCancel={() => setReject(null)}
+        onConfirm={(why, tell) => reject && review(reject, "rejected", why, tell)}
+      />
     </MuPage>
   );
 };

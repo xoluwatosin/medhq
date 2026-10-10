@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
+import { MuPageHeader } from "@/components/admin/mu/MuShell";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import SeoPagesRegister from "@/components/admin/seo/SeoPagesRegister";
 import SeoModulesRegister from "@/components/admin/seo/SeoModulesRegister";
@@ -21,11 +21,10 @@ const Seo = () => {
   const active = (SECTIONS.find((item) => item.id === section)?.id ?? "pages") as SectionId;
 
   return (
-    <section className="mx-auto w-full max-w-[1120px]" aria-labelledby="seo-heading">
-      <ConsolePageHeader
-        id="seo-heading"
+    <section className="w-full space-y-6" aria-label="SEO">
+      <MuPageHeader
         title="SEO"
-        description="Governed pages, canonical modules, public claims and markets. Operational truth stays in services, fees and the Bridge."
+        description="What search engines read about us."
       />
       <ConsoleTabs
         tabs={SECTIONS}

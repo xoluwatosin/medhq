@@ -1,8 +1,6 @@
 # Medic Connect
 
-Medic Connect (care, workforce, admin): a Vite + React app on Supabase.
-
-Heard lives in its own repository, [xoluwatosin/heard](https://github.com/xoluwatosin/heard), with its own Supabase and Vercel projects. `/heard` here redirects to heard.medicconnect.co.
+Medic Connect (care, workforce, admin) and Heard, in one Vite + React app on Supabase.
 
 Originally built in Lovable. The project has since moved off Lovable: nothing here depends on Lovable's hosting, AI gateway, connectors or package mirror.
 

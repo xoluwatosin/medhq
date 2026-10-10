@@ -69,17 +69,17 @@ export const PRESENTATION_GROUPS: Record<string, PresentationRule[]> = {
   ],
   core_support: [
     { id: "current", title: "Support in place", startsAt: "support_now" },
-    { id: "contact", title: "Alternative contact", startsAt: ["alt_contact_has", "alt_contact_first_name"] },
+    { id: "contact", title: "Staying in touch", startsAt: ["enquirer_location", "alt_contact_has", "alt_contact_first_name"] },
   ],
   core_arrangements: [
-    { id: "care", title: "Care arrangements", startsAt: "care_days" },
+    { id: "care", title: "Care arrangements", startsAt: "care_pattern" },
     { id: "assessment", title: "Assessment availability", startsAt: "visit_preferences" },
   ],
   svc_nanny_children: [
     { id: "childcare", title: "The childcare needed", startsAt: "nn_care_kind" },
     { id: "setting", title: "Nursery or school", startsAt: "nn_setting_attends" },
     { id: "health", title: "Health and medicines", startsAt: "nn_health" },
-    { id: "meals", title: "Meals", startsAt: "nn_diet" },
+    { id: "meals", title: "Meals", startsAt: ["nn_diet_has", "nn_diet"] },
     { id: "sleep", title: "Sleep", startsAt: "nn_naps" },
     { id: "day", title: "Day to day", startsAt: "nn_toileting" },
     { id: "safety", title: "Safety and supervision", startsAt: "nn_safety_areas" },
@@ -95,19 +95,25 @@ interface PresentationPart {
 export const presentationParts = (section: CareSection): PresentationPart[] => {
   const rules = PRESENTATION_GROUPS[section.id];
   if (!rules) return [{ id: section.id, title: section.title, fields: section.fields }];
-  const starts = rules.map((rule) => {
-    const names = Array.isArray(rule.startsAt) ? rule.startsAt : [rule.startsAt];
-    for (const name of names) {
-      const at = section.fields.findIndex((field) => field.id === name);
-      if (at >= 0) return at;
-    }
-    return -1;
-  });
-  if (starts.some((index) => index < 0)) return [{ id: section.id, title: section.title, fields: section.fields }];
-  return rules.map((rule, index) => ({
+  // A stop whose first question a version no longer has is left out; its
+  // questions join the stop before. A version that has none of them is shown
+  // as one stop.
+  const found = rules
+    .map((rule) => {
+      const names = Array.isArray(rule.startsAt) ? rule.startsAt : [rule.startsAt];
+      for (const name of names) {
+        const at = section.fields.findIndex((field) => field.id === name);
+        if (at >= 0) return { rule, at };
+      }
+      return null;
+    })
+    .filter((entry): entry is { rule: PresentationRule; at: number } => entry !== null)
+    .sort((a, b) => a.at - b.at);
+  if (found.length === 0) return [{ id: section.id, title: section.title, fields: section.fields }];
+  return found.map(({ rule, at }, index) => ({
     id: rule.id,
     title: rule.title,
-    fields: section.fields.slice(starts[index], starts[index + 1] ?? section.fields.length),
+    fields: section.fields.slice(index === 0 ? 0 : at, found[index + 1]?.at ?? section.fields.length),
   }));
 };
 

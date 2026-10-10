@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { SearchableSelect, SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { ServicePickerModal } from "./ServicePickerModal";
 import { BookOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { selectAll } from "@/lib/select-all";
 
 interface Props {
   onCreated: () => void;
@@ -29,13 +31,14 @@ export function InvoiceBuilder({ onCreated }: Props) {
   const { data: clients = [] } = useQuery({
     queryKey: ["invoice-clients"],
     queryFn: async () => {
-      const { data, error } = await adminDb()
-        .from("clients")
-        .select("id, full_name, first_name, last_name, client_contacts(first_name, last_name, full_name, email, phone, is_primary)")
-        .order("full_name")
-        .limit(300);
-      if (error) throw error;
-      return data as any[];
+      // Every client, not only the first 300.
+      return selectAll<any>((a, z) =>
+        adminDb()
+          .from("clients")
+          .select("id, full_name, first_name, last_name, client_contacts(first_name, last_name, full_name, email, phone, is_primary)")
+          .order("full_name")
+          .order("id")
+          .range(a, z));
     },
   });
 
@@ -110,21 +113,17 @@ export function InvoiceBuilder({ onCreated }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Who is being billed</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+      <MuSection title="Who is being billed">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label>Existing client</Label>
-            <Select value={data.clientId ?? ""} onValueChange={applyClient}>
-              <SelectTrigger><SelectValue placeholder="Optional, fills the details below" /></SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              label="Existing client"
+              value={data.clientId ?? ""}
+              onChange={applyClient}
+              placeholder="Optional, fills the details below"
+              searchPlaceholder="Search clients"
+              options={clients.map((c) => ({ value: c.id, label: c.full_name ?? "Unnamed client" }))}
+            />
           </div>
           <div>
             <Label htmlFor="inv-first">First name</Label>
@@ -142,32 +141,37 @@ export function InvoiceBuilder({ onCreated }: Props) {
             <Label htmlFor="inv-phone">Phone</Label>
             <Input id="inv-phone" value={data.clientPhone} onChange={(e) => update("clientPhone", e.target.value)} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-          <CardTitle className="text-base">What is being charged</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
-              <BookOpen className="h-4 w-4" /> Catalogue
-            </Button>
+      <MuSection
+        title="What is being charged"
+        actions={
+          <>
             <Button size="sm" onClick={() => addLine()} className="gap-1.5">
               <Plus className="h-4 w-4" /> Add line
             </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
+            <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
+              <BookOpen className="h-4 w-4" /> Catalogue
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
           {data.lines.length === 0 && (
-            <p className="text-sm text-muted-foreground">No lines. Add a line or pick from the catalogue.</p>
+            <MuEmpty
+              art={art.objPriceTagNaira}
+              title="No lines yet"
+              description="Add a line or pick a service from the catalogue."
+            />
           )}
           {data.lines.map((line, index) => (
             <div
               key={line.id}
-              className="space-y-3 rounded-xl border border-border/70 p-3 sm:space-y-0 sm:rounded-none sm:border-0 sm:p-0"
+              className="space-y-3 border border-line p-3 sm:space-y-0 sm:border-0 sm:p-0"
             >
               <div className="flex items-center justify-between sm:hidden">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
                   Line {index + 1}
                 </span>
                 <Button variant="ghost" size="icon" onClick={() => removeLine(line.id)} aria-label="Remove line">
@@ -220,25 +224,21 @@ export function InvoiceBuilder({ onCreated }: Props) {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Terms and notes</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <Label>Invoice type</Label>
-            <Select value={data.type} onValueChange={(v) => update("type", v as any)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="assessment">Assessment</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="care_package">Care package</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <MuSection title="Terms and notes">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <SelectField
+            label="Invoice type"
+            value={data.type}
+            onChange={(v) => { if (v) update("type", v as any); }}
+            options={[
+              { value: "assessment", label: "Assessment" },
+              { value: "standard", label: "Standard" },
+              { value: "care_package", label: "Care package" },
+            ]}
+          />
           <div>
             <Label htmlFor="inv-vat">VAT rate (%)</Label>
             <Input id="inv-vat" type="number" step="0.5" value={data.vatRate} onChange={(e) => update("vatRate", Number(e.target.value))} />
@@ -257,11 +257,11 @@ export function InvoiceBuilder({ onCreated }: Props) {
               onChange={(e) => update("notes", e.target.value)}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
-      <Card>
-        <CardContent className="space-y-2 pt-6">
+      <MuSection title="Total">
+        <div className="space-y-2">
           <div className="flex justify-between text-sm"><span>Subtotal</span><span className="tabular-nums">{naira(subtotal)}</span></div>
           <div className="flex justify-between text-sm"><span>VAT {data.vatRate}%</span><span className="tabular-nums">{naira(vatAmount)}</span></div>
           <div className="flex justify-between text-base font-semibold"><span>Total due</span><span className="tabular-nums">{naira(total)}</span></div>
@@ -270,8 +270,8 @@ export function InvoiceBuilder({ onCreated }: Props) {
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Create invoice on Paystack
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </MuSection>
 
       <ServicePickerModal
         open={pickerOpen}

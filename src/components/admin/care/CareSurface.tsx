@@ -1,7 +1,7 @@
 // The Care editing surfaces.
 //
-// Care inherits the Request Care language: rounded shapes, soft lines, white
-// surfaces, restrained navy, comfortable control heights. A larger edit opens
+// Care follows the admin kit: square shapes, soft lines, card surfaces,
+// restrained navy, comfortable control heights. A larger edit opens
 // a sheet at the side of the desk and fills the screen on a phone. A small
 // decision opens a short confirmation. Nothing in Care uses the older generic
 // admin dialog grammar.
@@ -10,7 +10,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-const headingClass = "text-[17px] font-bold tracking-[-0.01em] text-ink";
+const headingClass = "text-[17px] font-extrabold tracking-[-0.02em] text-navy";
 const subClass = "mt-1 text-[13.5px] leading-relaxed text-body";
 
 export const careButton =
@@ -61,7 +61,7 @@ export const CareSheet = ({
   <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent
       side="right"
-      className="flex w-full flex-col gap-0 border-line bg-white p-0 sm:max-w-[520px]"
+      className="flex w-full flex-col gap-0 border-line bg-card p-0 sm:max-w-[520px]"
     >
       <header className="border-b border-line-soft px-5 py-4 sm:px-6">
         <h2 className={headingClass}>{title}</h2>
@@ -73,7 +73,7 @@ export const CareSheet = ({
       </div>
 
       {onSave && (
-        <footer className="flex flex-col-reverse gap-2 border-t border-line-soft bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <footer className="flex flex-col-reverse gap-2 border-t border-line-soft bg-card px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           <button type="button" className={careGhost} onClick={() => onOpenChange(false)}>
             Cancel
           </button>
@@ -109,7 +109,7 @@ export const CareConfirm = ({
   keepLabel?: string;
 }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="cx-control max-w-md gap-0 border-line bg-white p-0">
+    <DialogContent className="max-w-md gap-0 border-line bg-card p-0">
       <div className="px-5 py-5">
         <h2 className={headingClass}>{title}</h2>
         {description && <p className={subClass}>{description}</p>}

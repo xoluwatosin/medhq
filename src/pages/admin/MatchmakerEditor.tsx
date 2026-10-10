@@ -27,6 +27,7 @@ import {
 import QuestionBuilder from "@/components/admin/QuestionBuilder";
 import { LocationField } from "@/components/LocationSelect";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { createAudienceGroup as makeAudienceGroup } from "@/lib/audience-groups";
 
 interface AudienceGroup {
   id: string;
@@ -117,7 +118,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
       slug: safeSlug,
       document_fields: merged.document_fields.filter((d) => d.label.trim()),
       questions: merged.questions.filter((q) => q.label.trim()),
-      closed_at: merged.status === "closed" ? new Date().toISOString() : null,
+      // Keep the date it actually closed; only stamp it when it first closes.
+      closed_at: merged.status === "closed" ? ((merged as any).closed_at || new Date().toISOString()) : null,
     };
     const { error } = await adminDb().from("matchmaker_opportunities").update(payload).eq("id", op.id);
     if (error) throw error;
@@ -158,7 +160,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
   // (state hooks moved above early-return)
 
   const openCreateGroup = () => {
-    setGroupDraftName(`Matchmakers — ${op.title || "Untitled"}`.slice(0, 80));
+    setGroupDraftName(`Matchmakers: ${op.title || "Untitled"}`.slice(0, 80));
     setGroupDraftDesc(`Audience for: ${op.title || "Untitled opportunity"}`);
     setGroupDialogOpen(true);
   };
@@ -166,14 +168,16 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
   const createAudienceGroup = async () => {
     if (!groupDraftName.trim()) return;
     setCreatingGroup(true);
-    const { data, error } = await adminDb()
-      .from("audience_groups")
-      .insert({ name: groupDraftName.trim(), description: groupDraftDesc.trim() || null })
-      .select("id, name")
-      .single();
+    let data: { id: string; name: string };
+    try {
+      data = (await makeAudienceGroup(groupDraftName, groupDraftDesc)).group;
+    } catch (error: any) {
+      setCreatingGroup(false);
+      toast({ title: "Could not create group", description: error.message, variant: "destructive" });
+      return;
+    }
     setCreatingGroup(false);
-    if (error) { toast({ title: "Could not create group", description: error.message, variant: "destructive" }); return; }
-    setGroups([data, ...groups]);
+    setGroups([data, ...groups.filter((g: any) => g.id !== data.id)]);
     update({ audience_group_id: data.id });
     await adminDb().from("matchmaker_opportunities").update({ audience_group_id: data.id }).eq("id", op.id);
     setGroupDialogOpen(false);
@@ -252,12 +256,17 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
         )}
         <div className={`flex gap-2 flex-wrap ${embedded ? "ml-auto" : ""}`}>
           <Button variant="outline" onClick={handlePreview}><Eye className="mr-2 h-4 w-4" />Preview</Button>
-          <Button variant="outline" asChild>
-            <Link to={`/admin/match-universe/opportunities/${op.id}/applications`}>Applications</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to={`/admin/match-universe/opportunities/${op.id}/matches`}>Matches</Link>
-          </Button>
+          {/* Embedded under the opportunity's own tabs, which already link here. */}
+          {!embedded && (
+            <>
+              <Button variant="outline" asChild>
+                <Link to={`/admin/match-universe/opportunities/${op.id}/applications`}>Applications</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to={`/admin/match-universe/opportunities/${op.id}/matches`}>Matches</Link>
+              </Button>
+            </>
+          )}
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save
           </Button>
@@ -265,7 +274,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
       </div>
 
 
-      <div className="border border-border rounded-2xl bg-background p-6 space-y-5">
+      <div className="border border-line bg-card p-6 space-y-5">
         <div>
           <Label htmlFor="title">Title</Label>
           <Input id="title" value={op.title} onChange={(e) => update({ title: e.target.value })} className="mt-1" />
@@ -275,7 +284,6 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           <div>
             <Label htmlFor="slug">Slug</Label>
             <Input id="slug" value={op.slug} onChange={(e) => update({ slug: e.target.value })} className="mt-1 font-mono text-sm" />
-            <p className="text-xs text-muted-foreground mt-1">Saved drafts and previews share this URL.</p>
           </div>
           <div>
             <Label htmlFor="location">Location</Label>
@@ -307,14 +315,13 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="mb-3">
-            <Label>Standard applicant fields</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">First name, last name and email are always required. Toggle everything else on or off for this opportunity.</p>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Standard applicant fields (name and email always required)</Label>
           </div>
           <div className="space-y-2">
             {(["phone", "current_position", "years_experience", "cover_note"] as StandardFieldKey[]).map((k) => {
               const state = op.standard_fields[k];
               return (
-                <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3">
+                <div key={k} className="flex items-center justify-between gap-3 border border-line bg-card px-4 py-3">
                   <span className="text-sm">{STANDARD_FIELD_LABELS[k]}</span>
                   <Select
                     value={state}
@@ -337,10 +344,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <div>
-              <Label>Applicant questions</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Custom, typed questions. Load from a template or save the current set as one.</p>
-            </div>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Applicant questions</Label>
             <div className="flex items-center gap-2 flex-wrap">
               <Select
                 value=""
@@ -379,12 +383,12 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <Label>Document uploads</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Document uploads</Label>
             <Button variant="outline" size="sm" onClick={() => update({ document_fields: [...op.document_fields, blankDoc()] })}>
               <Plus className="mr-1 h-3.5 w-3.5" />Add field
             </Button>
           </div>
-          {op.document_fields.length === 0 && <p className="text-sm text-muted-foreground">No documents required.</p>}
+          {op.document_fields.length === 0 && <p className="text-sm text-muted-foreground">No document uploads asked for yet.</p>}
           <div className="space-y-2">
             {op.document_fields.map((d, i) => (
               <div key={d.key} className="flex items-center gap-2">
@@ -437,7 +441,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                {/* Archiving has its own action; the status only shows it. */}
+                {op.status === "archived" && <SelectItem value="archived">Archived</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -446,18 +451,15 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
         <Separator />
 
         <div>
-          <Label>Audience group</Label>
-          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-            Manually sending this opportunity to a group makes that group its audience. Auto-create one or pick an existing.
-          </p>
-          <div className="flex gap-2 items-center flex-wrap">
+          <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Audience group</Label>
+          <div className="mt-2 flex gap-2 items-center flex-wrap">
             <Select
               value={op.audience_group_id || "__none"}
               onValueChange={(v) => update({ audience_group_id: v === "__none" ? null : v })}
             >
               <SelectTrigger className="flex-1 min-w-[200px]"><SelectValue placeholder="Pick a group" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none">— None —</SelectItem>
+                <SelectItem value="__none">None</SelectItem>
                 {groups.map((g) => (
                   <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                 ))}
@@ -472,9 +474,9 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           </div>
         </div>
 
-        <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-3">
+        <div className="bg-tint/40 border border-line p-4 space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Share link</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Share link</p>
             <div className="flex items-center gap-2">
               <code className="text-sm flex-1 truncate">{shareUrl}</code>
               <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(shareUrl); toast({ title: "Copied" }); }}>
@@ -486,7 +488,7 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
             </div>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Preview link (drafts visible only to admins)</p>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-label">Preview link (drafts visible only to admins)</p>
             <div className="flex items-center gap-2">
               <code className="text-sm flex-1 truncate">{previewUrl}</code>
               <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(previewUrl); toast({ title: "Copied" }); }}>
@@ -520,9 +522,8 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
           <div className="space-y-3">
             <div>
               <Label>Template name *</Label>
-              <Input value={saveTplName} onChange={(e) => setSaveTplName(e.target.value)} className="mt-1" placeholder="e.g. ICU Nurse — standard questions" />
+              <Input value={saveTplName} onChange={(e) => setSaveTplName(e.target.value)} className="mt-1" placeholder="For example, ICU nurse standard questions" />
             </div>
-            <p className="text-xs text-muted-foreground">Snapshots the current questions. Editing this template later won't change opportunities already using them.</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSaveTplOpen(false)}>Cancel</Button>
@@ -545,7 +546,6 @@ const MatchmakerEditor = ({ embedded }: MatchmakerEditorProps) => {
               <Label>Description</Label>
               <Input value={groupDraftDesc} onChange={(e) => setGroupDraftDesc(e.target.value)} className="mt-1" placeholder="Optional" />
             </div>
-            <p className="text-xs text-muted-foreground">This group will be linked to this opportunity and available across Audience and Campaigns.</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setGroupDialogOpen(false)}>Cancel</Button>

@@ -7,7 +7,9 @@ import ConsolePageHeader from "@/components/admin/console/ConsolePageHeader";
 import ConsoleTabs from "@/components/admin/console/ConsoleTabs";
 import ConsoleTable, { type ConsoleColumn } from "@/components/admin/console/ConsoleTable";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
-import { Status } from "@/components/field";
+import { SelectField, Status } from "@/components/field";
+import { MuEmpty, MuToolbar } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { adminDb } from "@/lib/admin-utils";
 import { requestReadiness, type RequestReadiness } from "@/lib/care-group";
 import { nextActions, type NextAction } from "@/lib/care-work";
@@ -94,10 +96,11 @@ const nextActionText = (row: CareRequestRow) => {
   return "No outstanding work";
 };
 
-const CareRequests = () => {
+const CareRequests = ({ embedded = false }: { embedded?: boolean }) => {
   const [rows, setRows] = useState<CareRequestRow[]>([]);
   const [filter, setFilter] = useState<FilterId>("attention");
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -114,6 +117,7 @@ const CareRequests = () => {
 
       if (requestsResult.error) {
         toast.error("Could not load care requests");
+        setLoadFailed(true);
         setLoading(false);
         return;
       }
@@ -141,19 +145,46 @@ const CareRequests = () => {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1120px]" aria-labelledby="care-requests-heading">
-      <ConsolePageHeader
-        id="care-requests-heading"
-        title="Care requests"
-        description="Requests for care, their recipients, intended services and preparation state."
-      />
-      <ConsoleTabs tabs={tabs} active={filter} onChange={(id) => setFilter(id as FilterId)} label="Filter care requests" controls="care-request-records" />
+    <section className={embedded ? "" : "w-full"} aria-labelledby={embedded ? undefined : "care-requests-heading"} aria-label={embedded ? "Care requests" : undefined}>
+      {!embedded && (
+        <ConsolePageHeader
+          id="care-requests-heading"
+          title="Care requests"
+          description="Requests for care, their recipients, intended services and preparation state."
+        />
+      )}
+      {embedded ? (
+        // Inside the Care list, a second tab row would read as a second page.
+        <div className="mb-4">
+        <MuToolbar>
+        <div className="w-full max-w-[260px]">
+          <SelectField
+            label="Show"
+            value={filter}
+            onChange={(v) => setFilter((v || "attention") as FilterId)}
+            placeholder={false}
+            options={tabs.map((t) => ({ value: t.id, label: `${t.label} (${t.count})` }))}
+          />
+        </div>
+        </MuToolbar>
+        </div>
+      ) : (
+        <ConsoleTabs tabs={tabs} active={filter} onChange={(id) => setFilter(id as FilterId)} label="Filter care requests" controls="care-request-records" />
+      )}
 
       <div id="care-request-records">
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+        ) : loadFailed ? (
+          <p className="border border-line bg-card px-5 py-10 text-center text-sm text-muted-copy">Care requests could not be loaded. Refresh to try again.</p>
         ) : visible.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-copy">No care requests</p>
+          <div className="border border-line bg-card">
+            <MuEmpty
+              art={art.objCarePlan}
+              title="No care requests here"
+              description={filter === "all" ? "Care requests appear here once an enquiry is promoted." : "Nothing in this view right now. Try another filter."}
+            />
+          </div>
         ) : (
           <>
             <ConsoleTable
@@ -187,7 +218,7 @@ const CareRequests = () => {
                 return {
                   key: row.id,
                   title: row.care_groups?.display_name ?? "Care request",
-                  state: `${enquirerName(row) ?? "No enquirer recorded"} · ${recipientNames(row) || "No recipients"} · ${nextActionText(row)}`,
+                  state: `${enquirerName(row) ?? "No enquirer recorded"}, for ${recipientNames(row) || "no recipients"}. ${nextActionText(row)}`,
                   status: <Status label={REQUEST_LABELS[row.status] ?? row.status} tone={statusTone(row.status)} />,
                   to: firstClient ? `/admin/clients/${firstClient}?tab=group&request=${row.id}` : undefined,
                 };

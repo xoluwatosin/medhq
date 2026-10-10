@@ -144,10 +144,6 @@ export const STATUS_LABELS: Record<string, string> = {
   archived: "Archived",
 };
 
-export const APP_STATUS_LABELS: Record<string, string> = {
-  new: "New",
-  reviewing: "Reviewing",
-  shortlisted: "Shortlisted",
-  rejected: "Rejected",
-  hired: "Hired",
-};
+// Application status is retired in the office: the stage list in
+// src/lib/applications.ts is the one vocabulary, and mu_set_application_stage
+// keeps the old status column in step for anything still reading it.

@@ -3,10 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
+import KitPageHero from "@/components/kit/KitPageHero";
+import { Stamp } from "@/components/mc/brand";
+import { art } from "@/components/mc/art";
+import { KitMain, KitPanel, kitInput, kitPrimaryButton } from "@/components/kit/KitLayout";
 import SEO from "@/components/SEO";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export default function Unsubscribe() {
@@ -44,48 +45,55 @@ export default function Unsubscribe() {
   }, []);
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col">
+    <div className="flex min-h-dvh flex-col bg-background">
       <SEO title="Unsubscribe | Medic Connect" description="Manage your email preferences with Medic Connect." path="/unsubscribe" />
       <MedicHeader />
-      <main className="flex-1 flex items-center justify-center px-4 py-20">
-        <div className="max-w-md w-full bg-card border rounded-3xl p-8 shadow-sm">
-          {done ? (
-            <div className="text-center space-y-3">
-              <h1 className="font-serif text-2xl">You're unsubscribed</h1>
-              <p className="text-muted-foreground text-sm">
-                {email || "Your email"} will no longer receive campaigns from Medic Connect.
-                Transactional messages (booking confirmations, replies) may still be sent.
-              </p>
-              <p className="text-xs text-muted-foreground pt-4">
-                Changed your mind? Email <a className="underline" href="mailto:hello@medicconnect.co">hello@medicconnect.co</a>.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleUnsubscribe} className="space-y-5">
-              <div className="text-center space-y-2">
-                <h1 className="font-serif text-2xl">Unsubscribe</h1>
-                <p className="text-sm text-muted-foreground">
-                  Enter your email to stop receiving marketing emails from Medic Connect.
+      <KitPageHero
+        eyebrow="Email preferences"
+        title={done ? "You are unsubscribed" : "Unsubscribe"}
+        art={done ? art.objEnvelope : art.objEnvelopeHeart}
+        artClassName="bottom-8 h-[100px] md:mb-16 md:h-[170px] lg:h-[200px]"
+        lead={done
+          ? `${email || "Your email"} will no longer get marketing emails from Medic Connect.`
+          : "Stop marketing emails from Medic Connect. Messages about your own care, application or bookings still arrive."}
+      />
+      <KitMain className="flex-1">
+        <div className="mx-auto max-w-[560px]">
+          <KitPanel>
+            {done ? (
+              <div className="space-y-3">
+                <Stamp title="UNSUBSCRIBED" sub="MARKETING EMAILS" className="mb-3" />
+                <p className="text-[16px] leading-[1.7] text-body">
+                  Messages about your own care, application or bookings, and replies to you, still arrive.
+                </p>
+                <p className="text-[16px] leading-[1.7] text-body">
+                  Changed your mind? Email <a className="font-bold text-brand underline" href="mailto:hello@medicconnect.co">hello@medicconnect.co</a>.
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Unsubscribing..." : "Unsubscribe"}
-              </Button>
-            </form>
-          )}
+            ) : (
+              <form onSubmit={handleUnsubscribe} className="space-y-5">
+                <label htmlFor="email" className="block text-[15px] font-bold text-ink">
+                  Your email address
+                  <input
+                    id="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className={kitInput}
+                  />
+                </label>
+                <button type="submit" className={`${kitPrimaryButton} w-full`} disabled={loading}>
+                  {loading ? "Unsubscribing" : "Unsubscribe"}
+                </button>
+              </form>
+            )}
+          </KitPanel>
         </div>
-      </main>
+      </KitMain>
       <Footer />
     </div>
   );

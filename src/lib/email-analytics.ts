@@ -1,6 +1,7 @@
 // Email analytics — one event stream (campaign_events) covers campaigns and
 // every tagged transactional send. All reads dedupe to unique recipients.
 import { adminDb } from "@/lib/admin-utils";
+import { selectAll } from "@/lib/select-all";
 
 export interface EmailEvent {
   id: string;
@@ -32,12 +33,10 @@ const uniq = (rows: { recipient_email: string }[]) =>
 
 /** Per-link click breakdown for one campaign. */
 export async function campaignLinkStats(campaignId: string): Promise<LinkStat[]> {
-  const { data, error } = await adminDb()
-    .from("campaign_events")
-    .select("link_url, recipient_email")
-    .eq("campaign_id", campaignId)
-    .eq("event_type", "clicked");
-  if (error || !data) return [];
+  const data = await selectAll<{ link_url: string | null; recipient_email: string }>((a, z) =>
+    adminDb().from("campaign_events").select("id, link_url, recipient_email")
+      .eq("campaign_id", campaignId).eq("event_type", "clicked").order("id").range(a, z)).catch(() => null);
+  if (!data) return [];
   const byUrl = new Map<string, { clicks: number; people: Set<string> }>();
   for (const r of data as { link_url: string | null; recipient_email: string }[]) {
     const url = r.link_url || "(unknown link)";
@@ -53,11 +52,11 @@ export async function campaignLinkStats(campaignId: string): Promise<LinkStat[]>
 
 /** Sent → delivered → opened → clicked → claimed funnel for one campaign. */
 export async function campaignFunnel(campaignId: string): Promise<CampaignFunnel> {
-  const { data, error } = await adminDb()
-    .from("campaign_events")
-    .select("event_type, recipient_email")
-    .eq("campaign_id", campaignId);
-  if (error || !data) return { sent: 0, delivered: 0, opened: 0, clicked: 0, claimed: 0 };
+  // Every event: a campaign to the whole audience passes 1,000 rows.
+  const data = await selectAll<{ event_type: string; recipient_email: string }>((a, z) =>
+    adminDb().from("campaign_events").select("id, event_type, recipient_email")
+      .eq("campaign_id", campaignId).order("id").range(a, z)).catch(() => null);
+  if (!data) return { sent: 0, delivered: 0, opened: 0, clicked: 0, claimed: 0 };
   const rows = data as { event_type: string; recipient_email: string }[];
   const funnel: CampaignFunnel = {
     sent: uniq(rows.filter((r) => r.event_type === "sent")),
@@ -96,10 +95,7 @@ export async function emailHistoryFor(email: string): Promise<EmailEvent[]> {
 
 /** Distinct templates seen, for filters. */
 export async function emailTemplatesSeen(): Promise<string[]> {
-  const { data } = await adminDb()
-    .from("campaign_events")
-    .select("template")
-    .not("template", "is", null)
-    .limit(1000);
-  return [...new Set(((data || []) as { template: string }[]).map((r) => r.template))].sort();
+  const data = await selectAll<{ template: string }>((a, z) =>
+    adminDb().from("campaign_events").select("id, template").not("template", "is", null).order("id").range(a, z)).catch(() => []);
+  return [...new Set(data.map((r) => r.template))].sort();
 }

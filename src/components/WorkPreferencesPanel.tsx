@@ -66,28 +66,65 @@ const COPY = {
 } as const;
 
 const Chip = ({
-  on, label, disabled, onClick,
-}: { on: boolean; label: string; disabled?: boolean; onClick: () => void }) => (
-  <button
-    type="button"
-    disabled={disabled}
-    onClick={onClick}
-    className={cn(
-      "min-h-11 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
-      on ? "border-primary bg-primary/15 text-foreground" : "border-border text-muted-foreground",
-      !disabled && "hover:border-primary",
-      disabled && "cursor-default",
-    )}
-  >
-    {label}
-  </button>
-);
+  on, label, disabled, onClick, tile = false,
+}: { on: boolean; label: string; disabled?: boolean; onClick: () => void; tile?: boolean }) =>
+  tile ? (
+    // Candidate portal: a square tick tile, the house shape for a choice.
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "flex min-h-12 items-center gap-2.5 border-2 px-3.5 py-2 text-left text-[14.5px] font-bold transition-colors",
+        on ? "border-navy bg-tint text-navy shadow-[3px_3px_0_hsl(var(--brand))]" : "border-navy/15 bg-white text-ink hover:border-navy/50",
+        disabled && "cursor-default",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "grid h-5 w-5 shrink-0 place-items-center border-2 text-[11px] font-black",
+          on ? "border-brand bg-brand text-white" : "border-navy/30 text-transparent",
+        )}
+      >
+        ✓
+      </span>
+      {label}
+    </button>
+  ) : (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "min-h-11 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+        on ? "border-primary bg-primary/15 text-foreground" : "border-border text-muted-foreground",
+        !disabled && "hover:border-primary",
+        disabled && "cursor-default",
+      )}
+    >
+      {label}
+    </button>
+  );
 
 const WorkPreferencesPanel = ({
   personId, readOnly = false, actorName, onSaved, voice = "candidate", track,
 }: Props) => {
   const t = COPY[voice];
   const rules = trackRules(track);
+  // The candidate portal uses the house shapes; the admin record keeps its own.
+  const cand = voice === "candidate";
+  // In the portal the section is already a card, so each question sits on a rule, not in a box.
+  const cardCls = cand
+    ? "!rounded-none !border-0 !border-t-2 !border-navy/10 !bg-transparent !shadow-none [&>div]:!px-0 [&>div]:!pb-2"
+    : "rounded-xl border-border/70 shadow-none";
+  const qCls = cand ? "text-[17px] font-extrabold tracking-[-0.02em] text-navy" : "text-sm font-semibold";
+  const helpCls = cand ? "mt-0.5 text-[14px] text-body" : "text-xs text-muted-foreground";
+  const optCls = (on: boolean) =>
+    cand
+      ? cn("min-h-12 border-2 p-3.5 text-left transition-colors", on ? "border-navy bg-tint shadow-[3px_3px_0_hsl(var(--brand))]" : "border-navy/15 bg-white hover:border-navy/50")
+      : cn("min-h-11 rounded-xl border p-3 text-left transition-colors", on ? "border-primary bg-primary/10" : "border-border hover:border-primary/60");
   const office = rules.needsFunctionAreas;
   const student = rules.needsPlacement;
   const care = rules.needsCarePreferences;
@@ -192,7 +229,7 @@ const WorkPreferencesPanel = ({
         ? <span className="text-xs text-muted-foreground">Not said yet</span>
         : codes.map((c) => <Badge key={c} variant="secondary" className="rounded-full">{labels[c] ?? c}</Badge>);
     return (
-      <Card className="rounded-xl border-border/70 shadow-none">
+      <Card className={cardCls}>
         <CardContent className="space-y-4 p-4 text-sm">
           {office ? (
             <>
@@ -220,7 +257,7 @@ const WorkPreferencesPanel = ({
     : `Answer these ${requiredCount === 2 ? "two" : "three"} and we can start putting you forward.`;
 
   const sharedOptional = (
-    <Card className="rounded-xl border-border/70 shadow-none">
+    <Card className={cardCls}>
       <CardContent className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
         <div className={cn("space-y-1.5", office && "hidden")}>
           <Label className="text-xs">Longest journey you will make (minutes)</Label>
@@ -244,8 +281,8 @@ const WorkPreferencesPanel = ({
         <div className="space-y-1.5">
           <Label className="text-xs">Would you relocate for the right role?</Label>
           <div className="flex gap-2">
-            <Chip label="Yes" on={prefs.willing_to_relocate === true} onClick={() => patch({ willing_to_relocate: true })} />
-            <Chip label="No" on={prefs.willing_to_relocate === false} onClick={() => patch({ willing_to_relocate: false })} />
+            <Chip tile={cand} label="Yes" on={prefs.willing_to_relocate === true} onClick={() => patch({ willing_to_relocate: true })} />
+            <Chip tile={cand} label="No" on={prefs.willing_to_relocate === false} onClick={() => patch({ willing_to_relocate: false })} />
           </div>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
@@ -264,7 +301,7 @@ const WorkPreferencesPanel = ({
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-base font-semibold text-foreground">What we match on</h3>
+        <h3 className={cand ? "text-[20px] font-extrabold tracking-[-0.03em] text-navy" : "text-base font-semibold text-foreground"}>What we match on</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {matchIntro}
         </p>
@@ -272,80 +309,88 @@ const WorkPreferencesPanel = ({
 
       <div className="space-y-4">
         {office && groupStates.required.has("function") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
               <div>
-                <p className="text-sm font-semibold">{voice === "candidate" ? "Which areas of work do you do?" : "Function areas"}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className={qCls}>{voice === "candidate" ? "Which areas of work do you do?" : "Function areas"}</p>
+                <p className={helpCls}>
                   {voice === "candidate" ? "Pick every area you can work in. We match roles to these." : "Stated by the candidate. Roles are matched against these areas."}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {FUNCTION_AREAS.map((f) => <Chip key={f.code} label={f.label} on={prefs.function_areas.includes(f.code)} onClick={() => toggle("function_areas", f.code)} />)}
+              <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>
+                {FUNCTION_AREAS.map((f) => <Chip tile={cand} key={f.code} label={f.label} on={prefs.function_areas.includes(f.code)} onClick={() => toggle("function_areas", f.code)} />)}
               </div>
             </CardContent>
           </Card>
         )}
 
         {office && groupStates.required.has("contract") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
-              <p className="text-sm font-semibold">{voice === "candidate" ? "What kind of contract suits you?" : "Contract types accepted"}</p>
-              <div className="flex flex-wrap gap-2">
-                {CONTRACT_TYPES.map((c) => <Chip key={c.code} label={c.label} on={prefs.contract_types.includes(c.code)} onClick={() => toggle("contract_types", c.code)} />)}
+              <p className={qCls}>{voice === "candidate" ? "What kind of contract suits you?" : "Contract types accepted"}</p>
+              <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>
+                {CONTRACT_TYPES.map((c) => <Chip tile={cand} key={c.code} label={c.label} on={prefs.contract_types.includes(c.code)} onClick={() => toggle("contract_types", c.code)} />)}
               </div>
             </CardContent>
           </Card>
         )}
 
         {student && groupStates.required.has("placement") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
               <div>
-                <p className="text-sm font-semibold">{voice === "candidate" ? "What are you looking for?" : "Placement sought"}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className={qCls}>{voice === "candidate" ? "What are you looking for?" : "Placement sought"}</p>
+                <p className={helpCls}>
                   {voice === "candidate" ? "Pick everything that would work around your studies." : "Stated by the student. Opportunities are matched against these."}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {PLACEMENT_TYPES.map((pt) => <Chip key={pt.code} label={pt.label} on={prefs.placement_types.includes(pt.code)} onClick={() => toggle("placement_types", pt.code)} />)}
+              <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>
+                {PLACEMENT_TYPES.map((pt) => <Chip tile={cand} key={pt.code} label={pt.label} on={prefs.placement_types.includes(pt.code)} onClick={() => toggle("placement_types", pt.code)} />)}
               </div>
             </CardContent>
           </Card>
         )}
 
         {care && groupStates.required.has("care") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
-              <div><p className="text-sm font-semibold">{t.careTitle}</p><p className="text-xs text-muted-foreground">{t.careHelp}</p></div>
-              <div className="flex flex-wrap gap-2">
-                {CARE_TYPES.map((c) => <Chip key={c.code} label={c.label} on={prefs.care_types.includes(c.code)} onClick={() => toggle("care_types", c.code)} />)}
+              <div><p className={qCls}>{t.careTitle}</p><p className={helpCls}>{t.careHelp}</p></div>
+              <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>
+                {CARE_TYPES.map((c) => <Chip tile={cand} key={c.code} label={c.label} on={prefs.care_types.includes(c.code)} onClick={() => toggle("care_types", c.code)} />)}
               </div>
             </CardContent>
           </Card>
         )}
 
         {care && groupStates.required.has("live-in") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
-              <p className="text-sm font-semibold">{t.liveIn}</p>
+              <p className={qCls}>{t.liveIn}</p>
+              {cand ? (
+                <div className="flex flex-wrap gap-2.5">
+                  {LIVE_IN_OPTIONS.filter((o) => o.code !== "unknown").map((o) => (
+                    <Chip tile key={o.code} label={o.label} on={prefs.live_in === o.code} onClick={() => patch({ live_in: o.code })} />
+                  ))}
+                </div>
+              ) : (
               <div className="grid gap-2 sm:grid-cols-2">
                 {LIVE_IN_OPTIONS.filter((o) => o.code !== "unknown").map((o) => (
-                  <button key={o.code} type="button" onClick={() => patch({ live_in: o.code })} className={cn("min-h-11 rounded-xl border p-3 text-left transition-colors", prefs.live_in === o.code ? "border-primary bg-primary/10" : "border-border hover:border-primary/60")}>
-                    <p className="text-sm font-medium">{o.label}</p><p className="text-xs text-muted-foreground">{o.help}</p>
+                  <button key={o.code} type="button" onClick={() => patch({ live_in: o.code })} className={optCls(prefs.live_in === o.code)}>
+                    <p className={cand ? "text-[15.5px] font-extrabold text-navy" : "text-sm font-medium"}>{o.label}</p><p className={cand ? "mt-0.5 text-[13.5px] text-body" : "text-xs text-muted-foreground"}>{o.help}</p>
                   </button>
                 ))}
               </div>
+              )}
             </CardContent>
           </Card>
         )}
 
         {care && groupStates.required.has("shifts") && (
-          <Card className="rounded-xl border-border/70 shadow-none">
+          <Card className={cardCls}>
             <CardContent className="space-y-3 p-4 sm:p-5">
-              <p className="text-sm font-semibold">{t.shifts}</p>
-              <div className="flex flex-wrap gap-2">
-                {SHIFT_PATTERNS.map((shift) => <Chip key={shift.code} label={shift.label} on={prefs.shift_patterns.includes(shift.code)} onClick={() => toggle("shift_patterns", shift.code)} />)}
+              <p className={qCls}>{t.shifts}</p>
+              <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>
+                {SHIFT_PATTERNS.map((shift) => <Chip tile={cand} key={shift.code} label={shift.label} on={prefs.shift_patterns.includes(shift.code)} onClick={() => toggle("shift_patterns", shift.code)} />)}
               </div>
             </CardContent>
           </Card>
@@ -364,16 +409,16 @@ const WorkPreferencesPanel = ({
         </div>
         <CollapsibleContent className="space-y-4 pt-4">
           {office && (
-            <Card className="rounded-xl border-border/70 shadow-none">
+            <Card className={cardCls}>
               <CardContent className="space-y-4 p-4 sm:p-5">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold">{voice === "candidate" ? "Who would you work for?" : "Employer types accepted"}</p>
-                  <div className="flex flex-wrap gap-2">{EMPLOYER_TYPES.map((e) => <Chip key={e.code} label={e.label} on={prefs.employer_types.includes(e.code)} onClick={() => toggle("employer_types", e.code)} />)}</div>
+                  <p className={qCls}>{voice === "candidate" ? "Who would you work for?" : "Employer types accepted"}</p>
+                  <div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>{EMPLOYER_TYPES.map((e) => <Chip tile={cand} key={e.code} label={e.label} on={prefs.employer_types.includes(e.code)} onClick={() => toggle("employer_types", e.code)} />)}</div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold">{voice === "candidate" ? "How do you want to work?" : "Work setting"}</p>
+                  <p className={qCls}>{voice === "candidate" ? "How do you want to work?" : "Work setting"}</p>
                   <div className="grid gap-2 sm:grid-cols-3">
-                    {WORK_SETTINGS.map((o) => <button key={o.code} type="button" onClick={() => patch({ work_setting: o.code })} className={cn("min-h-11 rounded-xl border p-3 text-left transition-colors", prefs.work_setting === o.code ? "border-primary bg-primary/10" : "border-border hover:border-primary/60")}><p className="text-sm font-medium">{o.label}</p><p className="text-xs text-muted-foreground">{o.help}</p></button>)}
+                    {WORK_SETTINGS.map((o) => <button key={o.code} type="button" onClick={() => patch({ work_setting: o.code })} className={optCls(prefs.work_setting === o.code)}><p className={cand ? "text-[15.5px] font-extrabold text-navy" : "text-sm font-medium"}>{o.label}</p><p className={cand ? "mt-0.5 text-[13.5px] text-body" : "text-xs text-muted-foreground"}>{o.help}</p></button>)}
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -386,12 +431,12 @@ const WorkPreferencesPanel = ({
 
           {care && (
             <>
-              <Card className="rounded-xl border-border/70 shadow-none">
-                <CardContent className="space-y-3 p-4 sm:p-5"><p className="text-sm font-semibold">{t.length}</p><div className="flex flex-wrap gap-2">{ENGAGEMENT_TYPES.map((engagement) => <Chip key={engagement.code} label={engagement.label} on={prefs.engagement_types.includes(engagement.code)} onClick={() => toggle("engagement_types", engagement.code)} />)}</div></CardContent>
+              <Card className={cardCls}>
+                <CardContent className="space-y-3 p-4 sm:p-5"><p className={qCls}>{t.length}</p><div className={cand ? "flex flex-wrap gap-2.5" : "flex flex-wrap gap-2"}>{ENGAGEMENT_TYPES.map((engagement) => <Chip tile={cand} key={engagement.code} label={engagement.label} on={prefs.engagement_types.includes(engagement.code)} onClick={() => toggle("engagement_types", engagement.code)} />)}</div></CardContent>
               </Card>
-              <Card className="rounded-xl border-border/70 shadow-none">
+              <Card className={cardCls}>
                 <CardContent className="space-y-4 p-4 sm:p-5">
-                  <div><p className="text-sm font-semibold">{t.householdTitle}</p><p className="text-xs text-muted-foreground">{t.householdHelp}</p></div>
+                  <div><p className={qCls}>{t.householdTitle}</p><p className={helpCls}>{t.householdHelp}</p></div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5"><Label className="text-xs">Client sex you prefer</Label><Select value={prefs.client_sex} onValueChange={(v) => patch({ client_sex: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{CLIENT_SEX_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}</SelectContent></Select></div>
                     <div className="space-y-1.5"><Label className="text-xs">Household faith you prefer</Label><Select value={prefs.client_religion} onValueChange={(v) => patch({ client_religion: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{CLIENT_RELIGION_OPTIONS.map((o) => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}</SelectContent></Select></div>
@@ -414,7 +459,7 @@ const WorkPreferencesPanel = ({
         </p>
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">{prefs.updated_at ? `Last updated ${new Date(prefs.updated_at).toLocaleDateString("en-GB")}` : "Not saved yet"}</p>
-          <Button className="min-h-11" onClick={save} disabled={saving || !dirty}>
+          <Button className={cand ? "cx-control min-h-12 rounded-[10px] bg-navy px-6 text-[15.5px] font-extrabold text-white shadow-[4px_4px_0_hsl(var(--brand))] hover:bg-navy/90 disabled:shadow-none" : "min-h-11"} onClick={save} disabled={saving || !dirty}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save preferences
           </Button>

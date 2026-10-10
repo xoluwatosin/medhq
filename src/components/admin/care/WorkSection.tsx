@@ -25,7 +25,8 @@ import {
   dueText, outstandingWork, staffOptions, teamLabel, workTone, WORK_TEAMS,
   type StaffOption, type WorkItem,
 } from "@/lib/care-work";
-import { MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { formatDateTime } from "@/lib/format";
 
 interface FinishedItem {
@@ -51,7 +52,7 @@ const DOMAIN_MANAGED = new Set(["book", "assign", "conduct"]);
 const HeadRow = ({ columns, labels }: { columns: string; labels: string[] }) => (
   <div className={`hidden gap-4 border-b border-line-soft px-5 py-2.5 md:grid ${columns}`}>
     {labels.map((l) => (
-      <span key={l} className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <span key={l} className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">
         {l}
       </span>
     ))}
@@ -172,7 +173,7 @@ const WorkSection = ({ clientId, onChanged }: { clientId: string; onChanged?: ()
         {loading ? (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">Loading work</p>
         ) : items.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">No outstanding work</p>
+          <MuEmpty art={art.objCalendar} title="No outstanding work" description="New tasks for this client appear here." />
         ) : (
           <>
             <HeadRow columns={OPEN_COLUMNS} labels={["Task", "Due", "Owner", "Team", ""]} />

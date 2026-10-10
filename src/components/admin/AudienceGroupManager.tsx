@@ -8,6 +8,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
+import { SelectField } from "@/components/field";
+import { createAudienceGroup } from "@/lib/audience-groups";
 
 interface Group { id: string; name: string }
 
@@ -79,17 +81,17 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
   const createGroup = async () => {
     if (!name.trim()) return;
     setCreating(true);
-    const { data, error } = await adminDb()
-      .from("audience_groups")
-      .insert({ name: name.trim(), description: desc.trim() || null })
-      .select("id, name")
-      .single();
-    setCreating(false);
-    if (error) {
+    let data: Group;
+    try {
+      const made = await createAudienceGroup(name, desc);
+      data = made.group as Group;
+      toast({ title: made.reused ? "That group already exists, using it" : "Group created", description: data.name });
+    } catch (error: any) {
+      setCreating(false);
       toast({ title: "Could not create group", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Group created", description: data.name });
+    setCreating(false);
     setName(""); setDesc(""); setCreateOpen(false);
     await onGroupsChanged();
     onGroupCreated?.(data as Group);
@@ -148,7 +150,7 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
           <div className="space-y-3">
             <div>
               <Label>Group name *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. ICU Nurses — Lagos" />
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="For example, ICU nurses in Lagos" />
             </div>
             <div>
               <Label>Description</Label>
@@ -174,26 +176,20 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Add members to a group</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div>
-                <Label>Group</Label>
-                <select
-                  className="w-full mt-1 border rounded-md h-10 px-3 bg-background text-sm"
-                  value={targetGroupId}
-                  onChange={(e) => setTargetGroupId(e.target.value)}
-                >
-                  <option value="">Pick a group…</option>
-                  {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
-              </div>
+              <SelectField
+                label="Group"
+                value={targetGroupId}
+                onChange={setTargetGroupId}
+                placeholder="Pick a group"
+                options={groups.map((g) => ({ value: g.id, label: g.name }))}
+              />
               <Tabs defaultValue="paste">
                 <TabsList className="grid grid-cols-2">
                   <TabsTrigger value="paste">Paste list</TabsTrigger>
                   <TabsTrigger value="single">Add one</TabsTrigger>
                 </TabsList>
                 <TabsContent value="paste" className="space-y-2 pt-3">
-                  <Label className="text-xs text-muted-foreground">
-                    One per line. Accepts <code>email</code>, <code>email, name</code>, or <code>Name &lt;email&gt;</code>.
-                  </Label>
+                  <Label className="text-xs text-muted-foreground">One per line</Label>
                   <Textarea
                     rows={7}
                     value={pasted}
@@ -202,7 +198,7 @@ const AudienceGroupManager = ({ groups, onGroupsChanged, selectedGroupIds = [], 
                   />
                   {pasted.trim() && (() => {
                     const p = parsePastedList(pasted);
-                    return <p className="text-xs text-muted-foreground">{p.valid.length} valid{p.skipped ? ` · ${p.skipped} skipped` : ""}</p>;
+                    return <p className="text-xs text-muted-foreground">{p.valid.length} valid{p.skipped ? `, ${p.skipped} skipped` : ""}</p>;
                   })()}
                 </TabsContent>
                 <TabsContent value="single" className="space-y-2 pt-3">

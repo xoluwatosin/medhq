@@ -37,6 +37,9 @@ const Field = ({
 
 const textClass = "h-11 w-full rounded-lg border-line bg-white px-3.5 text-[16px]";
 
+// Services for a baby or child, which a parent arranges for someone else.
+const CHILD_SERVICES = ["newborn", "paediatric", "additional_needs", "nanny"];
+
 const Pick = ({
   label, help, selected, onClick,
 }: { label: string; help?: string; selected: boolean; onClick: () => void }) => (
@@ -228,7 +231,7 @@ export const CareIntakeFlow = ({
         </Field>
 
         {!r.isEnquirer && (
-          <Field label="Relationship to you" error={problem(`${r.id}.relationship`)}>
+          <Field label={`You are ${r.firstName.trim() ? `${r.firstName.trim()}'s` : "their"}`} error={problem(`${r.id}.relationship`)}>
             <Select
               value={r.relationship ?? ""}
               onValueChange={(value) => setRecipient(r.id, { relationship: value })}
@@ -258,24 +261,36 @@ export const CareIntakeFlow = ({
 
       <div className="mt-4">
         <p className="text-[15px] font-bold text-ink2">Date of birth</p>
-        <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+        <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
           <Pick
             label="I know the date of birth"
-            selected={r.dobKnown === "yes"}
-            onClick={() => setRecipient(r.id, { dobKnown: "yes", approxAge: null })}
+            selected={r.dobKnown === "yes" && !r.expectedBirth}
+            onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: false, approxAge: null })}
           />
           <Pick
             label="I do not know the exact date"
             selected={r.dobKnown === "no"}
-            onClick={() => setRecipient(r.id, { dobKnown: "no", dateOfBirth: undefined })}
+            onClick={() => setRecipient(r.id, { dobKnown: "no", expectedBirth: false, dateOfBirth: undefined })}
           />
+          {/* Only someone else can be not born yet: a parent arranging care
+              for their baby chooses Another person. */}
+          {!r.isEnquirer && (
+            <Pick
+              label="Not born yet"
+              selected={r.dobKnown === "yes" && !!r.expectedBirth}
+              onClick={() => setRecipient(r.id, { dobKnown: "yes", expectedBirth: true, approxAge: null })}
+            />
+          )}
         </div>
         {problem(`${r.id}.dobKnown`) && (
           <p className="mt-1 text-[15px] font-medium text-warn-ink">{problem(`${r.id}.dobKnown`)}</p>
         )}
         {r.dobKnown === "yes" && (
           <div className="mt-3">
-            <Field label="Date of birth" error={problem(`${r.id}.dateOfBirth`)}>
+            <Field
+              label={r.expectedBirth ? "Expected date of birth" : "Date of birth"}
+              error={problem(`${r.id}.dateOfBirth`)}
+            >
               <Input
                 type="date"
                 className={textClass}
@@ -323,6 +338,12 @@ export const CareIntakeFlow = ({
         </div>
         {problem(`${r.id}.services`) && (
           <p className="mt-1.5 text-[15px] font-medium text-warn-ink">{problem(`${r.id}.services`)}</p>
+        )}
+        {r.isEnquirer && r.services.some((v) => CHILD_SERVICES.includes(v)) && (
+          <p className="mt-2 text-[15px] leading-snug text-warn-ink">
+            Is this care for your baby or child? Go back, choose Another person, and add them by name.
+            For a baby not born yet, use Baby and your family name.
+          </p>
         )}
       </div>
 
@@ -457,8 +478,8 @@ export const CareIntakeFlow = ({
           </div>
         ))}
         <p className="text-[15px] leading-relaxed text-body">
-          The questions that follow are organised for the request and for each care recipient,
-          based on the services selected above.
+          Next, a few questions about each person, then when and where we visit. Your
+          answers save as you go.
         </p>
       </div>
     );
@@ -466,8 +487,9 @@ export const CareIntakeFlow = ({
 
   return (
     <FormPage
-      eyebrow="Pre-assessment"
+      eyebrow="Before your visit"
       title="Before your visit"
+      heading="Who the care is for"
       step={null}
       rail={
         <nav aria-label="Opening stages" className="mb-4">
@@ -492,23 +514,23 @@ export const CareIntakeFlow = ({
                       window.scrollTo({ top: 0 });
                     }}
                     className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[14px] font-bold transition-colors",
+                      "flex h-9 w-9 shrink-0 items-center justify-center border-2 text-[14px] font-extrabold transition-colors",
                       current
                         ? "border-navy bg-navy text-primary-foreground"
                         : complete
-                          ? "border-brand/40 bg-tint text-navy"
-                          : "border-line bg-background text-label",
-                      reachable && "cursor-pointer hover:border-brand",
+                          ? "border-brand bg-brand text-white"
+                          : "border-navy/20 bg-background text-label",
+                      reachable && "cursor-pointer hover:border-navy",
                     )}
                   >
                     {number}
                   </button>
-                  {number < 5 && <span aria-hidden className={cn("mx-2 h-px flex-1", complete ? "bg-brand/40" : "bg-line")} />}
+                  {number < 5 && <span aria-hidden className={cn("mx-1.5 h-[3px] flex-1", complete ? "bg-brand" : "bg-navy/10")} />}
                 </li>
               );
             })}
           </ol>
-          <p className="mt-2 text-right text-[12px] text-muted-foreground">Stage {currentStage} of 5</p>
+          <p className="label-caps mt-2.5 text-[11px] text-label">Step {currentStage} of 5</p>
         </nav>
       }
       footer={

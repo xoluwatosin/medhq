@@ -14,6 +14,7 @@ import { cxInputClass } from "@/components/candidate/primitives";
 import { adminDb } from "@/lib/admin-utils";
 import { careErrorMessage } from "@/lib/care-errors";
 import { MuEmpty, MuSection, MuTable } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Status } from "@/components/field";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -160,7 +161,7 @@ const ClinicalReviewSection = ({
   if (!work || !record) {
     return (
       <MuSection title="Clinical review">
-        <MuEmpty title="No assessment to review" description="A review opens once an assessor sends an assessment." />
+        <MuEmpty art={art.objClipboardChecks} title="No assessment to review" description="A review opens once an assessor sends an assessment." />
       </MuSection>
     );
   }
@@ -172,7 +173,7 @@ const ClinicalReviewSection = ({
     <div className="flex flex-col gap-4">
       <MuSection
         title="Clinical review"
-        description="The sent assessment is shown as it was sent. It is not edited here."
+        description="Shown as sent. Not edited here."
         actions={<Status label={state.label} tone={state.tone} />}
       >
         <MuTable
@@ -196,6 +197,7 @@ const ClinicalReviewSection = ({
               type="button"
               className={carePrimary}
               disabled={!checklistAllowsAccept(checklist) || !notesComplete}
+              title={!checklistAllowsAccept(checklist) ? "Decide every check first. A check not met is returned, not accepted." : undefined}
               onClick={() => setAccepting(true)}
             >
               Accept assessment
@@ -203,11 +205,6 @@ const ClinicalReviewSection = ({
             <button type="button" className={careGhost} onClick={() => setReturning(true)}>
               Return for clarification
             </button>
-            {!checklistAllowsAccept(checklist) && (
-              <p className="self-center text-[13px] text-body">
-                Every check has to be decided, and a check that is not met is returned rather than accepted.
-              </p>
-            )}
           </div>
         )}
         {!canReview && awaiting && (
@@ -217,7 +214,6 @@ const ClinicalReviewSection = ({
 
       <MuSection
         title="Review checklist"
-        description="These twelve checks belong to this version of the assessment. A check that is not met needs a note, and is returned to the assessor."
         actions={
           <Status
             label={`${checklistDecided(checklist)} of ${REVIEW_CHECKS.length} decided`}
@@ -263,7 +259,7 @@ const ClinicalReviewSection = ({
                     />
                     {needsNote && (
                       <p className="mt-1 text-[13px] text-warn-ink">
-                        A check that is not met has to say what is wrong before it is held.
+                        Say what is wrong before this is saved.
                       </p>
                     )}
                   </>
@@ -282,7 +278,6 @@ const ClinicalReviewSection = ({
       {history.length > 0 && (
         <MuSection
           title="Earlier reviews"
-          description="Each earlier version keeps the review it was given. These are history and are not part of the checklist above."
           padded={false}
         >
           <div className="divide-y divide-line-soft">
@@ -290,7 +285,7 @@ const ClinicalReviewSection = ({
               <div key={row.id} className="px-5 py-4">
                 <p className="text-[14px] font-bold text-ink">
                   {row.status === "accepted" ? "Accepted" : row.status === "returned" ? "Returned" : "Open"}
-                  {row.completed_at ? ` · ${formatDateTime(row.completed_at)}` : ""}
+                  {row.completed_at ? ` on ${formatDateTime(row.completed_at)}` : ""}
                 </p>
                 {row.decision_reason && (
                   <p className="mt-1 whitespace-pre-wrap text-[13.5px] text-body">{row.decision_reason}</p>
@@ -298,7 +293,7 @@ const ClinicalReviewSection = ({
                 {row.return_category && (
                   <p className="mt-1 text-[13px] text-body">
                     {categoryLabel(row.return_category)}
-                    {row.return_priority ? ` · ${priorityLabel(row.return_priority)}` : ""}
+                    {row.return_priority ? `, ${priorityLabel(row.return_priority)}` : ""}
                   </p>
                 )}
                 {row.return_instructions && (
@@ -314,7 +309,7 @@ const ClinicalReviewSection = ({
       )}
 
       {docs.length > 1 && (
-        <MuSection title="Earlier versions" description="Every sent version stays on the record.">
+        <MuSection title="Earlier versions">
           <MuTable
             rows={docs
               .filter((d) => d.status !== "draft")

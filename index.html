@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#FAF8F4" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAF8F4" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#FAF8F4" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#FFFFFF" />
     <title>Medic Connect</title>
     <meta name="description" content="Healthcare and care coordination from Medic Connect." />
     <meta name="author" content="Medic Connect" />
     <meta name="google-site-verification" content="wMX5lCSpxpKDquM64smprR_LHqSS2ZcOmkZ81aPvbKU" />
+    <meta name="facebook-domain-verification" content="yvfoptz74fouwqo52s3q4l1o5nsm8m" />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -43,7 +44,11 @@
       },
       "sameAs": [
         "https://www.medicconnect.org",
-        "https://www.healthcarematchmakers.com"
+        "https://www.healthcarematchmakers.com",
+        "https://www.instagram.com/medicconnecthq",
+        "https://ng.linkedin.com/company/medicconnect-co",
+        "https://x.com/MedicConnectHQ",
+        "https://www.facebook.com/p/Medic-Connect-61571413054782/"
       ]
     }
     </script>
@@ -54,6 +59,11 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  // Team browsers (signed in to admin) and team-only screens send nothing.
+  try {
+    if (new URLSearchParams(location.search).get('mc_staff') === '0') localStorage.removeItem('mc-staff');
+    if (localStorage.getItem('mc-staff') === '1' || /^\/(admin|assessor)(\/|$)/.test(location.pathname)) window['ga-disable-G-FT88EMTPEN'] = true;
+  } catch (e) {}
   var __gaInit = function(){ gtag('config', 'G-FT88EMTPEN'); };
   if ('requestIdleCallback' in window) { requestIdleCallback(__gaInit, { timeout: 3000 }); }
   else { setTimeout(__gaInit, 1500); }

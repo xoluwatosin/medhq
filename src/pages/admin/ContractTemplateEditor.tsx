@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ArrowDown, ArrowUp, CheckCircle2, ExternalLink, FileStack, Loader2, Plus, Save, Search, Send,
+  ArrowDown, ArrowUp, ExternalLink, Loader2, Plus, Save, Search, Send,
   Trash2, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,19 +16,21 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuNote, MuPage, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import ContractDocument from "@/components/contracts/ContractDocument";
-import { CONTRACT_FIELDS, ContractAnnex, ContractClause, issueContractDocument } from "@/lib/contracts";
+import { CONTRACT_FIELDS, ContractAnnex, ContractClause } from "@/lib/contracts";
+import { issueAndSendContract } from "@/lib/contract-issue";
 import {
   AnnexLibraryItem, CandidateRow, ContractTemplate, FIELD_RULE_LABELS, FieldRule, annexFromLibrary,
   createContractFromTemplate, deleteTemplate, loadAcceptedCandidates, loadAnnexLibrary,
   loadTemplate, saveTemplate, searchCandidates,
 } from "@/lib/contract-templates";
+
+const sentence = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 interface RowState {
   person: CandidateRow;
@@ -91,6 +93,22 @@ const ContractTemplateEditor = () => {
   }, [id, toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Issuing and drafting read the saved template, so unsaved edits must be saved first.
+  const dirty = useMemo(() => {
+    if (!template) return false;
+    const saved = {
+      fields: template.fields || {}, rules: template.field_rules || {}, clauses: template.clauses || [], annexes: template.annexes || [],
+      meta: { name: template.name, description: template.description || "", contract_type: template.contract_type, job_title: template.job_title || "", department: template.department || "", is_clinical: template.is_clinical, active: template.active },
+    };
+    return JSON.stringify(saved) !== JSON.stringify({ fields, rules, clauses, annexes, meta });
+  }, [template, fields, rules, clauses, annexes, meta]);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const asked = useMemo(
     () => Object.entries(rules).filter(([, r]) => r === "ask").map(([k]) => k),
@@ -187,8 +205,12 @@ const ContractTemplateEditor = () => {
           location: merged.primary_place_of_work,
           created_by_name: adminDisplayName,
         });
-        if (issueToo) await issueContractDocument(contractId, adminDisplayName);
-        done.push({ ...row, contractId, state: issueToo ? "issued" : "drafted", error: undefined });
+        let note: string | undefined;
+        if (issueToo) {
+          const result = await issueAndSendContract(contractId, adminDisplayName);
+          if (!result.emailed) note = "Issued, email not sent";
+        }
+        done.push({ ...row, contractId, state: issueToo ? "issued" : "drafted", error: note });
       } catch (err: any) {
         done.push({ ...row, state: "failed", error: err.message });
       }
@@ -215,7 +237,10 @@ const ContractTemplateEditor = () => {
   if (!template) {
     return (
       <MuPage>
-        <MuSection><MuEmpty icon={FileStack} title="Template not found" /></MuSection>
+        <MuPageHeader title="Contract template" backTo="/admin/contracts/templates" backLabel="All templates" />
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="Template not found" description="It may have been deleted, or the link is wrong." />
+        </MuSection>
       </MuPage>
     );
   }
@@ -264,40 +289,36 @@ const ContractTemplateEditor = () => {
                 <Input value={meta.department} onChange={(e) => setMeta({ ...meta, department: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Basis</Label>
-                <Select value={meta.contract_type} onValueChange={(v) => setMeta({ ...meta, contract_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CONTRACT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Basis"
+                  value={meta.contract_type}
+                  onChange={(v) => v && setMeta({ ...meta, contract_type: v })}
+                  options={CONTRACT_TYPES.map((t) => ({ value: t, label: sentence(t.replace("_", " ")) }))}
+                />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>What this template is for</Label>
                 <Input value={meta.description} onChange={(e) => setMeta({ ...meta, description: e.target.value })} />
               </div>
-              <div className="flex items-center justify-between border border-line p-3">
-                <div>
-                  <p className="text-[13px] font-medium">Clinical role</p>
-                  <p className="text-xs text-muted-foreground">Carries the scope of practice annex.</p>
+              <div className="border-2 border-navy bg-tint/40 p-3 sm:col-span-2">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Settings</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label title="Carries the scope of practice annex" className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium">Clinical role</span>
+                    <Switch checked={meta.is_clinical} onCheckedChange={(v) => setMeta({ ...meta, is_clinical: v })} />
+                  </label>
+                  <label title="Turn off to retire the template" className="flex items-center justify-between gap-3">
+                    <span className="text-[13px] font-medium">In use</span>
+                    <Switch checked={meta.active} onCheckedChange={(v) => setMeta({ ...meta, active: v })} />
+                  </label>
                 </div>
-                <Switch checked={meta.is_clinical} onCheckedChange={(v) => setMeta({ ...meta, is_clinical: v })} />
-              </div>
-              <div className="flex items-center justify-between border border-line p-3">
-                <div>
-                  <p className="text-[13px] font-medium">In use</p>
-                  <p className="text-xs text-muted-foreground">Turn off to retire the template.</p>
-                </div>
-                <Switch checked={meta.active} onCheckedChange={(v) => setMeta({ ...meta, active: v })} />
               </div>
             </div>
           </MuSection>
 
           <MuSection
             title="The terms"
-            description="Say how each term behaves. Same for everybody is written here once. Suggested is prefilled and editable per person. Ask each time must be answered before that person's contract can go out."
+            description="Choose how each term behaves per person."
           >
             <div className="space-y-4">
               {CONTRACT_FIELDS.map((f) => {
@@ -308,7 +329,7 @@ const ContractTemplateEditor = () => {
                       <Label className="text-sm">{f.label}</Label>
                       {f.help && <p className="text-xs text-muted-foreground">{f.help}</p>}
                       {rule === "ask" ? (
-                        <p className="text-[13px] italic text-muted-foreground">Answered per person on the issue table.</p>
+                        <Input disabled placeholder="Answered per person on the issue table" />
                       ) : f.type === "textarea" ? (
                         <Textarea
                           rows={3}
@@ -324,18 +345,12 @@ const ContractTemplateEditor = () => {
                       )}
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">How it behaves</Label>
-                      <Select
+                      <SelectField
+                        label="How it behaves"
                         value={rule}
-                        onValueChange={(v) => setRules((p) => ({ ...p, [f.key]: v as FieldRule }))}
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {(Object.keys(FIELD_RULE_LABELS) as FieldRule[]).map((r) => (
-                            <SelectItem key={r} value={r}>{FIELD_RULE_LABELS[r]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(v) => v && setRules((p) => ({ ...p, [f.key]: v as FieldRule }))}
+                        options={(Object.keys(FIELD_RULE_LABELS) as FieldRule[]).map((r) => ({ value: r, label: FIELD_RULE_LABELS[r] }))}
+                      />
                     </div>
                   </div>
                 );
@@ -355,7 +370,6 @@ const ContractTemplateEditor = () => {
           <div className="grid gap-5 xl:grid-cols-2">
             <MuSection
               title="Clauses"
-              description="The wording every contract from this template carries."
               actions={
                 <Button
                   size="sm"
@@ -402,7 +416,7 @@ const ContractTemplateEditor = () => {
               </div>
             </MuSection>
 
-            <MuSection title="How it reads" description="The document as anybody on this template will receive it.">
+            <MuSection title="How it reads">
               <div className="max-h-[70vh] overflow-auto">
                 <ContractDocument
                   fields={previewFields}
@@ -419,13 +433,19 @@ const ContractTemplateEditor = () => {
         <TabsContent value="annexes" className="mt-4 space-y-5">
           <MuSection
             title="The pack this role carries"
-            description="Toggle what travels with the contract. The wording lives in the annex library."
+            description="The wording lives in the annex library."
             actions={
               <Button size="sm" variant="outline" onClick={refreshAnnexWording}>Refresh from the library</Button>
             }
           >
             <div className="space-y-3">
-              {annexes.length === 0 && <p className="text-sm text-muted-foreground">No annexes on this template yet.</p>}
+              {annexes.length === 0 && (
+                <MuEmpty
+                  art={art.objFolderDocuments}
+                  title="No annexes yet"
+                  description="Add annexes from the library below."
+                />
+              )}
               {annexes.map((a) => (
                 <div key={a.code} className="flex flex-wrap items-start gap-3 border border-line p-3">
                   <Switch checked={a.include !== false} onCheckedChange={(v) => toggleAnnex(a.code, v)} />
@@ -471,13 +491,19 @@ const ContractTemplateEditor = () => {
 
         {/* ------------------------------------------------------------ issue */}
         <TabsContent value="issue" className="mt-4 space-y-5">
-          <MuSection title="Who is getting this contract" description="People who accepted an offer come first. Anybody else can be searched for.">
+          {dirty && (
+            <MuNote tone="warning" title="Save the template first">
+              Contracts are drafted and issued from the saved template. Your latest changes are not saved yet.
+              <div className="mt-2"><Button size="sm" onClick={save} disabled={saving}>Save template</Button></div>
+            </MuNote>
+          )}
+          <MuSection title="Who is getting this contract">
             <div className="space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="pl-9"
-                  placeholder="Search by name or email"
+                  placeholder="Search anybody by name or email"
                   value={term}
                   onChange={(e) => search(e.target.value)}
                 />
@@ -490,7 +516,7 @@ const ContractTemplateEditor = () => {
                   </Button>
                 ))}
                 {term.trim().length < 2 && accepted.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Nobody has accepted an offer yet. Search for a person instead.</p>
+                  <p className="text-sm text-muted-foreground">Nobody has accepted an offer yet</p>
                 )}
               </div>
             </div>
@@ -501,17 +527,17 @@ const ContractTemplateEditor = () => {
             description={
               asked.length
                 ? `Each person needs: ${asked.map((k) => CONTRACT_FIELDS.find((f) => f.key === k)?.label || k).join(", ")}.`
-                : "Every term on this template is the same for everybody, so there is nothing left to fill in."
+                : "Every term is the same for everybody."
             }
             padded={false}
             actions={
               <>
-                <Button size="sm" variant="outline" disabled={running || rows.length === 0} onClick={() => run(false)}>
+                <Button size="sm" variant="outline" disabled={dirty || running || rows.length === 0} onClick={() => run(false)}>
                   {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Create drafts
                 </Button>
                 <Button
                   size="sm"
-                  disabled={running || rows.length === 0 || rows.some(rowIncomplete)}
+                  disabled={dirty || running || rows.length === 0 || rows.some(rowIncomplete)}
                   onClick={() => run(true)}
                 >
                   {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
@@ -521,7 +547,7 @@ const ContractTemplateEditor = () => {
             }
           >
             {rows.length === 0 ? (
-              <MuEmpty icon={UserPlus} title="Nobody chosen yet" description="Add the people this role was offered to." />
+              <MuEmpty art={art.objHandshake} title="Nobody chosen yet" description="Add the people this role was offered to." />
             ) : (
               <div className="divide-y divide-line-soft">
                 {rows.map((row) => (
@@ -530,11 +556,11 @@ const ContractTemplateEditor = () => {
                       <div>
                         <p className="text-[14px] font-semibold">{row.person.full_name || "Unnamed"}</p>
                         <p className="text-[13px] text-muted-foreground">
-                          {[row.person.email, row.person.profession, row.person.city].filter(Boolean).join(" · ")}
+                          {[row.person.email, row.person.profession, row.person.city].filter(Boolean).join(", ")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {row.state === "issued" && <MuStatus tone="good" label="Issued" />}
+                        {row.state === "issued" && <MuStatus tone={row.error ? "warning" : "good"} label={row.error || "Issued and emailed"} />}
                         {row.state === "drafted" && <MuStatus tone="info" label="Draft created" />}
                         {row.state === "failed" && <MuStatus tone="bad" label={row.error || "Failed"} />}
                         {row.contractId && (
@@ -579,7 +605,7 @@ const ContractTemplateEditor = () => {
 
                     {rowIncomplete(row) && (
                       <p className="text-xs text-destructive">
-                        Something asked of this person is still blank, so their contract cannot go out yet.
+                        Fill the blank terms before issuing.
                       </p>
                     )}
                   </div>
@@ -588,12 +614,6 @@ const ContractTemplateEditor = () => {
             )}
           </MuSection>
 
-          {rows.some((r) => r.state === "issued") && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4" />
-              Each contract carries its own frozen copy of this wording. Changing the template later leaves them untouched.
-            </p>
-          )}
         </TabsContent>
       </Tabs>
     </MuPage>

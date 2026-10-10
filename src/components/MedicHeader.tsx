@@ -50,7 +50,7 @@ const MedicHeader = () => {
                   key={link.href}
                   to={link.href}
                   aria-current={isActive(link.href) ? "page" : undefined}
-                  className={`whitespace-nowrap text-[15px] font-semibold ${isActive(link.href) ? "text-ink" : "text-body"} hover:text-brand rounded-full px-3.5 py-2 transition-colors duration-200`}
+                  className={`whitespace-nowrap text-[15px] font-extrabold px-3.5 py-2 transition-colors duration-200 ${isActive(link.href) ? "mc-notch bg-navy pr-5 text-white" : "text-body hover:text-brand"}`}
                 >
                   {link.name}
                 </Link>
@@ -59,7 +59,7 @@ const MedicHeader = () => {
 
             <a
               href="https://wa.me/2348126988237"
-              className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-hairline px-[18px] py-[9px] text-[15px] font-semibold text-ink transition-colors duration-200 hover:border-brand hover:text-brand"
+              className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap rounded-control border-[1.5px] border-brand px-[18px] py-[9px] text-[15px] font-extrabold text-brand transition-colors duration-200 hover:border-navy hover:text-navy"
             >
               <MessageCircle className="w-4 h-4" />
               WhatsApp
@@ -68,7 +68,7 @@ const MedicHeader = () => {
             <CareRequestDialog
               source="header"
               trigger={
-                <button className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-brand px-[24px] py-[11px] text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-brand-soft">
+                <button className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap rounded-control bg-brand px-[24px] py-[11px] text-[15px] font-extrabold text-white transition-colors duration-200 hover:bg-navy">
                   <HeartHandshake className="w-4 h-4" />
                   Request care
                 </button>
@@ -86,7 +86,7 @@ const MedicHeader = () => {
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button className="w-10 h-10 rounded-full bg-tint flex items-center justify-center text-ink transition-colors duration-200" aria-label="Open menu">
+              <button className="w-11 h-11 bg-navy flex items-center justify-center text-white transition-colors duration-200 hover:bg-brand" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
@@ -109,7 +109,7 @@ const MedicHeader = () => {
                     to={link.href}
                     onClick={() => setSheetOpen(false)}
                     aria-current={isActive(link.href) ? "page" : undefined}
-                    className={`text-[17px] font-semibold ${isActive(link.href) ? "text-white" : "text-white/75"} px-4 py-3 transition-colors duration-200`}
+                    className={`text-[22px] font-extrabold tracking-[-0.03em] px-4 py-3 transition-colors duration-200 ${isActive(link.href) ? "mc-notch self-start bg-brand pr-8 text-white" : "text-body-navy hover:text-white"}`}
                   >
                     {link.name}
                   </Link>
@@ -123,21 +123,21 @@ const MedicHeader = () => {
                 </p>
                 <button
                   onClick={() => { setSheetOpen(false); setMobileRequestOpen(true); }}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors duration-200"
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-control bg-white px-6 py-3 text-[15px] font-extrabold text-navy transition-colors duration-200"
                 >
                   <HeartHandshake className="w-4 h-4" />
                   Request care
                 </button>
                 <a
                   href="https://wa.me/2348126988237"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-white px-6 py-3 text-[15px] font-semibold text-navy transition-colors duration-200"
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-control border-[1.5px] border-outline-navy px-6 py-3 text-[15px] font-extrabold text-white transition-colors duration-200"
                 >
                   <MessageCircle className="w-4 h-4" />
                   WhatsApp us
                 </a>
                 <a
                   href="tel:+2348126988237"
-                  className="w-full inline-flex items-center justify-center gap-2 border-[1.5px] border-outline-navy px-6 py-3 text-[15px] font-semibold text-white transition-colors duration-200"
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 rounded-control border-[1.5px] border-outline-navy px-6 py-3 text-[15px] font-extrabold text-white transition-colors duration-200"
                 >
                   <Phone className="w-4 h-4" />
                   Call us

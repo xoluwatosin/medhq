@@ -7,9 +7,8 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Copy, KeyRound, Loader2, Send, ShieldOff } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MuSection, MuStatus } from "@/components/admin/mu/MuShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -86,23 +85,21 @@ const CandidateAccountPanel = ({
   };
 
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-medium">Their account</p>
-            <p className="text-xs text-muted-foreground">
-              {claimedAt
-                ? `Password set ${format(new Date(claimedAt), "d MMM yyyy")}`
-                : invitedAt
-                  ? `Invited ${format(new Date(invitedAt), "d MMM yyyy")}, not signed in yet`
-                  : "Never invited"}
-            </p>
-          </div>
-          <Badge variant={claimedAt ? "default" : hasAccount ? "secondary" : "outline"}>
-            {claimedAt ? "Active" : hasAccount ? "Invited" : "No account"}
-          </Badge>
-        </div>
+    <MuSection
+      title="Their account"
+      description={claimedAt
+        ? `Password set ${format(new Date(claimedAt), "d MMM yyyy")}`
+        : invitedAt
+          ? `Invited ${format(new Date(invitedAt), "d MMM yyyy")}, not signed in yet`
+          : "Never invited"}
+      actions={
+        <MuStatus
+          tone={claimedAt ? "good" : hasAccount ? "info" : "neutral"}
+          label={claimedAt ? "Active" : hasAccount ? "Invited" : "No account"}
+        />
+      }
+    >
+      <div className="space-y-4">
 
         <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
@@ -118,10 +115,13 @@ const CandidateAccountPanel = ({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={sendInvite} disabled={!email || busy === "invite"}>
-            {busy === "invite" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            {invitedAt ? "Email a password reset" : "Invite to their profile"}
-          </Button>
+          {/* The first invitation is the record's main button, in the band. */}
+          {invitedAt && (
+            <Button size="sm" variant="outline" onClick={sendInvite} disabled={!email || busy === "invite"}>
+              {busy === "invite" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Email a password reset
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={makeLink} disabled={!email || busy === "reset_link"}>
             {busy === "reset_link" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
             Generate a link to send myself
@@ -134,14 +134,14 @@ const CandidateAccountPanel = ({
         </div>
 
         {link && (
-          <div className="flex items-center gap-2 rounded-md bg-muted p-2">
+          <div className="flex items-center gap-2 bg-muted p-2">
             <code className="min-w-0 flex-1 truncate text-xs">{link}</code>
             <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Copied" }); }}>
               <Copy className="mr-2 h-4 w-4" />Copy
             </Button>
           </div>
         )}
-      </CardContent>
+      </div>
 
       <AlertDialog open={confirmRevoke} onOpenChange={setConfirmRevoke}>
         <AlertDialogContent>
@@ -158,7 +158,7 @@ const CandidateAccountPanel = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </MuSection>
   );
 };
 

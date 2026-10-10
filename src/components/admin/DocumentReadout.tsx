@@ -6,7 +6,7 @@
 // past. An admin still has to accept or reject.
 import { useEffect, useState } from "react";
 import { AlertTriangle, Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MuStatus } from "@/components/admin/mu/MuShell";
 import { adminDb } from "@/lib/admin-utils";
 
 const KIND_LABELS: Record<string, string> = {
@@ -68,7 +68,7 @@ const DocumentReadout = ({ documentId }: { documentId: string }) => {
 
   if (row.error) {
     return (
-      <p className="rounded-md bg-muted/60 p-2 text-xs text-muted-foreground">
+      <p className="bg-muted/60 p-2 text-xs text-muted-foreground">
         The reader could not open this one: {row.error}
       </p>
     );
@@ -88,14 +88,12 @@ const DocumentReadout = ({ documentId }: { documentId: string }) => {
   if (confidence > 0 && confidence < 0.7) warnings.push("The reader was not sure what kind of document this is");
 
   return (
-    <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2">
+    <div className="space-y-2 border border-line-soft bg-muted/30 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-medium">Read as {KIND_LABELS[row.doc_type] ?? row.doc_type}</span>
         {confidence > 0 && (
-          <Badge variant="secondary" className="rounded-full text-[10px]">
-            {Math.round(confidence * 100)}% sure
-          </Badge>
+          <MuStatus tone="neutral" label={`${Math.round(confidence * 100)}% sure`} />
         )}
         <span className="text-[11px] text-muted-foreground">Read, not verified</span>
       </div>

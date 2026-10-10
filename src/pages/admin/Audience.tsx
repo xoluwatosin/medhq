@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Download, Plus, Search, Trash2, Users, ArrowRight, Upload, FileDown } from "lucide-react";
+import { Loader2, Plus, Search, Trash2, Users, ArrowRight, Upload, FileDown, MoreHorizontal, ChevronDown } from "lucide-react";
 import { PAGE_SIZE, adminDb, downloadTemplate, parseCSV } from "@/lib/admin-utils";
-import ExportDropdown from "@/components/admin/ExportDropdown";
+import { ExportMenuItems } from "@/components/admin/ExportDropdown";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MuEmpty, MuPageHeader, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { format } from "date-fns";
 import ConsoleMobileList from "@/components/admin/console/ConsoleMobileList";
+import { selectAll } from "@/lib/select-all";
+import { createAudienceGroup, deleteAudienceGroup, renameAudienceGroup } from "@/lib/audience-groups";
 
 interface Group { id: string; name: string; description: string; created_at: string; }
 interface Member { id: string; email: string; name: string; group_id: string; source: string; created_at: string; }
@@ -45,10 +51,14 @@ const Audience = () => {
     const db = adminDb();
     const [g, m] = await Promise.all([
       db.from("audience_groups").select("*").order("created_at"),
-      db.from("audience_members").select("*").order("created_at", { ascending: false }),
+      // Every contact: a plain select stops at 1,000 rows.
+      selectAll<any>((a, z) =>
+        db.from("audience_members").select("*").order("created_at", { ascending: false }).order("id").range(a, z),
+      ).catch(() => null),
     ]);
+    if (g.error || !m) toast({ title: "Could not load the audience", description: "Reload to try again.", variant: "destructive" });
     setGroups(g.data || []);
-    setMembers(m.data || []);
+    setMembers(m || []);
     if (!newGroupId && g.data?.length) setNewGroupId(g.data[0].id);
     setLoading(false);
   };
@@ -58,12 +68,15 @@ const Audience = () => {
   // Engagement memory from the email event stream, so the audience can be
   // sliced by who actually reads what we send.
   useEffect(() => {
-    (adminDb() as any)
-      .from("campaign_events")
-      .select("event_type, recipient_email")
-      .in("event_type", ["opened", "clicked"])
-      .limit(10000)
-      .then(({ data }: any) => {
+    selectAll<any>((a, z) =>
+      (adminDb() as any)
+        .from("campaign_events")
+        .select("id, event_type, recipient_email")
+        .in("event_type", ["opened", "clicked"])
+        .order("id")
+        .range(a, z),
+    )
+      .then((data: any[]) => {
         const opened = new Set<string>();
         const clicked = new Set<string>();
         for (const r of data || []) {
@@ -73,7 +86,8 @@ const Audience = () => {
           if (r.event_type === "clicked") { clicked.add(em); opened.add(em); }
         }
         setEngaged({ opened, clicked });
-      });
+      })
+      .catch(() => { /* engagement slices are a nicety; the list still works without them */ });
   }, []);
 
   const addMember = async () => {
@@ -83,15 +97,48 @@ const Audience = () => {
     else { toast({ title: "Member added" }); setAddOpen(false); setNewEmail(""); setNewName(""); fetchAll(); }
   };
 
+  const [editGroup, setEditGroup] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [dropGroup, setDropGroup] = useState<any | null>(null);
+  const saveGroup = async () => {
+    try {
+      await renameAudienceGroup(editGroup.id, editName, editDesc);
+      toast({ title: "Group renamed" });
+      setEditGroup(null);
+      fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not rename", description: error.message, variant: "destructive" });
+    }
+  };
+  const removeGroup = async () => {
+    try {
+      await deleteAudienceGroup(dropGroup.id);
+      toast({ title: "Group deleted" });
+      setDropGroup(null);
+      fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+    }
+  };
+
   const createGroup = async () => {
     if (!groupName) return;
-    const { error } = await adminDb().from("audience_groups").insert({ name: groupName, description: groupDesc });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Group created" }); setNewGroupOpen(false); setGroupName(""); setGroupDesc(""); fetchAll(); }
+    try {
+      const made = await createAudienceGroup(groupName, groupDesc);
+      toast({ title: made.reused ? "That group already exists" : "Group created" });
+      setNewGroupOpen(false); setGroupName(""); setGroupDesc(""); fetchAll();
+    } catch (error: any) {
+      toast({ title: "Could not create group", description: error.message, variant: "destructive" });
+    }
   };
 
   const deleteMember = async (id: string) => {
-    await adminDb().from("audience_members").delete().eq("id", id);
+    const { error } = await adminDb().from("audience_members").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not remove them", description: error.message, variant: "destructive" });
+      return;
+    }
     setMembers((prev) => prev.filter((m) => m.id !== id));
     setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
   };
@@ -144,131 +191,177 @@ const Audience = () => {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-serif font-bold">Audience</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(true)}><Users className="mr-2 h-4 w-4" />New Group</Button>
-          <ExportDropdown data={filtered.map((m) => ({ ...m, group: groupMap[m.group_id] }))} filename="audience" />
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" />Import</Button>
-          <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Member</Button>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {groups.map((g) => (
-          <div key={g.id} className="text-xs px-3 py-1 rounded-full border bg-muted/50">
-            {g.name} <span className="text-muted-foreground">({members.filter((m) => m.group_id === g.id).length})</span>
-          </div>
-        ))}
-      </div>
+  const groupOptions = groups.map((g) => ({ value: g.id, label: g.name }));
+  const engagementOptions = [
+    { value: "all", label: "Any engagement" },
+    { value: "opened", label: "Opened an email" },
+    { value: "clicked", label: "Clicked a link" },
+    { value: "opened_no_click", label: "Opened, never clicked" },
+    { value: "no_open", label: "Never opened" },
+  ];
+  const groupFilterOptions = [{ value: "all", label: "All groups" }, ...groupOptions];
+  const onGroupFilter = (v: string) => { setGroupFilter(v || "all"); setPage(0); };
+  const onEngagement = (v: string) => { setEngagement(v || "all"); setPage(0); };
+  const hasFilters = !!search || groupFilter !== "all" || engagement !== "all";
 
-      {/* Bulk action bar */}
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border bg-muted/30">
-          <span className="text-sm font-medium">{selected.size} selected</span>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <Select value={moveGroupId} onValueChange={setMoveGroupId}>
-            <SelectTrigger className="w-48 h-8"><SelectValue placeholder="Move to group…" /></SelectTrigger>
-            <SelectContent>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
-          </Select>
-          <Button size="sm" variant="default" onClick={moveSelected} disabled={!moveGroupId}>Move</Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+  return (
+    <div className="space-y-6">
+      <MuPageHeader
+        title="Audience"
+        description="Everyone who can receive a campaign, sorted into groups."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" />Import</Button>
+            <Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Add member</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" aria-label="More actions"><MoreHorizontal className="mr-2 h-4 w-4" />More</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setNewGroupOpen(true)}><Users className="mr-2 h-4 w-4" />New group</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <ExportMenuItems data={filtered.map((m) => ({ ...m, group: groupMap[m.group_id] }))} filename="audience" />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
+      {groups.length > 0 && (
+        <div className="border-2 border-navy bg-tint/40 p-3">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Groups</p>
+          <div className="flex flex-wrap gap-2">
+          {groups.map((g) => {
+            const count = members.filter((m) => m.group_id === g.id).length;
+            return (
+              <DropdownMenu key={g.id}>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="border border-line bg-card px-2.5 py-1 text-xs font-semibold text-navy hover:border-brand">
+                    {g.name} <span className="font-normal text-muted-foreground">({count})</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => { setEditGroup(g); setEditName(g.name); setEditDesc(g.description ?? ""); }}>Rename</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onClick={() => setDropGroup({ ...g, count })}>Delete group</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })}
+          </div>
         </div>
       )}
 
-      <div className="mb-4">
-        <div className="relative mb-3 max-w-sm md:hidden">
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <MuToolbar>
+          <span className="text-sm font-semibold text-navy">{selected.size} selected</span>
+          <ArrowRight className="hidden h-4 w-4 text-muted-foreground lg:block" />
+          <SelectField
+            label="Move to group"
+            hideLabel
+            placeholder="Move to group"
+            value={moveGroupId}
+            onChange={setMoveGroupId}
+            options={groupOptions}
+            className="lg:w-56"
+          />
+          <div className="flex gap-2">
+            <Button size="sm" variant="default" onClick={moveSelected} disabled={!moveGroupId}>Move</Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+          </div>
+        </MuToolbar>
+      )}
+
+      <div>
+        <div className="md:hidden">
+        <MuToolbar>
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search email or name…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
+          <Input placeholder="Search email or name" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
         </div>
-        <details className="mb-3 rounded-lg border border-line-soft bg-card md:hidden">
-          <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-medium text-navy">Filter</summary>
-          <div className="space-y-3 px-4 pb-4">
-            <Select value={groupFilter} onValueChange={(v) => { setGroupFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All groups</SelectItem>
-                {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={engagement} onValueChange={(v) => { setEngagement(v); setPage(0); }}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any engagement</SelectItem>
-                <SelectItem value="opened">Opened an email</SelectItem>
-                <SelectItem value="clicked">Clicked a link</SelectItem>
-                <SelectItem value="opened_no_click">Opened, never clicked</SelectItem>
-                <SelectItem value="no_open">Never opened</SelectItem>
-              </SelectContent>
-            </Select>
+        <details className="group">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-navy [&::-webkit-details-marker]:hidden">
+            Group and engagement
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="space-y-3 pb-1">
+            <SelectField label="Group" hideLabel value={groupFilter} onChange={onGroupFilter} options={groupFilterOptions} placeholder="All groups" />
+            <SelectField label="Engagement" hideLabel value={engagement} onChange={onEngagement} options={engagementOptions} placeholder="Any engagement" />
           </div>
         </details>
-        <div className="hidden gap-3 md:flex">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search email or name…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
-          </div>
-          <Select value={groupFilter} onValueChange={(v) => { setGroupFilter(v); setPage(0); }}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All groups</SelectItem>
-              {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={engagement} onValueChange={(v) => { setEngagement(v); setPage(0); }}>
-            <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any engagement</SelectItem>
-              <SelectItem value="opened">Opened an email</SelectItem>
-              <SelectItem value="clicked">Clicked a link</SelectItem>
-              <SelectItem value="opened_no_click">Opened, never clicked</SelectItem>
-              <SelectItem value="no_open">Never opened</SelectItem>
-            </SelectContent>
-          </Select>
+        </MuToolbar>
+        </div>
+        <div className="hidden md:block">
+          <MuToolbar>
+            <div className="relative flex-1 lg:max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search email or name" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="pl-9" />
+            </div>
+            <SelectField label="Group" hideLabel value={groupFilter} onChange={onGroupFilter} options={groupFilterOptions} placeholder="All groups" className="lg:w-52" />
+            <SelectField label="Engagement" hideLabel value={engagement} onChange={onEngagement} options={engagementOptions} placeholder="Any engagement" className="lg:w-56" />
+          </MuToolbar>
         </div>
       </div>
-      <div className="hidden md:block overflow-x-auto border rounded-lg">
+      {paged.length === 0 ? (
+        <MuSection padded={false}>
+          {hasFilters ? (
+            <MuEmpty art={art.objMagnifier} title="No matching members" description="Try a different search or clear the filters." />
+          ) : (
+            <MuEmpty
+              art={art.objEnvelope}
+              title="No members yet"
+              description="Add people one at a time or import a CSV of email addresses."
+              action={<Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Add member</Button>}
+            />
+          )}
+        </MuSection>
+      ) : (
+      <>
+      <div className="hidden overflow-x-auto border border-line bg-card md:block">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10"><Checkbox checked={paged.length > 0 && selected.size === paged.length} onCheckedChange={toggleSelectAll} /></TableHead>
-              <TableHead>Email</TableHead><TableHead>Name</TableHead><TableHead>Group</TableHead><TableHead>Source</TableHead><TableHead>Added</TableHead><TableHead className="w-10" />
+              <TableHead className="w-10"><Checkbox aria-label="Select all on this page" checked={paged.length > 0 && selected.size === paged.length} onCheckedChange={toggleSelectAll} /></TableHead>
+              <TableHead>Email</TableHead><TableHead>Name</TableHead><TableHead>Group</TableHead><TableHead>Source</TableHead><TableHead>Added</TableHead><TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paged.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No members found.</TableCell></TableRow>
-            ) : paged.map((m) => (
+            {paged.map((m) => (
               <TableRow key={m.id}>
-                <TableCell><Checkbox checked={selected.has(m.id)} onCheckedChange={() => toggleSelect(m.id)} /></TableCell>
+                <TableCell><Checkbox aria-label={`Select ${m.email}`} checked={selected.has(m.id)} onCheckedChange={() => toggleSelect(m.id)} /></TableCell>
                 <TableCell className="font-medium">{m.email}</TableCell>
-                <TableCell>{m.name || "—"}</TableCell>
-                <TableCell>{groupMap[m.group_id] || "—"}</TableCell>
+                <TableCell>{m.name || <span className="text-muted-foreground">Not given</span>}</TableCell>
+                <TableCell>{groupMap[m.group_id] || <span className="text-muted-foreground">No group</span>}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{m.source}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd MMM yyyy")}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" onClick={() => deleteMember(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                <TableCell><ConfirmAction title="Remove this contact?" description={<p>{m.email} comes off the audience list and stops receiving campaigns.</p>} confirmLabel="Remove" destructive onConfirm={() => deleteMember(m.id)} trigger={<Button variant="ghost" size="icon" aria-label="Remove"><Trash2 className="h-4 w-4 text-destructive" /></Button>} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
       <ConsoleMobileList
-        emptyLabel="No members found."
+        emptyLabel="No members found"
         emptyIcon={Users}
         rows={paged.map((m) => ({
           key: m.id,
           title: m.name || m.email,
-          state: `${groupMap[m.group_id] || "No group"} · added ${format(new Date(m.created_at), "dd MMM yyyy")}`,
+          state: `${groupMap[m.group_id] || "No group"}, added ${format(new Date(m.created_at), "dd MMM yyyy")}`,
           trailing: (
-            <Button variant="ghost" size="icon" onClick={() => deleteMember(m.id)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <ConfirmAction
+              title="Remove this contact?"
+              description={<p>{m.email} comes off the audience list and stops receiving campaigns.</p>}
+              confirmLabel="Remove"
+              destructive
+              onConfirm={() => deleteMember(m.id)}
+              trigger={<Button variant="ghost" size="icon" aria-label="Remove"><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+            />
           ),
         }))}
       />
+      </>
+      )}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
           <span className="text-sm text-muted-foreground self-center">Page {page + 1} of {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</Button>
@@ -276,23 +369,18 @@ const Audience = () => {
       )}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Member</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Add member</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Email *</Label><Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} /></div>
             <div><Label>Name</Label><Input value={newName} onChange={(e) => setNewName(e.target.value)} /></div>
-            <div><Label>Group</Label>
-              <Select value={newGroupId} onValueChange={setNewGroupId}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            <SelectField label="Group" value={newGroupId} onChange={setNewGroupId} options={groupOptions} placeholder="Choose a group" />
           </div>
           <DialogFooter><Button onClick={addMember}>Add</Button></DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Group</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>New group</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Name *</Label><Input value={groupName} onChange={(e) => setGroupName(e.target.value)} /></div>
             <div><Label>Description</Label><Input value={groupDesc} onChange={(e) => setGroupDesc(e.target.value)} /></div>
@@ -302,17 +390,11 @@ const Audience = () => {
       </Dialog>
       <Dialog open={importOpen} onOpenChange={(open) => { setImportOpen(open); if (!open) { setImportFile(null); setImportPreview(null); } }}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Import Audience Members</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Import audience members</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Target Group *</Label>
-              <Select value={importGroupId} onValueChange={setImportGroupId}>
-                <SelectTrigger><SelectValue placeholder="Select group…" /></SelectTrigger>
-                <SelectContent>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            <SelectField label="Target group" required value={importGroupId} onChange={setImportGroupId} options={groupOptions} placeholder="Choose a group" />
             <Button variant="outline" size="sm" onClick={() => downloadTemplate(["email", "name"], ["example@email.com", "John Doe"], "audience-import")}>
-              <FileDown className="mr-2 h-4 w-4" />Download Template
+              <FileDown className="mr-2 h-4 w-4" />Download template
             </Button>
             <div>
               <Label>Upload CSV</Label>
@@ -342,7 +424,7 @@ const Audience = () => {
               }} />
             </div>
             {importPreview && (
-              <div className="text-sm p-3 rounded border bg-muted/30">
+              <div className="border border-line bg-muted/30 p-3 text-sm">
                 <p><strong>{importPreview.valid}</strong> valid rows ready to import</p>
                 {importPreview.skipped > 0 && <p className="text-muted-foreground">{importPreview.skipped} rows skipped (invalid email)</p>}
               </div>
@@ -358,11 +440,33 @@ const Audience = () => {
               if (error) toast({ title: "Import failed", description: error.message, variant: "destructive" });
               else { toast({ title: `Imported ${batch.length} members` }); setImportOpen(false); setImportFile(null); setImportPreview(null); fetchAll(); }
             }}>
-              {importing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Importing…</> : "Import"}
+              {importing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Importing</> : "Import"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={!!editGroup} onOpenChange={(o) => { if (!o) setEditGroup(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Rename group</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Group name" aria-label="Group name" />
+            <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description (optional)" aria-label="Description" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditGroup(null)}>Cancel</Button>
+            <Button onClick={() => void saveGroup()} disabled={!editName.trim()}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ConfirmAction
+        open={!!dropGroup}
+        onOpenChange={(o) => { if (!o) setDropGroup(null); }}
+        title={`Delete ${dropGroup?.name ?? "this group"}?`}
+        description={`${dropGroup?.count ?? 0} ${dropGroup?.count === 1 ? "person is" : "people are"} in this group. They are removed from it, but stay in any other group. Campaigns that used it keep their history.`}
+        confirmLabel="Delete group"
+        destructive
+        onConfirm={removeGroup}
+      />
     </div>
   );
 };

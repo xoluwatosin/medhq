@@ -18,7 +18,7 @@
 import {
   CARE_CARRY_KINDS,
   CareDefinition, CareField, CareFieldType, CareResponses,
-  CareSection, conditionMet, DERIVED_FIELDS, DERIVED_PREFIX,
+  CareSection, conditionMet, DERIVED_FIELDS, DERIVED_PREFIX, INTAKE_FACTS,
 } from "@/lib/care";
 import { COPY_TOKENS } from "@/lib/care-copy";
 
@@ -275,7 +275,7 @@ export const validateDefinition = (candidate: unknown): ValidationResult => {
 
   // The derived routing facts are read like questions, so a condition may
   // name one of them. Nothing may be authored under that prefix.
-  const known = new Set<string>(DERIVED_FIELDS);
+  const known = new Set<string>([...DERIVED_FIELDS, ...INTAKE_FACTS]);
   for (const section of sections) {
     for (const field of section?.fields ?? []) if (field?.id) known.add(field.id);
   }

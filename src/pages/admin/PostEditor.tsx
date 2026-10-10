@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea"; // still used for excerpt
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { MuNote, MuPageHeader, MuSection, MuToolbar } from "@/components/admin/mu/MuShell";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, ArrowLeft, Eye, Pencil, CalendarIcon, Plus, Bell } from "lucide-react";
+import { Loader2, Upload, X, Eye, Pencil, CalendarIcon, Plus, Bell } from "lucide-react";
 import { TEMPLATE_META, TEMPLATE_MAP, PolaroidFrame } from "@/components/blog-templates";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,8 +19,8 @@ import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 
 const HERO_TEMPLATES = [
-  { value: "default", label: "Default (Full-bleed)" },
-  { value: "polaroid", label: "Polaroid (Side-by-side)" },
+  { value: "default", label: "Default (full bleed)" },
+  { value: "polaroid", label: "Polaroid (side by side)" },
 ];
 
 const DEFAULT_CATEGORIES = ["Healthcare", "Wellness", "Clinical Insights", "Company News", "Industry Updates"];
@@ -56,6 +57,8 @@ const PostEditor = () => {
   const [bodyImages, setBodyImages] = useState<string[]>([]);
   const [bodyCaptions, setBodyCaptions] = useState<string[]>([]);
   const [status, setStatus] = useState("draft");
+  const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
+  const [approvalNote, setApprovalNote] = useState<string | null>(null);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [scheduledTime, setScheduledTime] = useState("09:00");
   const [notifying, setNotifying] = useState(false);
@@ -111,6 +114,8 @@ const PostEditor = () => {
           setBodyImages(Array.isArray(data.body_images) ? (data.body_images as string[]) : []);
           setBodyCaptions(Array.isArray((data as any).body_captions) ? ((data as any).body_captions as string[]) : []);
           setStatus(data.status);
+          setApprovalStatus((data as any).approval_status ?? null);
+          setApprovalNote((data as any).approval_note ?? null);
           setSubscribersNotified((data as any).subscribers_notified || false);
           setDropCapEnabled((data as any).drop_cap_enabled !== false);
           if (data.status === "scheduled" && data.published_at) {
@@ -126,9 +131,14 @@ const PostEditor = () => {
     }
   }, [id, isNew]);
 
+  // Autosave only ever touches a draft that is not waiting on approval. A live
+  // or scheduled story changes when the editor presses Update, not while they
+  // are mid-sentence; a submitted story stays as the approver saw it.
+  const autosaveOn = !isNew && status === "draft" && approvalStatus !== "pending";
+
   // Debounced autosave for existing posts only (skip while saving / before initial load)
   useEffect(() => {
-    if (isNew || !id || !initialLoadDoneRef.current) return;
+    if (!autosaveOn || !id || !initialLoadDoneRef.current) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
       if (saving || autoSaveInFlightRef.current) return;
@@ -158,7 +168,7 @@ const PostEditor = () => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [isNew, id, title, slug, excerpt, content, author, category, heroTemplate, polaroidCaption, bodyTemplate, featuredImageUrl, bodyImages, bodyCaptions, dropCapEnabled, saving, user?.id, adminDisplayName, user?.email]);
+  }, [autosaveOn, id, title, slug, excerpt, content, author, category, heroTemplate, polaroidCaption, bodyTemplate, featuredImageUrl, bodyImages, bodyCaptions, dropCapEnabled, saving, user?.id, adminDisplayName, user?.email]);
 
   // Resize bodyImages/bodyCaptions when template changes
   useEffect(() => {
@@ -273,9 +283,12 @@ const PostEditor = () => {
     }
 
     // Approval workflow: if user requires approval and trying to publish
-    if (requiresBlogApproval && !isSuperAdmin && publishStatus === "published") {
+    // The database applies the same rule, so this only keeps the screen honest.
+    const goingLive = publishStatus === "published" || publishStatus === "scheduled";
+    if (requiresBlogApproval && !isSuperAdmin && goingLive) {
       postData.status = "draft";
       postData.approval_status = "pending";
+      postData.approval_note = null;
     }
 
     let error;
@@ -289,8 +302,8 @@ const PostEditor = () => {
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
     } else {
-      const submittedForApproval = requiresBlogApproval && !isSuperAdmin && publishStatus === "published";
-      toast({ title: submittedForApproval ? "Submitted for approval" : publishStatus === "published" ? "Published!" : publishStatus === "scheduled" ? "Scheduled!" : "Saved as draft" });
+      const submittedForApproval = requiresBlogApproval && !isSuperAdmin && goingLive;
+      toast({ title: submittedForApproval ? "Submitted for approval" : publishStatus === "published" ? "Published" : publishStatus === "scheduled" ? "Scheduled" : "Saved as draft" });
       navigate("/admin/posts");
     }
   };
@@ -303,23 +316,30 @@ const PostEditor = () => {
   if (showPreview) {
     return (
       <div>
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="mb-4">
+        <MuToolbar>
           <Button variant="outline" size="sm" onClick={() => setShowPreview(false)}>
-            <Pencil className="h-4 w-4 mr-2" />Edit Form
+            <Pencil className="h-4 w-4 mr-2" />Edit form
           </Button>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 lg:ml-auto">
             <Switch id="preview-dropcap" checked={dropCapEnabled} onCheckedChange={setDropCapEnabled} />
             <Label htmlFor="preview-dropcap" className="text-xs">Drop cap</Label>
           </div>
-          {lastAutoSavedAt && (
+          {autosaveOn && lastAutoSavedAt && (
             <span className="text-xs text-muted-foreground">
-              Saved · {format(lastAutoSavedAt, "HH:mm")}
+              Saved {format(lastAutoSavedAt, "HH:mm")}
             </span>
           )}
+          {!isNew && !autosaveOn && (
+            <span className="text-xs text-muted-foreground">
+              {approvalStatus === "pending" ? "Waiting for approval, autosave is off" : "Live story, changes go out when you press Update"}
+            </span>
+          )}
+        </MuToolbar>
         </div>
 
-        <div className="overflow-hidden bg-background border rounded-lg">
-          {/* Hero Preview — inline editable */}
+        <div className="overflow-hidden border border-line bg-background">
+          {/* Hero preview, editable inline */}
           {heroTemplate === "polaroid" ? (
             <section className="bg-accent py-10 sm:py-14">
               <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
@@ -329,13 +349,13 @@ const PostEditor = () => {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => handleTitleChange(e.currentTarget.textContent || "")}
-                    className="text-3xl font-bold font-serif mt-2 mb-3 outline-none focus:ring-2 focus:ring-primary/30 rounded px-1 -mx-1"
-                  >{title || "Post Title"}</h1>
+                    className="text-3xl font-bold font-serif mt-2 mb-3 outline-none focus:ring-2 focus:ring-primary/30 px-1 -mx-1"
+                  >{title || "Post title"}</h1>
                   <p
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => setExcerpt(e.currentTarget.textContent || "")}
-                    className="opacity-80 outline-none focus:ring-2 focus:ring-primary/30 rounded px-1 -mx-1"
+                    className="opacity-80 outline-none focus:ring-2 focus:ring-primary/30 px-1 -mx-1"
                   >{excerpt || "Excerpt will appear here..."}</p>
                   <p className="mt-3 text-sm opacity-60">
                     By{" "}
@@ -343,7 +363,7 @@ const PostEditor = () => {
                       contentEditable
                       suppressContentEditableWarning
                       onBlur={(e) => setAuthor(e.currentTarget.textContent || "")}
-                      className="outline-none focus:ring-2 focus:ring-primary/30 rounded px-1"
+                      className="outline-none focus:ring-2 focus:ring-primary/30 px-1"
                     >{author || "Author"}</span>
                   </p>
                 </div>
@@ -351,7 +371,7 @@ const PostEditor = () => {
                   {featuredImageUrl ? (
                     <PolaroidFrame src={featuredImageUrl} caption={polaroidCaption || undefined} rotation={-3} variant="tape" className="w-full" />
                   ) : (
-                    <div className="aspect-square bg-muted/30 rounded flex items-center justify-center text-xs text-muted-foreground">No featured image</div>
+                    <div className="aspect-square bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">No featured image</div>
                   )}
                 </div>
               </div>
@@ -368,36 +388,37 @@ const PostEditor = () => {
                   contentEditable
                   suppressContentEditableWarning
                   onBlur={(e) => handleTitleChange(e.currentTarget.textContent || "")}
-                  className="text-2xl sm:text-3xl font-bold font-serif text-background mt-1 mb-2 outline-none focus:ring-2 focus:ring-background/40 rounded px-1 -mx-1"
-                >{title || "Post Title"}</h1>
+                  className="text-2xl sm:text-3xl font-bold font-serif text-background mt-1 mb-2 outline-none focus:ring-2 focus:ring-background/40 px-1 -mx-1"
+                >{title || "Post title"}</h1>
                 <p className="text-background/80 text-sm">
                   By{" "}
                   <span
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={(e) => setAuthor(e.currentTarget.textContent || "")}
-                    className="outline-none focus:ring-2 focus:ring-background/40 rounded px-1"
+                    className="outline-none focus:ring-2 focus:ring-background/40 px-1"
                   >{author || "Author"}</span>
                 </p>
               </div>
             </section>
           )}
 
-          {/* Body — read-only render using shared TEMPLATE_MAP */}
+          {/* Body, a read-only render using shared TEMPLATE_MAP */}
           <div className="bg-background">
             <BodyComponent content={content} bodyImages={bodyImages} bodyCaptions={bodyCaptions} dropCapEnabled={dropCapEnabled} />
           </div>
 
-          {/* Inline body editor — edits flow straight into the preview above */}
+          {/* Inline body editor: edits flow straight into the preview above */}
           <div className="border-t border-border bg-muted/20 p-4">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Edit body</Label>
+            <Label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-label">Edit body</Label>
             <RichTextEditor value={content} onChange={setContent} minHeight="300px" />
           </div>
         </div>
 
 
         {/* Schedule + Actions */}
-        <div className="mt-4 space-y-3 border-t border-border pt-4">
+        <div className="mt-4 space-y-3 border-2 border-navy bg-tint/40 p-3">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label">Publishing</p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Schedule</Label>
@@ -430,11 +451,11 @@ const PostEditor = () => {
 
           <div className="flex gap-3 flex-wrap">
             <Button onClick={() => handleSave("draft")} variant="outline" disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Save Draft
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Save draft
             </Button>
             {requiresBlogApproval && !isSuperAdmin ? (
               <Button onClick={() => handleSave("published")} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Submit for Approval
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Submit for approval
               </Button>
             ) : scheduledDate && scheduledDate > new Date() ? (
               <Button onClick={() => handleSave("scheduled")} disabled={saving}>
@@ -442,7 +463,7 @@ const PostEditor = () => {
               </Button>
             ) : (
               <Button onClick={() => handleSave("published")} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Publish Now
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Publish now
               </Button>
             )}
             {!isNew && status === "published" && (
@@ -456,7 +477,7 @@ const PostEditor = () => {
                     const { error } = await supabase.functions.invoke("notify-new-post", { body: { post_id: id } });
                     if (error) throw error;
                     setSubscribersNotified(true);
-                    toast({ title: "Subscribers notified!", description: "Email sent to all newsletter subscribers." });
+                    toast({ title: "Subscribers notified", description: "Email sent to all newsletter subscribers." });
                   } catch (err: any) {
                     toast({ title: "Failed to notify", description: err.message, variant: "destructive" });
                   } finally {
@@ -465,7 +486,7 @@ const PostEditor = () => {
                 }}
               >
                 {notifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-                {subscribersNotified ? "Subscribers Notified" : "Notify Subscribers"}
+                {subscribersNotified ? "Subscribers notified" : "Notify subscribers"}
               </Button>
             )}
           </div>
@@ -481,15 +502,32 @@ const PostEditor = () => {
   // ─── Editor Mode ───
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="icon" asChild><Link to="/admin/posts"><ArrowLeft className="h-4 w-4" /></Link></Button>
-        <h1 className="text-2xl font-bold font-serif flex-1">{isNew ? "New Post" : "Edit Post"}</h1>
-        <Button variant="outline" size="sm" onClick={() => setShowPreview(true)}>
-          <Eye className="h-4 w-4 mr-2" />Preview
-        </Button>
+      <div className="mb-6">
+        <MuPageHeader
+          title={isNew ? "New post" : "Edit post"}
+          backTo="/admin/posts"
+          backLabel="Blog posts"
+          actions={
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
+              <Eye className="h-4 w-4 mr-2" />Preview
+            </Button>
+          }
+        />
       </div>
 
       <div className="space-y-6">
+        {approvalStatus === "rejected" && (
+          <MuNote title="Sent back by the approver" tone="warning">
+            {approvalNote || "No reason was given."}
+          </MuNote>
+        )}
+        {approvalStatus === "pending" && (
+          <MuNote title="Waiting for approval">
+            Saving again replaces the version the approver sees.
+          </MuNote>
+        )}
+        <MuSection title="Details">
+        <div className="space-y-4">
         {/* Title & Slug */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -511,12 +549,15 @@ const PostEditor = () => {
           <div className="space-y-2">
             <Label>Category</Label>
             <div className="flex gap-2">
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="flex-1"><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SelectField
+                label="Category"
+                hideLabel
+                value={category}
+                onChange={(v) => { if (v) setCategory(v); }}
+                placeholder="Choose a category"
+                options={categories.map((c) => ({ value: c, label: c }))}
+                className="flex-1"
+              />
               {addingCategory ? (
                 <div className="flex gap-1">
                   <Input
@@ -539,6 +580,7 @@ const PostEditor = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    aria-label="Add category"
                     onClick={() => {
                       if (newCategory.trim()) {
                         const trimmed = newCategory.trim();
@@ -553,7 +595,7 @@ const PostEditor = () => {
                   </Button>
                 </div>
               ) : (
-                <Button variant="outline" size="icon" onClick={() => setAddingCategory(true)} title="Add category">
+                <Button variant="outline" size="icon" onClick={() => setAddingCategory(true)} title="Add category" aria-label="Add category">
                   <Plus className="h-4 w-4" />
                 </Button>
               )}
@@ -566,21 +608,26 @@ const PostEditor = () => {
           <Label>Excerpt</Label>
           <Textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={2} />
         </div>
+        </div>
+        </MuSection>
+
+        <MuSection title="Images and layout">
+        <div className="space-y-4">
 
         {/* Featured Image */}
         <div className="space-y-2">
-          <Label>Featured Image</Label>
+          <Label>Featured image</Label>
           {featuredImageUrl ? (
             <div className="relative max-w-xs">
-              <img loading="lazy" decoding="async" src={featuredImageUrl} alt="Featured" className="h-40 w-full rounded-lg object-cover" />
-              <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={removeFeaturedImage}>
+              <img loading="lazy" decoding="async" src={featuredImageUrl} alt="Featured" className="h-40 w-full object-cover" />
+              <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" aria-label="Remove image" onClick={removeFeaturedImage}>
                 <X className="h-3 w-3" />
               </Button>
             </div>
           ) : (
-            <label className="flex items-center gap-2 cursor-pointer border rounded-lg p-4 hover:bg-muted/50 transition-colors max-w-xs">
+            <label className="flex max-w-xs cursor-pointer items-center gap-2 border border-dashed border-line p-4 transition-colors hover:bg-muted/50">
               <Upload className="h-4 w-4" />
-              <span className="text-sm">{uploading ? "Uploading..." : "Upload image"}</span>
+              <span className="text-sm">{uploading ? "Uploading" : "Upload image"}</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleFeaturedUpload} disabled={uploading} />
             </label>
           )}
@@ -589,32 +636,28 @@ const PostEditor = () => {
         {/* Hero Template */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Hero Template</Label>
-            <Select value={heroTemplate} onValueChange={setHeroTemplate}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {HERO_TEMPLATES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SelectField
+              label="Hero template"
+              value={heroTemplate}
+              onChange={(v) => { if (v) setHeroTemplate(v); }}
+              options={HERO_TEMPLATES.map((t) => ({ value: t.value, label: t.label }))}
+            />
           </div>
           {heroTemplate === "polaroid" && (
             <div className="space-y-2">
-              <Label>Polaroid Caption</Label>
-              <Input value={polaroidCaption} onChange={(e) => setPolaroidCaption(e.target.value)} placeholder="e.g. Our first day!" />
+              <Label>Polaroid caption</Label>
+              <Input value={polaroidCaption} onChange={(e) => setPolaroidCaption(e.target.value)} placeholder="For example, our first day" />
             </div>
           )}
         </div>
 
         {/* Body Template */}
-        <div className="space-y-2">
-          <Label>Body Template</Label>
-          <Select value={bodyTemplate} onValueChange={setBodyTemplate}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {TEMPLATE_META.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <SelectField
+          label="Body template"
+          value={bodyTemplate}
+          onChange={(v) => { if (v) setBodyTemplate(v); }}
+          options={TEMPLATE_META.map((t) => ({ value: t.value, label: t.label }))}
+        />
 
         {/* Drop Cap Toggle */}
         <div className="flex items-center gap-3">
@@ -627,20 +670,20 @@ const PostEditor = () => {
         {/* Body Image Slots + Captions */}
         {currentMeta && (
           <div className="space-y-3">
-            <Label>Body Images ({currentMeta.label})</Label>
+            <Label>Body images ({currentMeta.label})</Label>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {currentMeta.slots.map((slotName, i) => (
                 <div key={`${bodyTemplate}-${i}`} className="space-y-1">
                   <span className="text-xs text-muted-foreground">{slotName}</span>
                   {bodyImages[i] ? (
                     <div className="relative">
-                      <img loading="lazy" decoding="async" src={bodyImages[i]} alt={slotName} className="h-24 w-full rounded object-cover" />
-                      <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-5 w-5" onClick={() => removeSlotImage(i)}>
+                      <img loading="lazy" decoding="async" src={bodyImages[i]} alt={slotName} className="h-24 w-full object-cover" />
+                      <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-5 w-5" aria-label="Remove image" onClick={() => removeSlotImage(i)}>
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center h-24 border border-dashed rounded cursor-pointer hover:bg-muted/50 transition-colors">
+                    <label className="flex h-24 cursor-pointer items-center justify-center border border-dashed border-line transition-colors hover:bg-muted/50" aria-label={`Upload ${slotName}`}>
                       <Upload className="h-4 w-4 text-muted-foreground" />
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleSlotUpload(e, i)} disabled={uploading} />
                     </label>
@@ -657,15 +700,20 @@ const PostEditor = () => {
           </div>
         )}
 
-        {/* Content Editor */}
-        <div className="space-y-2">
-          <Label>Content</Label>
-          <RichTextEditor value={content} onChange={setContent} />
         </div>
+        </MuSection>
+
+        {/* Content Editor */}
+        <MuSection title="Content">
+          <RichTextEditor value={content} onChange={setContent} />
+        </MuSection>
+
+        <MuSection title="Publishing">
+        <div className="space-y-4">
 
         {/* Schedule */}
         <div className="space-y-2">
-          <Label>Schedule Publish</Label>
+          <Label>Schedule</Label>
           <div className="flex flex-wrap items-end gap-3">
             <Popover>
               <PopoverTrigger asChild>
@@ -697,17 +745,16 @@ const PostEditor = () => {
               </Button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Leave empty to publish immediately, or pick a future date/time to schedule.</p>
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 flex-wrap">
           <Button onClick={() => handleSave("draft")} variant="outline" disabled={saving}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Save Draft
+            {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Save draft
           </Button>
           {requiresBlogApproval && !isSuperAdmin ? (
             <Button onClick={() => handleSave("published")} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Submit for Approval
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Submit for approval
             </Button>
           ) : scheduledDate && scheduledDate > new Date() ? (
             <Button onClick={() => handleSave("scheduled")} disabled={saving}>
@@ -715,7 +762,7 @@ const PostEditor = () => {
             </Button>
           ) : (
             <Button onClick={() => handleSave("published")} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Publish Now
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Publish now
             </Button>
           )}
           {!isNew && status === "published" && (
@@ -731,7 +778,7 @@ const PostEditor = () => {
                   });
                   if (error) throw error;
                   setSubscribersNotified(true);
-                  toast({ title: "Subscribers notified!", description: "Email sent to all newsletter subscribers." });
+                  toast({ title: "Subscribers notified", description: "Email sent to all newsletter subscribers." });
                 } catch (err: any) {
                   toast({ title: "Failed to notify", description: err.message, variant: "destructive" });
                 } finally {
@@ -740,10 +787,12 @@ const PostEditor = () => {
               }}
             >
               {notifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-              {subscribersNotified ? "Subscribers Notified" : "Notify Subscribers"}
+              {subscribersNotified ? "Subscribers notified" : "Notify subscribers"}
             </Button>
           )}
         </div>
+        </div>
+        </MuSection>
       </div>
     </div>
   );

@@ -2,6 +2,10 @@ import { Helmet } from "react-helmet-async";
 
 const SITE_URL = "https://www.medicconnect.co";
 const DEFAULT_IMAGE = `${SITE_URL}/social-cover.png`;
+/** The default share card is 1200 by 630; previews draw it at once when they know. */
+const DEFAULT_IMAGE_SIZE = { width: "1200", height: "630" };
+const DEFAULT_IMAGE_ALT = "Medic Connect: care at home and healthcare staffing across Lagos";
+
 
 // Friendly labels for BreadcrumbList — keeps crawlers and AI assistants on-brand.
 const PATH_LABELS: Record<string, string> = {
@@ -32,6 +36,14 @@ const PATH_LABELS: Record<string, string> = {
   "/home-care-ajah": "Home Care in Ajah",
   "/home-care-surulere": "Home Care in Surulere",
   "/home-care-yaba": "Home Care in Yaba",
+  "/home-care-banana-island": "Home Care in Banana Island",
+  "/home-care-parkview": "Home Care in Parkview Estate",
+  "/home-care-osborne-foreshore": "Home Care in Osborne Foreshore",
+  "/home-care-eko-atlantic": "Home Care in Eko Atlantic",
+  "/home-care-lekki-phase-1": "Home Care in Lekki Phase 1",
+  "/home-care-vgc": "Home Care in VGC",
+  "/home-care-ikeja-gra": "Home Care in Ikeja GRA",
+  "/home-care-magodo-gra": "Home Care in Magodo GRA",
 };
 
 interface BreadcrumbCrumb {
@@ -51,6 +63,11 @@ interface SEOProps {
   noindex?: boolean;
   /** The URL that owns this topic, when it is not this page. */
   canonicalPath?: string;
+  /** Alt text for a custom share image. */
+  imageAlt?: string;
+  /** Articles: when it was first published and last changed (ISO dates). */
+  publishedTime?: string;
+  modifiedTime?: string;
 }
 
 
@@ -80,7 +97,12 @@ function breadcrumbListSchema(crumbs: BreadcrumbCrumb[]) {
   };
 }
 
-const SEO = ({ title, description, path, image = DEFAULT_IMAGE, type = "website", jsonLd, breadcrumbs, noindex, canonicalPath }: SEOProps) => {
+const SEO = ({
+  title, description, path, image = DEFAULT_IMAGE, type = "website", jsonLd, breadcrumbs, noindex, canonicalPath,
+  imageAlt, publishedTime, modifiedTime,
+}: SEOProps) => {
+  const isDefaultImage = image === DEFAULT_IMAGE;
+  const alt = imageAlt ?? (isDefaultImage ? DEFAULT_IMAGE_ALT : title);
   const url = `${SITE_URL}${path}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath ?? path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? [...jsonLd] : [jsonLd]) : [];
@@ -102,7 +124,16 @@ const SEO = ({ title, description, path, image = DEFAULT_IMAGE, type = "website"
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
       <meta property="og:image" content={image} />
+      <meta property="og:image:alt" content={alt} />
+      {isDefaultImage && <meta property="og:image:width" content={DEFAULT_IMAGE_SIZE.width} />}
+      {isDefaultImage && <meta property="og:image:height" content={DEFAULT_IMAGE_SIZE.height} />}
+      <meta property="og:site_name" content="Medic Connect" />
+      <meta property="og:locale" content="en_NG" />
+      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+      {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@MedicConnectHQ" />
+      <meta name="twitter:image:alt" content={alt} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />

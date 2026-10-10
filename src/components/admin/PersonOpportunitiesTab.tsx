@@ -2,13 +2,15 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Star, AlertTriangle, RefreshCw, MessageSquareText, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { MuEmpty, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { FACET_TYPE_LABELS, facetLabel } from "@/lib/match-taxonomy";
+import { ShortlistControl, shortlistStageLabel } from "@/components/admin/mu/ShortlistControl";
 
 interface OppMatch {
   opportunity_id: string;
@@ -28,12 +30,16 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
   const [running, setRunning] = useState(false);
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [stages, setStages] = useState<Record<string, string>>({});
+  const [shortlistIds, setShortlistIds] = useState<Record<string, string>>({});
   const [rationales, setRationales] = useState<Record<string, string>>({});
   const [rationaleBusy, setRationaleBusy] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: sl } = await adminDb().from("mu_shortlists").select("opportunity_id").eq("person_id", personId);
+    const { data: sl } = await adminDb().from("mu_shortlists").select("id, opportunity_id, status").eq("person_id", personId);
     setShortlisted(new Set((sl || []).map((r: any) => r.opportunity_id)));
+    setStages(Object.fromEntries((sl || []).map((r: any) => [r.opportunity_id, r.status ?? "shortlisted"])));
+    setShortlistIds(Object.fromEntries((sl || []).map((r: any) => [r.opportunity_id, r.id])));
   };
 
   const run = async (blocked = includeBlocked) => {
@@ -58,7 +64,21 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
 
   const toggleShortlist = async (row: OppMatch) => {
     if (shortlisted.has(row.opportunity_id)) {
-      await adminDb().from("mu_shortlists").delete().eq("opportunity_id", row.opportunity_id).eq("person_id", personId);
+      // Once someone has been put forward or placed, the shortlist row is the
+      // record of that. Unticking here must not erase it.
+      const stage = stages[row.opportunity_id] ?? "shortlisted";
+      if (stage !== "shortlisted") {
+        toast({
+          title: "This shortlist has moved on",
+          description: `They are at "${stage.replace(/_/g, " ")}". Change or withdraw it from the role's Matches tab, where the stage is managed.`,
+        });
+        return;
+      }
+      const { error: delError } = await adminDb().from("mu_shortlists").delete().eq("opportunity_id", row.opportunity_id).eq("person_id", personId);
+      if (delError) {
+        toast({ title: "Could not remove the shortlist", description: delError.message, variant: "destructive" });
+        return;
+      }
       setShortlisted((prev) => {
         const next = new Set(prev);
         next.delete(row.opportunity_id);
@@ -80,6 +100,8 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
       return;
     }
     setShortlisted((prev) => new Set(prev).add(row.opportunity_id));
+    setStages((prev) => ({ ...prev, [row.opportunity_id]: "shortlisted" }));
+    void load();
     await adminDb().from("mu_activity").insert({
       person_id: personId,
       action: "shortlisted_to_opportunity",
@@ -87,6 +109,19 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
       actor_name: userData?.user?.email ?? null,
       detail: { opportunity_id: row.opportunity_id, score: row.score },
     });
+  };
+
+  // The same stage control as the role's Matches tab.
+  const setStage = async (row: OppMatch, status: string) => {
+    const id = shortlistIds[row.opportunity_id];
+    if (!id) { await load(); return; }
+    const { error } = await (adminDb() as any).rpc("mu_shortlist_set_stage", { _id: id, _status: status, _note: null });
+    if (error) {
+      toast({ title: "Could not move the stage", description: error.message, variant: "destructive" });
+      return;
+    }
+    setStages((prev) => ({ ...prev, [row.opportunity_id]: status }));
+    toast({ title: `Moved to ${shortlistStageLabel(status)}` });
   };
 
   const explain = async (row: OppMatch, refresh = false) => {
@@ -118,37 +153,46 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
             <Label htmlFor="blocked-person" className="text-sm">Show blocked</Label>
           </div>
           <Button variant="outline" size="sm" onClick={() => run()} disabled={running}>
-            {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Re-run
+            {running ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Run again
           </Button>
         </div>
       </div>
 
       {matches.length === 0 && !running && (
-        <p className="text-sm text-muted-foreground">No open opportunities match this person yet.</p>
+        <div className="border border-line bg-card">
+          <MuEmpty
+            art={art.objMagnifier}
+            title="No matching opportunities"
+            description="No open opportunity fits this person yet. Run the ranking again after new roles open."
+          />
+        </div>
       )}
 
       <div className="space-y-3">
         {matches.map((m) => (
-          <div key={m.opportunity_id} className="border border-border rounded-xl p-4 space-y-3">
+          <div key={m.opportunity_id} className="border border-line bg-card p-4 space-y-3">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <Link to={`/admin/match-universe/opportunities/${m.opportunity_id}`} className="font-medium hover:underline">
                   {m.title}
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  {[m.location, m.breakdown?.person_state, m.breakdown?.person_lga].filter(Boolean).join(" | ") || "No location set"}
-                </p>
+                {(() => {
+                  const parts = [m.location, m.breakdown?.person_state, m.breakdown?.person_lga].filter(Boolean);
+                  return (
+                    <p className="flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+                      {parts.length ? parts.map((part, i) => <span key={i}>{part}</span>) : "No location set"}
+                    </p>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="tabular-nums">{Number(m.score).toFixed(0)}</Badge>
-                <Button
-                  variant={shortlisted.has(m.opportunity_id) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleShortlist(m)}
-                >
-                  <Star className="mr-2 h-4 w-4" />
-                  {shortlisted.has(m.opportunity_id) ? "Shortlisted" : "Shortlist"}
-                </Button>
+                <MuStatus className="tabular-nums" label={Number(m.score).toFixed(0)} />
+                <ShortlistControl
+                  stage={shortlisted.has(m.opportunity_id) ? stages[m.opportunity_id] ?? "shortlisted" : null}
+                  onAdd={() => void toggleShortlist(m)}
+                  onRemove={() => void toggleShortlist(m)}
+                  onStage={(v) => void setStage(m, v)}
+                />
                 <Button variant="ghost" size="sm" onClick={() => explain(m, Boolean(rationales[m.opportunity_id]))} disabled={rationaleBusy === m.opportunity_id}>
                   {rationaleBusy === m.opportunity_id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquareText className="mr-2 h-4 w-4" />}
                   Why
@@ -158,15 +202,13 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
 
             <div className="flex flex-wrap gap-1.5">
               {m.matched_required.map((c) => (
-                <Badge key={`r-${c}`} className="text-xs">{facetLabel(c)}</Badge>
+                <MuStatus key={`r-${c}`} tone="good" label={facetLabel(c)} />
               ))}
               {m.matched_desirable.map((c) => (
-                <Badge key={`d-${c}`} variant="secondary" className="text-xs">{facetLabel(c)}</Badge>
+                <MuStatus key={`d-${c}`} tone="info" label={facetLabel(c)} />
               ))}
               {m.missing_required.map((c) => (
-                <Badge key={`m-${c}`} variant="outline" className="text-xs text-muted-foreground">
-                  Missing: {facetLabel(c)}
-                </Badge>
+                <MuStatus key={`m-${c}`} tone="neutral" label={`Missing: ${facetLabel(c)}`} />
               ))}
             </div>
 
@@ -178,7 +220,7 @@ export default function PersonOpportunitiesTab({ personId }: { personId: string 
             )}
 
             {rationales[m.opportunity_id] && (
-              <p className="text-sm bg-muted/50 rounded-lg p-3 whitespace-pre-line">{rationales[m.opportunity_id]}</p>
+              <p className="text-sm bg-muted/50 p-3 whitespace-pre-line">{rationales[m.opportunity_id]}</p>
             )}
           </div>
         ))}

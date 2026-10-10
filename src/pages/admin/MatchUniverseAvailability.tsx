@@ -9,13 +9,13 @@ import { Link } from "react-router-dom";
 import { Briefcase, CalendarCheck, CalendarClock, ChevronDown, ChevronRight, Loader2, Mail, MapPin, Search, Users } from "lucide-react";
 import { adminDb } from "@/lib/admin-utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuToolbar } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPage, MuPageHeader, MuSection, MuStats, MuStatus, MuToolbar } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import ConsoleMobileList, { ConsoleMobileRow } from "@/components/admin/console/ConsoleMobileList";
 import { PROFESSIONS } from "@/lib/professions";
 import { STATES_AND_LGAS } from "@/lib/nigeria-locations";
@@ -144,13 +144,11 @@ const MatchUniverseAvailability = () => {
   return (
     <MuPage>
       <MuPageHeader
-        backTo="/admin/match-universe"
-        backLabel="Match Universe"
         title="Availability"
-        description="Search candidates by date range and shift. Unknown means the candidate has not confirmed, not that they are unavailable."
+        description="Who is free for a date range and shift."
         actions={
           <Button variant="outline" asChild>
-            <Link to="/admin/match-universe/workforce">Workforce</Link>
+            <Link to="/admin/workforce">Workforce</Link>
           </Button>
         }
       />
@@ -161,22 +159,22 @@ const MatchUniverseAvailability = () => {
           { label: "Free in window", value: free.length, icon: CalendarCheck, tone: free.length ? "attention" : "default" },
           { label: "Booked or unavailable", value: busy.length, icon: CalendarClock },
           { label: "Have not told us yet", value: silent.length, icon: Users, hint: "Silence is not a no" },
-          { label: "Outdated availability", value: stale.length, icon: CalendarClock, hint: "Never set or over two weeks old" },
+          { label: "Outdated availability", value: stale.length, icon: CalendarClock },
         ]}
       />
 
       <MuToolbar>
         <div className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">From</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">From</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">To</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">To</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Shift</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Shift</Label>
             <Select value={block} onValueChange={setBlock}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -185,7 +183,7 @@ const MatchUniverseAvailability = () => {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">Profession</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Profession</Label>
             <Select value={profession} onValueChange={setProfession}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -195,7 +193,7 @@ const MatchUniverseAvailability = () => {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground">State</Label>
+            <Label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">State</Label>
             <Select value={state} onValueChange={(v) => { setState(v); setLga(""); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -223,17 +221,23 @@ const MatchUniverseAvailability = () => {
         {free.length === 0 ? (
           <div className="px-5 py-6">
             <MuEmpty
-              icon={CalendarCheck}
+              art={art.objCalendar}
               title={`Nobody has told us they are free between ${humanDate(from)} and ${humanDate(to)}`}
-              description="No matches in this range. The nearest available candidates are listed below."
+              description={
+                nextLoading
+                  ? "Looking further ahead…"
+                  : nextFree.length > 0
+                    ? "The nearest free candidates are below."
+                    : "Nobody has a free date in the next six months either."
+              }
             />
-            {nextFree.length > 0 ? (
-              <ul className="mt-4 divide-y divide-border/60 rounded-lg border border-border/60">
+            {nextFree.length > 0 && (
+              <ul className="mt-4 divide-y divide-line-soft border border-line">
                 {nextFree.map((n) => (
                   <li key={n.person_id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                     <div className="min-w-0">
                       <Link
-                        to={`/admin/match-universe/${n.person_id}?tab=work`}
+                        to={`/admin/match-universe/${n.person_id}?tab=hiring`}
                         className="text-sm font-medium hover:underline"
                       >
                         {n.full_name}
@@ -253,16 +257,12 @@ const MatchUniverseAvailability = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Free {humanDate(n.next_free_date)}</Badge>
-                      <Badge variant="outline">{n.days_away} days out</Badge>
+                      <MuStatus tone="good" label={`Free ${humanDate(n.next_free_date)}`} />
+                      <MuStatus label={`${n.days_away} days out`} />
                     </div>
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="mt-3 text-center text-sm text-muted-foreground">
-                {nextLoading ? "Looking further ahead…" : "Nobody in the candidate pool has a free date in the next six months either."}
-              </p>
             )}
           </div>
         ) : (
@@ -290,7 +290,7 @@ const MatchUniverseAvailability = () => {
                         type="button"
                         onClick={() => toggleRow(r.person_id)}
                         aria-label={openRows[r.person_id] ? `Hide ${r.full_name}'s exact hours` : `Show ${r.full_name}'s exact hours`}
-                        className="rounded p-1 text-muted-foreground hover:bg-muted"
+                        className="p-1 text-muted-foreground hover:bg-muted"
                       >
                         {openRows[r.person_id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
@@ -304,7 +304,7 @@ const MatchUniverseAvailability = () => {
                     <TableCell className="text-muted-foreground">
                       <span className="flex flex-wrap gap-1.5">
                         {(r.free_dates || []).slice(0, 5).map((d) => (
-                          <span key={d} className="rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px]">
+                          <span key={d} className="border border-line bg-muted/40 px-2 py-0.5 text-[11px]">
                             {new Date(`${d}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                           </span>
                         ))}
@@ -314,11 +314,11 @@ const MatchUniverseAvailability = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{freshnessLabel(r.last_availability_update)}</Badge>
+                      <MuStatus label={freshnessLabel(r.last_availability_update)} />
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" asChild>
-                        <Link to={`/admin/match-universe/${r.person_id}?tab=work`}>Offer work</Link>
+                        <Link to={`/admin/match-universe/${r.person_id}?tab=hiring`}>Offer work</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -347,13 +347,15 @@ const MatchUniverseAvailability = () => {
             rows={free.map((r): ConsoleMobileRow => ({
               key: r.person_id,
               title: r.full_name,
-              state: [
-                r.profession || "Not set",
-                [r.lga, r.state].filter(Boolean).join(", ") || "Not set",
-                `${r.free_days} day${r.free_days === 1 ? "" : "s"} free`,
-              ].join(" · "),
-              status: <Badge variant="outline">{freshnessLabel(r.last_availability_update)}</Badge>,
-              to: `/admin/match-universe/${r.person_id}?tab=work`,
+              state: (
+                <span className="flex flex-wrap gap-x-3">
+                  <span>{r.profession || "Not set"}</span>
+                  <span>{[r.lga, r.state].filter(Boolean).join(", ") || "Not set"}</span>
+                  <span>{`${r.free_days} day${r.free_days === 1 ? "" : "s"} free`}</span>
+                </span>
+              ),
+              status: <MuStatus label={freshnessLabel(r.last_availability_update)} />,
+              to: `/admin/match-universe/${r.person_id}?tab=hiring`,
             }))}
           />
         )}
@@ -365,13 +367,13 @@ const MatchUniverseAvailability = () => {
         padded={false}
       >
         {stale.length === 0 ? (
-          <MuEmpty icon={CalendarCheck} title="All availability is up to date" />
+          <MuEmpty art={art.objCalendar} title="All availability is up to date" description="Everyone has set their availability in the last two weeks." />
         ) : (
           <ul className="divide-y divide-border/60">
             {stale.slice(0, 40).map((s) => (
               <li key={s.person_id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                 <div className="min-w-0">
-                  <Link to={`/admin/match-universe/${s.person_id}?tab=work`} className="text-sm font-medium hover:underline">
+                  <Link to={`/admin/match-universe/${s.person_id}?tab=hiring`} className="text-sm font-medium hover:underline">
                     {s.full_name}
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -388,8 +390,8 @@ const MatchUniverseAvailability = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!s.claimed && <Badge variant="outline">Never signed in</Badge>}
-                  <Badge variant="secondary">{freshnessLabel(s.last_availability_update)}</Badge>
+                  {!s.claimed && <MuStatus label="Never signed in" />}
+                  <MuStatus tone="warning" label={freshnessLabel(s.last_availability_update)} />
                 </div>
               </li>
             ))}

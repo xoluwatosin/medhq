@@ -1,33 +1,50 @@
 import { useEffect, useState } from "react";
-import SEO from "@/components/SEO";
 import { Link } from "react-router-dom";
+import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import MedicHeader from "@/components/MedicHeader";
 import Footer from "@/components/Footer";
-import { Loader2 } from "lucide-react";
-import blogPlaceholder from "@/assets/hero/clinical-hero.jpg";
-import AudienceHero from "@/components/home/AudienceHero";
+import CTASection from "@/components/CTASection";
 import KitPillHeading from "@/components/kit/KitPillHeading";
+import { KitMain } from "@/components/kit/KitLayout";
+import { Chevrons, SpeechBubble, Stamp, Tape, TapeLabel, Watermark } from "@/components/mc/brand";
+import { art } from "@/components/mc/art";
+import PostCard, { firstParagraph, postDate, postImage, type PostCardData } from "@/components/blog/PostCard";
+import { cn } from "@/lib/utils";
 
-interface PostCard {
+interface PostRow extends PostCardData {
   id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  category: string;
-  author: string;
-  featured_image_url: string | null;
-  published_at: string;
 }
 
-const truncateWords = (text: string, maxWords: number) => {
-  const words = (text || "").split(/\s+/);
-  if (words.length <= maxWords) return text;
-  return words.slice(0, maxWords).join(" ") + "...";
-};
+const TAG_TILTS = [-2, 1.5, -1, 2, -1.5, 1];
 
+/** An open invitation pinned to the board: ask us what to write about next. */
+const Invite = () => (
+  <div className="relative flex h-full rotate-[1.2deg] flex-col items-start gap-4 bg-tint p-5 pt-8 shadow-offset">
+    <span aria-hidden="true" className="absolute left-1/2 -top-2 -ml-2 h-4 w-4 bg-brand shadow-[2px_2px_0_hsl(var(--navy))]" />
+    <SpeechBubble side="left" tone="navy" className="!max-w-none text-[19px] sm:text-[20px]">
+      Is there something you would like us to write about?
+    </SpeechBubble>
+    <a
+      href={`https://wa.me/2348126988237?text=${encodeURIComponent("Hello Medic Connect, I have an idea for The Bridge: ")}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-[48px] items-center gap-3 border-2 border-navy bg-white px-5 text-[16px] font-extrabold text-navy shadow-offset-sm hover:bg-tint"
+    >
+      Tell us on WhatsApp
+      <Chevrons size={13} colors={["hsl(var(--brand))", "hsl(var(--brand))", "hsl(var(--navy))"]} />
+    </a>
+    <img src={art.nurseFilmingExplainer} alt="" className="mt-auto h-[170px] self-end object-contain" />
+  </div>
+);
+
+/**
+ * The Bridge, set out like a scrapbook: the newest stories pegged to a line
+ * across the hero, topics as strips of tape, the latest story stamped, and the
+ * rest as polaroids taped or pinned to the board.
+ */
 const Blog = () => {
-  const [posts, setPosts] = useState<PostCard[]>([]);
+  const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -46,86 +63,131 @@ const Blog = () => {
 
   const categories = [...new Set(posts.map((p) => p.category).filter(Boolean))];
   const filtered = activeCategory ? posts.filter((p) => p.category === activeCategory) : posts;
+  const [lead, ...rest] = filtered;
+
+  const tag = (label: string, active: boolean, onClick: () => void, i: number) => (
+    <button
+      key={label}
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      style={{ transform: `rotate(${TAG_TILTS[i % TAG_TILTS.length]}deg)` }}
+      className={cn(
+        "min-h-[40px] shrink-0 whitespace-nowrap px-4 text-[13px] font-extrabold uppercase tracking-[0.12em] transition-colors",
+        active ? "bg-brand text-white shadow-offset-sm" : "bg-tint-deep/70 text-navy hover:bg-tint-deep",
+      )}
+    >
+      {label}
+    </button>
+  );
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh bg-background animate-fade-in">
       <SEO
         title="The Bridge | Medic Connect"
-        description="Stories, insights, and updates on healthcare, caregiving, and the Care Operating System from the Medic Connect team."
+        description="Stories, insights and field notes on caring well, at home and in hospital, from the Medic Connect team."
         path="/blog"
       />
       <MedicHeader />
-      <main>
-        <AudienceHero>
-          <p className="mb-4 text-center text-[11px] font-medium uppercase tracking-[0.24em] text-body-navy">
-            The Care Operating System
-          </p>
-          <KitPillHeading text="The Bridge" accent={[1]} align="centre" />
-          <p className="mx-auto mt-6 max-w-2xl text-center text-[15px] leading-relaxed text-body-navy sm:text-base">
-            Stories, insights and field notes on caring well, at home and in hospital.
-          </p>
-        </AudienceHero>
 
-        <section className="py-14 sm:py-20">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Category pills */}
-            {categories.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mb-10">
-                <button
-                  onClick={() => setActiveCategory(null)}
-                  className={`kit-curve-sm border px-4 py-1.5 text-sm font-medium transition-colors ${!activeCategory ? "border-brand bg-brand text-white" : "border-hairline bg-card text-foreground hover:bg-muted"}`}
-                >
-                  All
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`kit-curve-sm border px-4 py-1.5 text-sm font-medium transition-colors ${activeCategory === cat ? "border-brand bg-brand text-white" : "border-hairline bg-card text-foreground hover:bg-muted"}`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-            ) : filtered.length === 0 ? (
-              <p className="text-center text-muted-foreground py-16">No posts yet. Check back soon!</p>
-            ) : (
-              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((post) => (
-                  <Link key={post.id} to={`/blog/${post.slug}`} className="group block">
-                    <div className="kit-curve overflow-hidden border border-hairline bg-card transition-all duration-300 hover:-translate-y-1 hover:border-brand/40">
-
-                      <div className="aspect-[16/10] overflow-hidden">
-                        <img loading="lazy" decoding="async"
-                          src={post.featured_image_url || blogPlaceholder}
-                          alt={post.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="p-5 h-[180px] flex flex-col overflow-hidden">
-                        {post.category && (
-                          <span className="text-xs font-medium uppercase tracking-wider text-primary shrink-0">{post.category}</span>
-                        )}
-                        <h2 className="text-lg font-semibold mt-1 mb-2 group-hover:text-primary transition-colors line-clamp-2 shrink-0">
-                          {post.title}
-                        </h2>
-                        <p className="text-sm text-muted-foreground line-clamp-2 shrink-0">{truncateWords(post.excerpt || "", 12)}</p>
-                        <p className="text-xs text-muted-foreground mt-auto pt-3">
-                          {post.author} · {new Date(post.published_at).toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" })}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+      <section className="relative -mt-[80px] overflow-hidden bg-navy pt-[108px] sm:-mt-[114px] sm:pt-[150px]">
+        <Watermark glyph="o" size={620} opacity={0.12} className="-right-[200px] -top-[120px] hidden lg:block" />
+        <Watermark glyph="o" size={300} opacity={0.12} className="-right-[90px] -top-[30px] lg:hidden" />
+        <div className="relative mx-auto max-w-[1440px] px-[22px] pb-14 sm:px-[50px] lg:pb-20">
+          <p className="eyebrow !text-brand-soft">Stories from Medic Connect</p>
+          <div className="mt-4 lg:mt-6">
+            <KitPillHeading text="The Bridge" accent={[1]} align="left" size="xl" />
           </div>
-        </section>
-      </main>
+          <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.55] text-body-navy sm:text-[19px] lg:mt-8 lg:text-[21px]">
+            Stories, insights and field notes from nurses, carers and families, at home and in hospital.
+          </p>
+        </div>
+      </section>
+
+      <KitMain className="pt-10 lg:pt-14">
+        {categories.length > 0 && (
+          <div role="group" aria-label="Filter by topic" className="-mx-[22px] flex gap-3 overflow-x-auto px-[22px] py-2 sm:mx-0 sm:flex-wrap sm:px-0">
+            {tag("All stories", !activeCategory, () => setActiveCategory(null), 0)}
+            {categories.map((cat, i) => tag(cat, activeCategory === cat, () => setActiveCategory(cat), i + 1))}
+          </div>
+        )}
+
+        {loading ? (
+          <div aria-busy="true" aria-label="Loading stories" className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
+            <div className="aspect-[4/3] animate-pulse bg-tint" />
+            <div className="space-y-4 pt-4">
+              <div className="h-4 w-32 animate-pulse bg-tint" />
+              <div className="h-10 w-full animate-pulse bg-tint" />
+              <div className="h-10 w-3/4 animate-pulse bg-tint" />
+              <div className="h-20 w-full animate-pulse bg-tint" />
+            </div>
+          </div>
+        ) : !lead ? (
+          <div className="mt-10 flex flex-col items-center gap-4 border-2 border-navy bg-tint px-6 py-14 text-center">
+            <img src={art.objPhoneChat} alt="" className="h-[120px] object-contain" />
+            <p className="text-[22px] font-extrabold tracking-[-0.03em] text-navy">New stories are on their way.</p>
+            <p className="text-[15.5px] text-body">Check back soon.</p>
+          </div>
+        ) : (
+          <>
+            {/* The newest story, set large and stamped. */}
+            <Link to={`/blog/${lead.slug}`} className="group mt-12 grid items-center gap-10 lg:mt-16 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-14">
+              <figure className="relative w-full rotate-[-1.5deg] border-2 border-navy bg-white p-3 pb-12 shadow-offset transition-transform group-hover:rotate-0 sm:p-4 sm:pb-14">
+                <Tape width={130} tilt={-3} className="-top-3 left-1/2 z-10 -ml-[65px]" />
+                <img src={postImage(lead.featured_image_url)} alt="" className="aspect-[16/10] w-full object-cover" />
+                <figcaption className="absolute bottom-3 left-4 text-[14px] font-extrabold text-navy sm:bottom-4 sm:left-5 sm:text-[15px]">
+                  {postDate(lead.published_at, "long")}
+                </figcaption>
+                <Stamp title="NEW" sub="ON THE BRIDGE" tone="blue" tilt={10} className="absolute -right-3 -top-5 bg-white sm:-right-6 sm:-top-7" />
+              </figure>
+              <div>
+                <TapeLabel tone="blue" tilt={-2} className="uppercase">
+                  {lead.category || "Latest"}
+                </TapeLabel>
+                <h2 className="mt-5 text-[30px] leading-[1.05] tracking-[-0.05em] text-navy group-hover:text-brand sm:text-[42px]">{lead.title}</h2>
+                {firstParagraph(lead.excerpt) && (
+                  <p className="mt-4 line-clamp-4 max-w-[56ch] text-[16.5px] leading-[1.65] text-body sm:text-[18px]">{firstParagraph(lead.excerpt)}</p>
+                )}
+                {lead.author && <p className="mt-5 text-[14px] font-bold text-body">By {lead.author}</p>}
+                <span className="mt-6 inline-flex min-h-[48px] items-center gap-3 bg-navy px-6 text-[16px] font-extrabold text-white shadow-offset-blue group-hover:bg-brand">
+                  Read the story
+                  <Chevrons size={13} />
+                </span>
+              </div>
+            </Link>
+
+            {rest.length > 0 && (
+              <section aria-labelledby="more-heading" className="mt-20 lg:mt-24">
+                <hr className="mb-6 border-t-4 border-navy" />
+                <h2 id="more-heading" className="text-[30px] leading-none tracking-[-0.05em] sm:text-[40px]">
+                  {activeCategory ?? "More from the board"}
+                </h2>
+                <ul className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+                  {rest.map((post, i) => (
+                    <li key={post.id}>
+                      <PostCard post={post} index={i} />
+                    </li>
+                  ))}
+                  <li>
+                    <Invite />
+                  </li>
+                </ul>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* With no grid to sit in, the invitation stands on its own. */}
+        {!loading && rest.length === 0 && (
+          <div className="mx-auto mt-20 max-w-[420px] lg:mt-24">
+            <Invite />
+          </div>
+        )}
+
+        <div className="hidden lg:block">
+          <CTASection headline="Need care at home?" body="Tell us what is needed and we will arrange the assessment." />
+        </div>
+      </KitMain>
       <Footer />
     </div>
   );

@@ -6,12 +6,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
-import { MuSection } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuSection } from "@/components/admin/mu/MuShell";
 import { careErrorMessage } from "@/lib/care-errors";
-import { clientLinks, ROLE_LABELS, type ClientLinks } from "@/lib/care-records";
-
-const roleText = (roles: string[]) =>
-  roles.map((role) => ROLE_LABELS[role] ?? role).join(" · ");
+import { clientLinks, roleText, type ClientLinks } from "@/lib/care-records";
 
 const LinkedPeople = ({ clientId }: { clientId: string }) => {
   const [links, setLinks] = useState<ClientLinks | null>(null);
@@ -32,7 +29,7 @@ const LinkedPeople = ({ clientId }: { clientId: string }) => {
 
   if (problem) {
     return (
-      <MuSection title="Household">
+      <MuSection title="Family">
         <p className="text-[14.5px] text-muted-foreground">{problem}</p>
       </MuSection>
     );
@@ -45,12 +42,10 @@ const LinkedPeople = ({ clientId }: { clientId: string }) => {
   return (
     <MuSection
       title={links.household.display_name}
-      description="The household this file belongs to and everyone recorded in it."
+      description="The family this file belongs to."
     >
       {others.length === 0 ? (
-        <p className="text-[14.5px] text-muted-foreground">
-          No other people are recorded in this household.
-        </p>
+        <MuEmpty title="No one else in this family" description="Add relatives from the Family tab." />
       ) : (
         <ul className="flex flex-col divide-y divide-line-soft">
           {others.map((person) => {
@@ -67,7 +62,7 @@ const LinkedPeople = ({ clientId }: { clientId: string }) => {
                   <span className="mt-0.5 block text-[13.5px] text-muted-foreground">
                     {[roleText(person.roles), related.join(", "), person.phone, person.email]
                       .filter(Boolean)
-                      .join(" · ") || "No details recorded"}
+                      .join(", ") || "No details recorded"}
                   </span>
                 </span>
                 {person.client_id && (

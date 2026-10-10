@@ -4,9 +4,10 @@
 // narrow: their own details, the paperwork we need from them, and the contract
 // they are on, read in full and signed here with an audit trail behind it.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
-  Briefcase, CalendarDays, CheckCircle2, Download, FileSignature, Loader2, Mail, MapPin, Phone, Save,
+  Briefcase, CalendarDays, CheckCircle2, Download, Loader2, Mail, MapPin, Phone, Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { art } from "@/components/mc/art";
 import { humaniseTerm } from "@/lib/readable";
 import {
   DocumentRequirement, STATUS_HELP, STATUS_LABELS, loadRequirements, openDocumentTab,
@@ -31,6 +33,7 @@ import {
   STAFF_STATUS_LABELS, loadContracts,
 } from "@/lib/staff";
 import ContractDocument from "@/components/contracts/ContractDocument";
+import { Checklists, MyLeave, MyTeam, Reviews } from "@/components/admin/hr/HrPanels";
 import SignaturePad from "@/components/contracts/SignaturePad";
 import { blobToBase64, contractToPdfBlob, downloadBlob } from "@/lib/contract-pdf";
 import {
@@ -46,6 +49,14 @@ const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
 
 const MyProfile = () => {
+  // Notifications link here with ?tab= (leave, reviews) or ?person= (someone in your team).
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") ?? "details";
+  const setParam = (key: string, value: string | null) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (value) next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
   const { user, adminDisplayName } = useAuth();
   const { toast } = useToast();
   const [person, setPerson] = useState<any>(null);
@@ -160,8 +171,9 @@ const MyProfile = () => {
     return (
       <MuPage>
         <MuPageHeader title="My profile" />
-        <MuSection>
+        <MuSection padded={false}>
           <MuEmpty
+            art={art.objIdVerification}
             title="No staff record linked to this sign-in"
             description="Ask an administrator to link your account to your staff record."
           />
@@ -176,7 +188,7 @@ const MyProfile = () => {
     <MuPage>
       <MuPageHeader
         title="My profile"
-        description="Your employment details, the paperwork we need from you, and your contract."
+        description="Your record with Medic Connect."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <MuStatus label={STAFF_STATUS_LABELS[person.staff_status] || person.staff_status} tone="info" />
@@ -188,15 +200,31 @@ const MyProfile = () => {
         }
       />
 
-      <Tabs defaultValue="details">
-        <TabsList className="w-full justify-start">
+      {/* Managers see what is waiting for them first. Renders nothing for anyone without a team. */}
+      {person.is_staff && <MyTeam myPersonId={person.id} openPersonId={params.get("person")} onClosePerson={() => setParam("person", null)} />}
+
+      <Tabs value={tab} onValueChange={(v) => setParam("tab", v === "details" ? null : v)}>
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="details">Details</TabsTrigger>
+          {person.is_staff && <TabsTrigger value="leave">Leave</TabsTrigger>}
+          {person.is_staff && <TabsTrigger value="reviews">Reviews</TabsTrigger>}
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="contract">Contract</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-4">
-          <MuSection title="Your details" description="If anything here is wrong, tell your manager and we will correct it.">
+        {person.is_staff && (
+          <TabsContent value="leave" className="mt-4">
+            <MyLeave personId={person.id} />
+          </TabsContent>
+        )}
+        {person.is_staff && (
+          <TabsContent value="reviews" className="mt-4">
+            <Reviews personId={person.id} manage={false} myPersonId={person.id} />
+          </TabsContent>
+        )}
+
+        <TabsContent value="details" className="mt-4 space-y-6">
+          <MuSection title="Your details" description="Tell your manager if anything is wrong.">
             <MuFieldGrid columns={3}>
               <MuField label="Name" value={person.full_name} />
               <MuField label="Job title" icon={Briefcase} value={person.job_title} />
@@ -218,17 +246,24 @@ const MyProfile = () => {
                 icon={MapPin}
                 value={[person.lga, person.state].filter(Boolean).join(", ")}
               />
+              {person.is_staff && person.probation_end && (
+                <MuField
+                  label="Probation"
+                  value={`${person.probation_status === "passed" ? "Passed" : person.probation_status === "extended" ? "Extended to" : "Ends"} ${format(new Date(`${person.probation_end}T12:00:00`), "d MMM yyyy")}`}
+                />
+              )}
             </MuFieldGrid>
           </MuSection>
+          {person.is_staff && <Checklists personId={person.id} manage={false} />}
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
           <MuSection
             title="Your documents"
-            description="What we are required to hold on file. Upload a clear copy; a member of the team checks each one."
+            description="Upload a clear copy of each. The team checks every one."
             padded={false}
           >
-            <div className="divide-y divide-border/60">
+            <div className="divide-y divide-line-soft">
               {reqs.map((r) => (
                 <MuRecord
                   key={r.doc_type}
@@ -274,9 +309,9 @@ const MyProfile = () => {
         <TabsContent value="contract" className="mt-4">
           <MuSection title="Your contract" padded={false}>
             {contracts.length === 0 ? (
-              <MuEmpty icon={FileSignature} title="No contract issued yet" />
+              <MuEmpty art={art.objSignedContract} title="No contract issued yet" description="Your contract will appear here once it has been issued." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contracts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -327,14 +362,13 @@ const MyProfile = () => {
           <DialogHeader>
             <DialogTitle>Your contract</DialogTitle>
             <DialogDescription>
-              Read it in full. Sign by typing your name or drawing your signature. We record the name, the time
-              and the device used.
+              Type your name or draw your signature. We record the name, time and device.
             </DialogDescription>
           </DialogHeader>
 
           {open && (
             <>
-              <div className="overflow-x-auto rounded-2xl bg-muted/40 p-3">
+              <div className="overflow-x-auto border border-line-soft bg-muted/40 p-3">
                 <ContractDocument
                   ref={docRef}
                   fields={effectiveFields(open)}

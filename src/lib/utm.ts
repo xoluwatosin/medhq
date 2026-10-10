@@ -54,10 +54,13 @@ export function captureAttribution(): Attribution | null {
 
     const inferred = inferSourceFromReferrer(externalRef);
 
+    // A short share link (/b/<code>) only ever comes from someone sharing a post.
+    const shared = url.pathname.startsWith("/b/");
+
     const attribution: Attribution = {
-      utm_source: url.searchParams.get("utm_source") || inferred.source,
-      utm_medium: url.searchParams.get("utm_medium") || inferred.medium,
-      utm_campaign: url.searchParams.get("utm_campaign"),
+      utm_source: url.searchParams.get("utm_source") || inferred.source || (shared ? "share" : null),
+      utm_medium: url.searchParams.get("utm_medium") || inferred.medium || (shared ? "shared_link" : null),
+      utm_campaign: url.searchParams.get("utm_campaign") || (shared ? "blog" : null),
       utm_term: url.searchParams.get("utm_term"),
       utm_content: url.searchParams.get("utm_content"),
       referrer: externalRef,
@@ -84,4 +87,22 @@ export function getAttribution(): Attribution | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The visit's source as database columns, for any public form that records a
+ * lead (contact_submissions, creator_applications, join_applications and the
+ * matchmaker applications all carry these seven columns).
+ */
+export function attributionColumns() {
+  const a = getAttribution();
+  return {
+    utm_source: a?.utm_source ?? null,
+    utm_medium: a?.utm_medium ?? null,
+    utm_campaign: a?.utm_campaign ?? null,
+    utm_term: a?.utm_term ?? null,
+    utm_content: a?.utm_content ?? null,
+    referrer: a?.referrer ?? null,
+    landing_path: a?.landing_path ?? null,
+  };
 }

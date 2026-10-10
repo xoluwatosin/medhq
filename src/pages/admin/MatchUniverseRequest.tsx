@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import {
   Loader2, Save, CheckCircle2, CircleAlert, Stethoscope, MapPin, HeartPulse, CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { adminDb } from "@/lib/admin-utils";
 import { LocationField } from "@/components/LocationSelect";
-import RequirementChoices from "@/components/admin/mu/RequirementChoices";
 
-import { MuPageHeader, MuSection, MuNote } from "@/components/admin/mu/MuShell";
+import { MuEmpty, MuPageHeader, MuSection, MuStatus } from "@/components/admin/mu/MuShell";
+import { art } from "@/components/mc/art";
 import MatchmakerMatches from "./MatchmakerMatches";
 import { REQUEST_STATUS } from "./MatchUniverseRequests";
 
@@ -42,6 +42,20 @@ export default function MatchUniverseRequest() {
   const [rec, setRec] = useState<RequestRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [matchesKey, setMatchesKey] = useState(0);
+  const navigate = useNavigate();
+
+  // Binning hides the request from every list; the row stays for history.
+  const binRequest = async () => {
+    if (!id) return;
+    const { error } = await adminDb().from("matchmaker_opportunities").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not remove the request", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Request removed" });
+    navigate("/admin/match-universe/requests");
+  };
   const { toast } = useToast();
 
   const load = useCallback(async () => {
@@ -75,16 +89,10 @@ export default function MatchUniverseRequest() {
         client_notes: rec.client_notes,
         location: rec.location,
         // The picked place is also the matching criterion, so it is stored on the
-        // structured columns the shortlist actually filters on.
+        // structured columns the shortlist filters on. Every other requirement
+        // belongs to the requirements editor below, which saves its own columns.
         match_states: rec.match_states ?? [],
         match_lgas: rec.match_lgas ?? [],
-        // Requirements picked from the controlled lists, which is what the
-        // shortlist filters and scores on.
-        match_professions: rec.match_professions ?? [],
-        match_care_types: rec.match_care_types ?? [],
-        match_shift_patterns: rec.match_shift_patterns ?? [],
-        match_live_in: rec.match_live_in ?? "any",
-        match_min_years: rec.match_min_years,
 
         request_status: rec.request_status,
         start_date: rec.start_asap ? null : rec.start_date,
@@ -97,7 +105,21 @@ export default function MatchUniverseRequest() {
       return;
     }
     toast({ title: "Request saved" });
+    // The requirements editor reloads, so it never saves a stale location.
+    setMatchesKey((k) => k + 1);
   };
+
+  // After the requirements editor saves, pull its columns into the checklist
+  // without touching unsaved edits to the brief.
+  const refreshRequirements = useCallback(async () => {
+    if (!id) return;
+    const { data } = await adminDb()
+      .from("matchmaker_opportunities")
+      .select("match_professions, match_states, match_lgas, match_care_types, match_shift_patterns, match_live_in, match_min_years, requirements_parsed_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (data) setRec((prev) => (prev ? { ...prev, ...(data as Partial<RequestRecord>) } : prev));
+  }, [id]);
 
   // The checklist is the honest answer to "can this be matched yet". Each line
   // maps to a hard filter or a scoring input in mu_match_candidates, so a
@@ -137,31 +159,51 @@ export default function MatchUniverseRequest() {
   if (loading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
-  if (!rec) return <p className="text-sm text-muted-foreground">Request not found.</p>;
+  if (!rec)
+    return (
+      <div className="border border-line bg-card">
+        <MuEmpty
+          art={art.objMagnifier}
+          title="Request not found"
+          description="It may have been removed, or it could not be loaded."
+          action={<Button variant="outline" asChild><Link to="/admin/match-universe/requests">Back to staffing requests</Link></Button>}
+        />
+      </div>
+    );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <MuPageHeader
         backTo="/admin/match-universe/requests"
-        backLabel="Requests"
+        backLabel="Staffing requests"
         title={rec.title}
-        description="Write the brief, set the requirements, then rank the candidate pool against them."
+        description="The client's brief and its shortlist."
         actions={
-          <Button onClick={save} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
-          </Button>
+          <>
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save request
+            </Button>
+            <ConfirmAction
+              title="Remove this request?"
+              description={<p>"{rec.title}" leaves the requests list. Shortlists and history made from it are kept.</p>}
+              confirmLabel="Remove request"
+              destructive
+              onConfirm={binRequest}
+              trigger={<Button variant="outline">Remove</Button>}
+            />
+          </>
         }
       />
 
-      <MuSection title="The client's brief" description="What the client told you. Requirements are read from this.">
+      <MuSection title="The client's brief">
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reference</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Reference</label>
               <Input value={rec.title} onChange={(e) => setRec({ ...rec, title: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Location</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Location</label>
               <LocationField
                 value={rec.location}
                 onChange={(v, parts) =>
@@ -178,12 +220,12 @@ export default function MatchUniverseRequest() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Anything else the client said (optional)</label>
+            <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Anything else the client said (optional)</label>
             <Textarea rows={10} value={rec.brief ?? ""} onChange={(e) => setRec({ ...rec, brief: e.target.value })} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Internal notes</label>
+            <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Internal notes</label>
             <Textarea
               rows={3}
               value={rec.client_notes ?? ""}
@@ -194,7 +236,7 @@ export default function MatchUniverseRequest() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Stage</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Stage</label>
               <Select value={rec.request_status} onValueChange={(v) => setRec({ ...rec, request_status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -205,7 +247,7 @@ export default function MatchUniverseRequest() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Start date</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-label">Start date</label>
               <Input
                 type="date"
                 disabled={rec.start_asap}
@@ -226,49 +268,31 @@ export default function MatchUniverseRequest() {
       </MuSection>
 
       <MuSection
-        title="Requirements"
-        description="Pick what the client will not compromise on. These choices are the filters the shortlist runs on."
+        title="Matching checklist"
+        actions={<MuStatus tone={ready ? "good" : "warning"} label={ready ? "Complete" : "Shortlist will be rough"} />}
       >
-        <RequirementChoices
-          value={rec}
-          onChange={(next) => setRec({ ...rec, ...next })}
-        />
-      </MuSection>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Ready to match</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {checklist.map((c) => (
-              <div key={c.label} className="flex items-start gap-2.5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {checklist.map((c) => (
+            <div key={c.label} title={c.help} className="flex items-center justify-between gap-2.5 border border-line px-3 py-2.5">
+              <span className="flex items-center gap-2.5 text-sm font-medium">
                 {c.ok ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-navy" />
                 ) : (
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <CircleAlert className="h-4 w-4 shrink-0 text-warn-ink" />
                 )}
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{c.label}</p>
-                  <p className="text-xs leading-relaxed text-muted-foreground">{c.help}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          {!ready && (
-            <MuNote tone="warning" title="The shortlist will be rough until this is filled in">
-              Save the brief, run “Extract requirements” below, then correct anything that was read incorrectly. Ranking uses
-              the selected criteria.
-            </MuNote>
-          )}
-        </CardContent>
-      </Card>
+                {c.label}
+              </span>
+              <MuStatus tone={c.ok ? "good" : "warning"} label={c.ok ? "Set" : "Missing"} />
+            </div>
+          ))}
+        </div>
+      </MuSection>
 
       <MuSection
         title="Requirements and recommendations"
-        description="Extract the requirements from the brief, correct them, then run the match."
+        description="Extract from the brief, correct, save, then run the match."
       >
-        <MatchmakerMatches embedded />
+        <MatchmakerMatches key={matchesKey} embedded onSaved={refreshRequirements} />
       </MuSection>
     </div>
   );

@@ -260,6 +260,20 @@ export const DERIVED_FIELDS = [
 
 export const DERIVED_PREFIX = "derived_";
 
+/**
+ * Facts the intake settles about each care recipient (intakeRoutingAnswers in
+ * care-intake.ts). Conditions may read them like answers; nobody answers them.
+ */
+export const INTAKE_FACTS = [
+  "intake_relationship",
+  "intake_filler_parent",
+  "intake_first_recipient",
+  "intake_sole_self",
+  "intake_newborn_dob",
+  "intake_newborn_names",
+  "intake_parent_on_request",
+];
+
 /** Age bands for routing, never for a clinical judgement. */
 export const ageBandOf = (years: number | null, days: number | null): string => {
   if (years === null) return "unknown";
@@ -290,6 +304,9 @@ export const ageFromDateOfBirth = (
   return { years: Math.max(years, 0), days };
 };
 
+/** A baby, born or expected. */
+export const BABY_BANDS = ["newborn", "infant", "expected"];
+
 /** Services that only make sense for a child. */
 export const CHILD_ONLY_SERVICES = ["nanny", "additional_needs"];
 /** Services that only make sense for a pregnancy or a new mother. */
@@ -309,12 +326,15 @@ export const derivedFacts = (
   const age = ageFromDateOfBirth(responses.date_of_birth, now);
   const approx = Number(responses.approx_age);
   const dobKnown = String(responses.dob_known ?? "");
-  const years = age
+  // A baby not born yet is held with the expected date. Once that date has
+  // passed the baby is simply a newborn.
+  const expected = dobKnown === "expected" && !age;
+  const years = expected ? null : age
     ? age.years
     : dobKnown === "no" && Number.isFinite(approx) && approx >= 0 && approx <= 120
       ? Math.floor(approx)
       : null;
-  const band = ageBandOf(years, age ? age.days : null);
+  const band = expected ? "expected" : ageBandOf(years, age ? age.days : null);
   // Where the recorded service and the answer disagree, the person is asked
   // once which support to prepare for. That answer settles it.
   const answeredService =
@@ -324,9 +344,9 @@ export const derivedFacts = (
   // The group the questions are actually written for. A maternal journey is
   // the service, not the age; a baby is the age, not the service.
   const group =
-    MATERNAL_SERVICES.includes(service) && band !== "newborn" && band !== "infant"
+    MATERNAL_SERVICES.includes(service) && !BABY_BANDS.includes(band)
       ? "maternal"
-      : band === "newborn" || band === "infant"
+      : BABY_BANDS.includes(band)
         ? "baby"
         : band === "child"
           ? "child"
@@ -341,9 +361,9 @@ export const derivedFacts = (
   const conflictWithRecorded =
     !settled && !!recorded && !!answeredService && recorded !== answeredService;
   const impossible =
-    (self && (band === "newborn" || band === "infant" || band === "child")) ||
+    (self && (BABY_BANDS.includes(band) || band === "child")) ||
     (CHILD_ONLY_SERVICES.includes(service) && years !== null && years >= 18) ||
-    (MATERNAL_SERVICES.includes(service) && (band === "child" || band === "newborn" || band === "infant"));
+    (MATERNAL_SERVICES.includes(service) && (band === "child" || BABY_BANDS.includes(band)));
 
   return {
     derived_is_self: self ? "yes" : "no",
@@ -351,7 +371,7 @@ export const derivedFacts = (
     derived_age_band: band,
     derived_recipient_group: group,
     derived_service: service || "unknown",
-    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" ? "yes" : "no",
+    derived_is_parent: String(responses.is_parent_guardian ?? "") === "yes" || String(responses.intake_filler_parent ?? "") === "yes" ? "yes" : "no",
     derived_service_conflict: conflictWithRecorded || impossible ? "yes" : "no",
   };
 };
@@ -738,6 +758,8 @@ export const readAnswer = (
   if (typeof value === "object") {
     const obj = value as Record<string, unknown>;
     if (field.type === "upload" || obj.path) return "A file was uploaded with this answer";
+    // An area reads as people say it: "Ikeja, Lagos".
+    if (field.type === "lga" && (obj.lga || obj.state)) return [obj.lga, obj.state].filter(Boolean).map(String).join(", ");
     if (field.type === "measurement") {
       // A measurement is never read without the unit it was recorded in.
       return (field.measures ?? [])

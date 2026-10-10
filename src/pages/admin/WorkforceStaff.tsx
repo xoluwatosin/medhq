@@ -6,19 +6,19 @@
 // arranged in that order so nobody can invite somebody into the admin centre
 // on a handshake.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Ban, Briefcase, CalendarDays, FileSignature, KeyRound, Loader2, Mail, MapPin,
-  Phone, Plus, Save, Send, ShieldCheck, UserCog, Users,
+  Phone, Plus, Save, Send, ShieldCheck, UserCog,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectField } from "@/components/field";
+import { art } from "@/components/mc/art";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -38,11 +38,17 @@ import {
 import {
   CONTRACT_STATUS_LABELS, Contract, EMPLOYMENT_TYPE_LABELS, EmergencyContact,
   PAY_FREQUENCIES, PAY_FREQUENCY_LABELS, STAFF_STATUS_LABELS,
-   createContract, issueContract, loadContracts, loadEmergencyContacts, setContractStatus,
+   createContract, issueContract, loadContracts, loadEmergencyContacts, loadStaff, reportsBelow, setContractStatus,
+  WORK_SETTING_LABELS, type StaffRow,
 } from "@/lib/staff";
 
 import AccessAreas from "@/components/admin/AccessAreas";
-import { ACCESS_DELEGATE_PERMISSION, namedAreas } from "@/lib/admin-access";
+import { Checklists, PersonLeave, Reviews } from "@/components/admin/hr/HrPanels";
+import { PROBATION_LABELS } from "@/lib/hr";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
+import { returnToTalent } from "@/lib/lifecycle";
+import { ACCESS_DELEGATE_PERMISSION } from "@/lib/admin-access";
+import ClinicalAssessorPanel from "@/components/admin/mu/ClinicalAssessorPanel";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -75,6 +81,11 @@ const WorkforceStaff = () => {
   const [activity, setActivity] = useState<any[]>([]);
   const [acceptedOffer, setAcceptedOffer] = useState<any>(null);
   const [access, setAccess] = useState<any>(null);
+  // Everyone on the register, for "reports to" and the people who report here.
+  const [staff, setStaff] = useState<StaffRow[]>([]);
+  // The signed-in admin's own staff record, so they are never asked to review themselves.
+  const [myPersonId, setMyPersonId] = useState<string | null>(null);
+  const [savingHr, setSavingHr] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [tab, setTab] = useState("overview");
@@ -91,39 +102,6 @@ const WorkforceStaff = () => {
 
   const [contact, setContact] = useState({ name: "", relationship: "", phone: "", email: "", address: "" });
 
-  // Who may be sent out to carry out a care assessment. It is a capability on
-  // the workforce record, not a job title, and it is only real when the person
-  // is active here and can actually sign in.
-  const [capability, setCapability] = useState<{
-    active: boolean; eligible: boolean; has_account: boolean; staff_active: boolean;
-    live_assessments: number;
-  } | null>(null);
-  const [capabilityReason, setCapabilityReason] = useState("");
-  const [savingCapability, setSavingCapability] = useState(false);
-
-  const loadCapability = useCallback(async () => {
-    if (!id) return;
-    const { data } = await adminDb().rpc("care_assessor_capability", { _person_id: id });
-    setCapability((data ?? null) as typeof capability);
-  }, [id]);
-
-  useEffect(() => { void loadCapability(); }, [loadCapability]);
-
-  const setAssessor = async (active: boolean) => {
-    setSavingCapability(true);
-    const { error } = await adminDb().rpc("care_assessor_capability_set", {
-      _person_id: id, _active: active, _reason: capabilityReason.trim() || null,
-    });
-    setSavingCapability(false);
-    if (error) {
-      toast({ title: "Could not change this", description: error.message, variant: "destructive" });
-      return;
-    }
-    setCapabilityReason("");
-    await loadCapability();
-    toast({ title: active ? "Clinical Assessor added" : "Clinical Assessor removed" });
-  };
-
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -135,6 +113,11 @@ const WorkforceStaff = () => {
       adminDb().from("mu_offers").select("*").eq("person_id", id).eq("status", "accepted").eq("kind", "role").order("responded_at", { ascending: false }).limit(1),
     ]);
     setPerson(p);
+    loadStaff().then(setStaff).catch(() => setStaff([]));
+    if (user) {
+      adminDb().from("mu_people").select("id").eq("auth_user_id", user.id).maybeSingle()
+        .then(({ data: mine }: { data: { id: string } | null }) => setMyPersonId(mine?.id ?? null));
+    }
     setContracts(cs);
     setContacts(ecs);
     setActivity(act ?? []);
@@ -181,6 +164,8 @@ const WorkforceStaff = () => {
         staff_status: person.staff_status,
         staff_start_date: person.staff_start_date || null,
         staff_end_date: person.staff_end_date || null,
+        work_setting: person.work_setting || null,
+        reports_to: person.reports_to || null,
         state: person.state,
         lga: person.lga,
       })
@@ -242,10 +227,10 @@ const WorkforceStaff = () => {
     }
   };
 
-  const runContractAction = async (fn: () => Promise<void>, done: string) => {
+  const runContractAction = async (fn: () => Promise<void | string>, done: string) => {
     try {
-      await fn();
-      toast({ title: done });
+      const said = await fn();
+      toast({ title: typeof said === "string" && said ? said : done });
       load();
     } catch (err: any) {
       toast({ title: "That did not go through", description: err.message, variant: "destructive" });
@@ -285,11 +270,30 @@ const WorkforceStaff = () => {
 
   const savePerms = async (next: string[]) => {
     if (!access) return;
+    const before: string[] = Array.isArray(access.permissions) ? access.permissions : [];
     setAccess({ ...access, permissions: next });
-    await adminDb()
+    const { error } = await adminDb()
       .from("admin_permissions")
       .update({ permissions: next, updated_at: new Date().toISOString() })
       .eq("id", access.id);
+    if (error) {
+      setAccess({ ...access, permissions: before });
+      toast({ title: "Could not change access", description: error.message, variant: "destructive" });
+      return;
+    }
+    // Logged like a change made from People and access, so every change is in one history.
+    if (user) {
+      await adminDb().from("admin_access_log").insert({
+        actor_user_id: user.id,
+        actor_email: user.email ?? "",
+        target_user_id: access.user_id,
+        target_email: access.email,
+        action: "areas_changed",
+        permissions_before: before,
+        permissions_after: next,
+        note: "Changed from the staff record",
+      });
+    }
   };
 
   if (loading) {
@@ -301,7 +305,14 @@ const WorkforceStaff = () => {
   }
 
   if (!person) {
-    return <MuEmpty title="That staff record could not be found" />;
+    return (
+      <MuPage>
+        <MuPageHeader backTo="/admin/workforce" backLabel="Workforce" title="Staff record" />
+        <MuSection padded={false}>
+          <MuEmpty art={art.objMagnifier} title="That staff record could not be found" description="It may have been removed, or the link is wrong." />
+        </MuSection>
+      </MuPage>
+    );
   }
 
   return (
@@ -310,7 +321,7 @@ const WorkforceStaff = () => {
         backTo="/admin/workforce"
         backLabel="Workforce"
         title={person.full_name}
-        description={[person.job_title, person.department].filter(Boolean).join(" · ") || "No job details"}
+        description={[person.job_title, person.department].filter(Boolean).join(", ") || "No job details"}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <MuStatus label={STAFF_STATUS_LABELS[person.staff_status] || person.staff_status} tone={person.staff_status === "active" ? "good" : "warning"} />
@@ -322,6 +333,27 @@ const WorkforceStaff = () => {
             {person.auth_user_id
               ? <MuStatus icon={KeyRound} label="Has sign-in" tone="info" />
               : <MuStatus icon={KeyRound} label="No sign-in" tone="neutral" />}
+            <ConfirmAction
+              title={`Return ${person.full_name} to Talent?`}
+              description={
+                <>
+                  <p>Their employment closes and they go back to the Talent Pool. Their sign-in, documents and history stay as they are.</p>
+                  <p>Live assignments or contracts block this until they are resolved.</p>
+                </>
+              }
+              confirmLabel="Return to Talent"
+              destructive
+              onConfirm={async () => {
+                try {
+                  await returnToTalent(person.id);
+                  toast({ title: "Returned to Talent", description: "Employment closed. Their full history is unchanged." });
+                  navigate(`/admin/match-universe/${person.id}`);
+                } catch (err: any) {
+                  toast({ title: "Could not return them to Talent", description: err.message, variant: "destructive" });
+                }
+              }}
+              trigger={<Button size="sm" variant="outline">Return to Talent</Button>}
+            />
           </div>
         }
       />
@@ -335,11 +367,12 @@ const WorkforceStaff = () => {
           aria-label="Record section"
           value={tab}
           onChange={(e) => setTab(e.target.value)}
-          className="min-h-12 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+          className="min-h-12 w-full border border-line bg-card px-3 text-sm text-foreground"
         >
           <option value="overview">Overview</option>
           <option value="documents">Documents</option>
           <option value="contract">Contract</option>
+          <option value="hr">HR</option>
           <option value="access">Access</option>
           <option value="activity">Activity</option>
         </select>
@@ -350,6 +383,7 @@ const WorkforceStaff = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="contract">Contract</TabsTrigger>
+          <TabsTrigger value="hr">HR</TabsTrigger>
           <TabsTrigger value="access">Access</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
@@ -358,7 +392,7 @@ const WorkforceStaff = () => {
         <TabsContent value="overview" className="mt-4 space-y-6">
           <MuSection
             title="Employment details"
-            description="What we hold about their role here. Personal details and credentials stay on their candidate profile."
+            description="Personal details and credentials stay on their candidate profile."
             actions={
               <Button size="sm" onClick={saveProfile} disabled={savingProfile}>
                 {savingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -392,26 +426,47 @@ const WorkforceStaff = () => {
                 <Input value={person.department || ""} onChange={(e) => patchPerson({ department: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Employment type</Label>
-                <Select value={person.employment_type || "full_time"} onValueChange={(v) => patchPerson({ employment_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Employment type"
+                  value={person.employment_type || "full_time"}
+                  onChange={(v) => v && patchPerson({ employment_type: v })}
+                  options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label>Staff status</Label>
-                <Select value={person.staff_status || "pending"} onValueChange={(v) => patchPerson({ staff_status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["pending", "active", "on_notice", "exited"].map((k) => (
-                      <SelectItem key={k} value={k}>{STAFF_STATUS_LABELS[k]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SelectField
+                  label="Staff status"
+                  value={person.staff_status || "pending"}
+                  onChange={(v) => v && patchPerson({ staff_status: v })}
+                  options={["pending", "active", "on_notice", ...(person.staff_status === "exited" ? ["exited"] : [])].map((k) => ({
+                    value: k,
+                    label: STAFF_STATUS_LABELS[k],
+                  }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <SelectField
+                  label="Works in"
+                  value={person.work_setting || ""}
+                  onChange={(v) => patchPerson({ work_setting: v || null })}
+                  placeholder="Not set"
+                  options={Object.entries(WORK_SETTING_LABELS).map(([k, v]) => ({ value: k, label: k === "office" ? `${v} (back office)` : `${v} (shifts and visits)` }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <SelectField
+                  label="Reports to"
+                  value={person.reports_to || ""}
+                  onChange={(v) => patchPerson({ reports_to: v || null })}
+                  placeholder="No one (top of the structure)"
+                  options={[
+                    ...staff
+                      // Not themselves, and no one who already reports to them.
+                      .filter((r) => r.id !== person.id && !reportsBelow(staff, person.id).has(r.id))
+                      .filter((r) => r.staff_status !== "exited")
+                      .map((r) => ({ value: r.id, label: [r.full_name, r.job_title].filter(Boolean).join(", ") })),
+                  ]}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Start date</Label>
@@ -432,66 +487,34 @@ const WorkforceStaff = () => {
             </div>
           </MuSection>
 
-          <MuSection
-            title="Clinical Assessor"
-            description="Assessment visits can only be assigned to an active Clinical Assessor with a sign-in."
-          >
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="min-w-[220px] flex-1 space-y-1.5">
-                <Label>Reason</Label>
-                <Input
-                  value={capabilityReason}
-                  onChange={(e) => setCapabilityReason(e.target.value)}
-                  placeholder={capability?.active ? "Why this is being removed" : "Why this is being added"}
-                />
-              </div>
-              <Button
-                size="sm"
-                variant={capability?.active ? "outline" : "default"}
-                disabled={savingCapability || (!capability?.active && !(capability?.has_account && capability?.staff_active))}
-                onClick={() => setAssessor(!capability?.active)}
-              >
-                {capability?.active ? "Remove Clinical Assessor" : "Make Clinical Assessor"}
-              </Button>
-              <MuStatus
-                label={capability?.active ? "Clinical Assessor" : "Not an assessor"}
-                tone={capability?.active ? "good" : "neutral"}
-              />
-              {capability?.active && (capability.live_assessments ?? 0) > 0 && (
-                <MuStatus
-                  label={`${capability.live_assessments} active assessment${capability.live_assessments === 1 ? "" : "s"} assigned`}
-                  tone="warning"
-                />
-              )}
-            </div>
-            {capability?.active && (capability.live_assessments ?? 0) > 0 && (
-              <MuNote title="Reassign their visits first" tone="warning">
-                Clinical Assessor cannot be removed while assessments are still assigned to them. Move those visits
-                to another assessor, then remove the capability.
-              </MuNote>
-            )}
-            {capability?.active && !capability.eligible && (
-              <MuNote title="Cannot be assigned yet" tone="warning">
-                They hold this capability but cannot be assigned a visit until they are active Workforce with a
-                sign-in.
-              </MuNote>
-            )}
-            {!capability?.active && !(capability?.has_account && capability?.staff_active) && (
-              <MuNote title="Not eligible yet">
-                Set their staff status to active and invite them to sign in before making them an assessor.
-              </MuNote>
-            )}
-          </MuSection>
+          {(() => {
+            const team = staff.filter((r) => r.reports_to === person.id);
+            if (team.length === 0) return null;
+            return (
+              <MuSection title="Reports to them" description="Changed from each person’s own record.">
+                <ul className="divide-y divide-line-soft">
+                  {team.map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <Link to={`/admin/workforce/${r.id}`} className="min-w-0 truncate text-[14.5px] font-bold text-brand">{r.full_name}</Link>
+                      <span className="shrink-0 text-[13px] text-muted-foreground">{r.job_title || "No job title"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </MuSection>
+            );
+          })()}
+
+          {id && <ClinicalAssessorPanel personId={id} />}
 
           <MuSection
             title="Emergency contacts"
-            description="Who we call if something happens at work. The first one recorded is treated as next of kin."
+            description="The first one recorded is next of kin."
             padded={false}
           >
             {contacts.length === 0 ? (
-              <MuEmpty icon={Users} title="No emergency contact on file" description="Add at least one before their first shift." />
+              <MuEmpty art={art.objPhoneHandset} title="No emergency contact on file" description="Add at least one before their first shift." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contacts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -509,7 +532,9 @@ const WorkforceStaff = () => {
                 ))}
               </div>
             )}
-            <div className="grid gap-3 border-t border-border/60 p-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="border-t border-line-soft p-5">
+            <div className="grid gap-3 border-2 border-navy bg-tint/40 p-3 sm:grid-cols-2 xl:grid-cols-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-label sm:col-span-2 xl:col-span-3">Add a contact</p>
               <Input placeholder="Name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} />
               <Input placeholder="Relationship" value={contact.relationship} onChange={(e) => setContact({ ...contact, relationship: e.target.value })} />
               <Input placeholder="Phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
@@ -518,6 +543,7 @@ const WorkforceStaff = () => {
               <Button size="sm" variant="outline" onClick={addContact} disabled={!contact.name.trim()}>
                 <Plus className="mr-2 h-4 w-4" />Add contact
               </Button>
+            </div>
             </div>
           </MuSection>
         </TabsContent>
@@ -537,7 +563,7 @@ const WorkforceStaff = () => {
         <TabsContent value="contract" className="mt-4 space-y-6">
           <MuSection
             title="Contracts"
-            description="Draft the contract, issue it for signature, then it becomes active. Renewals and amendments stack here rather than overwriting the last one."
+            description="Renewals and amendments stack here."
             padded={false}
             actions={
               <Button size="sm" variant="outline" onClick={() => navigate(`/admin/match-universe/${id}?tab=hiring`)}>
@@ -548,12 +574,12 @@ const WorkforceStaff = () => {
           >
             {contracts.length === 0 ? (
               <MuEmpty
-                icon={FileSignature}
+                art={art.objSignedContract}
                 title="No contract on file"
-                description="Nobody can be invited into the system until a contract has been signed."
+                description="Draft one from their profile."
               />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {contracts.map((c) => (
                   <MuRecord
                     key={c.id}
@@ -598,13 +624,15 @@ const WorkforceStaff = () => {
                           <FileSignature className="mr-2 h-4 w-4" />Open the document
                         </Button>
                         {c.status === "draft" && (
-                           <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued for candidate signature")}>
+                           <Button size="sm" onClick={() => runContractAction(() => issueContract(c.id, adminDisplayName), "Contract issued")}>
                             <Send className="mr-2 h-4 w-4" />Issue for signature
                           </Button>
                         )}
                         {c.status === "signed" && (
-                          <Button size="sm" onClick={() => runContractAction(() => setContractStatus(c.id, "active"), "Contract active")}>
-                            <ShieldCheck className="mr-2 h-4 w-4" />Mark active
+                          <Button size="sm" asChild>
+                            <Link to={`/admin/contracts/${c.id}`}>
+                              <ShieldCheck className="mr-2 h-4 w-4" />Countersign
+                            </Link>
                           </Button>
                         )}
                         {["draft", "issued"].includes(c.status) && (
@@ -627,17 +655,70 @@ const WorkforceStaff = () => {
         </TabsContent>
 
         {/* ------------------------------------------------------------- */}
+        <TabsContent value="hr" className="mt-4 space-y-6">
+          <MuSection
+            title="Probation and leave"
+            description="The probation outcome is set by sharing a probation review. Annual leave is counted in working days."
+            actions={
+              <Button
+                size="sm"
+                disabled={savingHr}
+                onClick={async () => {
+                  setSavingHr(true);
+                  const { error } = await adminDb().from("mu_people").update({
+                    probation_end: person.probation_end || null,
+                    probation_status: person.probation_status || null,
+                    annual_leave_days: person.annual_leave_days === "" || person.annual_leave_days == null ? null : Number(person.annual_leave_days),
+                  }).eq("id", person.id);
+                  setSavingHr(false);
+                  toast(error ? { title: "Could not save", description: error.message, variant: "destructive" } : { title: "Saved" });
+                }}
+              >
+                {savingHr ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save
+              </Button>
+            }
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Probation ends</Label>
+                <Input type="date" value={person.probation_end || ""} onChange={(e) => patchPerson({ probation_end: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <SelectField
+                  label="Probation"
+                  value={person.probation_status || ""}
+                  placeholder="Not recorded"
+                  onChange={(v) => patchPerson({ probation_status: v || null })}
+                  options={Object.entries(PROBATION_LABELS).map(([value, label]) => ({ value, label }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Annual leave a year (working days)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={person.annual_leave_days ?? ""}
+                  onChange={(e) => patchPerson({ annual_leave_days: e.target.value.replace(/[^\d.]/g, "") })}
+                  placeholder="e.g. 20"
+                />
+              </div>
+            </div>
+          </MuSection>
+          {id && <PersonLeave personId={id} />}
+          {id && <Reviews personId={id} manage myPersonId={myPersonId} />}
+          {id && <Checklists personId={id} manage />}
+        </TabsContent>
+
         <TabsContent value="access" className="mt-4 space-y-6">
           {!access ? (
             <MuSection
               title="System access"
-              description="One person, one sign-in. If they already sign in, that same account gains the areas you choose; otherwise an invitation is sent."
+              description="One person, one sign-in."
             >
               <div className="space-y-4">
                 {!signed && (
                   <MuNote title="Not ready to grant access" tone="warning" icon={FileSignature}>
-                    A contract has to be signed before this person can be given access. Draft and issue one on the
-                    Contract tab first.
+                    Needs a signed contract. Draft and issue one on the Contract tab.
                   </MuNote>
                 )}
                 <Button disabled={!signed} onClick={() => setInviteOpen(true)}>
@@ -648,7 +729,7 @@ const WorkforceStaff = () => {
           ) : (
             <MuSection
               title="System access"
-              description="What this person can reach in the admin centre. Tick nothing but 'Own profile only' and they see their own record and nothing else."
+              description="Full withdrawal, password resets and sign-outs are on Admin access."
             >
               <div className="space-y-4">
                 <MuFieldGrid columns={3}>
@@ -659,21 +740,11 @@ const WorkforceStaff = () => {
                     value={access?.is_active === false ? "Withdrawn" : "Active"}
                   />
                 </MuFieldGrid>
-                {namedAreas(access?.permissions).length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {namedAreas(access?.permissions).map((label) => (
-                      <Badge key={label} variant="secondary" className="text-xs font-normal">{label}</Badge>
-                    ))}
-                  </div>
-                )}
                 <AccessAreas
                   value={access?.permissions || []}
                   lockedKeys={isSuperAdmin ? [] : [ACCESS_DELEGATE_PERMISSION]}
                   onChange={(next) => savePerms(next)}
                 />
-                <p className="text-sm text-muted-foreground">
-                  Withdrawing access entirely, resetting passwords and signing somebody out everywhere stay on Admin access.
-                </p>
               </div>
             </MuSection>
           )}
@@ -681,11 +752,11 @@ const WorkforceStaff = () => {
 
         {/* ------------------------------------------------------------- */}
         <TabsContent value="activity" className="mt-4">
-          <MuSection title="Activity" description="Every recorded change on this person, most recent first." padded={false}>
+          <MuSection title="Activity" padded={false}>
             {activity.length === 0 ? (
-              <MuEmpty title="Nothing recorded yet" />
+              <MuEmpty art={art.objClipboard} title="Nothing recorded yet" description="Changes to this record will be listed here." />
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-line-soft">
                 {activity.map((a) => (
                   <div key={a.id} className="flex items-start justify-between gap-3 px-5 py-3">
                     <div className="min-w-0">
@@ -709,20 +780,17 @@ const WorkforceStaff = () => {
           <DialogHeader>
             <DialogTitle>New contract</DialogTitle>
             <DialogDescription>
-              Record the terms and attach the document. It starts as a draft and is only binding once issued and signed.
+              Starts as a draft. Binding only once issued and signed.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Contract type</Label>
-              <Select value={draft.contract_type} onValueChange={(v) => setDraft({ ...draft, contract_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectField
+                label="Contract type"
+                value={draft.contract_type}
+                onChange={(v) => v && setDraft({ ...draft, contract_type: v })}
+                options={Object.entries(EMPLOYMENT_TYPE_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Job title</Label>
@@ -757,15 +825,12 @@ const WorkforceStaff = () => {
               <Input type="number" value={draft.pay_amount} onChange={(e) => setDraft({ ...draft, pay_amount: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Frequency</Label>
-              <Select value={draft.pay_frequency} onValueChange={(v) => setDraft({ ...draft, pay_frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAY_FREQUENCIES.map((f) => (
-                    <SelectItem key={f} value={f}>{PAY_FREQUENCY_LABELS[f]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectField
+                label="Frequency"
+                value={draft.pay_frequency}
+                onChange={(v) => v && setDraft({ ...draft, pay_frequency: v })}
+                options={PAY_FREQUENCIES.map((f) => ({ value: f, label: PAY_FREQUENCY_LABELS[f] }))}
+              />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Place of work</Label>
