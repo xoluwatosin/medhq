@@ -104,6 +104,7 @@ const AnnexLibrary = lazyPage(() => import("./pages/admin/AnnexLibrary"));
 const Clients = lazyPage(() => import("./pages/admin/Clients"));
 const ClientRecord = lazyPage(() => import("./pages/admin/ClientRecord"));
 const CareDuplicates = lazyPage(() => import("./pages/admin/CareDuplicates"));
+const CareToday = lazyPage(() => import("./pages/admin/CareToday"));
 
 const PortalLogin = lazyPage(() => import("./pages/portal/PortalLogin"));
 const PortalSetPassword = lazyPage(() => import("./pages/portal/PortalSetPassword"));
@@ -267,6 +268,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="care/requests" element={<Navigate to="/admin/clients?view=requests" replace />} />
               <Route path="care/duplicates" element={<CareDuplicates />} />
+              <Route path="care/today" element={<CareToday />} />
               <Route path="clients" element={<Clients />} />
               <Route path="clients/:id" element={<ClientRecord />} />
               <Route path="intelligence" element={<Intelligence />} />

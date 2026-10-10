@@ -47,7 +47,8 @@ const LABEL_OVERRIDES: Record<string, string> = {
 };
 
 const buildGroups = (): AccessGroup[] => {
-  const seen = new Set<string>();
+  // Care keys stay in their own group even when a page is gated on one.
+  const seen = new Set<string>(CARE_GROUP.areas.map((a) => a.key));
   const groups: AccessGroup[] = [];
 
   for (const domain of adminDomains) {

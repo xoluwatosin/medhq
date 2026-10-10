@@ -15,7 +15,9 @@
 --   3. only schedulers acknowledge and resolve, and resolving needs a note;
 --   4. overdue checkouts and visits not started notify coordinators once;
 --   5. the board, the episode list and the episode schedule are for
---      schedulers only and carry what the Today page needs.
+--      schedulers only and carry what the Today page needs;
+--   6. the Schedule screen's option lists are for schedulers only, offer
+--      care workers, and leave out clients whose care is already running.
 
 DO $$
 DECLARE
@@ -191,6 +193,21 @@ BEGIN
      OR NOT _r->'patterns' @> jsonb_build_array(jsonb_build_object('start_time', '06:00', 'is_primary', true))
      OR NOT _r->'visits' @> jsonb_build_array(jsonb_build_object('id', _v3, 'person_id', NULL)) THEN
     RAISE EXCEPTION 'care_today_board: episode schedule wrong (%)', _r;
+  END IF;
+
+  -- 6. the Schedule screen's option lists ---------------------------------------
+  _r := public.care_worker_options();
+  IF NOT _r @> jsonb_build_array(jsonb_build_object('person_id', _carer, 'app_access', true)) THEN
+    RAISE EXCEPTION 'care_today_board: worker options miss the carer (%)', _r;
+  END IF;
+  _r := public.care_schedule_start_options();
+  IF _r->'clients' @> jsonb_build_array(jsonb_build_object('client_id', _client))
+     OR NOT _r->'services' @> jsonb_build_array(jsonb_build_object('code', _svc)) THEN
+    RAISE EXCEPTION 'care_today_board: start options wrong (client with running care offered, or service missing)';
+  END IF;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', _u_carer::text, 'role', 'authenticated')::text, true);
+  IF public.care_worker_options() IS NOT NULL OR public.care_schedule_start_options() IS NOT NULL THEN
+    RAISE EXCEPTION 'care_today_board: a worker read the schedule option lists';
   END IF;
 
   RAISE EXCEPTION 'care_today_board: all assertions passed';
