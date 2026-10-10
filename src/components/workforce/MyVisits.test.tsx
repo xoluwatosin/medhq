@@ -48,7 +48,7 @@ describe("MyVisits", () => {
     expect(await screen.findByText("Mama Bisi")).toBeTruthy();
     expect(screen.getByText("Access: Blue gate")).toBeTruthy();
     expect(screen.getByText("Open in Maps").getAttribute("href")).toContain("6.428055,3.421955");
-    expect(screen.getByText(/location is taken only when you check in and check out/)).toBeTruthy();
+    expect(screen.getByText(/location is taken when you check in and out, and on the way/)).toBeTruthy();
 
     // jsdom has no geolocation, so the visit checks in with no location.
     fireEvent.click(screen.getByRole("button", { name: "Check in" }));

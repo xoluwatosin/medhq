@@ -1,13 +1,14 @@
-// "My visits" for a field carer: the next visit as a ticket with check-in and
-// check-out, the emergency button, then the rest of the week by day. Location
-// is read only at the moment of checking in or out (or pressing the emergency
-// button), and the screen says so.
+// "My visits" for a field carer: the next visit as a ticket with "I'm on my
+// way", check-in and check-out, the emergency button, then the rest of the
+// week by day. Location is read at check-in and check-out, on the emergency
+// button, and during a journey the worker started; the screen says so.
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   canCheckIn, checkIn, checkOut, lagosDayKey, mapsUrl, myVisits, newEventId, nextVisit,
   readDeviceLocation, type CareVisit,
 } from "@/lib/visits";
 import { EmergencyButton } from "./EmergencyButton";
+import { JourneyControl } from "./JourneyControl";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
@@ -79,6 +80,7 @@ const VisitTicket = ({ visit, onChanged }: { visit: CareVisit; onChanged: (v: Ca
       )}
 
       <div className="mt-4 border-t border-dashed border-white/50 pt-4">
+        {visit.status === "scheduled" && <JourneyControl visit={visit} />}
         {visit.status === "scheduled" && (canCheckIn(visit) ? (
           <button
             type="button"
@@ -120,7 +122,7 @@ const VisitTicket = ({ visit, onChanged }: { visit: CareVisit; onChanged: (v: Ca
         )}
         {error && <p role="alert" className="mt-3 text-[14px] font-bold text-[#FFD7D7]">{error}</p>}
         <p className="mt-3 text-[12px] text-white/70">
-          Your location is taken only when you check in and check out.
+          Your location is taken when you check in and out, and on the way if you tap I'm on my way.
         </p>
       </div>
     </section>

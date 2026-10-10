@@ -10222,6 +10222,21 @@ export type Database = {
           outcome: string
         }[]
       }
+      care_journey_points_add: {
+        Args: { _journey_id: string; _points: Json }
+        Returns: Json
+      }
+      care_journey_start: {
+        Args: {
+          _accuracy_m?: number
+          _client_event_id: string
+          _lat?: number
+          _lng?: number
+          _visit_id: string
+        }
+        Returns: Json
+      }
+      care_journey_stop: { Args: { _journey_id: string }; Returns: undefined }
       care_languages_valid: { Args: { _codes: string[] }; Returns: boolean }
       care_my_clients: {
         Args: never
@@ -10231,6 +10246,7 @@ export type Database = {
           display_name: string
         }[]
       }
+      care_my_journey: { Args: never; Returns: Json }
       care_my_open_alert: { Args: never; Returns: Json }
       care_my_person_ids: { Args: never; Returns: string[] }
       care_my_visits: {
