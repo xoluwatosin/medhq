@@ -382,7 +382,7 @@ Upcoming shifts and offers; availability and leave; timesheet with confirm or di
 
 0. Safety net: CI, preview deploys, staging database and restore. Changes nothing live. CI is in `.github/workflows/ci.yml`: typecheck, unit tests and build on every pull request; lint runs on changed files only and warns, because the codebase carries existing lint errors.
 1. Care-worker capability grants (Tranche 2) so a test worker exists. Rule: the workforce app is open to a person only while they are in the Workforce, work in the field, hold the `care_worker` capability and have a sign-in. An assignment never grants access; it decides which care they see. Built in `20261010120000_care_worker_access.sql` with `supabase/tests/care_worker_access.sql`; admins grant it on the Workforce staff page.
-2. Delivery data: observations, interventions, monitoring (7.5D and 7.5E), database only.
+2. Delivery data: observations, interventions, monitoring (7.5D and 7.5E), database only. 7.5D (monitoring plans) is `20261010140000_care_monitoring_plans.sql` with `supabase/tests/care_monitoring_plans.sql`.
 3. Schedule and visits: roster with recurring patterns and primary carer, visit records, check-in and check-out with location levels 1 and 2, Workforce app "My visits".
 4. Today board and live alerts, location levels 3 and 4, emergency button.
 5. Bookings and dispatch for home visits, with triage and nurse review.
