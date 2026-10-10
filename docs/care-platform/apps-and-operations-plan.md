@@ -210,6 +210,47 @@ Cover: the original worker stays assigned until a replacement accepts and a coor
 
 Rules: no overlaps, travel time between visits, maximum weekly hours, minimum rest, especially after nights.
 
+### 8.1 Shift offers
+
+Workforce members are notified of open shifts that match them, and accept in the app.
+
+What becomes an open shift:
+
+- A care request or home visit the client has paid for.
+- A cover request (the original worker stays assigned until a replacement is confirmed).
+- A shift a coordinator opens by hand.
+
+Unpaid requests are never offered.
+
+Who is offered it (all checked on the server):
+
+| Check | Rule |
+| --- | --- |
+| Distance | Home address within the worker's chosen radius (for example 10 km). Straight-line distance at first; travel time later |
+| Skills | Capability and credentials the service requires, all valid on the shift date |
+| Availability | The shift sits inside the worker's availability, not on approved leave |
+| Workload | No overlap, travel buffer from the previous visit, rest after nights, weekly hours limit |
+| Client | Client exclusions and preferences respected (for example a family's objection to a worker) |
+| Worker settings | Offer radius, shift types, alert hours, paused |
+
+Offering in waves, so continuity comes first and alerts are not spammed:
+
+1. The client's primary carer or familiar team, alone, for a short window (for example 30 minutes; shorter when urgent).
+2. The best-matched nearby workers, a small batch at a time.
+3. A wider radius, or a coordinator chooses by hand.
+
+Accepting:
+
+- First eligible acceptance holds the shift; it is confirmed by a coordinator (every shift reviewed by a person, as for pay). Others see it as taken.
+- Before confirmation the worker sees the area and distance, never the exact address.
+- On confirmation the worker, the family and, for cover, the original worker are notified; the assignment changes once.
+
+Notifications: in-app and WhatsApp, inside the worker's alert hours, except urgent cover, which the coordinator may send at any time.
+
+Fairness: offers rotate among equally matched workers; declining is never penalised; no-shows after accepting are tracked.
+
+Needs: coordinates for every worker's home address (address autocomplete already exists; it does not yet keep coordinates), and per-worker offer settings alongside the existing work preferences and availability.
+
 Continuity: a named primary carer per client, preferred by the roster, with continuity tracked. Evidence links carer continuity with fewer falls, better function and fewer readmissions.
 
 Already built and reused: availability with recurrence, work preferences (shift patterns, engagement types), leave requests, credentials and documents, capabilities.
@@ -342,3 +383,10 @@ Each step is tested on staging before release. The acceptance scenarios from the
 10. Retention period for journey location data, and legal review of location under the NDPA.
 11. Lab testing partner.
 12. Who staffs the Today board on evenings and weekends.
+13. Default offer radius, first-wave window, and how urgent cover is handled.
+
+---
+
+## 13. Design
+
+Screens for both apps are drafted on the Medic Connect design system (Figtree, navy and blue, square shapes, hard offset shadows, the house illustration library). Medic Connect has its own illustrator; the illustration brief for app moments the library does not yet cover (gate check-in, school-gate handover, door code, wound kit, newborn weighing, payment alert, route pin, worker lanyard, empty states, welcome screens) goes to them. Staff portraits come from real photography of the team.
