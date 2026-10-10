@@ -174,4 +174,4 @@ Goal: one postnatal and one eldercare client, from enquiry to a family seeing vi
   - the age is still stored as well as derived;
   - public holidays end in 2027 and leave out Easter and Eid;
   - reopening a work item can collide with a live one.
-- **Illustrations and icons from the house illustrator are still to come** (`apps-and-operations-plan.md` section 13).
+- **App illustrations and icons arrived on 10 October** (51 line icons, 15 scenes, 8 empty and welcome states, from the design system). They are in `src/assets/mc/app/`, `AppIcon` and `appArt`; the worker screens use them now, and the rest go in as each screen is built.

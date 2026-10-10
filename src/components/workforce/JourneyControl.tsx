@@ -6,6 +6,7 @@ import {
   canStartJourney, myJourney, newJourneyEventId, startJourney, stopJourney, trackJourney, type Journey,
 } from "@/lib/journey";
 import type { CareVisit } from "@/lib/visits";
+import { AppIcon } from "@/components/mc/AppIcon";
 
 export const JourneyControl = ({ visit }: { visit: CareVisit }) => {
   const [journey, setJourney] = useState<Journey | null>(null);
@@ -81,9 +82,9 @@ export const JourneyControl = ({ visit }: { visit: CareVisit }) => {
         type="button"
         disabled={busy}
         onClick={start}
-        className="w-full border-2 border-white py-3 text-[16px] font-bold text-white disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 border-2 border-white py-3 text-[16px] font-bold text-white disabled:opacity-60"
       >
-        {busy ? "Starting" : "I'm on my way"}
+        <AppIcon name="route" />{busy ? "Starting" : "I'm on my way"}
       </button>
       <p className="text-[12px] text-white/70">
         The office will see where you are until you check in. Keep the app open on the way.

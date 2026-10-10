@@ -4,6 +4,7 @@
 // While the alert is open the worker sees whether the office has picked it up.
 import { useEffect, useRef, useState } from "react";
 import { myOpenAlert, newEventId, raiseEmergency, readDeviceLocation, type OpenAlert } from "@/lib/visits";
+import { AppIcon } from "@/components/mc/AppIcon";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
@@ -59,9 +60,9 @@ export const EmergencyButton = ({ visitId }: { visitId: string | null }) => {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="w-full border-2 border-[#FFD7D7] py-3 text-[16px] font-bold text-[#FFD7D7]"
+        className="flex w-full items-center justify-center gap-2 border-2 border-[#FFD7D7] py-3 text-[16px] font-bold text-[#FFD7D7]"
       >
-        Emergency
+        <AppIcon name="emergency" />Emergency
       </button>
     );
   }
