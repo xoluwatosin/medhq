@@ -10232,6 +10232,10 @@ export type Database = {
         }[]
       }
       care_my_person_ids: { Args: never; Returns: string[] }
+      care_my_visits: {
+        Args: { _days?: number; _from?: string }
+        Returns: Json
+      }
       care_notification_attempt:
         | { Args: { _id: string }; Returns: number }
         | { Args: { _force?: boolean; _id: string }; Returns: number }
@@ -10480,6 +10484,27 @@ export type Database = {
       care_visit_attach_work: {
         Args: { _visit_id: string; _work_id: string }
         Returns: undefined
+      }
+      care_visit_check_in: {
+        Args: {
+          _accuracy_m?: number
+          _client_event_id: string
+          _lat?: number
+          _lng?: number
+          _visit_id: string
+        }
+        Returns: Json
+      }
+      care_visit_check_out: {
+        Args: {
+          _accuracy_m?: number
+          _client_event_id: string
+          _lat?: number
+          _lng?: number
+          _note?: string
+          _visit_id: string
+        }
+        Returns: Json
       }
       care_visit_set: {
         Args: {
