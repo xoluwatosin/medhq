@@ -75,14 +75,23 @@ GRANT ALL ON public.care_monitoring_plans, public.care_monitoring_items TO servi
 ALTER TABLE public.care_monitoring_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.care_monitoring_items ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Care staff read monitoring plans" ON public.care_monitoring_plans;
-CREATE POLICY "Care staff read monitoring plans" ON public.care_monitoring_plans
-  FOR SELECT TO authenticated
-  USING (private.care_clinical_ok() OR private.care_ops_ok());
-DROP POLICY IF EXISTS "Care staff read monitoring items" ON public.care_monitoring_items;
-CREATE POLICY "Care staff read monitoring items" ON public.care_monitoring_items
-  FOR SELECT TO authenticated
-  USING (private.care_clinical_ok() OR private.care_ops_ok());
+-- Created only when missing, so the file can be applied twice without a DROP.
+DO $policies$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public'
+                  AND tablename = 'care_monitoring_plans' AND policyname = 'Care staff read monitoring plans') THEN
+    CREATE POLICY "Care staff read monitoring plans" ON public.care_monitoring_plans
+      FOR SELECT TO authenticated
+      USING (private.care_clinical_ok() OR private.care_ops_ok());
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public'
+                  AND tablename = 'care_monitoring_items' AND policyname = 'Care staff read monitoring items') THEN
+    CREATE POLICY "Care staff read monitoring items" ON public.care_monitoring_items
+      FOR SELECT TO authenticated
+      USING (private.care_clinical_ok() OR private.care_ops_ok());
+  END IF;
+END
+$policies$;
 
 -- ---------------------------------------------------------------- helpers
 -- Validates an item payload and returns it normalised. Raises on anything wrong.
