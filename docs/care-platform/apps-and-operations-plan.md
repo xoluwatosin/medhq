@@ -390,3 +390,5 @@ Each step is tested on staging before release. The acceptance scenarios from the
 ## 13. Design
 
 Screens for both apps are drafted on the Medic Connect design system (Figtree, navy and blue, square shapes, hard offset shadows, the house illustration library). Medic Connect has its own illustrator; the illustration brief for app moments the library does not yet cover (gate check-in, school-gate handover, door code, wound kit, newborn weighing, payment alert, route pin, worker lanyard, empty states, welcome screens) goes to them. Staff portraits come from real photography of the team.
+
+Inside the apps: no logo and no watermarks on working screens. The logo appears on the app icon, the sign-in screen, the worker ID badge, and anything that leaves the app (receipts, payslips, invoices, shared summaries). Distinctiveness comes from a bespoke icon set and illustrations by the house illustrator, and from giving each kind of thing its own object (the next visit as a ticket, the day as a timeline, offers as postcards, live status as a tag), not from boxed cards.
