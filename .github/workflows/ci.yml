@@ -1,0 +1,67 @@
+name: CI
+
+# Read-only checks. Nothing here deploys, migrates or touches the live
+# Supabase project; tests run against placeholder credentials.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://placeholder.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: placeholder
+      VITE_SUPABASE_PROJECT_ID: placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npx tsc -p tsconfig.app.json --noEmit
+      - name: Unit tests
+        run: npx vitest run
+      - name: Build
+        run: npm run build
+
+  lint-changed:
+    # The codebase carries existing lint errors, so only the files a pull
+    # request touches are linted, and findings warn rather than block.
+    name: Lint changed files
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Lint
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA"...HEAD -- '*.ts' '*.tsx')
+          if [ -z "$FILES" ]; then
+            echo "No TypeScript files changed."
+            exit 0
+          fi
+          echo "$FILES"
+          npx eslint --no-warn-ignored $FILES || echo "::warning::Lint found problems in changed files. See the log above."

@@ -1,4 +1,4 @@
-# Deploys Supabase edge functions when their code changes on the live branch,
+# Deploys Supabase edge functions when their code changes on main (the live branch),
 # the way Vercel deploys the website. Only the functions a push touched are
 # deployed: a function whose own files, or a shared file it imports, changed.
 # Each function's login rule (verify_jwt) comes from supabase/config.toml.
@@ -9,7 +9,7 @@ name: Deploy edge functions
 
 on:
   push:
-    branches: [claude/stoic-clarke-xwp2ql]
+    branches: [main]
     paths: ["supabase/functions/**", "supabase/config.toml", ".github/workflows/deploy-functions.yml", ".github/scripts/changed-functions.py"]
   workflow_dispatch:
     inputs:
