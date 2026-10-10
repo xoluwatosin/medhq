@@ -200,3 +200,30 @@ export const addWorkerToCare = async (episodeId: string, personId: string, from:
   if (from <= lagosToday()) await call<void>("care_assignment_activate", { _assignment_id: id });
   return id;
 };
+
+export interface LiveMapData {
+  at: string;
+  travelling: {
+    journey_id: string; person_id: string; person_name: string; started_at: string;
+    lat: number | null; lng: number | null; accuracy_m: number | null; last_at: string | null;
+    visit_id: string; scheduled_start: string; client_name: string; address: string | null;
+    dest_lat: number | null; dest_lng: number | null;
+  }[];
+  on_visit: {
+    visit_id: string; person_id: string; person_name: string; client_name: string; address: string | null;
+    check_in_at: string | null; scheduled_end: string; lat: number | null; lng: number | null; overdue: boolean;
+  }[];
+  emergencies: {
+    id: string; person_name: string; raised_at: string; status: string; lat: number | null; lng: number | null; note: string | null;
+  }[];
+}
+
+export const liveMap = () => call<LiveMapData | null>("care_live_map");
+
+/** "3 minutes ago" for a worker's last position. */
+export const minutesAgo = (iso: string | null, now = Date.now()): string => {
+  if (!iso) return "no position yet";
+  const m = Math.round((now - Date.parse(iso)) / 60000);
+  if (m <= 0) return "just now";
+  return m === 1 ? "1 minute ago" : `${m} minutes ago`;
+};
