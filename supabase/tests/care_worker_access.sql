@@ -21,7 +21,7 @@ DECLARE
   _admin uuid;
   _u1 uuid := gen_random_uuid(); _u2 uuid := gen_random_uuid(); _u3 uuid := gen_random_uuid();
   _carer uuid; _other uuid; _office uuid;
-  _ep uuid; _a uuid; _a2 uuid;
+  _ep uuid; _a uuid; _a2 uuid; _client uuid; _svc text;
   _mode jsonb; _cap jsonb; _list jsonb; _n integer;
 BEGIN
   SELECT ur.user_id INTO _admin
@@ -146,13 +146,18 @@ BEGIN
   END IF;
 
   -- 4. revoke is blocked by live assignments ----------------------------------
-  INSERT INTO public.care_episodes (service_code, status) VALUES ('synthetic', 'active') RETURNING id INTO _ep;
-  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status)
-  VALUES (_ep, _carer, 'care_worker', 'active') RETURNING id INTO _a;
-  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status)
-  VALUES (_ep, _carer, 'care_worker', 'ended');
-  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status)
-  VALUES (_ep, _other, 'care_worker', 'planned') RETURNING id INTO _a2;
+  -- The synthetic episode borrows an existing client and service, so no client
+  -- record (and none of its triggers) is created. The client is not changed.
+  SELECT id INTO _client FROM public.clients ORDER BY created_at LIMIT 1;
+  SELECT slug INTO _svc FROM public.services ORDER BY slug LIMIT 1;
+  IF _client IS NULL OR _svc IS NULL THEN RAISE EXCEPTION 'care_worker_access: no client or service to test with'; END IF;
+  INSERT INTO public.care_episodes (client_id, service_code, status) VALUES (_client, _svc, 'active') RETURNING id INTO _ep;
+  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status, effective_from)
+  VALUES (_ep, _carer, 'care_worker', 'active', current_date) RETURNING id INTO _a;
+  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status, effective_from)
+  VALUES (_ep, _carer, 'care_worker', 'ended', current_date - 30);
+  INSERT INTO public.care_delivery_assignments (episode_id, person_id, capability_code, status, effective_from)
+  VALUES (_ep, _other, 'care_worker', 'planned', current_date + 7) RETURNING id INTO _a2;
 
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', _admin::text, 'role', 'authenticated')::text, true);
