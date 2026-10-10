@@ -10561,6 +10561,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      care_worker_capability: { Args: { _person_id: string }; Returns: Json }
+      care_worker_capability_set: {
+        Args: { _active: boolean; _person_id: string; _reason?: string }
+        Returns: undefined
+      }
+      care_worker_my_assignments: { Args: never; Returns: Json }
       care_working_due: {
         Args: { _days: number; _from: string }
         Returns: string

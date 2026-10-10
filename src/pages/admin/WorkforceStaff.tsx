@@ -49,6 +49,7 @@ import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { returnToTalent } from "@/lib/lifecycle";
 import { ACCESS_DELEGATE_PERMISSION } from "@/lib/admin-access";
 import ClinicalAssessorPanel from "@/components/admin/mu/ClinicalAssessorPanel";
+import CareWorkerPanel from "@/components/admin/mu/CareWorkerPanel";
 
 const contractTone = (s: string): MuTone =>
   s === "active" || s === "signed" ? "good" : s === "issued" ? "info" : s === "draft" ? "warning" : "bad";
@@ -505,6 +506,8 @@ const WorkforceStaff = () => {
           })()}
 
           {id && <ClinicalAssessorPanel personId={id} />}
+
+          {id && <CareWorkerPanel personId={id} />}
 
           <MuSection
             title="Emergency contacts"

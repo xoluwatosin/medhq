@@ -26,6 +26,8 @@ export interface PortalModeResult {
   mode: PortalMode;
   staff_status?: string | null;
   assessor?: boolean;
+  /** Field carer with the care_worker capability: the workforce app is open. */
+  care_worker?: boolean;
 }
 
 /** The one transition into Workforce. Admin action at a signed contract. */
@@ -57,6 +59,23 @@ export async function workforceBlockers(personId: string) {
 }
 
 /** One login, resolved to the mode this person is operating in today. */
+export interface CareWorkerAssignment {
+  id: string;
+  episode_id: string;
+  status: "planned" | "active";
+  effective_from: string;
+  effective_to: string | null;
+  service_code: string | null;
+  episode_status: string;
+}
+
+/** The signed-in carer's live care assignments. Empty unless they have app access. */
+export async function myCareAssignments(): Promise<CareWorkerAssignment[]> {
+  const { data, error } = await db().rpc("care_worker_my_assignments");
+  if (error) throw error;
+  return (data ?? []) as CareWorkerAssignment[];
+}
+
 export async function resolvePortalMode(): Promise<PortalModeResult> {
   const { data, error } = await db().rpc("mu_portal_mode");
   if (error) throw error;
