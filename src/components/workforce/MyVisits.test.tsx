@@ -63,6 +63,7 @@ describe("MyVisits", () => {
     let attempts = 0;
     rpc.mockImplementation((fn: string) => {
       if (fn === "care_my_visits") return Promise.resolve({ data: [v], error: null });
+      if (fn !== "care_visit_check_in") return Promise.resolve({ data: null, error: null });
       attempts += 1;
       return attempts === 1
         ? Promise.resolve({ data: null, error: { message: "Network request failed" } })

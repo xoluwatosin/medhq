@@ -10231,6 +10231,7 @@ export type Database = {
           display_name: string
         }[]
       }
+      care_my_open_alert: { Args: never; Returns: Json }
       care_my_person_ids: { Args: never; Returns: string[] }
       care_my_visits: {
         Args: { _days?: number; _from?: string }
@@ -10585,6 +10586,17 @@ export type Database = {
           _team?: string
         }
         Returns: undefined
+      }
+      care_worker_alert_raise: {
+        Args: {
+          _accuracy_m?: number
+          _client_event_id: string
+          _lat?: number
+          _lng?: number
+          _note?: string
+          _visit_id?: string
+        }
+        Returns: Json
       }
       care_worker_capability: { Args: { _person_id: string }; Returns: Json }
       care_worker_capability_set: {

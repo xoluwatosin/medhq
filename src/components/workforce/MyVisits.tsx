@@ -1,11 +1,13 @@
 // "My visits" for a field carer: the next visit as a ticket with check-in and
-// check-out, then the rest of the week by day. Location is read only at the
-// moment of checking in or out, and the screen says so.
+// check-out, the emergency button, then the rest of the week by day. Location
+// is read only at the moment of checking in or out (or pressing the emergency
+// button), and the screen says so.
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   canCheckIn, checkIn, checkOut, lagosDayKey, mapsUrl, myVisits, newEventId, nextVisit,
   readDeviceLocation, type CareVisit,
 } from "@/lib/visits";
+import { EmergencyButton } from "./EmergencyButton";
 
 const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
@@ -164,6 +166,7 @@ export const MyVisits = () => {
       {next ? <VisitTicket key={next.id} visit={next} onChanged={replace} /> : (
         <p className="text-[15px] text-white/90">No visits booked in the next seven days.</p>
       )}
+      <EmergencyButton visitId={visits.find((v) => v.status === "in_progress")?.id ?? null} />
       {Object.entries(byDay).map(([day, list]) => (
         <div key={day} className="space-y-2">
           <p className="text-[13px] font-bold uppercase tracking-wide text-white/75">{dayLabel(day)}</p>

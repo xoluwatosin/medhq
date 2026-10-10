@@ -66,6 +66,7 @@ export const adminDomains: AdminDomain[] = [
     url: "/admin/clients",
     items: [
       { title: "Care list", url: "/admin/clients", icon: HeartPulse, perm: "dashboard", keywords: "care clients recipients assessments requests families groups enquirer preparation paused closed" },
+      { title: "Today", url: "/admin/care/today", icon: CalendarDays, perm: "care_coordinator", keywords: "today visits schedule roster rota alerts emergency check-in checkout assign worker book carers patterns" },
       { title: "Duplicates", url: "/admin/care/duplicates", icon: Copy, perm: "dashboard", keywords: "care duplicates same person merge entered twice families" },
     ],
   },

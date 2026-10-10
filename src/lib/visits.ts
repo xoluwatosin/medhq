@@ -115,3 +115,36 @@ export function mapsUrl(v: Pick<CareVisit, "lat" | "lng" | "address">): string |
   if (v.address) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.address)}`;
   return null;
 }
+
+export interface OpenAlert {
+  id: string;
+  status: "open" | "acknowledged";
+  raised_at: string;
+  acknowledged_at: string | null;
+}
+
+/**
+ * The emergency button. Sends whatever the phone can give within a few
+ * seconds; with no location it still goes. Reuse the same event id when
+ * retrying one press, so the office is told once.
+ */
+export async function raiseEmergency(
+  eventId: string, visitId: string | null, loc: DeviceLocation | null, note: string,
+): Promise<OpenAlert> {
+  const { data, error } = await supabase.rpc("care_worker_alert_raise", {
+    _client_event_id: eventId,
+    _visit_id: visitId ?? undefined,
+    _lat: loc?.lat,
+    _lng: loc?.lng,
+    _accuracy_m: loc?.accuracy_m,
+    _note: note.trim() || undefined,
+  });
+  if (error) throw error;
+  return data as unknown as OpenAlert;
+}
+
+export async function myOpenAlert(): Promise<OpenAlert | null> {
+  const { data, error } = await supabase.rpc("care_my_open_alert");
+  if (error) throw error;
+  return (data ?? null) as unknown as OpenAlert | null;
+}

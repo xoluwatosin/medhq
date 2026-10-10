@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  adminDomains, domainDestinations, domainLanding, isNavItemActive, locateRoute, visibleDomains,
+  adminDomains, canOpenRoute, domainDestinations, domainLanding, isNavItemActive, locateRoute, visibleDomains,
 } from "./admin-nav";
 
 const everything = { isSuperAdmin: true, permissions: [] as string[] };
@@ -55,8 +55,14 @@ describe("Admin navigation", () => {
     expect(person.deeper).toBe(true);
     expect(person.backUrl).toBe("/admin/match-universe");
     expect(locateRoute(domains, "/admin/care/duplicates").domain?.key).toBe("care");
+    expect(locateRoute(domains, "/admin/care/today").domain?.key).toBe("care");
     expect(locateRoute(domains, "/admin/seo/claims").domain?.key).toBe("content");
     expect(locateRoute(domains, "/admin/seo/pages/abc").domain?.key).toBe("content");
+  });
+
+  it("opens the care Today page only to care coordinators", () => {
+    expect(canOpenRoute("/admin/care/today", { isSuperAdmin: false, permissions: ["care_coordinator"] })).toBe(true);
+    expect(canOpenRoute("/admin/care/today", { isSuperAdmin: false, permissions: ["dashboard"] })).toBe(false);
   });
 
   it("lists SEO inside Content", () => {
