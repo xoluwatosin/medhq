@@ -291,7 +291,32 @@ Shift ends, check-out, timesheet created
 - Review deadline, for example within 4 hours of check-out or by 9am for nights; overdue reviews appear in the action centre.
 - Each shift records whether the system would have approved it automatically and whether the reviewer agreed. Automatic approval is switched on only once that agreement is consistently high.
 - Separation of duties: the coordinator approves timesheets and finance releases payouts. Where one person must do both for now, every action is logged.
-- Payouts go in batches (for example twice daily) by Paystack transfer. The bank account name is verified before the first payout and any change of bank details is re-approved. Each shift can be paid once only; failed transfers retry and flag, never double-pay. The client's prepayment for the shift must be received before payout.
+- Each shift can be paid once only; failed transfers retry and flag, never double-pay. The client's prepayment for the shift must be received before its pay becomes available.
+
+### 9.2.1 Paystack: the whole money cycle
+
+Paystack carries money in and out. Workers do not get Paystack accounts; Medic Connect keeps an earnings ledger and pays out through Paystack Transfers.
+
+Money in:
+
+- Card payments through Paystack, as now.
+- A Paystack dedicated virtual account per client: their own account number to pay by bank transfer, matched to the client and invoice automatically.
+
+Money out, as an earnings balance:
+
+1. A shift is approved; its pay, after tax, becomes the worker's available balance.
+2. The worker taps Withdraw; Paystack transfers it to their verified bank account. A worker may choose automatic payouts instead (daily, weekly or monthly).
+3. Funds stay in Medic Connect's Paystack balance until withdrawn; the system's ledger records who is owed what.
+
+Rules:
+
+- Earned pay only. No top-ups, no transfers between workers, no spending. Called "Earnings" or "Balance", never "Wallet": a stored-value wallet is e-money and needs Central Bank of Nigeria licensing.
+- Not Paystack split payments: they would pay before the visit and before review and tax, and complicate cancellations and refunds.
+- Tax withheld before pay shows as available; statements show gross, tax and net.
+- The bank account name is verified before the first payout; any change of bank details is re-approved; every withdrawal sends the worker an alert.
+- A daily reconciliation compares what workers can withdraw with the Paystack balance, and alerts finance if the balance falls short.
+- Balances not withdrawn within a set period (for example 30 days) are paid out automatically.
+- Before build: confirm with Paystack that dedicated virtual accounts and Transfers are enabled for the account, and have the accountant sign off the arrangement.
 
 Tax by worker type:
 
@@ -354,7 +379,7 @@ Upcoming shifts and offers; availability and leave; timesheet with confirm or di
 
 ## 11. Build order
 
-0. Safety net: CI, preview deploys, staging database and restore. Changes nothing live.
+0. Safety net: CI, preview deploys, staging database and restore. Changes nothing live. CI is in `.github/workflows/ci.yml`: typecheck, unit tests and build on every pull request; lint runs on changed files only and warns, because the codebase carries existing lint errors.
 1. Care-worker capability grants (Tranche 2) so a test worker exists.
 2. Delivery data: observations, interventions, monitoring (7.5D and 7.5E), database only.
 3. Schedule and visits: roster with recurring patterns and primary carer, visit records, check-in and check-out with location levels 1 and 2, Workforce app "My visits".
